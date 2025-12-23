@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+:root {
+  font-family: 'Outfit', Inter, system-ui, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  /* Keep legacy vars if needed, but prefer shadcn vars above */
+  --bg-main: #f4f7fe;
+  --text-dark: #1a1c21;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--bg-main);
+  color: #1a1c21;
+}
+
+@media (min-width: 1024px) {
+  body {
+    overflow: hidden;
+  }
+}
+
+.glass {
+  background: rgba(255, 255, 255, 1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #2d5bff;
+}
+
+/* Original input focus class - updating to use new primary */
+.input-focus {
+  transition: all 0.3s ease;
+}
+
+.input-focus:focus {
+  border-color: #2d5bff;
+  box-shadow: 0 0 10px rgba(74, 105, 255, 0.1);
+  outline: none;
+}
+
+/* Desktop and tablet popup */
+.responsive-datepicker-dropdown {
+  max-width: 350px !important;
+}
+
+/* Mobile popup: full width and proper padding */
+.responsive-datepicker-dropdown-mobile {
+  max-width: 100vw !important;
+  width: 100vw !important;
+  left: 0 !important;
+  right: 0 !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 10px !important;
+  background-color: #f8fafc !important;
+  font-size: 14px !important;
+  z-index: 9999 !important;
+  overflow: auto !important;
+  height: auto !important;
+  max-height: 80vh !important;
+}
+
+/* Mobile-specific panel stacking */
+@media (max-width: 640px) {
+
+  /* Dimensions constraints */
+  .responsive-datepicker-dropdown-mobile .ant-picker-panel-container {
+    max-width: 100vw !important;
+    width: 100% !important;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Force stack arrangement */
+  .responsive-datepicker-dropdown-mobile .ant-picker-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+
+  /* Make both panels full width */
+  .responsive-datepicker-dropdown-mobile .ant-picker-date-panel,
+  .responsive-datepicker-dropdown-mobile .ant-picker-time-panel {
+    width: 100% !important;
+    border: none !important;
+  }
+
+  /* Add separator between stacked panels */
+  .responsive-datepicker-dropdown-mobile .ant-picker-date-panel {
+    border-bottom: 1px solid #f0f0f0 !important;
+  }
+
+  /* Ensure the calendar grid fits */
+  .responsive-datepicker-dropdown-mobile .ant-picker-content {
+    width: 100% !important;
+    min-width: unset !important;
+  }
+
+  .responsive-datepicker-dropdown-mobile .ant-picker-content th,
+  .responsive-datepicker-dropdown-mobile .ant-picker-content td {
+    padding: 2px 0 !important;
+  }
+
+  /* Adjust Time Panel height/layout */
+  .responsive-datepicker-dropdown-mobile .ant-picker-time-panel-column {
+    height: 150px !important;
+    width: 33.33% !important;
+    overflow-y: auto;
+  }
+}
