@@ -36,25 +36,9 @@ exports.update = async (id, userData) => {
     return result.affectedRows > 0;
 };
 
-exports.saveResetToken = async (email, token, expiry) => {
-    const [result] = await db.query(
-        'UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE email = ?',
-        [token, expiry, email]
-    );
-    return result.affectedRows > 0;
-};
-
-exports.findByResetToken = async (token) => {
-    const [rows] = await db.query(
-        'SELECT * FROM users WHERE reset_token = ? AND reset_token_expiry > NOW()',
-        [token]
-    );
-    return rows[0];
-};
-
 exports.updatePassword = async (id, hashedPassword) => {
     const [result] = await db.query(
-        'UPDATE users SET password = ?, reset_token = NULL, reset_token_expiry = NULL WHERE id = ?',
+        'UPDATE users SET password = ? WHERE id = ?',
         [hashedPassword, id]
     );
     return result.affectedRows > 0;

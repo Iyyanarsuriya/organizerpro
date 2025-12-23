@@ -10,8 +10,6 @@ CREATE TABLE IF NOT EXISTS users (
     mobile_number VARCHAR(20),
     password VARCHAR(255) NOT NULL,
     profile_image VARCHAR(255) DEFAULT NULL,
-    reset_token VARCHAR(255) DEFAULT NULL,
-    reset_token_expiry DATETIME DEFAULT NULL,
     reset_otp VARCHAR(6) DEFAULT NULL,
     reset_otp_expiry DATETIME DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

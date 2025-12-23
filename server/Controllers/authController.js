@@ -106,34 +106,6 @@ exports.resetPasswordWithOTP = async (req, res) => {
     }
 };
 
-// Keep old method for backward compatibility (optional)
-exports.resetPassword = async (req, res) => {
-    const { token } = req.params;
-    const { password } = req.body;
-
-    try {
-        const user = await User.findByResetToken(token);
-        if (!user) {
-            return res.status(400).json({ error: 'Invalid or expired token' });
-        }
-
-        // Check if new password is same as old password
-        const isSamePassword = await bcrypt.compare(password, user.password);
-        if (isSamePassword) {
-            return res.status(400).json({ error: 'New password cannot be the same as your current password' });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-        await User.updatePassword(user.id, hashedPassword);
-
-        res.json({ message: 'Password reset successfully. You can now login.' });
-
-    } catch (error) {
-        console.error('Reset password error:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-};
-
 exports.signup = async (req, res) => {
     const { username, email, password, mobile_number } = req.body;
     try {

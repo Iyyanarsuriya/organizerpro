@@ -14,6 +14,5 @@ router.put('/profile', authenticateToken, upload.single('profile_image'), authCo
 router.post('/forgot-password', authController.forgotPassword);
 router.post('/verify-otp', authController.verifyOTP);
 router.post('/reset-password-otp', authController.resetPasswordWithOTP);
-router.post('/reset-password/:token', authController.resetPassword); // Keep for backward compatibility
 
 module.exports = router;
