@@ -20,21 +20,48 @@ exports.create = async (userData) => {
 };
 
 exports.update = async (id, userData) => {
-    const { username, email, mobile_number, profile_image } = userData;
-    let query = 'UPDATE users SET username = ?, email = ?, mobile_number = ?';
-    const params = [username, email, mobile_number];
+    const fields = [];
+    const params = [];
 
-    if (profile_image !== undefined) {
-        query += ', profile_image = ?';
-        params.push(profile_image);
+    if (userData.username !== undefined) {
+        fields.push("username = ?");
+        params.push(userData.username);
     }
 
-    query += ' WHERE id = ?';
+    if (userData.email !== undefined) {
+        fields.push("email = ?");
+        params.push(userData.email);
+    }
+
+    if (userData.mobile_number !== undefined) {
+        fields.push("mobile_number = ?");
+        params.push(userData.mobile_number || null);
+    }
+
+    if (userData.profile_image !== undefined) {
+        fields.push("profile_image = ?");
+        params.push(userData.profile_image || null);
+    }
+
+    // ❌ Nothing to update
+    if (fields.length === 0) {
+        return true;
+    }
+
+    const query = `
+        UPDATE users
+        SET ${fields.join(", ")}
+        WHERE id = ?
+    `;
+
     params.push(id);
 
     const [result] = await db.query(query, params);
-    return result.affectedRows > 0;
+
+    // ✅ If row exists, update is considered successful
+    return result.affectedRows >= 0;
 };
+
 
 exports.updatePassword = async (id, hashedPassword) => {
     const [result] = await db.query(

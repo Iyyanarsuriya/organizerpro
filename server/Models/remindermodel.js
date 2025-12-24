@@ -7,12 +7,28 @@ exports.getAllByUserId = async (userId) => {
 
 exports.create = async (reminderData) => {
     const { user_id, title, description, due_date, priority } = reminderData;
+
+    // ✅ Convert ISO string → MySQL DATETIME
+    const formattedDueDate = due_date
+        ? new Date(due_date).toISOString().slice(0, 19).replace("T", " ")
+        : null;
+
     const [result] = await db.query(
         'INSERT INTO reminders (user_id, title, description, due_date, priority) VALUES (?, ?, ?, ?, ?)',
-        [user_id, title, description, due_date, priority || 'medium']
+        [user_id, title, description, formattedDueDate, priority || 'medium']
     );
-    return { id: result.insertId, ...reminderData, is_completed: false };
+
+    return {
+        id: result.insertId,
+        user_id,
+        title,
+        description,
+        due_date: formattedDueDate,
+        priority: priority || 'medium',
+        is_completed: false
+    };
 };
+
 
 exports.updateStatus = async (id, userId, is_completed) => {
     const [result] = await db.query(
