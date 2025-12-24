@@ -39,23 +39,26 @@ const Home = () => {
         }
     }, []);
 
-    // Track which reminders have been notified
-    const [notifiedReminders, setNotifiedReminders] = useState(new Set());
+    // Track last notification time for each reminder
+    const [lastNotifiedTimes, setLastNotifiedTimes] = useState({});
 
     // Check for due reminders every minute
     useEffect(() => {
         const checkReminders = () => {
             const now = new Date();
+            const nowMs = now.getTime();
 
             reminders.forEach(reminder => {
                 if (reminder.is_completed || !reminder.due_date) return;
-                if (notifiedReminders.has(reminder.id)) return;
 
                 const dueDate = new Date(reminder.due_date);
-                const timeDiff = dueDate - now;
+                const dueDateMs = dueDate.getTime();
+                const lastNotifyTime = lastNotifiedTimes[reminder.id] || 0;
 
-                // Notify if reminder is due (within 1 minute)
-                if (timeDiff <= 60000 && timeDiff > -60000) {
+                // Condition: If reminder is due/overdue AND (never notified OR 2 minutes passed)
+                // We use dueDateMs - 30000 to catch it slightly early or on time
+                if (nowMs >= dueDateMs - 30000 && nowMs - lastNotifyTime >= 120000) {
+
                     // Show browser notification
                     if ('Notification' in window && Notification.permission === 'granted') {
                         const notification = new Notification('⏰ Reminder Due!', {
@@ -72,14 +75,23 @@ const Home = () => {
                         };
                     }
 
-                    // Show toast notification as 
+                    // Show toast notification
                     toast.error(`⏰ Reminder Due: ${reminder.title}`, {
                         duration: 6000,
                         position: 'top-center',
+                        style: {
+                            background: '#fff',
+                            color: '#e11d48',
+                            fontWeight: 'bold',
+                            border: '2px solid #e11d48'
+                        }
                     });
 
-                    // Mark as notified
-                    setNotifiedReminders(prev => new Set([...prev, reminder.id]));
+                    // Update last notified time
+                    setLastNotifiedTimes(prev => ({
+                        ...prev,
+                        [reminder.id]: nowMs
+                    }));
                 }
             });
         };
@@ -87,11 +99,11 @@ const Home = () => {
         // Check immediately
         checkReminders();
 
-        // Then check every minute
-        const interval = setInterval(checkReminders, 60000);
+        // Check every 30 seconds for better precision on the 2-minute mark
+        const interval = setInterval(checkReminders, 30000);
 
         return () => clearInterval(interval);
-    }, [reminders, notifiedReminders]);
+    }, [reminders, lastNotifiedTimes]);
 
     // 🔔 Notification logic for today's tasks
     const todayStr = new Date().toISOString().split('T')[0];
