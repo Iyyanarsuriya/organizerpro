@@ -14,6 +14,9 @@ self.addEventListener('push', function (event) {
         icon: '/favicon.svg',
         badge: '/favicon.svg',
         vibrate: [200, 100, 200],
+        tag: data.tag || 'default-reminder',
+        renotify: true,
+        requireInteraction: true,
         data: {
             url: data.url || '/'
         },

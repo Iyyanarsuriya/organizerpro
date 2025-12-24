@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getReminders, createReminder, updateReminder, deleteReminder } from '../api/homeApi';
 import { getMe } from '../api/authApi';
+import { subscribeToPush } from '../api/notificationApi';
 import ReminderForm from '../components/ReminderForm';
 import ReminderList from '../components/ReminderList';
 import { Link } from 'react-router-dom';
@@ -37,15 +38,43 @@ const Home = () => {
     useEffect(() => {
         fetchData();
 
-        // Request notification permission
-        if ('Notification' in window && Notification.permission === 'default') {
-            Notification.requestPermission().then(permission => {
+        // Request notification permission & subscribe for Web Push
+        if ('Notification' in window) {
+            Notification.requestPermission().then(async permission => {
                 if (permission === 'granted') {
-                    toast.success("Notifications enabled for background alerts!");
+                    toast.success("Notifications enabled!");
+
+                    // Subscribe to Web Push for locked screen support
+                    try {
+                        const registration = await navigator.serviceWorker.ready;
+                        const publicVapidKey = 'BBZkduSTn1UjCwEKOjkuNgDs4iOPwkfpaa--K9NtxsqmcgjxKQpQTfzeGnjuDDpHyhZ6TiRUb1-rNg3zFDJIcWM';
+
+                        const subscription = await registration.pushManager.subscribe({
+                            userVisibleOnly: true,
+                            applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+                        });
+
+                        await subscribeToPush(subscription);
+                        console.log("Push Subscribed!");
+                    } catch (err) {
+                        console.error("Push Subscription failed:", err);
+                    }
                 }
             });
         }
     }, []);
+
+    // Helper to convert VAPID key
+    function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    }
 
     // Refresh data when user returns to the tab
     useEffect(() => {
