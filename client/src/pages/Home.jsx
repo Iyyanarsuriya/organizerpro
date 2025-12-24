@@ -58,8 +58,15 @@ const Home = () => {
         return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
     }, []);
 
-    // Track last notification time for each reminder
-    const [lastNotifiedTimes, setLastNotifiedTimes] = useState({});
+    // Track last notification time for each reminder - Persist to localStorage for reliability
+    const [lastNotifiedTimes, setLastNotifiedTimes] = useState(() => {
+        const saved = localStorage.getItem('lastNotifiedTimes');
+        return saved ? JSON.parse(saved) : {};
+    });
+
+    useEffect(() => {
+        localStorage.setItem('lastNotifiedTimes', JSON.stringify(lastNotifiedTimes));
+    }, [lastNotifiedTimes]);
 
     // Check for due reminders every minute
     useEffect(() => {
@@ -72,13 +79,15 @@ const Home = () => {
 
                 const dueDate = new Date(reminder.due_date);
                 const dueDateMs = dueDate.getTime();
-                const lastNotifyTime = lastNotifiedTimes[reminder.id] || 0;
 
-                // Condition: If reminder is due/overdue AND (never notified OR 2 minutes passed)
-                // We use dueDateMs - 30000 to catch it slightly early or on time
-                if (nowMs >= dueDateMs - 30000 && nowMs - lastNotifyTime >= 120000) {
+                // Use a non-state check to avoid dependency loop
+                const lastNotifyTime = JSON.parse(localStorage.getItem('lastNotifiedTimes') || '{}')[reminder.id] || 0;
 
-                    // Show browser/native notification (using Service Worker for better background support)
+                // Condition: If reminder is due/overdue AND (never notified OR 5 minutes passed)
+                // We show immediate alert if it just became due
+                if (nowMs >= dueDateMs - 30000 && (nowMs - lastNotifyTime >= 300000)) {
+
+                    // Trigger Native Notification
                     if ('serviceWorker' in navigator && Notification.permission === 'granted') {
                         navigator.serviceWorker.ready.then(registration => {
                             registration.showNotification('🚀 Task Alert!', {
@@ -99,13 +108,9 @@ const Home = () => {
                         });
                     }
 
-                    // Show toast notification
-                    // Show toast notification
+                    // Show Toast Alert
                     toast.custom((t) => (
-                        <div
-                            className={`${t.visible ? 'animate-enter' : 'animate-leave'
-                                } max-w-md w-[95%] xs:w-[90%] sm:w-full bg-red-600 shadow-2xl rounded-2xl pointer-events-auto flex ring-1 ring-black ring-opacity-5 overflow-hidden border border-red-500/50 mt-4`}
-                        >
+                        <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-[95%] xs:w-[90%] sm:w-full bg-red-600 shadow-2xl rounded-2xl pointer-events-auto flex ring-1 ring-black ring-opacity-5 overflow-hidden border border-red-500/50 mt-4`}>
                             <div className="flex-1 w-0 p-3 sm:p-4">
                                 <div className="flex items-center">
                                     <div className="shrink-0">
@@ -114,28 +119,16 @@ const Home = () => {
                                         </div>
                                     </div>
                                     <div className="ml-3 sm:ml-4 flex-1">
-                                        <p className="text-xs sm:text-sm font-black text-white">
-                                            Task Milestone Reached!
-                                        </p>
-                                        <p className="mt-0.5 text-[9px] sm:text-[11px] font-bold text-white/80 uppercase tracking-widest line-clamp-1">
-                                            {reminder.title}
-                                        </p>
+                                        <p className="text-xs sm:text-sm font-black text-white">Task Milestone Reached!</p>
+                                        <p className="mt-0.5 text-[9px] sm:text-[11px] font-bold text-white/80 uppercase tracking-widest line-clamp-1">{reminder.title}</p>
                                     </div>
                                 </div>
                             </div>
                             <div className="flex border-l border-white/10">
-                                <button
-                                    onClick={() => toast.dismiss(t.id)}
-                                    className="w-full border border-transparent rounded-none rounded-r-2xl px-3 sm:px-4 flex items-center justify-center text-[10px] sm:text-xs font-black text-white hover:bg-white/10 transition-colors uppercase tracking-widest"
-                                >
-                                    Done
-                                </button>
+                                <button onClick={() => toast.dismiss(t.id)} className="w-full border border-transparent rounded-none rounded-r-2xl px-3 sm:px-4 flex items-center justify-center text-[10px] sm:text-xs font-black text-white hover:bg-white/10 transition-colors uppercase tracking-widest">Done</button>
                             </div>
                         </div>
-                    ), {
-                        duration: 6000,
-                        position: 'top-center'
-                    });
+                    ), { duration: 6000, position: 'top-center' });
 
                     // Update last notified time
                     setLastNotifiedTimes(prev => ({
@@ -146,14 +139,10 @@ const Home = () => {
             });
         };
 
-        // Check immediately
         checkReminders();
-
-        // Check every 30 seconds for better precision on the 2-minute mark
         const interval = setInterval(checkReminders, 30000);
-
         return () => clearInterval(interval);
-    }, [reminders, lastNotifiedTimes]);
+    }, [reminders]); // lastNotifiedTimes removed from dependencies
 
     // 🔔 Notification logic for today's tasks
     const todayStr = new Date().toISOString().split('T')[0];
