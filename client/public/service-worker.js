@@ -1,8 +1,8 @@
 self.addEventListener('push', function (event) {
     const data = event.data ? event.data.json() : {};
-    const title = data.title || 'Reminder Due!';
+    const title = data.title || '🚀 Task Alert!';
     const options = {
-        body: data.body || 'You have a reminder scheduled for now.',
+        body: data.body || 'One of your priorities is due now.',
         icon: '/favicon.svg',
         badge: '/favicon.svg',
         vibrate: [200, 100, 200],

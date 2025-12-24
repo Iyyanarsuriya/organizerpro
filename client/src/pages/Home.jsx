@@ -81,8 +81,8 @@ const Home = () => {
                     // Show browser/native notification (using Service Worker for better background support)
                     if ('serviceWorker' in navigator && Notification.permission === 'granted') {
                         navigator.serviceWorker.ready.then(registration => {
-                            registration.showNotification('⏰ Reminder Due!', {
-                                body: reminder.title,
+                            registration.showNotification('🚀 Task Alert!', {
+                                body: `Heads up! "${reminder.title}" is due now.`,
                                 icon: '/favicon.svg',
                                 badge: '/favicon.svg',
                                 vibrate: [200, 100, 200],
@@ -115,7 +115,7 @@ const Home = () => {
                                     </div>
                                     <div className="ml-3 sm:ml-4 flex-1">
                                         <p className="text-xs sm:text-sm font-black text-white">
-                                            Reminder Due!
+                                            Task Milestone Reached!
                                         </p>
                                         <p className="mt-0.5 text-[9px] sm:text-[11px] font-bold text-white/80 uppercase tracking-widest line-clamp-1">
                                             {reminder.title}
@@ -180,10 +180,10 @@ const Home = () => {
                             </div>
                             <div className="flex-1">
                                 <p className="text-lg sm:text-xl font-black text-slate-800 tracking-tight">
-                                    Today's Agenda
+                                    Your Daily Brief
                                 </p>
                                 <p className="mt-1 text-[11px] sm:text-sm font-bold text-slate-500">
-                                    You have <span className="text-[#2d5bff]">{notifications.length} tasks</span> scheduled for today.
+                                    You have <span className="text-[#2d5bff] font-black">{notifications.length} priorities</span> today.
                                 </p>
                                 <div className="mt-4 flex flex-col gap-2">
                                     {notifications.slice(0, 3).map(n => (
