@@ -67,7 +67,7 @@ const Login = ({ setToken }) => {
 
       setToken(token);
       toast.dismiss();
-      toast.success("Login successful", { duration: 2000 });
+      toast.success("Login successful");
 
       navigate("/");
     } catch (error) {

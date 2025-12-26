@@ -32,6 +32,7 @@ function App() {
         reverseOrder={false}
         gutter={8}
         toastOptions={{
+          // Global defaults
           duration: 2000,
           pauseOnHover: false,
           pauseOnFocusLoss: false,
@@ -40,7 +41,22 @@ function App() {
             fontWeight: '600',
             fontSize: '14px',
             borderRadius: '12px',
-          }
+          },
+          // Specific type defaults
+          success: {
+            duration: 2000,
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            duration: 2000,
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
         }}
       />
       <div className="min-h-screen bg-transparent text-slate-800 tracking-tight">
