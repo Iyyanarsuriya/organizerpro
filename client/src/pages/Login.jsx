@@ -12,13 +12,20 @@ const Login = ({ setToken }) => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  // Load saved email on mount
+  // Load saved email on mount and clear stuck toasts
   useEffect(() => {
     const savedEmail = localStorage.getItem('rememberedEmail');
     if (savedEmail) {
       setEmail(savedEmail);
       setRememberMe(true);
     }
+
+    // Fix: Force dismiss any sticky toasts (like "Logged out") after a short delay on mobile
+    const timer = setTimeout(() => {
+      toast.dismiss();
+    }, 1500);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const isValidEmail = (email) => {
