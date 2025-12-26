@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { getReminders } from '../api/homeApi';
 import { updateProfile, getGoogleAuthUrl, getMe } from '../api/authApi';
 import { API_URL } from '../api/axiosInstance';
