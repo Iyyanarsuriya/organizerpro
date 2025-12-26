@@ -97,7 +97,7 @@ const Profile = () => {
         localStorage.removeItem('user');
         window.dispatchEvent(new Event('storage'));
         toast.dismiss();
-        toast.success("Logged out successfully");
+        toast.success("Logged out successfully", { duration: 2000 });
         navigate('/login');
     };
 
