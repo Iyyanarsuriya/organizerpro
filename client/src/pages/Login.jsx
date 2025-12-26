@@ -105,7 +105,7 @@ const Login = ({ setToken }) => {
                 if (errors.email) setErrors({ ...errors, email: null });
               }}
               className={`w-full bg-slate-50 border ${errors.email ? 'border-red-500' : 'border-slate-200'} rounded-2xl px-4 py-4 text-slate-800 input-focus font-medium placeholder:text-slate-300`}
-              placeholder="lilyamber@gmail.com"
+              placeholder="suriya@gmail.com"
               required
             />
             {errors.email && <p className="text-red-500 text-xs mt-1 px-2 font-medium">{errors.email}</p>}
