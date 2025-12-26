@@ -37,10 +37,6 @@ const Home = () => {
 
     useEffect(() => {
         fetchData();
-        // Request permission for system-level notifications
-        if ("Notification" in window && Notification.permission === "default") {
-            Notification.requestPermission();
-        }
     }, []);
 
     // Refresh data when user returns to the tab
@@ -84,15 +80,7 @@ const Home = () => {
                 const lastNotifyTime = JSON.parse(localStorage.getItem('lastNotifiedTimes') || '{}')[reminder.id] || 0;
 
                 if (nowMs >= dueDateMs - 30000 && (nowMs - lastNotifyTime >= 300000)) {
-                    // 1. Show Native System Notification (Works even if tab is in background)
-                    if ("Notification" in window && Notification.permission === "granted") {
-                        new Notification("🚀 Task Alert!", {
-                            body: `Heads up! "${reminder.title}" is due now.`,
-                            icon: "/favicon.svg"
-                        });
-                    }
-
-                    // 2. Show In-App Toast
+                    // Show In-App Toast
                     toast.custom((t) => (
                         <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-[95%] xs:w-[90%] sm:w-full bg-red-600 shadow-2xl rounded-2xl pointer-events-auto flex ring-1 ring-black ring-opacity-5 overflow-hidden border border-red-500/50 mt-4`}>
                             <div className="flex-1 w-0 p-3 sm:p-4">

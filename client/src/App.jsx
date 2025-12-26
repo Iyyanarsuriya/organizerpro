@@ -30,6 +30,7 @@ function App() {
       <Toaster
         position="top-center"
         reverseOrder={false}
+        gutter={8}
         toastOptions={{
           duration: 2000,
           pauseOnHover: false,

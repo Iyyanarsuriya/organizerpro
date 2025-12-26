@@ -64,10 +64,12 @@ const Login = ({ setToken }) => {
       }
 
       setToken(token);
+      toast.dismiss();
       toast.success("Login successful");
 
       navigate("/");
     } catch (error) {
+      toast.dismiss(); // Dismiss any existing toasts before showing new error
       toast.error(error.response?.data?.error || "Login failed");
     } finally {
       setLoading(false);

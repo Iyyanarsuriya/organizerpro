@@ -88,6 +88,7 @@ const Profile = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.dispatchEvent(new Event('storage'));
+        toast.dismiss();
         toast.success("Logged out successfully");
         navigate('/login');
     };
