@@ -22,8 +22,6 @@ const Login = ({ setToken }) => {
       setPassword(atob(savedPassword)); // Decode from base64
       setRememberMe(true);
     }
-    // Clear any lingering toasts from the previous screen (like Logout)
-    toast.dismiss();
   }, []);
 
   const isValidEmail = (email) => {

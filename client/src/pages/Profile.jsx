@@ -7,13 +7,19 @@ import { API_URL } from '../api/axiosInstance';
 import toast from 'react-hot-toast';
 
 const Profile = () => {
-    const [user, setUser] = useState({ username: '', email: '', mobile_number: '' });
+    const [user, setUser] = useState(() => {
+        const saved = localStorage.getItem('user');
+        return saved ? JSON.parse(saved) : { username: '', email: '', mobile_number: '' };
+    });
     const [reminders, setReminders] = useState([]);
     const [stats, setStats] = useState({ total: 0, completed: 0, pending: 0 });
     const [selectedStat, setSelectedStat] = useState({ open: false, title: '', items: [] });
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
-    const [editData, setEditData] = useState({ username: '', email: '', mobile_number: '' });
+    const [editData, setEditData] = useState(() => {
+        const saved = localStorage.getItem('user');
+        return saved ? JSON.parse(saved) : { username: '', email: '', mobile_number: '' };
+    });
     const [selectedFile, setSelectedFile] = useState(null);
     const [previewImage, setPreviewImage] = useState(null);
     const [updating, setUpdating] = useState(false);
@@ -59,11 +65,13 @@ const Profile = () => {
             const response = await updateProfile(formData);
 
             // Update local user state with new data including image if returned
-            setUser(prev => ({
-                ...prev,
+            const updatedUser = {
+                ...user,
                 ...editData,
-                profile_image: response.data.profile_image || prev.profile_image
-            }));
+                profile_image: response.data.profile_image || user.profile_image
+            };
+            setUser(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
 
             setIsEditing(false);
             setSelectedFile(null);

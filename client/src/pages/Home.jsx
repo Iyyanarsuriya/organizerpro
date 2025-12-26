@@ -11,7 +11,10 @@ import { FaBell, FaTimes } from 'react-icons/fa';
 const Home = () => {
     const [reminders, setReminders] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(() => {
+        const saved = localStorage.getItem('user');
+        return saved ? JSON.parse(saved) : null;
+    });
     const [showNotifications, setShowNotifications] = useState(false);
     const [confirmToggle, setConfirmToggle] = useState(null); // { id, currentStatus }
     const [sortBy, setSortBy] = useState('due_date'); // Default to date wise
@@ -25,6 +28,7 @@ const Home = () => {
             ]);
             setReminders(remindersRes.data);
             setUser(userRes.data);
+            localStorage.setItem('user', JSON.stringify(userRes.data));
         } catch (error) {
             console.error("Error fetching data", error);
         } finally {
@@ -37,8 +41,6 @@ const Home = () => {
 
     useEffect(() => {
         fetchData();
-        // Force clear any lingering login/auth toasts
-        toast.dismiss();
     }, []);
 
     // Refresh data when user returns to the tab
