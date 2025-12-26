@@ -12,14 +12,11 @@ const Login = ({ setToken }) => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  // Load saved credentials on mount
+  // Load saved email on mount
   useEffect(() => {
     const savedEmail = localStorage.getItem('rememberedEmail');
-    const savedPassword = localStorage.getItem('rememberedPassword');
-
-    if (savedEmail && savedPassword) {
+    if (savedEmail) {
       setEmail(savedEmail);
-      setPassword(atob(savedPassword)); // Decode from base64
       setRememberMe(true);
     }
   }, []);
@@ -51,16 +48,21 @@ const Login = ({ setToken }) => {
 
       const { token, user } = response.data;
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
+      // Clear any previous session data
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("user");
 
-      // Handle Remember Me
+      const storage = rememberMe ? localStorage : sessionStorage;
+      storage.setItem("token", token);
+      storage.setItem("user", JSON.stringify(user));
+
+      // Handle Remembered Email (Only email, never password)
       if (rememberMe) {
         localStorage.setItem('rememberedEmail', email);
-        localStorage.setItem('rememberedPassword', btoa(password)); // Encode to base64
       } else {
         localStorage.removeItem('rememberedEmail');
-        localStorage.removeItem('rememberedPassword');
       }
 
       setToken(token);
@@ -69,7 +71,7 @@ const Login = ({ setToken }) => {
 
       navigate("/");
     } catch (error) {
-      toast.dismiss(); // Dismiss any existing toasts before showing new error
+      toast.dismiss();
       toast.error(error.response?.data?.error || "Login failed");
     } finally {
       setLoading(false);

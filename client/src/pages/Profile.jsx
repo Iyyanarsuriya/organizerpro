@@ -96,9 +96,12 @@ const Profile = () => {
     const logout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
+
         window.dispatchEvent(new Event('storage'));
         toast.dismiss();
-        toast.success("Logged out successfully", { duration: 2000 });
+        toast.success("Logged out successfully");
         navigate('/login');
     };
 
