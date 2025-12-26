@@ -99,7 +99,7 @@ const Home = () => {
                                 <button onClick={() => toast.dismiss(t.id)} className="w-full border border-transparent rounded-none rounded-r-2xl px-3 sm:px-4 flex items-center justify-center text-[10px] sm:text-xs font-black text-white hover:bg-white/10 transition-colors uppercase tracking-widest">Done</button>
                             </div>
                         </div>
-                    ), { duration: 2000, position: 'top-center' });
+                    ), { duration: 4000, position: 'top-center' });
 
                     // Update last notified time
                     setLastNotifiedTimes(prev => ({
@@ -172,7 +172,7 @@ const Home = () => {
                     </div>
                 </div>
             ), {
-                duration: 2000,
+                duration: 4000,
                 position: 'top-center'
             });
             setHasShownAgenda(true);
