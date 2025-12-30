@@ -3,11 +3,14 @@ require('dotenv').config();
 
 const redirectUri = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:5000/api/auth/google/callback';
 
-const oauth2Client = new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    redirectUri
-);
+// Helper to create a NEW client instance to avoid race conditions
+const createOAuthClient = () => {
+    return new google.auth.OAuth2(
+        process.env.GOOGLE_CLIENT_ID,
+        process.env.GOOGLE_CLIENT_SECRET,
+        redirectUri
+    );
+};
 
 if (!process.env.GOOGLE_CLIENT_ID) {
     console.warn('⚠️ GOOGLE_CLIENT_ID is missing from .env. Google Calendar features will not work.');
@@ -20,6 +23,7 @@ if (!process.env.GOOGLE_REDIRECT_URI && process.env.NODE_ENV === 'production') {
 const SCOPES = ['https://www.googleapis.com/auth/calendar.events', 'https://www.googleapis.com/auth/calendar.readonly'];
 
 exports.getAuthUrl = (state) => {
+    const oauth2Client = createOAuthClient();
     return oauth2Client.generateAuthUrl({
         access_type: 'offline',
         scope: SCOPES,
@@ -29,11 +33,13 @@ exports.getAuthUrl = (state) => {
 };
 
 exports.getTokens = async (code) => {
+    const oauth2Client = createOAuthClient();
     const { tokens } = await oauth2Client.getToken(code);
     return tokens;
 };
 
 exports.createEvent = async (refreshToken, reminder) => {
+    const oauth2Client = createOAuthClient();
     oauth2Client.setCredentials({ refresh_token: refreshToken });
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
@@ -65,11 +71,12 @@ exports.createEvent = async (refreshToken, reminder) => {
         return response.data;
     } catch (error) {
         console.error('Error creating Google Calendar event:', error);
-        throw error;
+        throw error; // Rethrow to let controller handle it
     }
 };
 
 exports.deleteEvent = async (refreshToken, eventId) => {
+    const oauth2Client = createOAuthClient();
     oauth2Client.setCredentials({ refresh_token: refreshToken });
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
