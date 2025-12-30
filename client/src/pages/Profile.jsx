@@ -476,54 +476,90 @@ const Profile = () => {
                         </div>
                     </div>
                 )}
-                {/* STATS MODAL */}
+                {/* STATS MODAL - Dynamic Theme */}
                 {selectedStat.open && (
-                    <div className="fixed inset-0 z-100 flex items-center justify-center p-[16px]">
-                        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setSelectedStat({ ...selectedStat, open: false })}></div>
-                        <div className="relative bg-white rounded-[32px] p-[24px] sm:p-[32px] w-full max-w-[600px] max-h-[80vh] overflow-hidden shadow-2xl flex flex-col border border-white">
-                            <div className="flex justify-between items-center mb-[24px] shrink-0">
-                                <h3 className={`text-[20px] font-black uppercase tracking-tighter ${selectedStat.title === 'Remaining Tasks' ? 'text-amber-500' :
-                                    selectedStat.title === 'Completed Tasks' ? 'text-emerald-500' :
-                                        'text-[#2d5bff]'
-                                    }`}>{selectedStat.title}</h3>
-                                <button onClick={() => setSelectedStat({ ...selectedStat, open: false })} className="text-slate-400 hover:text-[#ff4d4d] p-1 rounded-full hover:bg-slate-100 transition-all">
-                                    <svg className="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div
+                            className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-white"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Modal Header - Dynamic Theme */}
+                            <div className={`relative p-4 sm:p-6 md:p-8 shrink-0 overflow-hidden ${selectedStat.title === 'Completed Tasks' ? 'bg-linear-to-r from-emerald-500 via-teal-500 to-green-500' :
+                                    selectedStat.title === 'Remaining Tasks' ? 'bg-linear-to-r from-amber-500 via-orange-500 to-red-500' :
+                                        'bg-linear-to-r from-[#2d5bff] via-[#4a69ff] to-[#6366f1]'
+                                }`}>
+                                {/* Decorative circle */}
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-xl"></div>
+
+                                <div className="flex justify-between items-center relative z-10">
+                                    <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-white uppercase tracking-tight shadow-sm">
+                                        {selectedStat.title}
+                                    </h3>
+                                    <button
+                                        onClick={() => setSelectedStat({ ...selectedStat, open: false })}
+                                        className="p-1.5 sm:p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all text-white backdrop-blur-sm"
+                                    >
+                                        <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                                    </button>
+                                </div>
+                                <p className="text-white/80 text-xs sm:text-sm font-bold uppercase tracking-widest mt-1">
+                                    {selectedStat.items.length} Tasks found
+                                </p>
                             </div>
 
-                            <div className="overflow-y-auto flex-1 pr-[8px] custom-scrollbar">
+                            {/* Modal Body - Scrollable List */}
+                            <div className="overflow-y-auto p-4 sm:p-6 md:p-8 custom-scrollbar bg-slate-50/50">
                                 {selectedStat.items.length > 0 ? (
-                                    <div className="space-y-[12px]">
+                                    <div className="space-y-3 sm:space-y-4">
                                         {selectedStat.items.map(item => (
                                             <div
                                                 key={item.id}
                                                 onClick={() => setSelectedTask(item)}
-                                                className={`p-[16px] rounded-[20px] border transition-all shadow-sm cursor-pointer hover:scale-[1.02] hover:shadow-md ${selectedStat.title === 'Remaining Tasks' ? 'bg-linear-to-br from-amber-50 to-orange-50 border-orange-100' :
-                                                    selectedStat.title === 'Completed Tasks' ? 'bg-linear-to-br from-emerald-50 to-teal-50 border-emerald-100' :
-                                                        'bg-linear-to-br from-blue-50 to-indigo-50 border-blue-100'
-                                                    }`}
+                                                className={`group relative p-4 rounded-xl border border-white shadow-sm hover:shadow-md transition-all cursor-pointer bg-white overflow-hidden active:scale-[0.99] ${item.is_completed ? 'opacity-75 grayscale-[0.5]' : ''}`}
                                             >
-                                                <div className="flex justify-between items-start mb-[4px]">
-                                                    <h4 className={`font-bold text-slate-800 ${item.is_completed ? 'line-through text-slate-400' : ''}`}>{item.title}</h4>
-                                                    <span className={`text-[10px] font-black uppercase px-[8px] py-[2px] rounded-full border ${item.priority === 'high' ? 'bg-white/50 text-[#ff4d4d] border-red-100' :
-                                                        item.priority === 'medium' ? 'bg-white/50 text-[#ffb800] border-amber-100' :
-                                                            'bg-white/50 text-slate-500 border-slate-200'
+                                                {/* Left Border accent */}
+                                                <div className={`absolute left-0 top-0 bottom-0 w-1 sm:w-1.5 ${item.priority === 'high' ? 'bg-[#ff4d4d]' :
+                                                        item.priority === 'medium' ? 'bg-[#ffb800]' :
+                                                            'bg-[#2d5bff]'
+                                                    }`}></div>
+
+                                                <div className="pl-3 sm:pl-4 flex justify-between items-start gap-3">
+                                                    <div>
+                                                        <h4 className={`font-black text-sm sm:text-base text-slate-800 mb-1 ${item.is_completed ? 'line-through text-slate-400' : ''}`}>
+                                                            {item.title}
+                                                        </h4>
+                                                        {item.description && (
+                                                            <p className="text-[11px] sm:text-xs text-slate-500 font-medium line-clamp-1 mb-2">
+                                                                {item.description}
+                                                            </p>
+                                                        )}
+                                                        <div className="flex items-center gap-2">
+                                                            {item.due_date && (
+                                                                <div className={`flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider ${isOverdue(item.due_date, item.is_completed) ? 'text-red-500' : 'text-slate-400'}`}>
+                                                                    <Clock className="w-3 h-3" />
+                                                                    {formatDate(item.due_date)}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <span className={`shrink-0 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${item.priority === 'high' ? 'bg-red-50 text-red-500 border-red-100' :
+                                                            item.priority === 'medium' ? 'bg-amber-50 text-amber-500 border-amber-100' :
+                                                                'bg-blue-50 text-blue-500 border-blue-100'
                                                         }`}>
                                                         {item.priority}
                                                     </span>
-                                                </div>
-                                                {item.description && <p className="text-[12px] text-slate-500 mb-[8px] line-clamp-2">{item.description}</p>}
-                                                <div className="text-[10px] text-slate-400 font-bold">
-                                                    {item.due_date ? new Date(item.due_date).toLocaleString() : 'No due date'}
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="py-[48px] text-center text-slate-400">
-                                        No tasks found in this category.
+                                    <div className="flex flex-col items-center justify-center py-12 text-center opacity-60">
+                                        <div className="w-16 h-16 bg-slate-200/50 rounded-full flex items-center justify-center mb-4 text-slate-400">
+                                            <Calendar className="w-8 h-8" />
+                                        </div>
+                                        <p className="text-slate-500 font-black text-sm uppercase tracking-widest">No tasks here</p>
+                                        <p className="text-slate-400 text-[11px] font-bold mt-1">Enjoy your free time!</p>
                                     </div>
                                 )}
                             </div>
