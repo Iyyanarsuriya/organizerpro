@@ -378,7 +378,7 @@ const Profile = () => {
                                         type="date"
                                         value={filterDate}
                                         onChange={(e) => setFilterDate(e.target.value)}
-                                        className="bg-white border boundary-slate-200 text-slate-600 text-[12px] font-bold px-3 py-2 rounded-[12px] outline-none focus:border-[#2d5bff] transition-colors shadow-sm"
+                                        className="bg-white border border-slate-200 text-slate-600 text-[12px] font-bold px-3 py-2 rounded-[12px] outline-none focus:border-[#2d5bff] transition-colors shadow-sm"
                                     />
                                 </div>
 

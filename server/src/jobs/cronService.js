@@ -1,6 +1,8 @@
 const cron = require('node-cron');
-const Reminder = require('../Models/remindermodel');
-const emailService = require('./emailService');
+const Reminder = require('../models/remindermodel');
+const emailService = require('../services/emailService');
+const pushService = require('../services/pushNotificationService');
+const User = require('../models/userModel');
 
 // Reusable function to check and send emails
 const runMissedTaskCheck = async (userId = null) => {
@@ -18,6 +20,7 @@ const runMissedTaskCheck = async (userId = null) => {
         const userReminders = overdueReminders.reduce((acc, reminder) => {
             if (!acc[reminder.email]) {
                 acc[reminder.email] = {
+                    userId: reminder.user_id, // Ensure we have user_id in the query!
                     username: reminder.username,
                     items: []
                 };
@@ -26,10 +29,12 @@ const runMissedTaskCheck = async (userId = null) => {
             return acc;
         }, {});
 
-        // Send email to each user
+        // Send email and push to each user
         for (const [email, data] of Object.entries(userReminders)) {
-            const { username, items } = data;
+            const { username, items, userId } = data; // We need user_id here. 
+            // Note: Reminder.getOverdueRemindersForToday query needs to return user_id as 'user_id' or 'id' from users table.
 
+            // EMAIL LOGIC
             const taskListHtml = items.map(item => `
                 <li style="margin-bottom: 10px; padding: 10px; background: #fff1f2; border-left: 4px solid #f43f5e; border-radius: 4px;">
                     <strong style="color: #881337;">${item.title}</strong>
@@ -54,9 +59,17 @@ const runMissedTaskCheck = async (userId = null) => {
             `;
 
             await emailService.sendEmail(email, `You have ${items.length} missed tasks today`, html);
+
+            // PUSH NOTIFICATION LOGIC
+            await pushService.sendNotification(userId, { // Use userId here
+                title: 'Unfinished Tasks Alert',
+                body: `You have ${items.length} tasks still pending for today. Don't forget them!`,
+                url: '/?filter=overdue', // Deep link if supported
+                tag: 'daily-reminder'
+            });
         }
 
-        console.log(`📧 Sent missed task emails to ${Object.keys(userReminders).length} users.`);
+        console.log(`📧 Sent missed task emails/push to ${Object.keys(userReminders).length} users.`);
         return { sent: true, count: Object.keys(userReminders).length };
 
     } catch (error) {

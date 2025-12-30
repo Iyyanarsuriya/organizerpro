@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const reminderController = require('../Controllers/reminderController');
-const authenticateToken = require('../Middleware/authMiddleware');
+const reminderController = require('../controllers/reminderController');
+const authenticateToken = require('../middlewares/authMiddleware');
 
 router.use(authenticateToken); // Protect all reminder routes
 

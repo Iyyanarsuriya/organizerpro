@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const User = require('../Models/userModel');
+const User = require('../models/userModel');
 const dotenv = require('dotenv');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
@@ -191,7 +191,7 @@ exports.updateProfile = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
-const googleService = require('../Services/googleCalendarService');
+const googleService = require('../services/googleCalendarService');
 
 exports.googleAuth = (req, res) => {
     // Pass the JWT as state so we can identify the user in the callback

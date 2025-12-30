@@ -1,6 +1,6 @@
-const Reminder = require('../Models/remindermodel');
-const User = require('../Models/userModel');
-const googleService = require('../Services/googleCalendarService');
+const Reminder = require('../models/remindermodel');
+const User = require('../models/userModel');
+const googleService = require('../services/googleCalendarService');
 
 exports.getReminders = async (req, res) => {
     try {
@@ -82,7 +82,7 @@ exports.updateReminder = async (req, res) => {
     }
 };
 
-const { runMissedTaskCheck } = require('../Services/cronService');
+const { runMissedTaskCheck } = require('../jobs/cronService');
 
 exports.triggerMissedTaskEmail = async (req, res) => {
     try {

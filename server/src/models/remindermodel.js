@@ -1,4 +1,4 @@
-const db = require('../Config/db');
+const db = require('../config/db');
 
 exports.getAllByUserId = async (userId) => {
     const [rows] = await db.query('SELECT * FROM reminders WHERE user_id = ? ORDER BY created_at DESC', [userId]);
@@ -46,7 +46,7 @@ exports.getOverdueRemindersForToday = async (userId = null) => {
     // Get reminders that are due today AND not completed
     // We join with users to get the email address to send notifications to
     let query = `
-        SELECT r.id, r.title, r.description, r.due_date, r.priority, u.email, u.username 
+        SELECT r.id, r.user_id, r.title, r.description, r.due_date, r.priority, u.email, u.username 
         FROM reminders r
         JOIN users u ON r.user_id = u.id
         WHERE r.is_completed = 0 
