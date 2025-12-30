@@ -117,10 +117,15 @@ const Home = () => {
                                             setReminders(prev => prev.map(r => r.id === reminder.id ? { ...r, due_date: newDate } : r));
                                             toast.success("Snoozed for 10 min", { icon: '💤' });
                                         } catch (e) {
-                                            toast.error("Task not found or deleted");
-                                            // Refresh data to sync UI if deleted
+                                            // Silent refresh if possible, or filtered toast
                                             const res = await getReminders().catch(() => ({ data: [] }));
                                             setReminders(res.data);
+                                            // Check if it still exists to show error
+                                            if (!res.data.find(r => r.id === reminder.id)) {
+                                                toast.error("Task no longer exists");
+                                            } else {
+                                                toast.error("Failed to snooze");
+                                            }
                                         }
                                     }}
                                     className="flex-1 py-3 text-[10px] sm:text-xs font-bold text-slate-300 hover:bg-slate-700 transition-colors uppercase tracking-wider cursor-pointer"
@@ -137,9 +142,15 @@ const Home = () => {
                                             setReminders(prev => prev.map(r => r.id === reminder.id ? { ...r, due_date: newDate } : r));
                                             toast.success("Snoozed for 1 hour", { icon: '💤' });
                                         } catch (e) {
-                                            toast.error("Task not found or deleted");
+                                            // Silent refresh if possible, or filtered toast
                                             const res = await getReminders().catch(() => ({ data: [] }));
                                             setReminders(res.data);
+                                            // Check if it still exists to show error
+                                            if (!res.data.find(r => r.id === reminder.id)) {
+                                                toast.error("Task no longer exists");
+                                            } else {
+                                                toast.error("Failed to snooze");
+                                            }
                                         }
                                     }}
                                     className="flex-1 py-3 text-[10px] sm:text-xs font-bold text-slate-300 hover:bg-slate-700 transition-colors uppercase tracking-wider cursor-pointer"

@@ -33,30 +33,51 @@ const Profile = () => {
     // Filter stats by date (Default to Today)
     const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
 
-    // Check Push Status on Mount
+    // VAPID Key State
+    const [vapidKey, setVapidKey] = useState(null);
+
+    // Initial Check & Auto-Subscribe
     useEffect(() => {
-        const checkPushStatus = async () => {
+        const initPush = async () => {
             if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
                 setPushStatus('unsupported');
                 return;
             }
 
-            if (Notification.permission === 'denied') {
-                setPushStatus('blocked');
-                return;
-            }
+            // 1. Fetch VAPID Key Early
+            try {
+                const { data: { publicKey } } = await getVapidPublicKey();
+                setVapidKey(publicKey);
 
-            const registration = await navigator.serviceWorker.ready;
-            const subscription = await registration.pushManager.getSubscription();
+                // 2. Check Permission & Subscription
+                const registration = await navigator.serviceWorker.ready;
+                const subscription = await registration.pushManager.getSubscription();
 
-            if (subscription) {
-                setPushStatus('enabled');
-            } else {
+                if (subscription) {
+                    setPushStatus('enabled');
+                } else if (Notification.permission === 'granted') {
+                    // Auto-subscribe if permission already granted!
+                    const convertedKey = urlBase64ToUint8Array(publicKey);
+                    const newSub = await registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: convertedKey
+                    });
+                    await subscribeToPush(newSub);
+                    setPushStatus('enabled');
+                    toast.success("Notifications synced 🔔");
+                } else if (Notification.permission === 'denied') {
+                    setPushStatus('blocked');
+                } else {
+                    setPushStatus('disabled');
+                }
+            } catch (error) {
+                console.error("Push Init Error:", error);
                 setPushStatus('disabled');
             }
         };
 
-        checkPushStatus();
+        const timer = setTimeout(initPush, 1000); // Small delay to ensure SW is ready
+        return () => clearTimeout(timer);
     }, []);
 
     // Helper: Convert VAPID key
@@ -96,9 +117,14 @@ const Profile = () => {
                 return;
             }
 
-            // Get VAPID Key
-            const { data: { publicKey } } = await getVapidPublicKey();
-            const convertedKey = urlBase64ToUint8Array(publicKey);
+            // Use cached key or fetch if missing
+            let key = vapidKey;
+            if (!key) {
+                const { data: { publicKey } } = await getVapidPublicKey();
+                key = publicKey;
+                setVapidKey(publicKey);
+            }
+            const convertedKey = urlBase64ToUint8Array(key);
 
             // Subscribe
             const registration = await navigator.serviceWorker.ready;
@@ -119,7 +145,13 @@ const Profile = () => {
         } catch (error) {
             console.error('Push subscription failed:', error);
             setPushStatus('disabled');
-            toast.error("Failed to enable notifications");
+            // Check if it was a permission issue
+            if (Notification.permission === 'denied') {
+                setPushStatus('blocked');
+                toast.error("Permission denied");
+            } else {
+                toast.error("Failed to enable notifications");
+            }
         }
     };
 
@@ -406,7 +438,7 @@ const Profile = () => {
                             </div>
                             <button
                                 onClick={() => setIsEditing(!isEditing)}
-                                className={`w-full md:w-auto px-[24px] py-[12px] rounded-[16px] font-black text-[13px] tracking-widest uppercase transition-all shadow-xl active:scale-95 ${isEditing
+                                className={`w-full md:w-auto px-[24px] py-[12px] rounded-[16px] font-black text-[13px] tracking-widest uppercase transition-all shadow-xl active:scale-95 cursor-pointer ${isEditing
                                     ? 'bg-slate-300 text-black hover:bg-slate-400'
                                     : 'bg-[#2d5bff] text-white hover:bg-blue-600'
                                     }`}
@@ -466,7 +498,7 @@ const Profile = () => {
                                 <button
                                     type="submit"
                                     disabled={updating}
-                                    className="w-full bg-[#1a1c21] text-white font-black py-[14px] rounded-[16px] hover:bg-slate-800 disabled:opacity-50 transition-all shadow-lg uppercase tracking-widest text-[13px]"
+                                    className="w-full bg-[#1a1c21] text-white font-black py-[14px] rounded-[16px] hover:bg-slate-800 disabled:opacity-50 transition-all shadow-lg uppercase tracking-widest text-[13px] cursor-pointer"
                                 >
                                     {updating ? 'Saving Changes...' : 'Save Changes'}
                                 </button>
@@ -494,7 +526,7 @@ const Profile = () => {
                                             });
                                             setSelectedStat({ open: true, title: 'All Tasks', items: currentFiltered });
                                         }}
-                                        className="bg-white border border-slate-100 p-[16px] sm:p-[24px] rounded-[24px] text-center shadow-lg shadow-slate-200/50 hover:scale-[1.02] transition-transform active:scale-95"
+                                        className="bg-white border border-slate-100 p-[16px] sm:p-[24px] rounded-[24px] text-center shadow-lg shadow-slate-200/50 hover:scale-[1.02] transition-transform active:scale-95 cursor-pointer"
                                     >
                                         <p className="text-slate-400 text-[11px] font-black uppercase tracking-widest mb-[4px]">Total Tasks</p>
                                         <p className="text-[32px] sm:text-[40px] font-black text-[#2d5bff]">{stats.total}</p>
@@ -508,7 +540,7 @@ const Profile = () => {
                                             });
                                             setSelectedStat({ open: true, title: 'Completed Tasks', items: currentFiltered.filter(r => r.is_completed) });
                                         }}
-                                        className="bg-emerald-50 border border-emerald-100 p-[16px] sm:p-[24px] rounded-[24px] text-center shadow-lg shadow-emerald-200/20 hover:scale-[1.02] transition-transform active:scale-95"
+                                        className="bg-emerald-50 border border-emerald-100 p-[16px] sm:p-[24px] rounded-[24px] text-center shadow-lg shadow-emerald-200/20 hover:scale-[1.02] transition-transform active:scale-95 cursor-pointer"
                                     >
                                         <p className="text-emerald-600 text-[11px] font-black uppercase tracking-widest mb-[4px]">Completed</p>
                                         <p className="text-[32px] sm:text-[40px] font-black text-emerald-600">{stats.completed}</p>
@@ -522,7 +554,7 @@ const Profile = () => {
                                             });
                                             setSelectedStat({ open: true, title: 'Remaining Tasks', items: currentFiltered.filter(r => !r.is_completed) });
                                         }}
-                                        className="bg-amber-50 border border-amber-100 p-[16px] sm:p-[24px] rounded-[24px] text-center shadow-lg shadow-amber-200/20 hover:scale-[1.02] transition-transform active:scale-95"
+                                        className="bg-amber-50 border border-amber-100 p-[16px] sm:p-[24px] rounded-[24px] text-center shadow-lg shadow-amber-200/20 hover:scale-[1.02] transition-transform active:scale-95 cursor-pointer"
                                     >
                                         <p className="text-amber-600 text-[11px] font-black uppercase tracking-widest mb-[4px]">Remaining</p>
                                         <p className="text-[32px] sm:text-[40px] font-black text-amber-600">{stats.pending}</p>
@@ -547,7 +579,7 @@ const Profile = () => {
                                             className={`flex items-center gap-[12px] px-[24px] py-[14px] rounded-[18px] font-black text-[13px] tracking-widest uppercase transition-all shadow-lg active:scale-95 ${user?.google_refresh_token
                                                 ? 'bg-rose-500 text-white hover:bg-rose-600'
                                                 : 'bg-[#4285F4] text-white hover:bg-blue-600'
-                                                }`}
+                                                } cursor-pointer`}
                                         >
                                             <FaCalendarAlt className="text-[16px]" />
                                             {user?.google_refresh_token ? 'Disconnect' : 'Connect Calendar'}
@@ -589,7 +621,7 @@ const Profile = () => {
                                         ? 'bg-emerald-100 text-emerald-600 border-emerald-200 cursor-default'
                                         : pushStatus === 'blocked'
                                             ? 'bg-slate-200 text-slate-500 border-slate-300 cursor-not-allowed'
-                                            : 'bg-indigo-500 text-white border-indigo-500 hover:bg-indigo-600'
+                                            : 'bg-indigo-500 text-white border-indigo-500 hover:bg-indigo-600 cursor-pointer'
                                         }`}
                                 >
                                     {pushStatus === 'loading' ? 'Checking...' :
@@ -606,7 +638,7 @@ const Profile = () => {
                                 </div>
                                 <button
                                     onClick={logout}
-                                    className="bg-white hover:bg-red-500 hover:text-white text-red-500 px-[20px] py-[10px] rounded-[14px] text-[11px] font-black tracking-widest uppercase border border-red-100 transition-all shadow-sm active:scale-95"
+                                    className="bg-white hover:bg-red-500 hover:text-white text-red-500 px-[20px] py-[10px] rounded-[14px] text-[11px] font-black tracking-widest uppercase border border-red-100 transition-all shadow-sm active:scale-95 cursor-pointer"
                                 >
                                     Logout
                                 </button>
@@ -621,7 +653,7 @@ const Profile = () => {
                                     </div>
                                     <button
                                         onClick={handleTestNotification}
-                                        className="bg-white hover:bg-slate-100 text-slate-600 px-[20px] py-[10px] rounded-[14px] text-[11px] font-black tracking-widest uppercase border border-slate-200 transition-all shadow-sm active:scale-95"
+                                        className="bg-white hover:bg-slate-100 text-slate-600 px-[20px] py-[10px] rounded-[14px] text-[11px] font-black tracking-widest uppercase border border-slate-200 transition-all shadow-sm active:scale-95 cursor-pointer"
                                     >
                                         Send Test
                                     </button>
@@ -632,7 +664,7 @@ const Profile = () => {
                 )}
                 {/* STATS MODAL - Dynamic Theme */}
                 {selectedStat.open && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
                         <div
                             className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-white"
                             onClick={(e) => e.stopPropagation()}
@@ -651,7 +683,7 @@ const Profile = () => {
                                     </h3>
                                     <button
                                         onClick={() => setSelectedStat({ ...selectedStat, open: false })}
-                                        className="p-1.5 sm:p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all text-white backdrop-blur-sm"
+                                        className="p-1.5 sm:p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all text-white backdrop-blur-sm cursor-pointer"
                                     >
                                         <X className="w-4 h-4 sm:w-5 sm:h-5" />
                                     </button>
@@ -723,7 +755,7 @@ const Profile = () => {
                 {/* Detail Modal for Selected Task */}
                 {selectedTask && (
                     <div
-                        className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
+                        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
                         onClick={() => setSelectedTask(null)}
                     >
                         <div
@@ -737,7 +769,7 @@ const Profile = () => {
 
                                 <button
                                     onClick={() => setSelectedTask(null)}
-                                    className="absolute top-3 right-3 sm:top-4 sm:right-4 p-1.5 sm:p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all text-white backdrop-blur-sm"
+                                    className="absolute top-3 right-3 sm:top-4 sm:right-4 p-1.5 sm:p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all text-white backdrop-blur-sm cursor-pointer"
                                 >
                                     <X className="w-4 h-4 sm:w-5 sm:h-5" />
                                 </button>
@@ -807,7 +839,7 @@ const Profile = () => {
                                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-slate-100">
                                     <button
                                         onClick={() => handleToggleTask(selectedTask)}
-                                        className={`flex-1 py-3 px-6 rounded-xl font-black text-[13px] tracking-widest uppercase transition-all shadow-lg active:scale-95 ${selectedTask.is_completed
+                                        className={`flex-1 py-3 px-6 rounded-xl font-black text-[13px] tracking-widest uppercase transition-all shadow-lg active:scale-95 cursor-pointer ${selectedTask.is_completed
                                             ? 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                                             : 'bg-[#2d5bff] text-white hover:bg-blue-600 shadow-blue-500/30'
                                             }`}
@@ -821,7 +853,7 @@ const Profile = () => {
                                                 setDeleteId(selectedTask.id);
                                                 // Don't close selectedTask yet, let delete confirmation render on top or replace
                                             }}
-                                            className="flex-1 sm:flex-none py-3 px-6 rounded-xl font-black text-[13px] tracking-widest uppercase bg-white border-2 border-red-50 text-[#ff4d4d] hover:bg-red-50 transition-all flex items-center justify-center gap-2 active:scale-95"
+                                            className="flex-1 sm:flex-none py-3 px-6 rounded-xl font-black text-[13px] tracking-widest uppercase bg-white border-2 border-red-50 text-[#ff4d4d] hover:bg-red-50 transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
                                         >
                                             <Trash2 className="w-4 h-4" />
                                             Delete
@@ -835,7 +867,7 @@ const Profile = () => {
 
                 {/* Delete Confirmation Modal (Reused) */}
                 {deleteId && (
-                    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
                         <div className="bg-white rounded-[32px] p-6 sm:p-8 w-full max-w-[400px] shadow-2xl animate-in zoom-in-95 duration-200 border border-white">
                             <div className="flex flex-col items-center text-center">
                                 <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-6 border border-red-100 shadow-lg shadow-red-500/10">
@@ -848,13 +880,13 @@ const Profile = () => {
                                 <div className="flex w-full gap-3">
                                     <button
                                         onClick={() => setDeleteId(null)}
-                                        className="flex-1 py-3 px-6 rounded-xl font-black text-[11px] tracking-widest uppercase border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all active:scale-95"
+                                        className="flex-1 py-3 px-6 rounded-xl font-black text-[11px] tracking-widest uppercase border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         onClick={() => handleDeleteTask(deleteId)}
-                                        className="flex-1 py-3 px-6 rounded-xl font-black text-[11px] tracking-widest uppercase bg-[#ff4d4d] text-white shadow-lg shadow-red-500/20 hover:bg-[#ff3333] hover:shadow-xl transition-all active:scale-95"
+                                        className="flex-1 py-3 px-6 rounded-xl font-black text-[11px] tracking-widest uppercase bg-[#ff4d4d] text-white shadow-lg shadow-red-500/20 hover:bg-[#ff3333] hover:shadow-xl transition-all active:scale-95 cursor-pointer"
                                     >
                                         Delete
                                     </button>
@@ -864,7 +896,7 @@ const Profile = () => {
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 };
 
