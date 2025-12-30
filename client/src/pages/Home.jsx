@@ -24,6 +24,7 @@ const Home = () => {
     const [isSelectionMode, setIsSelectionMode] = useState(false);
     const [selectedIds, setSelectedIds] = useState([]);
     const [showFilters, setShowFilters] = useState(false);
+    const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
     const fetchData = async () => {
         try {
@@ -432,16 +433,7 @@ const Home = () => {
                             Complete All
                         </button>
                         <button
-                            onClick={async () => {
-                                if (!window.confirm("Delete selected tasks?")) return;
-                                try {
-                                    await Promise.all(selectedIds.map(id => deleteReminder(id)));
-                                    setReminders(prev => prev.filter(r => !selectedIds.includes(r.id)));
-                                    toast.success("Tasks deleted");
-                                    setSelectedIds([]);
-                                    setIsSelectionMode(false);
-                                } catch (e) { toast.error("Batch delete failed"); }
-                            }}
+                            onClick={() => setConfirmBulkDelete(true)}
                             className="text-xs font-black text-[#ff4d4d] hover:text-[#ff3333] transition-colors uppercase tracking-wider"
                         >
                             Delete All
@@ -531,6 +523,7 @@ const Home = () => {
                                                 <svg className={`w-3.5 h-3.5 ${filterDate ? 'text-[#2d5bff]' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                 </svg>
+                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-wide">Date:</span>
                                                 <input
                                                     type="date"
                                                     value={filterDate}
@@ -552,6 +545,7 @@ const Home = () => {
                                         <div className="relative group/cat">
                                             <div className={`flex items-center gap-2 bg-white border px-3 py-2 rounded-xl transition-all cursor-pointer ${filterCategory ? 'border-[#2d5bff] ring-2 ring-[#2d5bff]/10' : 'border-slate-200 hover:border-slate-300'}`}>
                                                 <div className={`w-2 h-2 rounded-full ${filterCategory ? 'bg-[#2d5bff]' : 'bg-slate-300'}`}></div>
+                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-wide">Category:</span>
                                                 <select
                                                     value={filterCategory}
                                                     onChange={(e) => setFilterCategory(e.target.value)}
@@ -586,6 +580,7 @@ const Home = () => {
                                                 <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
                                                 </svg>
+                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-wide">Sort:</span>
                                                 <select
                                                     value={sortBy}
                                                     onChange={(e) => setSortBy(e.target.value)}
@@ -663,6 +658,50 @@ const Home = () => {
                                     className="flex-1 py-3 px-6 rounded-xl font-black text-[11px] tracking-widest uppercase bg-[#2d5bff] text-white shadow-lg shadow-blue-500/20 hover:bg-blue-600 hover:shadow-xl transition-all active:scale-95"
                                 >
                                     Yes, Done!
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Bulk Delete Confirmation Modal */}
+            {confirmBulkDelete && (
+                <div className="fixed inset-0 z-120 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+                    <div className="bg-white rounded-[32px] p-6 sm:p-8 w-full max-w-[400px] shadow-2xl animate-in zoom-in-95 duration-200 border border-white">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-6 border border-red-100 shadow-lg shadow-red-500/10">
+                                <div className="w-8 h-8 bg-[#ff4d4d] rounded-full flex items-center justify-center animate-pulse">
+                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <h3 className="text-xl font-black text-slate-800 mb-2 uppercase tracking-tighter">Delete {selectedIds.length} Tasks?</h3>
+                            <p className="text-slate-500 text-sm font-medium mb-8">
+                                Are you sure you want to delete these tasks? This action cannot be undone! 🗑️
+                            </p>
+                            <div className="flex w-full gap-3">
+                                <button
+                                    onClick={() => setConfirmBulkDelete(false)}
+                                    className="flex-1 py-3 px-6 rounded-xl font-black text-[11px] tracking-widest uppercase border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all active:scale-95"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            await Promise.all(selectedIds.map(id => deleteReminder(id)));
+                                            setReminders(prev => prev.filter(r => !selectedIds.includes(r.id)));
+                                            toast.success("Tasks deleted");
+                                            setSelectedIds([]);
+                                            setIsSelectionMode(false);
+                                        } catch (e) { toast.error("Batch delete failed"); } finally {
+                                            setConfirmBulkDelete(false);
+                                        }
+                                    }}
+                                    className="flex-1 py-3 px-6 rounded-xl font-black text-[11px] tracking-widest uppercase bg-[#ff4d4d] text-white shadow-lg shadow-red-500/20 hover:bg-[#ff3333] hover:shadow-xl transition-all active:scale-95"
+                                >
+                                    Yes, Delete
                                 </button>
                             </div>
                         </div>
