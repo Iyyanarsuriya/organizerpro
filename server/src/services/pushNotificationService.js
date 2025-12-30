@@ -1,19 +1,34 @@
 const webpush = require('web-push');
 const PushSubscription = require('../models/pushSubscriptionModel');
-require('dotenv').config();
+const path = require('path');
+// Try to load .env from server root if not already loaded
+require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
 // Configure web-push
-if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
-    webpush.setVapidDetails(
-        process.env.VAPID_MAILTO || 'mailto:admin@example.com',
-        process.env.VAPID_PUBLIC_KEY,
-        process.env.VAPID_PRIVATE_KEY
-    );
-} else {
-    console.warn('⚠️ VAPID keys are missing. Push notifications will not work.');
-}
+const configureWebPush = () => {
+    if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+        try {
+            webpush.setVapidDetails(
+                process.env.VAPID_MAILTO || 'mailto:admin@example.com',
+                process.env.VAPID_PUBLIC_KEY,
+                process.env.VAPID_PRIVATE_KEY
+            );
+            return true;
+        } catch (err) {
+            console.error('VAPID Configuration Error:', err);
+            return false;
+        }
+    }
+    return false;
+};
+
+// Initial config attempt
+configureWebPush();
 
 exports.sendNotification = async (userId, payload) => {
+    // Ensure config is ready before sending
+    if (!process.env.VAPID_PUBLIC_KEY) configureWebPush();
+
     try {
         const subscriptions = await PushSubscription.getByUserId(userId);
         if (!subscriptions || subscriptions.length === 0) return;
@@ -46,5 +61,10 @@ exports.sendNotification = async (userId, payload) => {
 };
 
 exports.getPublicKey = () => {
+    if (!process.env.VAPID_PUBLIC_KEY) {
+        // Try reloading env if missing
+        require('dotenv').config({ path: path.join(__dirname, '../../.env') });
+        configureWebPush();
+    }
     return process.env.VAPID_PUBLIC_KEY;
 };

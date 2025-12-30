@@ -60,124 +60,13 @@ const Home = () => {
         return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
     }, []);
 
-    // Track last notification time for each reminder - Persist to localStorage for reliability
-    const [lastNotifiedTimes, setLastNotifiedTimes] = useState(() => {
-        const saved = localStorage.getItem('lastNotifiedTimes');
-        return saved ? JSON.parse(saved) : {};
-    });
 
-    useEffect(() => {
-        localStorage.setItem('lastNotifiedTimes', JSON.stringify(lastNotifiedTimes));
-    }, [lastNotifiedTimes]);
 
-    // Keep a ref of reminders for the background interval to avoid restarting it
-    const remindersRef = useRef(reminders);
-    useEffect(() => {
-        remindersRef.current = reminders;
-    }, [reminders]);
 
-    // Stable background check for due reminders
-    useEffect(() => {
-        const checkReminders = () => {
-            const now = new Date();
-            const nowMs = now.getTime();
 
-            remindersRef.current.forEach(reminder => {
-                if (reminder.is_completed || !reminder.due_date) return;
 
-                const dueDate = new Date(reminder.due_date);
-                const dueDateMs = dueDate.getTime();
-                const lastNotifyTime = JSON.parse(localStorage.getItem('lastNotifiedTimes') || '{}')[reminder.id] || 0;
 
-                if (nowMs >= dueDateMs - 30000 && (nowMs - lastNotifyTime >= 300000)) {
-                    // Show In-App Toast
-                    toast.custom((t) => (
-                        <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-[95%] xs:w-[90%] sm:w-full bg-slate-900 shadow-2xl rounded-2xl pointer-events-auto flex flex-col ring-1 ring-black ring-opacity-5 overflow-hidden border border-slate-700 mt-4`}>
-                            <div className="flex-1 w-0 p-3 sm:p-4">
-                                <div className="flex items-center">
-                                    <div className="shrink-0">
-                                        <div className="h-8 w-8 sm:h-10 sm:w-10 bg-linear-to-br from-[#2d5bff] to-[#6366f1] rounded-full flex items-center justify-center border border-white/10 shadow-lg shadow-blue-500/20">
-                                            <FaBell className="h-4 w-4 sm:h-5 sm:w-5 text-white animate-bounce" />
-                                        </div>
-                                    </div>
-                                    <div className="ml-3 sm:ml-4 flex-1">
-                                        <p className="text-xs sm:text-sm font-black text-white">Reminder</p>
-                                        <p className="mt-0.5 text-[10px] sm:text-[11px] font-bold text-slate-300 line-clamp-1">{reminder.title}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="flex border-t border-slate-700/50 divide-x divide-slate-700/50 bg-slate-800/50">
-                                <button
-                                    onClick={async () => {
-                                        toast.remove(t.id);
-                                        // Snooze for 10 minutes
-                                        try {
-                                            const newDate = new Date(Date.now() + 10 * 60000).toISOString();
-                                            await updateReminder(reminder.id, { due_date: newDate });
-                                            setReminders(prev => prev.map(r => r.id === reminder.id ? { ...r, due_date: newDate } : r));
-                                            toast.success("Snoozed for 10 min", { icon: '💤' });
-                                        } catch (e) {
-                                            // Silent refresh if possible, or filtered toast
-                                            const res = await getReminders().catch(() => ({ data: [] }));
-                                            setReminders(res.data);
-                                            // Check if it still exists to show error
-                                            if (!res.data.find(r => r.id === reminder.id)) {
-                                                toast.error("Task no longer exists");
-                                            } else {
-                                                toast.error("Failed to snooze");
-                                            }
-                                        }
-                                    }}
-                                    className="flex-1 py-3 text-[10px] sm:text-xs font-bold text-slate-300 hover:bg-slate-700 transition-colors uppercase tracking-wider cursor-pointer"
-                                >
-                                    Snooze 10m
-                                </button>
-                                <button
-                                    onClick={async () => {
-                                        toast.remove(t.id);
-                                        // Snooze for 1 hour
-                                        try {
-                                            const newDate = new Date(Date.now() + 60 * 60000).toISOString();
-                                            await updateReminder(reminder.id, { due_date: newDate });
-                                            setReminders(prev => prev.map(r => r.id === reminder.id ? { ...r, due_date: newDate } : r));
-                                            toast.success("Snoozed for 1 hour", { icon: '💤' });
-                                        } catch (e) {
-                                            // Silent refresh if possible, or filtered toast
-                                            const res = await getReminders().catch(() => ({ data: [] }));
-                                            setReminders(res.data);
-                                            // Check if it still exists to show error
-                                            if (!res.data.find(r => r.id === reminder.id)) {
-                                                toast.error("Task no longer exists");
-                                            } else {
-                                                toast.error("Failed to snooze");
-                                            }
-                                        }
-                                    }}
-                                    className="flex-1 py-3 text-[10px] sm:text-xs font-bold text-slate-300 hover:bg-slate-700 transition-colors uppercase tracking-wider cursor-pointer"
-                                >
-                                    1h
-                                </button>
-                                <button
-                                    onClick={() => toast.remove(t.id)}
-                                    className="flex-1 py-3 text-[10px] sm:text-xs font-black text-[#2d5bff] hover:bg-slate-700 transition-colors uppercase tracking-wider cursor-pointer"
-                                >
-                                    Dismiss
-                                </button>
-                            </div>
-                        </div>
-                    ), { duration: 8000, position: 'top-center' }); // Longer duration for snooze decision
 
-                    setLastNotifiedTimes(prev => ({
-                        ...prev,
-                        [reminder.id]: nowMs
-                    }));
-                }
-            });
-        };
-
-        const interval = setInterval(checkReminders, 30000);
-        return () => clearInterval(interval);
-    }, []); // Heartbeat interval starts once and stays alive
 
     // 🔔 Notification logic for today's tasks
     const notifications = useMemo(() => {

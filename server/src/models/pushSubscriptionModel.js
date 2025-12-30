@@ -4,14 +4,22 @@ exports.create = async (userId, subscription) => {
     const { endpoint, keys } = subscription;
     const { p256dh, auth } = keys;
 
-    // Check if subscription already exists to avoid duplicates
+    // Check if subscription exists globally for ANY user
     const [existing] = await db.query(
-        'SELECT id FROM push_subscriptions WHERE user_id = ? AND endpoint = ?',
-        [userId, endpoint]
+        'SELECT id, user_id FROM push_subscriptions WHERE endpoint = ?',
+        [endpoint]
     );
 
     if (existing.length > 0) {
-        return existing[0].id;
+        const record = existing[0];
+        // If it belongs to another user, take ownership (Device switched users)
+        if (record.user_id !== userId) {
+            await db.query(
+                'UPDATE push_subscriptions SET user_id = ? WHERE id = ?',
+                [userId, record.id]
+            );
+        }
+        return record.id;
     }
 
     const [result] = await db.query(
