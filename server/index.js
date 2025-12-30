@@ -10,8 +10,10 @@ const reminderRoutes = require("./routes/reminderRoutes");
 const app = express();
 const PORT = process.env.PORT || 5000;
 const db = require("./Config/db");
+const { initCronJobs } = require("./Services/cronService");
 
-
+// Start Cron Jobs
+initCronJobs();
 
 app.use(cors());
 app.use(express.json());

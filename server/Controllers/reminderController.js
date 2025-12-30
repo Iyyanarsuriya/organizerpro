@@ -81,3 +81,16 @@ exports.updateReminder = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
+const { runMissedTaskCheck } = require('../Services/cronService');
+
+exports.triggerMissedTaskEmail = async (req, res) => {
+    try {
+        // Trigger the check specifically for this user
+        const result = await runMissedTaskCheck(req.user.id);
+        res.json({ message: 'Missed task check ran successfully', ...result });
+    } catch (error) {
+        console.error('Manual trigger error:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
