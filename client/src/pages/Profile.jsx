@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getReminders, updateReminder, deleteReminder } from '../api/homeApi';
 import { disconnectGoogle, updateProfile, getGoogleAuthUrl, getMe } from '../api/authApi';
+import { getVapidPublicKey, subscribeToPush, sendTestNotification } from '../api/pushApi';
 import { API_URL } from '../api/axiosInstance';
 import toast from 'react-hot-toast';
 import { FaGoogle, FaCalendarAlt } from 'react-icons/fa';
@@ -19,6 +20,7 @@ const Profile = () => {
     const [deleteId, setDeleteId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
+    const [pushStatus, setPushStatus] = useState('loading'); // loading, enabled, disabled, blocked, supported
     const [editData, setEditData] = useState(() => {
         const saved = localStorage.getItem('user');
         return saved ? JSON.parse(saved) : { username: '', email: '', mobile_number: '' };
@@ -30,6 +32,105 @@ const Profile = () => {
 
     // Filter stats by date (Default to Today)
     const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
+
+    // Check Push Status on Mount
+    useEffect(() => {
+        const checkPushStatus = async () => {
+            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                setPushStatus('unsupported');
+                return;
+            }
+
+            if (Notification.permission === 'denied') {
+                setPushStatus('blocked');
+                return;
+            }
+
+            const registration = await navigator.serviceWorker.ready;
+            const subscription = await registration.pushManager.getSubscription();
+
+            if (subscription) {
+                setPushStatus('enabled');
+            } else {
+                setPushStatus('disabled');
+            }
+        };
+
+        checkPushStatus();
+    }, []);
+
+    // Helper: Convert VAPID key
+    const urlBase64ToUint8Array = (base64String) => {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding)
+            .replace(/\-/g, '+')
+            .replace(/_/g, '/');
+
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    };
+
+    const handlePushSubscription = async () => {
+        if (pushStatus === 'enabled') {
+            toast.success("Notifications are already active!");
+            return;
+        }
+
+        try {
+            setPushStatus('loading');
+            const permission = await Notification.requestPermission();
+
+            if (permission === 'denied') {
+                setPushStatus('blocked');
+                toast.error("Notifications blocked. Please enable them in browser settings.");
+                return;
+            }
+
+            if (permission !== 'granted') {
+                setPushStatus('disabled');
+                return;
+            }
+
+            // Get VAPID Key
+            const { data: { publicKey } } = await getVapidPublicKey();
+            const convertedKey = urlBase64ToUint8Array(publicKey);
+
+            // Subscribe
+            const registration = await navigator.serviceWorker.ready;
+            const subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: convertedKey
+            });
+
+            // Send to Backend
+            await subscribeToPush(subscription);
+
+            setPushStatus('enabled');
+            toast.success("Push notifications enabled! 🔔");
+
+            // Send immediate test
+            await sendTestNotification();
+
+        } catch (error) {
+            console.error('Push subscription failed:', error);
+            setPushStatus('disabled');
+            toast.error("Failed to enable notifications");
+        }
+    };
+
+    const handleTestNotification = async () => {
+        try {
+            await sendTestNotification();
+            toast.success("Test notification sent!");
+        } catch (error) {
+            toast.error("Failed to send test");
+        }
+    };
 
     const fetchProfileData = async () => {
         try {
@@ -475,6 +576,29 @@ const Profile = () => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
+                            {/* NOTIFICATIONS SETTING */}
+                            <div className="p-[20px] rounded-[24px] bg-indigo-50/50 border border-indigo-100 flex items-center justify-between">
+                                <div>
+                                    <h3 className="font-black text-slate-800 text-[14px]">Push Notifications</h3>
+                                    <p className="text-[12px] text-slate-500 font-medium">Daily alerts for missed tasks</p>
+                                </div>
+                                <button
+                                    onClick={handlePushSubscription}
+                                    disabled={pushStatus === 'loading' || pushStatus === 'supported'}
+                                    className={`px-[20px] py-[10px] rounded-[14px] text-[11px] font-black tracking-widest uppercase border transition-all shadow-sm active:scale-95 ${pushStatus === 'enabled'
+                                        ? 'bg-emerald-100 text-emerald-600 border-emerald-200 cursor-default'
+                                        : pushStatus === 'blocked'
+                                            ? 'bg-slate-200 text-slate-500 border-slate-300 cursor-not-allowed'
+                                            : 'bg-indigo-500 text-white border-indigo-500 hover:bg-indigo-600'
+                                        }`}
+                                >
+                                    {pushStatus === 'loading' ? 'Checking...' :
+                                        pushStatus === 'enabled' ? 'Active' :
+                                            pushStatus === 'blocked' ? 'Blocked' :
+                                                'Enable'}
+                                </button>
+                            </div>
+
                             <div className="p-[20px] rounded-[24px] bg-red-50/50 border border-red-100 flex items-center justify-between group">
                                 <div>
                                     <h3 className="font-black text-slate-800 text-[14px]">Session</h3>
@@ -488,13 +612,21 @@ const Profile = () => {
                                 </button>
                             </div>
 
-                            <div className="p-[20px] rounded-[24px] bg-slate-50 border border-slate-100 flex items-center justify-between opacity-60">
-                                <div>
-                                    <h3 className="font-black text-slate-800 text-[14px]">Privacy</h3>
-                                    <p className="text-[12px] text-slate-500 font-medium">Manage your data</p>
+                            {/* TEST NOTIFICATION (Only visible if enabled) */}
+                            {pushStatus === 'enabled' && (
+                                <div className="p-[20px] rounded-[24px] bg-slate-50 border border-slate-100 flex items-center justify-between md:col-span-2">
+                                    <div>
+                                        <h3 className="font-black text-slate-800 text-[14px]">Test Alerts</h3>
+                                        <p className="text-[12px] text-slate-500 font-medium">Send a test notification to this device</p>
+                                    </div>
+                                    <button
+                                        onClick={handleTestNotification}
+                                        className="bg-white hover:bg-slate-100 text-slate-600 px-[20px] py-[10px] rounded-[14px] text-[11px] font-black tracking-widest uppercase border border-slate-200 transition-all shadow-sm active:scale-95"
+                                    >
+                                        Send Test
+                                    </button>
                                 </div>
-                                <span className="bg-slate-200 text-slate-500 px-[12px] py-[6px] rounded-full text-[9px] font-black uppercase tracking-widest">Coming Soon</span>
-                            </div>
+                            )}
                         </div>
                     </div>
                 )}
