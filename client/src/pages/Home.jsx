@@ -23,6 +23,7 @@ const Home = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isSelectionMode, setIsSelectionMode] = useState(false);
     const [selectedIds, setSelectedIds] = useState([]);
+    const [showFilters, setShowFilters] = useState(false);
 
     const fetchData = async () => {
         try {
@@ -94,7 +95,7 @@ const Home = () => {
                             <div className="flex-1 w-0 p-3 sm:p-4">
                                 <div className="flex items-center">
                                     <div className="shrink-0">
-                                        <div className="h-8 w-8 sm:h-10 sm:w-10 bg-gradient-to-br from-[#2d5bff] to-[#6366f1] rounded-full flex items-center justify-center border border-white/10 shadow-lg shadow-blue-500/20">
+                                        <div className="h-8 w-8 sm:h-10 sm:w-10 bg-linear-to-br from-[#2d5bff] to-[#6366f1] rounded-full flex items-center justify-center border border-white/10 shadow-lg shadow-blue-500/20">
                                             <FaBell className="h-4 w-4 sm:h-5 sm:w-5 text-white animate-bounce" />
                                         </div>
                                     </div>
@@ -477,117 +478,133 @@ const Home = () => {
                                         {processedReminders.length} Tasks
                                     </span>
                                     <button
+                                        onClick={() => setShowFilters(!showFilters)}
+                                        className={`ml-2 flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${showFilters ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'}`}
+                                    >
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                        </svg>
+                                        <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest hidden xs:inline">Filters</span>
+                                    </button>
+
+                                    <button
                                         onClick={() => setIsSelectionMode(!isSelectionMode)}
-                                        className={`ml-2 text-[10px] sm:text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border transition-all ${isSelectionMode ? 'bg-[#2d5bff] text-white border-[#2d5bff] shadow-lg shadow-blue-500/30' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'}`}
+                                        className={`ml-1 text-[10px] sm:text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border transition-all ${isSelectionMode ? 'bg-[#2d5bff] text-white border-[#2d5bff] shadow-lg shadow-blue-500/30' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'}`}
                                     >
                                         {isSelectionMode ? 'Cancel' : 'Select'}
                                     </button>
                                 </div>
+                            </div>
 
-                                <div className="flex flex-wrap items-center gap-2 sm:gap-2">
-                                    {/* 🔍 Search Input */}
-                                    <div className="relative shrink-0 hidden sm:block group/search">
-                                        <div className={`flex items-center gap-2 bg-white border px-3 py-1.5 rounded-xl transition-all ${searchQuery ? 'border-[#2d5bff] ring-2 ring-[#2d5bff]/10' : 'border-slate-200 group-hover/search:border-slate-300'}`}>
-                                            <svg className={`w-3.5 h-3.5 ${searchQuery ? 'text-[#2d5bff]' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                            </svg>
-                                            <input
-                                                type="text"
-                                                value={searchQuery}
-                                                onChange={(e) => setSearchQuery(e.target.value)}
-                                                placeholder="Search..."
-                                                className="bg-transparent text-[11px] font-bold text-slate-700 outline-none w-20 sm:w-24 placeholder:text-slate-400 placeholder:font-medium"
-                                            />
-                                            {searchQuery && (
-                                                <button
-                                                    onClick={() => setSearchQuery('')}
-                                                    className="text-slate-400 hover:text-[#ff4d4d] transition-colors"
-                                                >
-                                                    <FaTimes className="w-2.5 h-2.5" />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
+                            {/* COLLAPSIBLE FILTERS */}
+                            {showFilters && (
+                                <div className="animate-in slide-in-from-top-2 fade-in duration-200 mb-6">
+                                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-slate-50 rounded-xl border border-slate-200/60">
 
-                                    {/* 📅 Date Search Filter */}
-                                    <div className="relative shrink-0">
-                                        <div className={`flex items-center gap-2 bg-white border px-3 py-1.5 rounded-xl transition-all cursor-pointer ${filterDate ? 'border-[#2d5bff] ring-2 ring-[#2d5bff]/10' : 'border-slate-200 hover:border-slate-300'}`}>
-                                            <svg className={`w-3.5 h-3.5 ${filterDate ? 'text-[#2d5bff]' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                            <input
-                                                type="date"
-                                                value={filterDate}
-                                                onChange={(e) => setFilterDate(e.target.value)}
-                                                className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer uppercase tracking-wider"
-                                            />
-                                            {filterDate && (
-                                                <button
-                                                    onClick={() => setFilterDate('')}
-                                                    className="text-slate-400 hover:text-[#ff4d4d] transition-colors"
-                                                >
-                                                    <FaTimes className="w-2.5 h-2.5" />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* 🏷️ Category Filter */}
-                                    <div className="relative group/cat">
-                                        <div className={`flex items-center gap-2 bg-white border px-3 py-1.5 rounded-xl transition-all cursor-pointer ${filterCategory ? 'border-[#2d5bff] ring-2 ring-[#2d5bff]/10' : 'border-slate-200 hover:border-slate-300'}`}>
-                                            <div className={`w-2 h-2 rounded-full ${filterCategory ? 'bg-[#2d5bff]' : 'bg-slate-300'}`}></div>
-                                            <select
-                                                value={filterCategory}
-                                                onChange={(e) => setFilterCategory(e.target.value)}
-                                                className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer appearance-none min-w-[60px]"
-                                            >
-                                                <option value="">All Categories</option>
-                                                <option value="Work">Work</option>
-                                                <option value="Personal">Personal</option>
-                                                <option value="Health">Health</option>
-                                                <option value="Study">Study</option>
-                                                <option value="Finance">Finance</option>
-                                                <option value="General">General</option>
-                                            </select>
-                                            {filterCategory ? (
-                                                <button
-                                                    onClick={() => setFilterCategory('')}
-                                                    className="text-slate-400 hover:text-[#ff4d4d] transition-colors"
-                                                >
-                                                    <FaTimes className="w-2.5 h-2.5" />
-                                                </button>
-                                            ) : (
-                                                <svg className="w-3 h-3 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                                        {/* 🔍 Search Input */}
+                                        <div className="relative shrink-0 group/search flex-1 min-w-[140px]">
+                                            <div className={`flex items-center gap-2 bg-white border px-3 py-2 rounded-xl transition-all ${searchQuery ? 'border-[#2d5bff] ring-2 ring-[#2d5bff]/10' : 'border-slate-200 group-hover/search:border-slate-300'}`}>
+                                                <svg className={`w-3.5 h-3.5 ${searchQuery ? 'text-[#2d5bff]' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                                 </svg>
-                                            )}
+                                                <input
+                                                    type="text"
+                                                    value={searchQuery}
+                                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                                    placeholder="Search tasks..."
+                                                    className="bg-transparent text-[11px] font-bold text-slate-700 outline-none w-full placeholder:text-slate-400 placeholder:font-medium"
+                                                />
+                                                {searchQuery && (
+                                                    <button
+                                                        onClick={() => setSearchQuery('')}
+                                                        className="text-slate-400 hover:text-[#ff4d4d] transition-colors"
+                                                    >
+                                                        <FaTimes className="w-2.5 h-2.5" />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    {/* 🧪 Sort Control - Modern UI */}
-                                    <div className="relative group/sort">
-                                        <div className="flex items-center gap-2 bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-sm hover:border-[#2d5bff]/30 transition-all cursor-pointer relative">
-                                            <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
-                                            </svg>
-                                            <select
-                                                value={sortBy}
-                                                onChange={(e) => setSortBy(e.target.value)}
-                                                className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer appearance-none pr-5 min-w-[80px]"
-                                            >
-                                                <option value="due_date">Due Date</option>
-                                                <option value="newest">Newest</option>
-                                                <option value="oldest">Oldest</option>
-                                                <option value="priority">Priority</option>
-                                                <option value="status">Status</option>
-                                            </select>
-                                            <svg className="w-2.5 h-2.5 text-slate-400 absolute right-2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
-                                            </svg>
+                                        {/* 📅 Date Search Filter */}
+                                        <div className="relative shrink-0">
+                                            <div className={`flex items-center gap-2 bg-white border px-3 py-2 rounded-xl transition-all cursor-pointer ${filterDate ? 'border-[#2d5bff] ring-2 ring-[#2d5bff]/10' : 'border-slate-200 hover:border-slate-300'}`}>
+                                                <svg className={`w-3.5 h-3.5 ${filterDate ? 'text-[#2d5bff]' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                <input
+                                                    type="date"
+                                                    value={filterDate}
+                                                    onChange={(e) => setFilterDate(e.target.value)}
+                                                    className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer uppercase tracking-wider"
+                                                />
+                                                {filterDate && (
+                                                    <button
+                                                        onClick={() => setFilterDate('')}
+                                                        className="text-slate-400 hover:text-[#ff4d4d] transition-colors"
+                                                    >
+                                                        <FaTimes className="w-2.5 h-2.5" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* 🏷️ Category Filter */}
+                                        <div className="relative group/cat">
+                                            <div className={`flex items-center gap-2 bg-white border px-3 py-2 rounded-xl transition-all cursor-pointer ${filterCategory ? 'border-[#2d5bff] ring-2 ring-[#2d5bff]/10' : 'border-slate-200 hover:border-slate-300'}`}>
+                                                <div className={`w-2 h-2 rounded-full ${filterCategory ? 'bg-[#2d5bff]' : 'bg-slate-300'}`}></div>
+                                                <select
+                                                    value={filterCategory}
+                                                    onChange={(e) => setFilterCategory(e.target.value)}
+                                                    className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer appearance-none min-w-[60px]"
+                                                >
+                                                    <option value="">All</option>
+                                                    <option value="Work">Work</option>
+                                                    <option value="Personal">Personal</option>
+                                                    <option value="Health">Health</option>
+                                                    <option value="Study">Study</option>
+                                                    <option value="Finance">Finance</option>
+                                                    <option value="General">General</option>
+                                                </select>
+                                                {filterCategory ? (
+                                                    <button
+                                                        onClick={() => setFilterCategory('')}
+                                                        className="text-slate-400 hover:text-[#ff4d4d] transition-colors"
+                                                    >
+                                                        <FaTimes className="w-2.5 h-2.5" />
+                                                    </button>
+                                                ) : (
+                                                    <svg className="w-3 h-3 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                                                    </svg>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* 🧪 Sort Control */}
+                                        <div className="relative group/sort">
+                                            <div className="flex items-center gap-2 bg-white border border-slate-200 px-3 py-2 rounded-xl shadow-sm hover:border-[#2d5bff]/30 transition-all cursor-pointer relative">
+                                                <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                                                </svg>
+                                                <select
+                                                    value={sortBy}
+                                                    onChange={(e) => setSortBy(e.target.value)}
+                                                    className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer appearance-none pr-5 min-w-[80px]"
+                                                >
+                                                    <option value="due_date">Due Date</option>
+                                                    <option value="newest">Newest</option>
+                                                    <option value="oldest">Oldest</option>
+                                                    <option value="priority">Priority</option>
+                                                    <option value="status">Status</option>
+                                                </select>
+                                                <svg className="w-2.5 h-2.5 text-slate-400 absolute right-2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
 
                             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
                                 <ReminderList
