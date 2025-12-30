@@ -82,7 +82,7 @@ function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selected
                   ) : (
                     <button
                       onClick={(e) => { e.stopPropagation(); onToggle(reminder.id, reminder.is_completed); }}
-                      className={`mt-0.5 sm:mt-1 shrink-0 w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 transition-all flex items-center justify-center shadow-sm z-10 ${reminder.is_completed
+                      className={`mt-0.5 sm:mt-1 shrink-0 w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 transition-all flex items-center justify-center shadow-sm z-10 cursor-pointer ${reminder.is_completed
                         ? 'bg-[#2d5bff] border-[#2d5bff] shadow-blue-500/30'
                         : 'border-slate-300 hover:border-[#2d5bff] bg-white'
                         }`}
@@ -180,7 +180,7 @@ function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selected
             <div className="relative p-4 sm:p-6 md:p-8 rounded-t-xl sm:rounded-t-2xl bg-linear-to-r from-[#2d5bff] via-[#4a69ff] to-[#6366f1]">
               <button
                 onClick={() => setSelectedReminder(null)}
-                className="absolute top-3 right-3 sm:top-4 sm:right-4 p-1.5 sm:p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all text-white"
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 p-1.5 sm:p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all text-white cursor-pointer"
               >
                 <X className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
@@ -273,7 +273,7 @@ function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selected
                     onToggle(selectedReminder.id, selectedReminder.is_completed);
                     setSelectedReminder(null);
                   }}
-                  className={`flex-1 py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm transition-all ${selectedReminder.is_completed
+                  className={`flex-1 py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer ${selectedReminder.is_completed
                     ? 'bg-slate-200 text-slate-700 hover:bg-slate-300'
                     : 'bg-[#2d5bff] text-white hover:bg-[#1e4bd8]'
                     }`}
@@ -287,7 +287,7 @@ function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selected
                       setDeleteId(selectedReminder.id);
                       setSelectedReminder(null);
                     }}
-                    className="flex-1 sm:flex-none py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm bg-[#ff4d4d] text-white hover:bg-[#ff3333] transition-all flex items-center justify-center gap-2"
+                    className="flex-1 sm:flex-none py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm bg-[#ff4d4d] text-white hover:bg-[#ff3333] transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                     Delete
@@ -313,7 +313,7 @@ function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selected
               <div className="flex w-full gap-3">
                 <button
                   onClick={() => setDeleteId(null)}
-                  className="flex-1 py-3 px-6 rounded-xl font-black text-[13px] tracking-widest uppercase border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all active:scale-95"
+                  className="flex-1 py-3 px-6 rounded-xl font-black text-[13px] tracking-widest uppercase border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -322,7 +322,7 @@ function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selected
                     onDelete(deleteId);
                     setDeleteId(null);
                   }}
-                  className="flex-1 py-3 px-6 rounded-xl font-black text-[13px] tracking-widest uppercase bg-[#ff4d4d] text-white shadow-lg shadow-red-500/20 hover:bg-[#ff3333] hover:shadow-xl transition-all active:scale-95"
+                  className="flex-1 py-3 px-6 rounded-xl font-black text-[13px] tracking-widest uppercase bg-[#ff4d4d] text-white shadow-lg shadow-red-500/20 hover:bg-[#ff3333] hover:shadow-xl transition-all active:scale-95 cursor-pointer"
                 >
                   Delete
                 </button>

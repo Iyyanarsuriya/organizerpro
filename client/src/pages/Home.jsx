@@ -220,7 +220,7 @@ const Home = () => {
                                 toast.dismiss(t.id);
                                 setHasShownAgenda(true);
                             }}
-                            className="w-full border border-transparent rounded-none rounded-r-[24px] sm:rounded-r-[32px] p-4 sm:p-6 flex items-center justify-center text-xs sm:text-sm font-black text-[#2d5bff] hover:bg-slate-50 transition-all uppercase tracking-widest"
+                            className="w-full border border-transparent rounded-none rounded-r-[24px] sm:rounded-r-[32px] p-4 sm:p-6 flex items-center justify-center text-xs sm:text-sm font-black text-[#2d5bff] hover:bg-slate-50 transition-all uppercase tracking-widest cursor-pointer"
                         >
                             Got it
                         </button>
@@ -441,18 +441,18 @@ const Home = () => {
                                     setIsSelectionMode(false);
                                 } catch (e) { toast.error("Batch update failed"); }
                             }}
-                            className="text-xs font-black text-white hover:text-blue-400 transition-colors uppercase tracking-wider"
+                            className="text-xs font-black text-white hover:text-blue-400 transition-colors uppercase tracking-wider cursor-pointer"
                         >
                             Complete All
                         </button>
                         <button
                             onClick={() => setConfirmBulkDelete(true)}
-                            className="text-xs font-black text-[#ff4d4d] hover:text-[#ff3333] transition-colors uppercase tracking-wider"
+                            className="text-xs font-black text-[#ff4d4d] hover:text-[#ff3333] transition-colors uppercase tracking-wider cursor-pointer"
                         >
                             Delete All
                         </button>
                         <div className="h-4 w-px bg-slate-700"></div>
-                        <button onClick={() => { setSelectedIds([]); setIsSelectionMode(false); }} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+                        <button onClick={() => { setSelectedIds([]); setIsSelectionMode(false); }} className="p-1 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
                             <FaTimes className="w-3 h-3" />
                         </button>
                     </div>
@@ -484,7 +484,7 @@ const Home = () => {
                                     </span>
                                     <button
                                         onClick={() => setShowFilters(!showFilters)}
-                                        className={`ml-2 flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${showFilters ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'}`}
+                                        className={`ml-2 flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${showFilters ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'}`}
                                     >
                                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -494,7 +494,7 @@ const Home = () => {
 
                                     <button
                                         onClick={() => setIsSelectionMode(!isSelectionMode)}
-                                        className={`ml-1 text-[10px] sm:text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border transition-all ${isSelectionMode ? 'bg-[#2d5bff] text-white border-[#2d5bff] shadow-lg shadow-blue-500/30' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'}`}
+                                        className={`ml-1 text-[10px] sm:text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${isSelectionMode ? 'bg-[#2d5bff] text-white border-[#2d5bff] shadow-lg shadow-blue-500/30' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'}`}
                                     >
                                         {isSelectionMode ? 'Cancel' : 'Select'}
                                     </button>
@@ -522,7 +522,7 @@ const Home = () => {
                                                 {searchQuery && (
                                                     <button
                                                         onClick={() => setSearchQuery('')}
-                                                        className="text-slate-400 hover:text-[#ff4d4d] transition-colors"
+                                                        className="text-slate-400 hover:text-[#ff4d4d] transition-colors cursor-pointer"
                                                     >
                                                         <FaTimes className="w-2.5 h-2.5" />
                                                     </button>
@@ -546,7 +546,7 @@ const Home = () => {
                                                 {filterDate && (
                                                     <button
                                                         onClick={() => setFilterDate('')}
-                                                        className="text-slate-400 hover:text-[#ff4d4d] transition-colors"
+                                                        className="text-slate-400 hover:text-[#ff4d4d] transition-colors cursor-pointer"
                                                     >
                                                         <FaTimes className="w-2.5 h-2.5" />
                                                     </button>
@@ -575,7 +575,7 @@ const Home = () => {
                                                 {filterCategory ? (
                                                     <button
                                                         onClick={() => setFilterCategory('')}
-                                                        className="text-slate-400 hover:text-[#ff4d4d] transition-colors"
+                                                        className="text-slate-400 hover:text-[#ff4d4d] transition-colors cursor-pointer"
                                                     >
                                                         <FaTimes className="w-2.5 h-2.5" />
                                                     </button>
@@ -662,13 +662,13 @@ const Home = () => {
                             <div className="flex w-full gap-3">
                                 <button
                                     onClick={() => setConfirmToggle(null)}
-                                    className="flex-1 py-3 px-6 rounded-xl font-black text-[11px] tracking-widest uppercase border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all active:scale-95"
+                                    className="flex-1 py-3 px-6 rounded-xl font-black text-[11px] tracking-widest uppercase border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
                                 >
                                     Not yet
                                 </button>
                                 <button
                                     onClick={confirmCompletion}
-                                    className="flex-1 py-3 px-6 rounded-xl font-black text-[11px] tracking-widest uppercase bg-[#2d5bff] text-white shadow-lg shadow-blue-500/20 hover:bg-blue-600 hover:shadow-xl transition-all active:scale-95"
+                                    className="flex-1 py-3 px-6 rounded-xl font-black text-[11px] tracking-widest uppercase bg-[#2d5bff] text-white shadow-lg shadow-blue-500/20 hover:bg-blue-600 hover:shadow-xl transition-all active:scale-95 cursor-pointer"
                                 >
                                     Yes, Done!
                                 </button>
@@ -696,7 +696,7 @@ const Home = () => {
                             <div className="flex w-full gap-3">
                                 <button
                                     onClick={() => setConfirmBulkDelete(false)}
-                                    className="flex-1 py-3 px-6 rounded-xl font-black text-[11px] tracking-widest uppercase border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all active:scale-95"
+                                    className="flex-1 py-3 px-6 rounded-xl font-black text-[11px] tracking-widest uppercase border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
                                 >
                                     Cancel
                                 </button>
