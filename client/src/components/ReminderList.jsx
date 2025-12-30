@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Trash2, X, Calendar, Clock, AlertCircle } from 'lucide-react';
+import { Trash2, X, Calendar, Clock, AlertCircle, Repeat, Tag, CheckSquare, Square } from 'lucide-react';
 
-function ReminderList({ reminders, onToggle, onDelete }) {
+function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selectedIds, onSelect }) {
   const [selectedReminder, setSelectedReminder] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
 
@@ -26,6 +26,15 @@ function ReminderList({ reminders, onToggle, onDelete }) {
     high: 'bg-red-50 text-[#ff4d4d] border-red-100',
     medium: 'bg-amber-50 text-[#ffb800] border-amber-100',
     low: 'bg-slate-100 text-slate-500 border-slate-200',
+  };
+
+  const categoryColors = {
+    Work: 'bg-indigo-50 text-indigo-600 border-indigo-100',
+    Personal: 'bg-pink-50 text-pink-600 border-pink-100',
+    Health: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+    Study: 'bg-violet-50 text-violet-600 border-violet-100',
+    Finance: 'bg-cyan-50 text-cyan-600 border-cyan-100',
+    General: 'bg-gray-50 text-gray-600 border-gray-100'
   };
 
   return (
@@ -52,7 +61,9 @@ function ReminderList({ reminders, onToggle, onDelete }) {
         return (
           <div
             key={reminder.id}
-            className={`group relative flex flex-col gap-2 sm:gap-4 p-1 rounded-[16px] sm:rounded-[24px] transition-all duration-300 bg-white border border-slate-200 shadow-sm hover:shadow-xl sm:hover:scale-[1.01]`}
+            onClick={() => isSelectionMode && onSelect && onSelect(reminder.id)}
+            className={`group relative flex flex-col gap-2 sm:gap-4 p-1 rounded-[16px] sm:rounded-[24px] transition-all duration-300 bg-white border shadow-sm hover:shadow-xl sm:hover:scale-[1.01] ${isSelectionMode && selectedIds?.includes(reminder.id) ? 'border-[#2d5bff] ring-2 ring-[#2d5bff]/20' : 'border-slate-200'
+              } ${isSelectionMode ? 'cursor-pointer' : ''}`}
           >
             <div className={`flex flex-col gap-2 sm:gap-4 p-3 sm:p-4 rounded-[14px] sm:rounded-[20px] ${contentStyle}`}>
               {/* Priority Pulse Indicator (Side) */}
@@ -62,28 +73,41 @@ function ReminderList({ reminders, onToggle, onDelete }) {
 
               <div className="flex items-start justify-between gap-2 sm:gap-4">
                 <div className="flex items-start gap-2 sm:gap-4 flex-1 min-w-0">
-                  {/* Status Toggle - Radio Button Style */}
-                  <button
-                    onClick={() => onToggle(reminder.id, reminder.is_completed)}
-                    className={`mt-0.5 sm:mt-1 shrink-0 w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 transition-all flex items-center justify-center shadow-sm ${reminder.is_completed
-                      ? 'bg-[#2d5bff] border-[#2d5bff] shadow-blue-500/30'
-                      : 'border-slate-300 hover:border-[#2d5bff] bg-white'
-                      }`}
-                  >
-                    {!!reminder.is_completed && (
-                      <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-white rounded-full"></div>
-                    )}
-                  </button>
+
+                  {/* Status Toggle OR Selection Checkbox */}
+                  {isSelectionMode ? (
+                    <div className={`mt-0.5 sm:mt-1 shrink-0 w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center transition-colors ${selectedIds?.includes(reminder.id) ? 'text-[#2d5bff]' : 'text-slate-300'}`}>
+                      {selectedIds?.includes(reminder.id) ? <CheckSquare className="w-5 h-5 sm:w-6 sm:h-6" /> : <Square className="w-5 h-5 sm:w-6 sm:h-6" />}
+                    </div>
+                  ) : (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onToggle(reminder.id, reminder.is_completed); }}
+                      className={`mt-0.5 sm:mt-1 shrink-0 w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 transition-all flex items-center justify-center shadow-sm z-10 ${reminder.is_completed
+                        ? 'bg-[#2d5bff] border-[#2d5bff] shadow-blue-500/30'
+                        : 'border-slate-300 hover:border-[#2d5bff] bg-white'
+                        }`}
+                    >
+                      {!!reminder.is_completed && (
+                        <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-white rounded-full"></div>
+                      )}
+                    </button>
+                  )}
 
                   <div
                     className="flex-1 min-w-0 cursor-pointer"
-                    onClick={() => setSelectedReminder(reminder)}
+                    onClick={() => {
+                      if (!isSelectionMode) setSelectedReminder(reminder);
+                    }}
                   >
                     <div className="flex items-center gap-1 sm:gap-2 mb-0.5 sm:mb-1">
                       <h3 className={`text-sm sm:text-base md:text-lg font-black tracking-tight truncate ${reminder.is_completed ? 'text-slate-400 line-through' : 'text-slate-800'
                         }`}>
                         {reminder.title}
                       </h3>
+                      {/* Recurrence Icon */}
+                      {reminder.recurrence_type && reminder.recurrence_type !== 'none' && (
+                        <Repeat className="w-3 h-3 text-slate-400" />
+                      )}
                     </div>
 
                     {reminder.description && (
@@ -113,6 +137,13 @@ function ReminderList({ reminders, onToggle, onDelete }) {
                         }`}>
                         {reminder.priority}
                       </span>
+
+                      {/* Category Badge */}
+                      {reminder.category && (
+                        <span className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl border text-[8px] sm:text-[10px] font-black uppercase tracking-widest ${categoryColors[reminder.category] || categoryColors.General}`}>
+                          {reminder.category}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -170,6 +201,11 @@ function ReminderList({ reminders, onToggle, onDelete }) {
                         Completed
                       </span>
                     )}
+                    {selectedReminder.category && (
+                      <span className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-white/20 text-white`}>
+                        {selectedReminder.category}
+                      </span>
+                    )}
                   </div>
                   <h2 className={`text-xl sm:text-2xl md:text-3xl font-black text-white mb-1 ${selectedReminder.is_completed ? 'line-through ' : ''}`}>
                     {selectedReminder.title}
@@ -193,27 +229,42 @@ function ReminderList({ reminders, onToggle, onDelete }) {
                 </div>
               )}
 
-              {/* Due Date */}
-              {selectedReminder.due_date && (
-                <div>
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
-                    <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Due Date
-                  </h3>
-                  <div className={`flex flex-wrap items-center gap-2 text-sm sm:text-base md:text-lg font-semibold ${isOverdue(selectedReminder.due_date, selectedReminder.is_completed)
-                    ? 'text-red-600'
-                    : 'text-slate-700'
-                    }`}>
-                    <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
-                    <span>{formatDate(selectedReminder.due_date)}</span>
-                    {isOverdue(selectedReminder.due_date, selectedReminder.is_completed) && (
-                      <span className="px-2 py-0.5 bg-red-100 text-red-700 text-[10px] sm:text-xs font-bold rounded-full">
-                        OVERDUE
-                      </span>
-                    )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Due Date */}
+                {selectedReminder.due_date && (
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                      <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+                      Due Date
+                    </h3>
+                    <div className={`flex flex-wrap items-center gap-2 text-sm sm:text-base md:text-lg font-semibold ${isOverdue(selectedReminder.due_date, selectedReminder.is_completed)
+                      ? 'text-red-600'
+                      : 'text-slate-700'
+                      }`}>
+                      <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <span>{formatDate(selectedReminder.due_date)}</span>
+                      {isOverdue(selectedReminder.due_date, selectedReminder.is_completed) && (
+                        <span className="px-2 py-0.5 bg-red-100 text-red-700 text-[10px] sm:text-xs font-bold rounded-full">
+                          OVERDUE
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+
+                {/* Recurrence */}
+                {selectedReminder.recurrence_type && selectedReminder.recurrence_type !== 'none' && (
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                      <Repeat className="w-3 h-3 sm:w-4 sm:h-4" />
+                      Repeats
+                    </h3>
+                    <div className="text-sm sm:text-base md:text-lg text-slate-700 font-semibold capitalize">
+                      {selectedReminder.recurrence_type}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Actions */}
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-slate-200">

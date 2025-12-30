@@ -19,6 +19,10 @@ const Home = () => {
     const [confirmToggle, setConfirmToggle] = useState(null); // { id, currentStatus }
     const [sortBy, setSortBy] = useState('due_date'); // Default to date wise
     const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]); // Default to Today
+    const [filterCategory, setFilterCategory] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isSelectionMode, setIsSelectionMode] = useState(false);
+    const [selectedIds, setSelectedIds] = useState([]);
 
     const fetchData = async () => {
         try {
@@ -86,25 +90,56 @@ const Home = () => {
                 if (nowMs >= dueDateMs - 30000 && (nowMs - lastNotifyTime >= 300000)) {
                     // Show In-App Toast
                     toast.custom((t) => (
-                        <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-[95%] xs:w-[90%] sm:w-full bg-red-600 shadow-2xl rounded-2xl pointer-events-auto flex ring-1 ring-black ring-opacity-5 overflow-hidden border border-red-500/50 mt-4`}>
+                        <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-[95%] xs:w-[90%] sm:w-full bg-slate-900 shadow-2xl rounded-2xl pointer-events-auto flex flex-col ring-1 ring-black ring-opacity-5 overflow-hidden border border-slate-700 mt-4`}>
                             <div className="flex-1 w-0 p-3 sm:p-4">
                                 <div className="flex items-center">
                                     <div className="shrink-0">
-                                        <div className="h-8 w-8 sm:h-10 sm:w-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
+                                        <div className="h-8 w-8 sm:h-10 sm:w-10 bg-gradient-to-br from-[#2d5bff] to-[#6366f1] rounded-full flex items-center justify-center border border-white/10 shadow-lg shadow-blue-500/20">
                                             <FaBell className="h-4 w-4 sm:h-5 sm:w-5 text-white animate-bounce" />
                                         </div>
                                     </div>
                                     <div className="ml-3 sm:ml-4 flex-1">
-                                        <p className="text-xs sm:text-sm font-black text-white">Task Milestone Reached!</p>
-                                        <p className="mt-0.5 text-[9px] sm:text-[11px] font-bold text-white/80 uppercase tracking-widest line-clamp-1">{reminder.title}</p>
+                                        <p className="text-xs sm:text-sm font-black text-white">Reminder</p>
+                                        <p className="mt-0.5 text-[10px] sm:text-[11px] font-bold text-slate-300 line-clamp-1">{reminder.title}</p>
                                     </div>
                                 </div>
                             </div>
-                            <div className="flex border-l border-white/10">
-                                <button onClick={() => toast.remove(t.id)} className="w-full border border-transparent rounded-none rounded-r-2xl px-3 sm:px-4 flex items-center justify-center text-[10px] sm:text-xs font-black text-white hover:bg-white/10 transition-colors uppercase tracking-widest">Done</button>
+                            <div className="flex border-t border-slate-700/50 divide-x divide-slate-700/50 bg-slate-800/50">
+                                <button
+                                    onClick={async () => {
+                                        toast.remove(t.id);
+                                        // Snooze for 10 minutes
+                                        const newDate = new Date(Date.now() + 10 * 60000).toISOString();
+                                        await updateReminder(reminder.id, { due_date: newDate });
+                                        setReminders(prev => prev.map(r => r.id === reminder.id ? { ...r, due_date: newDate } : r));
+                                        toast.success("Snoozed for 10 min", { icon: '💤' });
+                                    }}
+                                    className="flex-1 py-3 text-[10px] sm:text-xs font-bold text-slate-300 hover:bg-slate-700 transition-colors uppercase tracking-wider"
+                                >
+                                    Snooze 10m
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        toast.remove(t.id);
+                                        // Snooze for 1 hour
+                                        const newDate = new Date(Date.now() + 60 * 60000).toISOString();
+                                        await updateReminder(reminder.id, { due_date: newDate });
+                                        setReminders(prev => prev.map(r => r.id === reminder.id ? { ...r, due_date: newDate } : r));
+                                        toast.success("Snoozed for 1 hour", { icon: '💤' });
+                                    }}
+                                    className="flex-1 py-3 text-[10px] sm:text-xs font-bold text-slate-300 hover:bg-slate-700 transition-colors uppercase tracking-wider"
+                                >
+                                    1h
+                                </button>
+                                <button
+                                    onClick={() => toast.remove(t.id)}
+                                    className="flex-1 py-3 text-[10px] sm:text-xs font-black text-[#2d5bff] hover:bg-slate-700 transition-colors uppercase tracking-wider"
+                                >
+                                    Dismiss
+                                </button>
                             </div>
                         </div>
-                    ), { duration: 4000, position: 'top-center' });
+                    ), { duration: 8000, position: 'top-center' }); // Longer duration for snooze decision
 
                     setLastNotifiedTimes(prev => ({
                         ...prev,
@@ -248,9 +283,22 @@ const Home = () => {
 
         return reminders
             .filter(r => {
-                if (!filterDate) return true;
-                if (!r.due_date) return false;
-                return r.due_date.startsWith(filterDate);
+                let matches = true;
+                if (filterDate) {
+                    if (!r.due_date) matches = false;
+                    else if (!r.due_date.startsWith(filterDate)) matches = false;
+                }
+                if (filterCategory) {
+                    if (r.category !== filterCategory) matches = false;
+                }
+                if (searchQuery) {
+                    const query = searchQuery.toLowerCase();
+                    if (!r.title.toLowerCase().includes(query) &&
+                        !r.description?.toLowerCase().includes(query)) {
+                        matches = false;
+                    }
+                }
+                return matches;
             })
             .sort((a, b) => {
                 if (sortBy === 'newest') return new Date(b.created_at || 0) - new Date(a.created_at || 0);
@@ -264,7 +312,7 @@ const Home = () => {
                 if (sortBy === 'status') return (a.is_completed ? 1 : 0) - (b.is_completed ? 1 : 0);
                 return 0;
             });
-    }, [reminders, filterDate, sortBy]);
+    }, [reminders, filterDate, filterCategory, sortBy, searchQuery]);
 
     if (loading) {
         return (
@@ -361,6 +409,49 @@ const Home = () => {
                     </div>
                 </div>
 
+                {/* BULK ACTION BAR */}
+                {selectedIds.length > 0 && (
+                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/90 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-4 z-50 animate-in slide-in-from-bottom-10 fade-in duration-300 border border-slate-700">
+                        <span className="text-xs font-bold text-slate-300">
+                            {selectedIds.length} selected
+                        </span>
+                        <div className="h-4 w-px bg-slate-700"></div>
+                        <button
+                            onClick={async () => {
+                                try {
+                                    await Promise.all(selectedIds.map(id => updateReminder(id, { is_completed: true })));
+                                    setReminders(prev => prev.map(r => selectedIds.includes(r.id) ? { ...r, is_completed: true } : r));
+                                    toast.success(`${selectedIds.length} tasks completed`);
+                                    setSelectedIds([]);
+                                    setIsSelectionMode(false);
+                                } catch (e) { toast.error("Batch update failed"); }
+                            }}
+                            className="text-xs font-black text-white hover:text-blue-400 transition-colors uppercase tracking-wider"
+                        >
+                            Complete All
+                        </button>
+                        <button
+                            onClick={async () => {
+                                if (!window.confirm("Delete selected tasks?")) return;
+                                try {
+                                    await Promise.all(selectedIds.map(id => deleteReminder(id)));
+                                    setReminders(prev => prev.filter(r => !selectedIds.includes(r.id)));
+                                    toast.success("Tasks deleted");
+                                    setSelectedIds([]);
+                                    setIsSelectionMode(false);
+                                } catch (e) { toast.error("Batch delete failed"); }
+                            }}
+                            className="text-xs font-black text-[#ff4d4d] hover:text-[#ff3333] transition-colors uppercase tracking-wider"
+                        >
+                            Delete All
+                        </button>
+                        <div className="h-4 w-px bg-slate-700"></div>
+                        <button onClick={() => { setSelectedIds([]); setIsSelectionMode(false); }} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+                            <FaTimes className="w-3 h-3" />
+                        </button>
+                    </div>
+                )}
+
                 {/* MAIN CONTENT GRID */}
                 <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 h-full min-h-0 items-start overflow-y-auto lg:overflow-visible custom-scrollbar pb-10 lg:pb-0">
 
@@ -385,9 +476,39 @@ const Home = () => {
                                     <span className="text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
                                         {processedReminders.length} Tasks
                                     </span>
+                                    <button
+                                        onClick={() => setIsSelectionMode(!isSelectionMode)}
+                                        className={`ml-2 text-[10px] sm:text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border transition-all ${isSelectionMode ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'}`}
+                                    >
+                                        {isSelectionMode ? 'Cancel' : 'Select'}
+                                    </button>
                                 </div>
-
+// ... (Filters and list remain similar but need to match context)
                                 <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                                    {/* 🔍 Search Input */}
+                                    <div className="relative shrink-0 hidden sm:block">
+                                        <div className={`flex items-center gap-1.5 sm:gap-2 bg-white border px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl transition-all ${searchQuery ? 'border-[#2d5bff] bg-blue-50' : 'border-slate-200'}`}>
+                                            <svg className={`w-3 sm:w-3.5 h-3 sm:h-3.5 ${searchQuery ? 'text-[#2d5bff]' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                            </svg>
+                                            <input
+                                                type="text"
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                placeholder="Search tasks..."
+                                                className="bg-transparent text-[10px] sm:text-[11px] font-black text-slate-700 outline-none w-20 sm:w-24 placeholder:text-slate-400"
+                                            />
+                                            {searchQuery && (
+                                                <button
+                                                    onClick={() => setSearchQuery('')}
+                                                    className="text-slate-400 hover:text-[#ff4d4d] transition-colors"
+                                                >
+                                                    <FaTimes className="w-2 h-2" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+
                                     {/* 📅 Date Search Filter */}
                                     <div className="relative shrink-0">
                                         <div className={`flex items-center gap-1.5 sm:gap-2 bg-white border px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl transition-all ${filterDate ? 'border-[#2d5bff] bg-blue-50' : 'border-slate-200'}`}>
@@ -403,6 +524,33 @@ const Home = () => {
                                             {filterDate && (
                                                 <button
                                                     onClick={() => setFilterDate('')}
+                                                    className="text-slate-400 hover:text-[#ff4d4d] transition-colors"
+                                                >
+                                                    <FaTimes className="w-2 h-2" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* 🏷️ Category Filter */}
+                                    <div className="relative group/cat">
+                                        <div className={`flex items-center gap-1.5 sm:gap-2 bg-white border px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl transition-all ${filterCategory ? 'border-[#2d5bff] bg-blue-50' : 'border-slate-200'}`}>
+                                            <select
+                                                value={filterCategory}
+                                                onChange={(e) => setFilterCategory(e.target.value)}
+                                                className="bg-transparent text-[10px] sm:text-[11px] font-black text-slate-700 outline-none cursor-pointer appearance-none min-w-[60px]"
+                                            >
+                                                <option value="">All Categories</option>
+                                                <option value="Work">Work</option>
+                                                <option value="Personal">Personal</option>
+                                                <option value="Health">Health</option>
+                                                <option value="Study">Study</option>
+                                                <option value="Finance">Finance</option>
+                                                <option value="General">General</option>
+                                            </select>
+                                            {filterCategory && (
+                                                <button
+                                                    onClick={() => setFilterCategory('')}
                                                     className="text-slate-400 hover:text-[#ff4d4d] transition-colors"
                                                 >
                                                     <FaTimes className="w-2 h-2" />
@@ -441,6 +589,11 @@ const Home = () => {
                                     reminders={processedReminders}
                                     onToggle={handleToggle}
                                     onDelete={handleDelete}
+                                    isSelectionMode={isSelectionMode}
+                                    selectedIds={selectedIds}
+                                    onSelect={(id) => {
+                                        setSelectedIds(prev => prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]);
+                                    }}
                                 />
                                 {processedReminders.length === 0 && (
                                     <div className="h-full flex flex-col items-center justify-center p-12 text-center opacity-60">

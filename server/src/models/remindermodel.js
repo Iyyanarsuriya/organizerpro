@@ -6,14 +6,14 @@ exports.getAllByUserId = async (userId) => {
 };
 
 exports.create = async (reminderData) => {
-    const { user_id, title, description, due_date, priority, google_event_id } = reminderData;
+    const { user_id, title, description, due_date, priority, category, recurrence_type, recurrence_interval, google_event_id } = reminderData;
 
     const dateObj = due_date ? new Date(due_date) : null;
     const finalDate = (dateObj && !isNaN(dateObj.getTime())) ? dateObj : null;
 
     const [result] = await db.query(
-        'INSERT INTO reminders (user_id, title, description, due_date, priority, google_event_id) VALUES (?, ?, ?, ?, ?, ?)',
-        [user_id, title, description, finalDate, priority || 'medium', google_event_id || null]
+        'INSERT INTO reminders (user_id, title, description, due_date, priority, category, recurrence_type, recurrence_interval, google_event_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [user_id, title, description, finalDate, priority || 'medium', category || 'General', recurrence_type || 'none', recurrence_interval || 1, google_event_id || null]
     );
     return { id: result.insertId, ...reminderData, is_completed: false };
 };
