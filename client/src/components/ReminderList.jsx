@@ -76,7 +76,7 @@ function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selected
 
                   {/* Status Toggle OR Selection Checkbox */}
                   {isSelectionMode ? (
-                    <div className={`mt-0.5 sm:mt-1 shrink-0 w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center transition-colors ${selectedIds?.includes(reminder.id) ? 'text-[#2d5bff]' : 'text-slate-300'}`}>
+                    <div className={`mt-0.5 sm:mt-1 shrink-0 w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center transition-colors cursor-pointer ${selectedIds?.includes(reminder.id) ? 'text-[#2d5bff]' : 'text-slate-300'}`}>
                       {selectedIds?.includes(reminder.id) ? <CheckSquare className="w-5 h-5 sm:w-6 sm:h-6" /> : <Square className="w-5 h-5 sm:w-6 sm:h-6" />}
                     </div>
                   ) : (

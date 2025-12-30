@@ -111,12 +111,19 @@ const Home = () => {
                                     onClick={async () => {
                                         toast.remove(t.id);
                                         // Snooze for 10 minutes
-                                        const newDate = new Date(Date.now() + 10 * 60000).toISOString();
-                                        await updateReminder(reminder.id, { due_date: newDate });
-                                        setReminders(prev => prev.map(r => r.id === reminder.id ? { ...r, due_date: newDate } : r));
-                                        toast.success("Snoozed for 10 min", { icon: '💤' });
+                                        try {
+                                            const newDate = new Date(Date.now() + 10 * 60000).toISOString();
+                                            await updateReminder(reminder.id, { due_date: newDate });
+                                            setReminders(prev => prev.map(r => r.id === reminder.id ? { ...r, due_date: newDate } : r));
+                                            toast.success("Snoozed for 10 min", { icon: '💤' });
+                                        } catch (e) {
+                                            toast.error("Task not found or deleted");
+                                            // Refresh data to sync UI if deleted
+                                            const res = await getReminders().catch(() => ({ data: [] }));
+                                            setReminders(res.data);
+                                        }
                                     }}
-                                    className="flex-1 py-3 text-[10px] sm:text-xs font-bold text-slate-300 hover:bg-slate-700 transition-colors uppercase tracking-wider"
+                                    className="flex-1 py-3 text-[10px] sm:text-xs font-bold text-slate-300 hover:bg-slate-700 transition-colors uppercase tracking-wider cursor-pointer"
                                 >
                                     Snooze 10m
                                 </button>
@@ -124,18 +131,24 @@ const Home = () => {
                                     onClick={async () => {
                                         toast.remove(t.id);
                                         // Snooze for 1 hour
-                                        const newDate = new Date(Date.now() + 60 * 60000).toISOString();
-                                        await updateReminder(reminder.id, { due_date: newDate });
-                                        setReminders(prev => prev.map(r => r.id === reminder.id ? { ...r, due_date: newDate } : r));
-                                        toast.success("Snoozed for 1 hour", { icon: '💤' });
+                                        try {
+                                            const newDate = new Date(Date.now() + 60 * 60000).toISOString();
+                                            await updateReminder(reminder.id, { due_date: newDate });
+                                            setReminders(prev => prev.map(r => r.id === reminder.id ? { ...r, due_date: newDate } : r));
+                                            toast.success("Snoozed for 1 hour", { icon: '💤' });
+                                        } catch (e) {
+                                            toast.error("Task not found or deleted");
+                                            const res = await getReminders().catch(() => ({ data: [] }));
+                                            setReminders(res.data);
+                                        }
                                     }}
-                                    className="flex-1 py-3 text-[10px] sm:text-xs font-bold text-slate-300 hover:bg-slate-700 transition-colors uppercase tracking-wider"
+                                    className="flex-1 py-3 text-[10px] sm:text-xs font-bold text-slate-300 hover:bg-slate-700 transition-colors uppercase tracking-wider cursor-pointer"
                                 >
                                     1h
                                 </button>
                                 <button
                                     onClick={() => toast.remove(t.id)}
-                                    className="flex-1 py-3 text-[10px] sm:text-xs font-black text-[#2d5bff] hover:bg-slate-700 transition-colors uppercase tracking-wider"
+                                    className="flex-1 py-3 text-[10px] sm:text-xs font-black text-[#2d5bff] hover:bg-slate-700 transition-colors uppercase tracking-wider cursor-pointer"
                                 >
                                     Dismiss
                                 </button>
