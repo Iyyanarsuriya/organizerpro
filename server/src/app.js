@@ -7,6 +7,7 @@ require("dotenv").config();
 const authRoutes = require("./routes/authRoutes");
 const reminderRoutes = require("./routes/reminderRoutes");
 const pushRoutes = require("./routes/pushRoutes");
+const transactionRoutes = require("./routes/transactionRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -30,6 +31,7 @@ app.use("/uploads", express.static(uploadDir));
 app.use("/api/auth", authRoutes);
 app.use("/api/reminders", reminderRoutes);
 app.use("/api/push", pushRoutes);
+app.use("/api/transactions", transactionRoutes);
 
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);

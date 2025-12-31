@@ -13,8 +13,6 @@ export const getMe = async () => {
 };
 
 export const updateProfile = async (userData) => {
-    // IMPORTANT: Do NOT manually set 'Content-Type': 'multipart/form-data'.
-    // Axios/Browser will automatically set it with the correct boundary when passing FormData.
     return await axiosInstance.put('/auth/profile', userData);
 };
 

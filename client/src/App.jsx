@@ -16,6 +16,8 @@ const ToastLimiter = () => {
 
 // Pages
 import Home from './pages/Home';
+import Reminders from './pages/Reminders';
+import ExpenseTracker from './pages/ExpenseTracker';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -105,11 +107,11 @@ function AppContent({ token, setToken }) {
                 <Link to="/" className="flex items-center gap-2 group">
                   <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#2d5bff] rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
                     <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                     </svg>
                   </div>
                   <span className="text-lg sm:text-xl font-black text-slate-800 tracking-tighter">
-                    Reminder<span className="text-[#2d5bff]">App</span>
+                    Organizer<span className="text-[#2d5bff]">Pro</span>
                   </span>
                 </Link>
               </div>
@@ -138,6 +140,18 @@ function AppContent({ token, setToken }) {
           <Route path="/" element={
             <ProtectedRoute>
               <Home />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/reminders" element={
+            <ProtectedRoute>
+              <Reminders />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/expense-tracker" element={
+            <ProtectedRoute>
+              <ExpenseTracker />
             </ProtectedRoute>
           } />
 

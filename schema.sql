@@ -42,3 +42,16 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- Transactions table (Income & Expenses)
+CREATE TABLE IF NOT EXISTS transactions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    type ENUM('income', 'expense') NOT NULL,
+    category VARCHAR(50) DEFAULT 'Other',
+    date DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
