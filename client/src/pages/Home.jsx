@@ -26,7 +26,15 @@ const Home = () => {
     const [showFilters, setShowFilters] = useState(false);
     const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
+    const lastFetchRef = useRef(0);
+
     const fetchData = async () => {
+        // Throttle fetching: don't fetch if last fetch was less than 60s ago
+        const now = Date.now();
+        if (now - lastFetchRef.current < 60000 && !loading) {
+            return;
+        }
+
         try {
             const [remindersRes, userRes] = await Promise.all([
                 getReminders(),
@@ -35,6 +43,7 @@ const Home = () => {
             setReminders(remindersRes.data);
             setUser(userRes.data);
             localStorage.setItem('user', JSON.stringify(userRes.data));
+            lastFetchRef.current = Date.now();
         } catch (error) {
             console.error("Error fetching data", error);
         } finally {

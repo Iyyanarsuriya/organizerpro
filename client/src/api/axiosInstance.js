@@ -18,5 +18,20 @@ axiosInstance.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
+// Handle 401/403 errors (Token expired or invalid)
+axiosInstance.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if ((error.response?.status === 401 || error.response?.status === 403) && !window.location.pathname.includes('/login')) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('user');
+            window.location.href = '/login';
+        }
+        return Promise.reject(error);
+    }
+);
+
 export { API_URL };
 export default axiosInstance;

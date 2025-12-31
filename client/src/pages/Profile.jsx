@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getReminders, updateReminder, deleteReminder } from '../api/homeApi';
 import { disconnectGoogle, updateProfile, getGoogleAuthUrl, getMe } from '../api/authApi';
@@ -35,7 +35,15 @@ const Profile = () => {
 
 
 
+    const lastFetchRef = useRef(0);
+
     const fetchProfileData = async () => {
+        // Throttle fetching: don't fetch if last fetch was less than 60s ago
+        const now = Date.now();
+        if (now - lastFetchRef.current < 60000 && !loading) {
+            return;
+        }
+
         try {
             const [userRes, remindersRes] = await Promise.all([
                 getMe(),
@@ -60,6 +68,7 @@ const Profile = () => {
                 completed: completed,
                 pending: filteredReminders.length - completed
             });
+            lastFetchRef.current = Date.now();
         } catch (error) {
             console.error("Error fetching profile", error);
         } finally {
