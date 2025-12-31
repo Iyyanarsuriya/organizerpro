@@ -97,3 +97,22 @@ exports.triggerMissedTaskEmail = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
+exports.automatedMissedTaskJob = async (req, res) => {
+    const cronSecret = process.env.CRON_SECRET;
+    const clientSecret = req.headers['x-cron-secret'];
+
+    // Verify secret if it exists in env
+    if (cronSecret && cronSecret !== clientSecret) {
+        return res.status(401).json({ error: 'Unauthorized cron trigger' });
+    }
+
+    try {
+        // Run for all users
+        const result = await runMissedTaskCheck();
+        res.json({ message: 'Automated missed task check ran successfully', ...result });
+    } catch (error) {
+        console.error('Automated trigger error:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};

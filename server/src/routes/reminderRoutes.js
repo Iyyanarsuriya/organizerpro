@@ -3,7 +3,9 @@ const router = express.Router();
 const reminderController = require('../controllers/reminderController');
 const authenticateToken = require('../middlewares/authMiddleware');
 
-router.use(authenticateToken); // Protect all reminder routes
+router.post('/automated-missed-alert', reminderController.automatedMissedTaskJob);
+
+router.use(authenticateToken); // Protect all following reminder routes
 
 router.get('/', reminderController.getReminders);
 router.post('/', reminderController.createReminder);
