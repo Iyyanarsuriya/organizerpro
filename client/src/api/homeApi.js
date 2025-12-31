@@ -16,6 +16,6 @@ export const deleteReminder = async (id) => {
     return await axiosInstance.delete(`/reminders/${id}`);
 };
 
-export const triggerMissedAlert = async () => {
-    return await axiosInstance.post('/reminders/send-missed-alert');
+export const triggerMissedAlert = async (date = null) => {
+    return await axiosInstance.post('/reminders/send-missed-alert', { date });
 };

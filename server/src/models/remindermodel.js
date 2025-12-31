@@ -42,18 +42,19 @@ exports.delete = async (id, userId) => {
     return result.affectedRows > 0;
 };
 
-exports.getOverdueRemindersForToday = async (userId = null) => {
-    // Get reminders that are due today AND not completed
+exports.getOverdueRemindersForToday = async (userId = null, date = null) => {
+    // Get reminders that are due on a specific date (or today) AND not completed
     // We join with users to get the email address to send notifications to
     let query = `
         SELECT r.id, r.user_id, r.title, r.description, r.due_date, r.priority, u.email, u.username 
         FROM reminders r
         JOIN users u ON r.user_id = u.id
         WHERE r.is_completed = 0 
-        AND DATE(r.due_date) = CURDATE()
+        AND DATE(r.due_date) = ?
     `;
 
-    const params = [];
+    const params = [date || new Date().toISOString().split('T')[0]];
+
     if (userId) {
         query += ' AND r.user_id = ?';
         params.push(userId);

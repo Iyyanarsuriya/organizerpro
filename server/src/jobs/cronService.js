@@ -5,11 +5,12 @@ const pushService = require('../services/pushNotificationService');
 const User = require('../models/userModel');
 
 // Reusable function to check and send emails
-const runMissedTaskCheck = async (userId = null) => {
-    console.log(`⏰ Running missed task completion check... ${userId ? `(Target User: ${userId})` : '(All Users)'}`);
+const runMissedTaskCheck = async (userId = null, date = null) => {
+    const targetDate = date || new Date().toISOString().split('T')[0];
+    console.log(`⏰ Running missed task completion check for ${targetDate}... ${userId ? `(Target User: ${userId})` : '(All Users)'}`);
 
     try {
-        const overdueReminders = await Reminder.getOverdueRemindersForToday(userId);
+        const overdueReminders = await Reminder.getOverdueRemindersForToday(userId, targetDate);
 
         if (overdueReminders.length === 0) {
             console.log('✅ No missed tasks found.');
@@ -45,9 +46,9 @@ const runMissedTaskCheck = async (userId = null) => {
 
             const html = `
                 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
-                    <h2 style="color: #1e293b; text-align: center; border-bottom: 2px solid #f43f5e; padding-bottom: 15px;">⚠️ Missed Tasks Alert</h2>
+                    <h2 style="color: #1e293b; text-align: center; border-bottom: 2px solid #f43f5e; padding-bottom: 15px;">⚠️ Missed Tasks Alert - ${targetDate}</h2>
                     <p style="color: #475569; font-size: 16px;">Hi <strong>${username}</strong>,</p>
-                    <p style="color: #475569;">The day is almost over, but you still have <strong>${items.length} unfinished tasks</strong> scheduled for today:</p>
+                    <p style="color: #475569;">The day is almost over, but you still have <strong>${items.length} unfinished tasks</strong> scheduled for today (${targetDate}):</p>
                     <ul style="list-style: none; padding: 0;">
                         ${taskListHtml}
                     </ul>
@@ -58,7 +59,7 @@ const runMissedTaskCheck = async (userId = null) => {
                 </div>
             `;
 
-            await emailService.sendEmail(email, `You have ${items.length} missed tasks today`, html);
+            await emailService.sendEmail(email, `Missed Tasks Alert - ${targetDate}`, html);
 
             // PUSH NOTIFICATION LOGIC
             await pushService.sendNotification(userId, { // Use userId here

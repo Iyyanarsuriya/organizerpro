@@ -309,8 +309,8 @@ const Home = () => {
 
     const handleTriggerMissedAlert = async () => {
         try {
-            await triggerMissedAlert();
-            toast.success("Missed task check triggered!");
+            await triggerMissedAlert(filterDate);
+            toast.success(`Checking missed tasks for ${filterDate || 'today'}...`);
         } catch (error) {
             toast.error("Failed to trigger missed task check");
         }
