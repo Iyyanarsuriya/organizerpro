@@ -164,6 +164,7 @@ exports.getMe = async (req, res) => {
         if (!user) return res.status(404).json({ error: 'User not found' });
         res.json(user);
     } catch (error) {
+        console.error('getMe error:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };

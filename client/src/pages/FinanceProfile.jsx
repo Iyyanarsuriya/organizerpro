@@ -121,7 +121,7 @@ const FinanceProfile = () => {
                                 <div className="grid grid-cols-2 gap-[16px] w-full text-center">
                                     <div>
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Net Worth</p>
-                                        <p className="text-[16px] sm:text-[18px] font-black text-emerald-600">${totalBalance.toFixed(0)}</p>
+                                        <p className="text-[16px] sm:text-[18px] font-black text-emerald-600">₹{totalBalance.toFixed(0)}</p>
                                     </div>
                                     <div>
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Efficiency</p>
@@ -172,10 +172,10 @@ const FinanceProfile = () => {
                                     />
                                     <div>
                                         <label className="block text-[10px] sm:text-[12px] font-black text-slate-400 uppercase tracking-[0.2em] mb-[8px] sm:mb-[12px] ml-[4px] sm:ml-[8px]">Default Currency</label>
-                                        <select className="w-full bg-slate-50 border border-slate-200 rounded-[12px] sm:rounded-[16px] px-[16px] sm:px-[24px] py-[12px] sm:py-[16px] text-[12px] sm:text-[14px] font-bold text-slate-700 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all cursor-pointer">
+                                        <select className="w-full bg-slate-50 border border-slate-200 rounded-[12px] sm:rounded-[16px] px-[16px] sm:px-[24px] py-[12px] sm:py-[16px] text-[12px] sm:text-[14px] font-bold text-slate-700 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all cursor-pointer" defaultValue="INR (₹)">
+                                            <option>INR (₹)</option>
                                             <option>USD ($)</option>
                                             <option>EUR (€)</option>
-                                            <option>INR (₹)</option>
                                             <option>GBP (£)</option>
                                         </select>
                                     </div>

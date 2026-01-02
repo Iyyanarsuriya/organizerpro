@@ -1,0 +1,247 @@
+import { Link } from 'react-router-dom';
+import { API_URL } from '../api/axiosInstance';
+import {
+    Bell,
+    PieChart,
+    ArrowRight,
+    Cloud,
+    RefreshCcw,
+    TrendingUp,
+    LayoutDashboard,
+    Wallet,
+    BarChart3,
+    CheckCircle2,
+    Facebook,
+    Twitter,
+    Linkedin,
+    Instagram,
+    Sun,
+    Clock,
+    Github
+} from 'lucide-react';
+
+const LandingPage = ({ token, user, onProfileClick, onSignupClick }) => {
+    const isLoggedIn = !!token;
+
+    return (
+        <div className="bg-[#f8fafc] min-h-screen font-['Outfit',sans-serif] text-slate-800 overflow-x-hidden">
+
+
+            {/* Hero Section */}
+            <section className="pt-12 lg:pt-20 pb-20 px-4 sm:px-6 relative overflow-hidden">
+                {/* Background Decor */}
+                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[120px] -z-10 translate-x-1/2 -translate-y-1/2"></div>
+
+                <div className="max-w-7xl mx-auto">
+                    <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+                        <div className="animate-in fade-in slide-in-from-left-10 duration-700">
+                            <h1 className="text-[36px] sm:text-[48px] md:text-[60px] lg:text-[72px] font-black text-[#1a1c21] leading-[1.1] mb-[16px]">
+                                {isLoggedIn ? (
+                                    <>Welcome Back to <span className="text-[#2d5bff]">OrganizerPro</span></>
+                                ) : (
+                                    <>Your Personal <span className="text-[#2d5bff]">Organizer</span></>
+                                )}
+                            </h1>
+                            <p className="text-[12px] sm:text-[13px] font-black text-slate-400 uppercase tracking-[0.4em] mb-[40px]">
+                                PRODUCTIVITY MEETS CONTROL
+                            </p>
+
+                            {isLoggedIn ? (
+                                <div className="flex flex-wrap gap-4 mb-12">
+                                    <Link to="/reminders" className="inline-flex items-center gap-3 bg-[#2d5bff] hover:bg-blue-600 text-white font-black px-8 py-4 rounded-2xl shadow-xl shadow-blue-500/10 transition-all active:scale-95 group">
+                                        <Bell className="w-5 h-5" />
+                                        My Reminders
+                                    </Link>
+                                    <Link to="/expenses" className="inline-flex items-center gap-3 bg-[#00d1a0] hover:bg-[#00b890] text-white font-black px-8 py-4 rounded-2xl shadow-xl shadow-emerald-500/10 transition-all active:scale-95 group">
+                                        <Wallet className="w-5 h-5" />
+                                        Track Expenses
+                                    </Link>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={onSignupClick}
+                                    className="inline-flex items-center bg-[#00d1a0] hover:bg-[#00b890] text-white text-[18px] font-black px-[40px] py-[16px] rounded-full shadow-2xl shadow-emerald-500/20 transition-all active:scale-95 mb-[64px] cursor-pointer"
+                                >
+                                    Get Started For Free
+                                </button>
+                            )}
+
+                            {/* Center Feature Cards */}
+                            <div className="grid sm:grid-cols-2 gap-6 max-w-2xl">
+                                <div className="p-8 rounded-[40px] bg-[#eff6ff] border border-blue-100 flex flex-col items-center text-center group cursor-pointer hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-500">
+                                    <div className="w-16 h-16 bg-[#2d5bff] rounded-[24px] flex items-center justify-center mb-6 shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
+                                        <Bell className="w-8 h-8 text-white" />
+                                    </div>
+                                    <h3 className="text-[20px] font-black text-[#2d5bff] mb-[12px]">Reminders</h3>
+                                    <p className="text-slate-400 text-[14px] font-medium leading-relaxed mb-[16px]">
+                                        Never miss what matters with our smart notification system.
+                                    </p>
+                                    <div className="text-[10px] font-black uppercase text-[#2d5bff] tracking-widest flex items-center gap-2 group-hover:gap-3 transition-all">
+                                        Learn More <ArrowRight className="w-3 h-3" />
+                                    </div>
+                                </div>
+                                <div className="p-8 rounded-[40px] bg-[#ecfdf5] border border-emerald-100 flex flex-col items-center text-center group cursor-pointer hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-500">
+                                    <div className="w-16 h-16 bg-[#00d1a0] rounded-[24px] flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/30 group-hover:scale-110 transition-transform">
+                                        <Wallet className="w-8 h-8 text-white" />
+                                    </div>
+                                    <h3 className="text-xl font-black text-[#00d1a0] mb-3">Expense</h3>
+                                    <p className="text-slate-400 text-sm font-medium leading-relaxed mb-4">
+                                        Track spending and manage your budget with absolute ease.
+                                    </p>
+                                    <div className="text-[10px] font-black uppercase text-[#00d1a0] tracking-widest flex items-center gap-2 group-hover:gap-3 transition-all">
+                                        View Features <ArrowRight className="w-3 h-3" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="relative animate-in fade-in slide-in-from-right-10 duration-1000 delay-200 hidden lg:flex justify-end">
+                            <div className="relative z-10 scale-105 lg:scale-110">
+                                <div className={`navigate-home-container bg-white rounded-[32px] sm:rounded-[48px] p-2 sm:p-4 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.1)] border border-white ${!isLoggedIn ? 'max-w-[450px]' : 'max-w-[550px]'}`}>
+                                    <div className="bg-[#1a1c21] rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl p-1.5 sm:p-2">
+                                        <div className="aspect-4/5 relative rounded-xl sm:rounded-2xl overflow-hidden bg-[#2d5bff]/5">
+                                            <img
+                                                src="/landing_hero.png"
+                                                alt="Organizer Display"
+                                                className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-700"
+                                                onError={(e) => {
+                                                    // High quality colorful clipboard illustration fallback
+                                                    e.target.src = 'https://img.freepik.com/free-vector/clipboard-with-checking-list-icon-illustration_53876-136502.jpg?w=800';
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Features Icon Row */}
+            <section className="py-24 bg-white">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
+                        <div className="flex flex-col items-center text-center group">
+                            <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-6 group-hover:bg-blue-100 transition-colors">
+                                <RefreshCcw className="w-7 h-7 text-blue-500" />
+                            </div>
+                            <h4 className="font-black text-[#1a1c21] text-base mb-2">Smart Sync: Your</h4>
+                            <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Expenses work together</p>
+                        </div>
+                        <div className="flex flex-col items-center text-center group">
+                            <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center mb-6 group-hover:bg-emerald-100 transition-colors">
+                                <BarChart3 className="w-7 h-7 text-emerald-500" />
+                            </div>
+                            <h4 className="font-black text-[#1a1c21] text-base mb-2">Analytics View</h4>
+                            <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Real-time data insights</p>
+                        </div>
+                        <div className="flex flex-col items-center text-center group">
+                            <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mb-6 group-hover:bg-indigo-100 transition-colors">
+                                <TrendingUp className="w-7 h-7 text-indigo-500" />
+                            </div>
+                            <h4 className="font-black text-[#1a1c21] text-base mb-2">Analytics Reports</h4>
+                            <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Productivity habits</p>
+                        </div>
+                        <div className="flex flex-col items-center text-center group">
+                            <div className="w-14 h-14 rounded-2xl bg-sky-50 flex items-center justify-center mb-6 group-hover:bg-sky-100 transition-colors">
+                                <Cloud className="w-7 h-7 text-sky-400" />
+                            </div>
+                            <h4 className="font-black text-[#1a1c21] text-base mb-2">Cloud Backup</h4>
+                            <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Never lose information</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Dark Section - How it Works */}
+            <section className="py-32 bg-[#1a1c21] text-white relative">
+                <div className="max-w-7xl mx-auto px-6 relative z-10">
+                    <h2 className="text-4xl font-black mb-16 tracking-tight">How It Works</h2>
+
+                    <div className="grid md:grid-cols-3 gap-8 mb-32">
+                        {/* Step 1 */}
+                        <div className="bg-white/5 backdrop-blur-sm p-10 rounded-[40px] border border-white/10 hover:border-blue-500/50 transition-all duration-500 group">
+                            <div className="flex items-center gap-6 mb-8">
+                                <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white/10 group-hover:border-[#2d5bff]/50 transition-all">
+                                    <img src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=200&h=200&fit=crop" alt="User 1" className="w-full h-full object-cover" />
+                                </div>
+                                <div>
+                                    <h4 className="font-black text-xl">Create Account</h4>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Add step in seconds</p>
+                                </div>
+                            </div>
+                            <p className="text-slate-400 font-medium leading-relaxed">
+                                Join our platform and start organizing your life instantly with just a few clicks and a secure login.
+                            </p>
+                        </div>
+
+                        {/* Step 2 */}
+                        <div className="bg-white/5 backdrop-blur-sm p-10 rounded-[40px] border border-white/10 hover:border-emerald-500/50 transition-all duration-500 group">
+                            <div className="flex items-center gap-6 mb-8">
+                                <div className="w-20 h-20 rounded-[30px] bg-white/10 flex items-center justify-center text-4xl font-black text-white/20 group-hover:text-[#00d1a0] group-hover:bg-emerald-500/10 transition-all">
+                                    2.
+                                </div>
+                                <div>
+                                    <h4 className="font-black text-xl">Log Data</h4>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Add your daily tasks</p>
+                                </div>
+                            </div>
+                            <p className="text-slate-400 font-medium leading-relaxed">
+                                Log your daily tasks, set priorities, and keep track of your spending to stay organized and productive.
+                            </p>
+                        </div>
+
+                        {/* Step 3 */}
+                        <div className="bg-white/5 backdrop-blur-sm p-10 rounded-[40px] border border-white/10 hover:border-indigo-500/50 transition-all duration-500 group">
+                            <div className="flex items-center gap-6 mb-8">
+                                <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white/10 group-hover:border-indigo-500/50 transition-all">
+                                    <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop" alt="User 2" className="w-full h-full object-cover" />
+                                </div>
+                                <div>
+                                    <h4 className="font-black text-xl">Testimonial For Life</h4>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Indispensable Tool!</p>
+                                </div>
+                            </div>
+                            <p className="text-slate-400 font-medium leading-relaxed">
+                                "This app has completely changed how I manage my time and money. Absolutely essential for my workflow."
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Footer Area */}
+                    <div className="pt-20 border-t border-white/10 flex flex-col lg:flex-row items-center justify-between gap-12">
+                        <div className="flex items-center gap-6">
+                            {[Facebook, Twitter, Linkedin, Instagram].map((Icon, i) => (
+                                <a key={i} href="#" className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:bg-[#2d5bff] hover:border-[#2d5bff] transition-all group">
+                                    <Icon className="w-5 h-5 text-white/50 group-hover:text-white" />
+                                </a>
+                            ))}
+                        </div>
+
+                        <div className="flex flex-wrap justify-center gap-x-12 gap-y-4">
+                            <a href="#" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] hover:text-white transition-colors">Terms of Service</a>
+                            <a href="#" className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] hover:text-white transition-colors">Privacy Policy</a>
+                        </div>
+
+                        <div className="flex flex-col items-center lg:items-end gap-2">
+                            <a href="mailto:contact@organizerpro.com" className="text-sm font-black text-white hover:text-[#2d5bff] transition-colors">Contact Us</a>
+                            <p className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em]">
+                                @2024 OrganizerPro
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Decorative Star */}
+                <div className="absolute bottom-12 right-12 w-32 h-32 opacity-20 pointer-events-none">
+                    <svg viewBox="0 0 100 100" fill="white">
+                        <path d="M50 0 L53 47 L100 50 L53 53 L50 100 L47 53 L0 50 L47 47 Z" />
+                    </svg>
+                </div>
+            </section>
+        </div>
+    );
+};
+
+export default LandingPage;

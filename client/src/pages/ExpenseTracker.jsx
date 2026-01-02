@@ -179,9 +179,9 @@ const ExpenseTracker = () => {
                     <div className="animate-in fade-in duration-500">
                         {/* Summary Cards */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[16px] sm:gap-[24px] mb-[32px] lg:mb-[48px]">
-                            <StatCard title="Total Balance" value={`$${totalBalance.toFixed(2)}`} color="text-slate-800" subtitle={`${totalBalance >= 0 ? '+' : ''}0% from last month`} />
-                            <StatCard title="Monthly Income" value={`$${parseFloat(stats.summary?.total_income || 0).toFixed(2)}`} color="text-blue-500" subtitle="This month" />
-                            <StatCard title="Monthly Expenses" value={`$${parseFloat(stats.summary?.total_expense || 0).toFixed(2)}`} color="text-red-500" subtitle="This month" />
+                            <StatCard title="Total Balance" value={`₹${totalBalance.toFixed(2)}`} color="text-slate-800" subtitle={`${totalBalance >= 0 ? '+' : ''}0% from last month`} />
+                            <StatCard title="Monthly Income" value={`₹${parseFloat(stats.summary?.total_income || 0).toFixed(2)}`} color="text-blue-500" subtitle="This month" />
+                            <StatCard title="Monthly Expenses" value={`₹${parseFloat(stats.summary?.total_expense || 0).toFixed(2)}`} color="text-red-500" subtitle="This month" />
                             <StatCard title="Savings Rate" value={`${savingsRate}%`} color="text-emerald-500" subtitle="% of income" />
                         </div>
 
@@ -279,7 +279,7 @@ const ExpenseTracker = () => {
                                                 </div>
                                             </div>
                                             <p className={`font-black text-[13px] sm:text-[14px] ${t.type === 'income' ? 'text-blue-500' : 'text-red-500'}`}>
-                                                {t.type === 'income' ? '+' : '-'}${parseFloat(t.amount).toFixed(2)}
+                                                {t.type === 'income' ? '+' : '-'}₹{parseFloat(t.amount).toFixed(2)}
                                             </p>
                                         </div>
                                     ))}
@@ -353,7 +353,7 @@ const ExpenseTracker = () => {
                                     </div>
                                     <div className="flex items-center justify-between sm:justify-end gap-[12px] sm:gap-[24px]">
                                         <p className={`text-[18px] sm:text-[20px] font-black tracking-tighter ${t.type === 'income' ? 'text-blue-500' : 'text-red-500'}`}>
-                                            {t.type === 'income' ? '+' : '-'}${parseFloat(t.amount).toFixed(2)}
+                                            {t.type === 'income' ? '+' : '-'}₹{parseFloat(t.amount).toFixed(2)}
                                         </p>
                                         <button onClick={() => handleDelete(t.id)} className="p-[12px] text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-[12px] transition-all opacity-100 sm:opacity-0 group-hover:opacity-100 cursor-pointer">
                                             <FaTrash />
@@ -387,12 +387,12 @@ const ExpenseTracker = () => {
                                         <span className="text-[24px] font-black tracking-tighter text-blue-500">76%</span>
                                     </div>
                                     <h4 className="text-[18px] font-black mb-[8px]">Food & Dining</h4>
-                                    <p className="text-[12px] text-slate-500 font-bold uppercase tracking-widest mb-[24px]">Budget: $500.00</p>
+                                    <p className="text-[12px] text-slate-500 font-bold uppercase tracking-widest mb-[24px]">Budget: ₹500.00</p>
                                     <div className="w-full h-[12px] bg-slate-50 rounded-full overflow-hidden mb-[8px]">
                                         <div className="h-full bg-blue-500 w-[76%] rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
                                     </div>
                                 </div>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-[24px]">Remaining: $120.00</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-[24px]">Remaining: ₹120.00</p>
                             </div>
                             <div className="bg-white p-[32px] rounded-[32px] shadow-xl border border-slate-100 flex flex-col justify-between">
                                 <div>
@@ -403,12 +403,12 @@ const ExpenseTracker = () => {
                                         <span className="text-[24px] font-black tracking-tighter text-emerald-500">45%</span>
                                     </div>
                                     <h4 className="text-[18px] font-black mb-[8px]">Health & Wellness</h4>
-                                    <p className="text-[12px] text-slate-500 font-bold uppercase tracking-widest mb-[24px]">Budget: $200.00</p>
+                                    <p className="text-[12px] text-slate-500 font-bold uppercase tracking-widest mb-[24px]">Budget: ₹200.00</p>
                                     <div className="w-full h-[12px] bg-slate-50 rounded-full overflow-hidden mb-[8px]">
                                         <div className="h-full bg-emerald-500 w-[45%] rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
                                     </div>
                                 </div>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-[24px]">Remaining: $110.00</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-[24px]">Remaining: ₹110.00</p>
                             </div>
                         </div>
                     </div>
@@ -445,7 +445,7 @@ const ExpenseTracker = () => {
                                     </div>
                                     <div className="p-[24px] bg-slate-50 rounded-[24px] border border-slate-100">
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px]">Average Expense</p>
-                                        <p className="text-[32px] font-black tracking-tighter text-slate-800">$42.50</p>
+                                        <p className="text-[32px] font-black tracking-tighter text-slate-800">₹42.50</p>
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-[16px]">per transaction</p>
                                     </div>
                                     <div className="p-[24px] bg-slate-50 rounded-[24px] border border-slate-100">
@@ -476,12 +476,12 @@ const ExpenseTracker = () => {
                                     </div>
                                     <div>
                                         <h3 className="text-[24px] font-black">Dreams House Fund</h3>
-                                        <p className="text-white/60 text-[12px] font-bold uppercase tracking-widest">Target: $500,000</p>
+                                        <p className="text-white/60 text-[12px] font-bold uppercase tracking-widest">Target: ₹500,000</p>
                                     </div>
                                 </div>
 
                                 <div className="mb-[12px] flex justify-between items-end">
-                                    <span className="text-[48px] font-black tracking-tighter">$125,400</span>
+                                    <span className="text-[48px] font-black tracking-tighter">₹125,400</span>
                                     <span className="text-[18px] font-black opacity-80 mb-[12px]">25% reached</span>
                                 </div>
 
@@ -571,7 +571,7 @@ const BudgetProgress = ({ label, spent, limit, color }) => {
         <div>
             <div className="flex justify-between items-center mb-[8px]">
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{label}</span>
-                <span className="text-[10px] font-black text-slate-800">${parseFloat(spent).toFixed(0)} / ${limit}</span>
+                <span className="text-[10px] font-black text-slate-800">₹{parseFloat(spent).toFixed(0)} / ₹{limit}</span>
             </div>
             <div className="w-full h-[8px] bg-slate-100 rounded-full overflow-hidden">
                 <div

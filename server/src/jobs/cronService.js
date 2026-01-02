@@ -30,10 +30,13 @@ const runMissedTaskCheck = async (userId = null, date = null) => {
             return acc;
         }, {});
 
+        // Format date for display (DD-MM-YYYY)
+        const [year, month, day] = targetDate.split('-');
+        const displayDate = `${day}-${month}-${year}`;
+
         // Send email and push to each user
         for (const [email, data] of Object.entries(userReminders)) {
-            const { username, items, userId } = data; // We need user_id here. 
-            // Note: Reminder.getOverdueRemindersForToday query needs to return user_id as 'user_id' or 'id' from users table.
+            const { username, items, userId } = data;
 
             // EMAIL LOGIC
             const taskListHtml = items.map(item => `
@@ -46,9 +49,9 @@ const runMissedTaskCheck = async (userId = null, date = null) => {
 
             const html = `
                 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
-                    <h2 style="color: #1e293b; text-align: center; border-bottom: 2px solid #f43f5e; padding-bottom: 15px;">⚠️ Missed Tasks Alert - ${targetDate}</h2>
+                    <h2 style="color: #1e293b; text-align: center; border-bottom: 2px solid #f43f5e; padding-bottom: 15px;">⚠️ Missed Tasks Alert - ${displayDate}</h2>
                     <p style="color: #475569; font-size: 16px;">Hi <strong>${username}</strong>,</p>
-                    <p style="color: #475569;">The day is almost over, but you still have <strong>${items.length} unfinished tasks</strong> scheduled for today (${targetDate}):</p>
+                    <p style="color: #475569;">The day is almost over, but you still have <strong>${items.length} unfinished tasks</strong> scheduled for today (${displayDate}):</p>
                     <ul style="list-style: none; padding: 0;">
                         ${taskListHtml}
                     </ul>
@@ -59,7 +62,7 @@ const runMissedTaskCheck = async (userId = null, date = null) => {
                 </div>
             `;
 
-            await emailService.sendEmail(email, `Missed Tasks Alert - ${targetDate}`, html);
+            await emailService.sendEmail(email, `Missed Tasks Alert - ${displayDate}`, html);
 
             // PUSH NOTIFICATION LOGIC
             await pushService.sendNotification(userId, { // Use userId here
