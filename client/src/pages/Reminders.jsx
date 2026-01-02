@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { FaBell, FaTimes } from 'react-icons/fa';
 import { LayoutDashboard, Settings } from 'lucide-react';
-import { getCategories } from '../api/categoryApi';
+import { getCategories, createCategory, deleteCategory } from '../api/categoryApi';
 import CategoryManager from '../components/CategoryManager';
 
 const Reminders = () => {
@@ -433,9 +433,12 @@ const Reminders = () => {
             <div className="w-full max-w-[1280px] flex flex-col h-full pt-[16px] pb-[8px] sm:py-[16px] md:py-[32px]">
 
                 <div className="flex justify-between items-center mb-[16px] sm:mb-[24px] shrink-0 bg-linear-to-r from-[#2d5bff] via-[#4a69ff] to-[#6366f1] p-[10px] sm:p-[16px] rounded-[12px] sm:rounded-[16px] border border-blue-400/30 shadow-xl shadow-blue-500/20 relative z-20">
-                    <h1 className="text-[18px] sm:text-[24px] md:text-[30px] font-black text-white drop-shadow-lg tracking-tight">
-                        Dashboard
-                    </h1>
+                    <div className="flex items-center gap-[12px] sm:gap-[16px]">
+                        <h1 className="text-[18px] sm:text-[24px] md:text-[30px] font-black text-white drop-shadow-lg tracking-tight">
+                            Dashboard
+                        </h1>
+                    </div>
+
 
                     <div className="flex items-center gap-[8px] sm:gap-[16px]">
                         {/* 🔔 Notification Icon */}
@@ -577,6 +580,38 @@ const Reminders = () => {
                                             <span className="text-[9px] sm:text-[10px] md:text-[12px] font-black uppercase tracking-widest">Filters</span>
                                         </button>
 
+                                        {/* 📅 Date Search Filter */}
+                                        <div className="relative shrink-0">
+                                            <div className={`flex items-center gap-[6px] sm:gap-[8px] bg-white border px-[10px] sm:px-[12px] py-[4px] sm:py-[6px] rounded-[8px] transition-all cursor-pointer ${filterDate ? 'border-[#2d5bff] ring-2 ring-[#2d5bff]/10' : 'border-slate-200 hover:border-slate-300'}`}>
+                                                <svg className={`w-[12px] h-[12px] sm:w-[14px] sm:h-[14px] ${filterDate ? 'text-[#2d5bff]' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                <span className="text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-wide hidden sm:inline">Date:</span>
+                                                <input
+                                                    type="date"
+                                                    value={filterDate}
+                                                    onChange={(e) => setFilterDate(e.target.value)}
+                                                    className="bg-transparent text-[9px] sm:text-[11px] font-bold text-slate-700 outline-none cursor-pointer uppercase tracking-wider max-w-[85px] sm:max-w-none"
+                                                />
+                                                {filterDate && (
+                                                    <button
+                                                        onClick={() => setFilterDate('')}
+                                                        className="text-slate-400 hover:text-[#ff4d4d] transition-colors cursor-pointer"
+                                                    >
+                                                        <FaTimes className="w-2 sm:w-2.5 h-2 sm:h-2.5" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            onClick={() => setShowCategoryManager(true)}
+                                            className="p-[5px] sm:p-[6px] bg-white border border-slate-200 rounded-[8px] text-slate-400 hover:text-[#2d5bff] hover:border-[#2d5bff] transition-all cursor-pointer shadow-sm group/cat-btn shrink-0"
+                                            title="Manage Categories"
+                                        >
+                                            <Settings className="w-[12px] h-[12px] sm:w-[14px] sm:h-[14px] group-hover/cat-btn:rotate-90 transition-transform" />
+                                        </button>
+
                                         <button
                                             onClick={() => setIsSelectionMode(!isSelectionMode)}
                                             className={`text-[9px] sm:text-[10px] md:text-[12px] font-black uppercase tracking-widest px-[10px] sm:px-[12px] py-[4px] sm:py-[6px] rounded-[8px] border transition-all cursor-pointer ${isSelectionMode ? 'bg-[#2d5bff] text-white border-[#2d5bff] shadow-lg shadow-blue-500/30' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'}`}
@@ -616,29 +651,7 @@ const Reminders = () => {
                                             </div>
                                         </div>
 
-                                        {/* 📅 Date Search Filter */}
-                                        <div className="relative shrink-0">
-                                            <div className={`flex items-center gap-[8px] bg-white border px-[12px] py-[8px] rounded-[12px] transition-all cursor-pointer ${filterDate ? 'border-[#2d5bff] ring-2 ring-[#2d5bff]/10' : 'border-slate-200 hover:border-slate-300'}`}>
-                                                <svg className={`w-[14px] h-[14px] ${filterDate ? 'text-[#2d5bff]' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-wide">Date:</span>
-                                                <input
-                                                    type="date"
-                                                    value={filterDate}
-                                                    onChange={(e) => setFilterDate(e.target.value)}
-                                                    className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer uppercase tracking-wider"
-                                                />
-                                                {filterDate && (
-                                                    <button
-                                                        onClick={() => setFilterDate('')}
-                                                        className="text-slate-400 hover:text-[#ff4d4d] transition-colors cursor-pointer"
-                                                    >
-                                                        <FaTimes className="w-2.5 h-2.5" />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
+
 
                                         {/* 🏷️ Category Filter */}
                                         <div className="relative group/cat flex items-center gap-[8px]">
@@ -669,13 +682,7 @@ const Reminders = () => {
                                                     </svg>
                                                 )}
                                             </div>
-                                            <button
-                                                onClick={() => setShowCategoryManager(true)}
-                                                className="p-2 bg-white border border-slate-200 rounded-[12px] text-slate-400 hover:text-[#2d5bff] hover:border-[#2d5bff]/30 transition-all cursor-pointer shadow-sm group/cat-btn shrink-0"
-                                                title="Manage Categories"
-                                            >
-                                                <Settings className="w-[14px] h-[14px] group-hover/cat-btn:rotate-45 transition-transform" />
-                                            </button>
+
                                         </div>
                                         {/* 🧪 Sort Control */}
                                         <div className="relative group/sort">
@@ -823,6 +830,8 @@ const Reminders = () => {
                         getCategories().then(res => setCategories(res.data));
                         // No need to refresh reminders, but good practice
                     }}
+                    onCreate={createCategory}
+                    onDelete={deleteCategory}
                     onClose={() => setShowCategoryManager(false)}
                 />
             )}

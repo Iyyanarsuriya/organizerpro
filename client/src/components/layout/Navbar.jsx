@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
-import { LayoutDashboard, Bell, X, ChevronRight, Sun, Clock } from 'lucide-react';
+import { LayoutDashboard, Bell, X, ChevronRight, Sun, Clock, Home } from 'lucide-react';
 import { API_URL } from '../../api/axiosInstance';
 
 const Navbar = ({
@@ -18,7 +18,7 @@ const Navbar = ({
     const isLandingPage = location.pathname === '/';
 
     return (
-        <header className={`fixed top-0 left-0 right-0 z-100 backdrop-blur-xl border-b transition-all duration-300 ${isLandingPage ? 'bg-white/80 border-slate-200' : 'bg-[#1a1c21]/80 border-white/5'}`}>
+        <header className={`fixed top-0 left-0 right-0 z-100 backdrop-blur-xl border-b transition-all duration-300 ${isLandingPage ? 'bg-white/80 border-slate-200' : 'bg-black border-white/10'}`}>
             <div className="max-w-[1440px] mx-auto px-[16px] sm:px-[40px] h-[72px] sm:h-[80px] flex items-center justify-between">
 
                 {/* Left: Branding */}
@@ -49,23 +49,46 @@ const Navbar = ({
                     ) : (
                         <div className="flex items-center gap-4 sm:gap-[24px]">
                             {!isLandingPage && (
-                                <Link to="/" className="text-[10px] sm:text-[12px] font-black tracking-widest uppercase text-white/70 hover:text-white transition-all duration-300 hidden xs:block">
-                                    Home
-                                </Link>
+                                <button
+                                    onClick={() => navigate('/')}
+                                    className="w-[34px] h-[34px] sm:w-[40px] sm:h-[40px] bg-white/10 hover:bg-white text-white hover:text-black rounded-[10px] sm:rounded-[12px] flex items-center justify-center transition-all duration-300 active:scale-90 shadow-lg shadow-white/5 group"
+                                    title="Back to Home"
+                                >
+                                    <Home className="w-5 h-5 sm:w-6 sm:h-6 transition-transform group-hover:scale-110" />
+                                </button>
                             )}
+
+                            {/* Profile Icon (Before Bell) */}
+                            <button
+                                onClick={onProfileClick}
+                                className="w-[34px] h-[34px] sm:w-[40px] sm:h-[40px] rounded-full bg-linear-to-br from-[#2d5bff] to-[#6366f1] border-2 border-white/10 overflow-hidden hover:border-white transition-all active:scale-90 cursor-pointer shadow-lg shadow-blue-500/20 flex items-center justify-center group shrink-0"
+                            >
+                                {/* {(user?.profile_image && !imageError) ? (
+                                    <img
+                                        src={user.profile_image.startsWith('http') ? user.profile_image : `${API_URL}${user.profile_image}`}
+                                        alt="Profile"
+                                        className="w-full h-full object-cover"
+                                        onError={() => setImageError(true)}
+                                    />
+                                ) : ( */}
+                                <span className="text-white font-black text-[14px] sm:text-[15px] tracking-tight">
+                                    {user?.username ? user.username.charAt(0).toUpperCase() : '?'}
+                                </span>
+                                {/* )} */}
+                            </button>
 
                             {/* Notification Bell */}
                             <div className="relative">
                                 <button
                                     onClick={() => setShowNotifDropdown(!showNotifDropdown)}
-                                    className={`relative p-2 rounded-full transition-all active:scale-90 cursor-pointer ${showNotifDropdown
+                                    className={`relative p-2 rounded-[12px] transition-all active:scale-90 cursor-pointer ${showNotifDropdown
                                         ? (isLandingPage ? 'bg-slate-100 text-black' : 'bg-white/10 text-white')
-                                        : (isLandingPage ? 'text-slate-500 hover:text-black hover:bg-slate-50' : 'text-slate-400 hover:text-white hover:bg-white/5')
+                                        : (isLandingPage ? 'text-slate-500 hover:text-black hover:bg-slate-50' : 'text-white hover:bg-white/5')
                                         }`}
                                 >
                                     <Bell className="w-5 h-5 sm:w-6 sm:h-6" />
                                     {todayReminders.length > 0 && (
-                                        <span className={`absolute top-[6px] right-[6px] w-[14px] h-[14px] sm:w-[18px] sm:h-[18px] bg-[#ff4d4d] border-2 rounded-full text-[8px] sm:text-[10px] font-black text-white flex items-center justify-center animate-pulse ${isLandingPage ? 'border-white' : 'border-[#1a1c21]'}`}>
+                                        <span className={`absolute top-[6px] right-[6px] w-[14px] h-[14px] sm:w-[18px] sm:h-[18px] bg-[#ff4d4d] border-2 rounded-full text-[8px] sm:text-[10px] font-black text-white flex items-center justify-center animate-pulse ${isLandingPage ? 'border-white' : 'border-black'}`}>
                                             {todayReminders.length}
                                         </span>
                                     )}
@@ -129,25 +152,6 @@ const Navbar = ({
                                     </>
                                 )}
                             </div>
-
-                            {/* Profile Icon (Last) */}
-                            <button
-                                onClick={onProfileClick}
-                                className="w-[36px] h-[36px] sm:w-[42px] sm:h-[42px] rounded-full bg-linear-to-br from-[#2d5bff] to-[#6366f1] border-2 border-white/20 overflow-hidden hover:border-white transition-all active:scale-90 cursor-pointer shadow-lg shadow-blue-500/20 flex items-center justify-center group"
-                            >
-                                {/* {(user?.profile_image && !imageError) ? (
-                                    <img
-                                        src={user.profile_image.startsWith('http') ? user.profile_image : `${API_URL}${user.profile_image}`}
-                                        alt="Profile"
-                                        className="w-full h-full object-cover"
-                                        onError={() => setImageError(true)}
-                                    />
-                                ) : ( */}
-                                <span className="text-white font-black text-[15px] sm:text-[16px] tracking-tight">
-                                    {user?.username ? user.username.charAt(0).toUpperCase() : '?'}
-                                </span>
-                                {/* )} */}
-                            </button>
                         </div>
                     )}
 

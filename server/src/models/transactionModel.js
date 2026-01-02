@@ -26,24 +26,35 @@ class Transaction {
         return result.affectedRows > 0;
     }
 
-    static async getStats(userId) {
-        const [rows] = await db.query(
-            `SELECT 
-                SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as total_income,
-                SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as total_expense
-             FROM transactions WHERE user_id = ?`,
-            [userId]
-        );
+    static async getStats(userId, month) {
+        let query = `SELECT 
+            SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as total_income,
+            SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as total_expense
+             FROM transactions WHERE user_id = ?`;
+        const params = [userId];
+
+        if (month) {
+            query += ` AND DATE_FORMAT(date, '%Y-%m') = ?`;
+            params.push(month);
+        }
+
+        const [rows] = await db.query(query, params);
         return rows[0];
     }
 
-    static async getCategoryStats(userId) {
-        const [rows] = await db.query(
-            `SELECT category, type, SUM(amount) as total 
-             FROM transactions WHERE user_id = ? 
-             GROUP BY category, type`,
-            [userId]
-        );
+    static async getCategoryStats(userId, month) {
+        let query = `SELECT category, type, SUM(amount) as total 
+             FROM transactions WHERE user_id = ?`;
+        const params = [userId];
+
+        if (month) {
+            query += ` AND DATE_FORMAT(date, '%Y-%m') = ?`;
+            params.push(month);
+        }
+
+        query += ` GROUP BY category, type`;
+
+        const [rows] = await db.query(query, params);
         return rows;
     }
 }

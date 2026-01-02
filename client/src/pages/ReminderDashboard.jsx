@@ -16,6 +16,8 @@ const ReminderDashboard = () => {
     const [stats, setStats] = useState({ total: 0, completed: 0, pending: 0 });
     const [loading, setLoading] = useState(true);
     const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
+    const [showModal, setShowModal] = useState(null); // 'all', 'completed', 'pending', or null
+    const [modalTasks, setModalTasks] = useState([]);
     const navigate = useNavigate();
 
     const fetchProfileData = async () => {
@@ -84,6 +86,27 @@ const ReminderDashboard = () => {
         navigate('/');
     };
 
+    const handleShowTasks = (type) => {
+        const filteredReminders = reminders.filter(r => {
+            if (!filterDate) return true;
+            if (!r.due_date) return false;
+            return r.due_date.startsWith(filterDate);
+        });
+
+        let tasks = [];
+        if (type === 'all') {
+            tasks = filteredReminders;
+        } else if (type === 'completed') {
+            tasks = filteredReminders.filter(r => r.is_completed);
+        } else if (type === 'pending') {
+            tasks = filteredReminders.filter(r => !r.is_completed);
+        }
+
+        setModalTasks(tasks);
+        setShowModal(type);
+    };
+
+
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
             <div className="animate-spin rounded-full w-[48px] h-[48px] border-t-2 border-b-2 border-blue-500"></div>
@@ -95,7 +118,7 @@ const ReminderDashboard = () => {
             <div className="max-w-[1024px] mx-auto">
 
                 {/* Header Row with Date Picker */}
-                <div className="flex justify-end mb-[32px]">
+                <div className="flex justify-end mb-[32px] relative z-60">
                     <div className="relative group">
                         <input
                             type="date"
@@ -110,22 +133,31 @@ const ReminderDashboard = () => {
                 {/* Stat Cards Container */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-[24px] mb-[48px]">
                     {/* Total Tasks */}
-                    <div className="bg-white rounded-[40px] p-[32px] shadow-sm border border-slate-100 flex flex-col items-center text-center group hover:shadow-md transition-all">
+                    <button
+                        onClick={() => handleShowTasks('all')}
+                        className="bg-white rounded-[40px] p-[32px] shadow-sm border border-slate-100 flex flex-col items-center text-center group hover:shadow-md transition-all cursor-pointer"
+                    >
                         <span className="text-slate-400 text-[12px] font-black uppercase tracking-widest mb-2 group-hover:text-blue-500 transition-colors">Total Tasks</span>
                         <h2 className="text-[64px] font-black text-[#2d5bff] leading-none">{stats.total}</h2>
-                    </div>
+                    </button>
 
                     {/* Completed */}
-                    <div className="bg-white rounded-[40px] p-[32px] shadow-sm border border-slate-100 flex flex-col items-center text-center group hover:shadow-md transition-all">
+                    <button
+                        onClick={() => handleShowTasks('completed')}
+                        className="bg-white rounded-[40px] p-[32px] shadow-sm border border-slate-100 flex flex-col items-center text-center group hover:shadow-md transition-all cursor-pointer"
+                    >
                         <span className="text-[#00d1a0] text-[12px] font-black uppercase tracking-widest mb-2">Completed</span>
                         <h2 className="text-[64px] font-black text-[#00d1a0] leading-none">{stats.completed}</h2>
-                    </div>
+                    </button>
 
                     {/* Remaining */}
-                    <div className="bg-white rounded-[40px] p-[32px] shadow-sm border border-slate-100 flex flex-col items-center text-center group hover:shadow-md transition-all">
+                    <button
+                        onClick={() => handleShowTasks('pending')}
+                        className="bg-white rounded-[40px] p-[32px] shadow-sm border border-slate-100 flex flex-col items-center text-center group hover:shadow-md transition-all cursor-pointer"
+                    >
                         <span className="text-amber-500 text-[12px] font-black uppercase tracking-widest mb-2">Remaining</span>
                         <h2 className="text-[64px] font-black text-amber-500 leading-none">{stats.pending}</h2>
-                    </div>
+                    </button>
                 </div>
 
                 {/* Google Calendar Section */}
@@ -175,6 +207,92 @@ const ReminderDashboard = () => {
                         </button>
                     </div>
                 </div>
+
+                {/* Task Details Modal */}
+                {showModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        {/* Backdrop */}
+                        <div
+                            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                            onClick={() => setShowModal(null)}
+                        ></div>
+
+                        {/* Modal Content */}
+                        <div className="relative bg-white rounded-[32px] shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden z-10">
+                            {/* Modal Header */}
+                            <div className="sticky top-0 bg-white border-b border-slate-100 p-6 flex items-center justify-between z-10">
+                                <h3 className="text-xl font-black text-slate-800">
+                                    {showModal === 'all' && 'All Tasks'}
+                                    {showModal === 'completed' && 'Completed Tasks'}
+                                    {showModal === 'pending' && 'Remaining Tasks'}
+                                </h3>
+                                <button
+                                    onClick={() => setShowModal(null)}
+                                    className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+                                >
+                                    <LogOut className="w-5 h-5 text-slate-600 rotate-180" />
+                                </button>
+                            </div>
+
+                            {/* Modal Body */}
+                            <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)]">
+                                {modalTasks.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {modalTasks.map((task) => (
+                                            <div
+                                                key={task.id}
+                                                className="bg-slate-50 rounded-2xl p-4 border border-slate-100 hover:border-blue-200 transition-all"
+                                            >
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div className="flex-1">
+                                                        <h4 className="font-bold text-slate-800 mb-1">{task.title}</h4>
+                                                        {task.description && (
+                                                            <p className="text-sm text-slate-500 mb-2">{task.description}</p>
+                                                        )}
+                                                        <div className="flex flex-wrap gap-2 text-xs">
+                                                            {task.priority && (
+                                                                <span className={`px-2 py-1 rounded-full font-bold ${task.priority === 'high' ? 'bg-red-100 text-red-600' :
+                                                                    task.priority === 'medium' ? 'bg-amber-100 text-amber-600' :
+                                                                        'bg-blue-100 text-blue-600'
+                                                                    }`}>
+                                                                    {task.priority}
+                                                                </span>
+                                                            )}
+                                                            {task.category && (
+                                                                <span className="px-2 py-1 rounded-full bg-slate-200 text-slate-700 font-bold">
+                                                                    {task.category}
+                                                                </span>
+                                                            )}
+                                                            {task.due_date && (
+                                                                <span className="px-2 py-1 rounded-full bg-slate-200 text-slate-700 font-bold">
+                                                                    {new Date(task.due_date).toLocaleDateString()}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    {task.is_completed && (
+                                                        <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center shrink-0">
+                                                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-12">
+                                        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <LayoutDashboard className="w-8 h-8 text-slate-400" />
+                                        </div>
+                                        <p className="text-slate-500 font-bold">No tasks found for this date</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
             </div>
         </div>

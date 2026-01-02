@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { Plus, Trash2, X, Tag } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { createCategory, deleteCategory } from '../api/categoryApi';
-
-const CategoryManager = ({ categories, onUpdate, onClose }) => {
+const CategoryManager = ({ categories, onUpdate, onClose, onCreate, onDelete }) => {
     const [newCategory, setNewCategory] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -13,7 +11,7 @@ const CategoryManager = ({ categories, onUpdate, onClose }) => {
 
         setIsSubmitting(true);
         try {
-            await createCategory({ name: newCategory.trim() });
+            await onCreate({ name: newCategory.trim() });
             toast.success("Category added!");
             setNewCategory('');
             onUpdate(); // Trigger refresh in parent
@@ -25,6 +23,9 @@ const CategoryManager = ({ categories, onUpdate, onClose }) => {
     };
 
     const handleDelete = async (id, name) => {
+        // Warning: This 'General' check might be specific to Reminders.
+        // For flexibility, maybe pass 'safeCategories' prop? 
+        // But for now, keeping it simple as 'General' is a common default.
         if (name === 'General') {
             toast.error("Cannot delete 'General' category");
             return;
@@ -33,7 +34,7 @@ const CategoryManager = ({ categories, onUpdate, onClose }) => {
         if (!window.confirm(`Are you sure you want to delete '${name}'?`)) return;
 
         try {
-            await deleteCategory(id);
+            await onDelete(id);
             toast.success("Category deleted");
             onUpdate();
         } catch (error) {

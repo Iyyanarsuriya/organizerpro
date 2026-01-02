@@ -5,12 +5,16 @@ import { API_URL } from '../api/axiosInstance';
 import toast from 'react-hot-toast';
 import {
     FaWallet, FaPlus, FaTrash, FaChartBar, FaTag, FaHome,
-    FaExchangeAlt, FaPiggyBank, FaFileAlt, FaSignOutAlt, FaTimes
+    FaExchangeAlt, FaPiggyBank, FaFileAlt, FaSignOutAlt, FaTimes,
+    FaArrowLeft
 } from 'react-icons/fa';
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
     BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
+import { Settings } from 'lucide-react';
+import { getExpenseCategories, createExpenseCategory, deleteExpenseCategory } from '../api/expenseCategoryApi';
+import CategoryManager from '../components/CategoryManager';
 
 const ExpenseTracker = () => {
     const navigate = useNavigate();
@@ -20,6 +24,9 @@ const ExpenseTracker = () => {
     const [activeTab, setActiveTab] = useState('Dashboard');
     const [showAddModal, setShowAddModal] = useState(false);
     const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user')) || {});
+    const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7));
+    const [showCategoryManager, setShowCategoryManager] = useState(false);
+    const [categories, setCategories] = useState([]);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -33,18 +40,22 @@ const ExpenseTracker = () => {
     const [filterCat, setFilterCat] = useState('all');
     const [sortBy, setSortBy] = useState('date_desc');
     const [searchQuery, setSearchQuery] = useState('');
+    const [showModal, setShowModal] = useState(null); // 'income', 'expense', or null
+    const [modalTransactions, setModalTransactions] = useState([]);
 
     const expenseCategories = ['Food', 'Shopping', 'Rent', 'Transport', 'Utilities', 'Entertainment', 'Health', 'Other'];
     const incomeCategories = ['Salary', 'Freelance', 'Investment', 'Gift', 'Other'];
 
     const fetchData = async () => {
         try {
-            const [transRes, statsRes] = await Promise.all([
+            const [transRes, statsRes, catsRes] = await Promise.all([
                 getTransactions(),
-                getTransactionStats()
+                getTransactionStats(currentMonth),
+                getExpenseCategories()
             ]);
             setTransactions(transRes.data);
             setStats(statsRes.data);
+            setCategories(catsRes.data);
             setLoading(false);
         } catch (error) {
             toast.error("Failed to fetch data");
@@ -54,7 +65,7 @@ const ExpenseTracker = () => {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [currentMonth]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -83,6 +94,17 @@ const ExpenseTracker = () => {
         } catch (error) {
             toast.error("Failed to delete transaction");
         }
+    };
+
+    const handleShowTransactions = (type) => {
+        let filtered = [];
+        if (type === 'income') {
+            filtered = transactions.filter(t => t.type === 'income');
+        } else if (type === 'expense') {
+            filtered = transactions.filter(t => t.type === 'expense');
+        }
+        setModalTransactions(filtered);
+        setShowModal(type);
     };
 
     const filteredTransactions = useMemo(() => {
@@ -135,17 +157,15 @@ const ExpenseTracker = () => {
         <div className="flex bg-slate-50 min-h-screen text-slate-800 font-['Outfit']">
             {/* Sidebar */}
             <aside className="w-72 bg-white border-r border-slate-200 p-8 hidden lg:flex flex-col">
-                <Link to="/finance-profile" className="flex flex-col items-center mb-12 hover:opacity-80 transition-opacity">
-                    <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mb-4 border-4 border-white shadow-xl overflow-hidden relative group">
-                        {user.profile_image ? (
-                            <img src={`${API_URL}${user.profile_image}`} className="w-full h-full object-cover" alt="Profile" />
-                        ) : (
-                            <div className="text-3xl font-black text-[#2d5bff]">{user.username?.charAt(0).toUpperCase()}</div>
-                        )}
+                <div className="flex items-center gap-3 mb-12">
+                    <div className="w-10 h-10 rounded-xl bg-linear-to-br from-[#2d5bff] to-[#6366f1] flex items-center justify-center shadow-lg shadow-blue-500/20">
+                        <FaWallet className="text-white text-lg" />
                     </div>
-                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Welcome!</p>
-                    <h3 className="text-xl font-black">{user.username}</h3>
-                </Link>
+                    <div>
+                        <h2 className="text-sm font-black tracking-tight">Financial Hub</h2>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Management</p>
+                    </div>
+                </div>
 
                 <nav className="flex-1 space-y-2">
                     <SidebarItem icon={FaChartBar} label="Dashboard" />
@@ -166,12 +186,30 @@ const ExpenseTracker = () => {
                 <div className="flex justify-between items-center mb-[32px] lg:mb-[48px]">
                     <div>
                         <div className="flex items-center gap-[12px] mb-[8px]">
+                            <button
+                                onClick={() => setShowCategoryManager(true)}
+                                className="w-[40px] h-[40px] bg-slate-500 rounded-[12px] flex items-center justify-center text-white hover:bg-slate-600 transition-all cursor-pointer shadow-lg shadow-slate-500/20 group/cat-btn shrink-0"
+                                title="Manage Categories"
+                            >
+                                <Settings className="w-[20px] h-[20px] group-hover/cat-btn:rotate-90 transition-transform" />
+                            </button>
                             <div className="w-[40px] h-[40px] bg-[#2d5bff] rounded-[12px] flex items-center justify-center shadow-lg shadow-blue-500/20">
                                 <FaWallet className="text-white text-[20px]" />
                             </div>
                             <h1 className="text-[20px] sm:text-[30px] font-black tracking-tight">Income and Expense Tracker</h1>
                         </div>
                         <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest ml-[52px]">Take control of your finances</p>
+                    </div>
+
+                    {/* Month Picker Filter */}
+                    <div className="flex items-center gap-[8px] bg-white border border-slate-200 p-[8px] rounded-[12px] shadow-sm hover:border-blue-500 transition-colors">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-[4px]">Period:</span>
+                        <input
+                            type="month"
+                            value={currentMonth}
+                            onChange={(e) => setCurrentMonth(e.target.value)}
+                            className="text-[12px] font-bold text-slate-700 outline-none bg-transparent cursor-pointer font-['Outfit']"
+                        />
                     </div>
                 </div>
 
@@ -180,8 +218,20 @@ const ExpenseTracker = () => {
                         {/* Summary Cards */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[16px] sm:gap-[24px] mb-[32px] lg:mb-[48px]">
                             <StatCard title="Total Balance" value={`₹${totalBalance.toFixed(2)}`} color="text-slate-800" subtitle={`${totalBalance >= 0 ? '+' : ''}0% from last month`} />
-                            <StatCard title="Monthly Income" value={`₹${parseFloat(stats.summary?.total_income || 0).toFixed(2)}`} color="text-blue-500" subtitle="This month" />
-                            <StatCard title="Monthly Expenses" value={`₹${parseFloat(stats.summary?.total_expense || 0).toFixed(2)}`} color="text-red-500" subtitle="This month" />
+                            <StatCard
+                                title="Monthly Income"
+                                value={`₹${parseFloat(stats.summary?.total_income || 0).toFixed(2)}`}
+                                color="text-blue-500"
+                                subtitle="This month"
+                                onClick={() => handleShowTransactions('income')}
+                            />
+                            <StatCard
+                                title="Monthly Expenses"
+                                value={`₹${parseFloat(stats.summary?.total_expense || 0).toFixed(2)}`}
+                                color="text-red-500"
+                                subtitle="This month"
+                                onClick={() => handleShowTransactions('expense')}
+                            />
                             <StatCard title="Savings Rate" value={`${savingsRate}%`} color="text-emerald-500" subtitle="% of income" />
                         </div>
 
@@ -532,7 +582,7 @@ const ExpenseTracker = () => {
                                     <div>
                                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Category</label>
                                         <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[16px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-['Outfit'] cursor-pointer">
-                                            {(formData.type === 'expense' ? expenseCategories : incomeCategories).map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                            {[...new Set([...(formData.type === 'expense' ? expenseCategories : incomeCategories), ...categories.map(c => c.name)])].map(cat => <option key={cat} value={cat}>{cat}</option>)}
                                         </select>
                                     </div>
                                 </div>
@@ -550,12 +600,103 @@ const ExpenseTracker = () => {
                     </div>
                 </div>
             )}
+
+            {/* Transaction Details Modal */}
+            {showModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                        onClick={() => setShowModal(null)}
+                    ></div>
+
+                    {/* Modal Content */}
+                    <div className="relative bg-white rounded-[32px] shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden z-10">
+                        {/* Modal Header */}
+                        <div className="sticky top-0 bg-white border-b border-slate-100 p-6 flex items-center justify-between z-10">
+                            <h3 className="text-xl font-black text-slate-800">
+                                {showModal === 'income' ? 'Income Transactions' : 'Expense Transactions'}
+                            </h3>
+                            <button
+                                onClick={() => setShowModal(null)}
+                                className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+                            >
+                                <FaTimes className="w-5 h-5 text-slate-600" />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)]">
+                            {modalTransactions.length > 0 ? (
+                                <div className="space-y-3">
+                                    {modalTransactions.map((transaction) => (
+                                        <div
+                                            key={transaction.id}
+                                            className="bg-slate-50 rounded-2xl p-4 border border-slate-100 hover:border-blue-200 transition-all"
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="flex-1">
+                                                    <h4 className="font-bold text-slate-800 mb-1">{transaction.title}</h4>
+                                                    <div className="flex flex-wrap gap-2 text-xs">
+                                                        <span className={`px-2 py-1 rounded-full font-bold ${transaction.type === 'income'
+                                                            ? 'bg-blue-100 text-blue-600'
+                                                            : 'bg-red-100 text-red-600'
+                                                            }`}>
+                                                            {transaction.type}
+                                                        </span>
+                                                        {transaction.category && (
+                                                            <span className="px-2 py-1 rounded-full bg-slate-200 text-slate-700 font-bold">
+                                                                {transaction.category}
+                                                            </span>
+                                                        )}
+                                                        {transaction.date && (
+                                                            <span className="px-2 py-1 rounded-full bg-slate-200 text-slate-700 font-bold">
+                                                                {new Date(transaction.date).toLocaleDateString()}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className={`text-lg font-black ${transaction.type === 'income' ? 'text-blue-600' : 'text-red-600'
+                                                    }`}>
+                                                    ₹{parseFloat(transaction.amount).toFixed(2)}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-12">
+                                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <FaWallet className="w-8 h-8 text-slate-400" />
+                                    </div>
+                                    <p className="text-slate-500 font-bold">No {showModal} transactions found</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Category Manager Modal */}
+            {showCategoryManager && (
+                <CategoryManager
+                    categories={categories}
+                    onUpdate={() => {
+                        getExpenseCategories().then(res => setCategories(res.data));
+                    }}
+                    onCreate={createExpenseCategory}
+                    onDelete={deleteExpenseCategory}
+                    onClose={() => setShowCategoryManager(false)}
+                />
+            )}
         </div>
     );
 };
 
-const StatCard = ({ title, value, color, subtitle }) => (
-    <div className="bg-white rounded-[32px] p-[24px] sm:p-[32px] shadow-xl border border-slate-100 transform hover:-translate-y-1 transition-transform">
+const StatCard = ({ title, value, color, subtitle, onClick }) => (
+    <div
+        onClick={onClick}
+        className={`bg-white rounded-[32px] p-[24px] sm:p-[32px] shadow-xl border border-slate-100 transform hover:-translate-y-1 transition-transform ${onClick ? 'cursor-pointer hover:shadow-2xl' : ''}`}
+    >
         <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-[4px]">{title}</p>
         <p className={`text-[20px] sm:text-[24px] font-black tracking-tight mb-[8px] ${color}`}>{value}</p>
         <p className="text-[10px] font-bold text-slate-500 flex items-center gap-[4px]">

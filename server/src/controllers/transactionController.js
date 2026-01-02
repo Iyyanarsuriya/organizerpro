@@ -42,8 +42,9 @@ exports.deleteTransaction = async (req, res) => {
 
 exports.getTransactionStats = async (req, res) => {
     try {
-        const summary = await Transaction.getStats(req.user.id);
-        const categories = await Transaction.getCategoryStats(req.user.id);
+        const { month } = req.query;
+        const summary = await Transaction.getStats(req.user.id, month);
+        const categories = await Transaction.getCategoryStats(req.user.id, month);
         res.json({ summary, categories });
     } catch (error) {
         console.error(error);

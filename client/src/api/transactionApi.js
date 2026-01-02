@@ -12,6 +12,6 @@ export const deleteTransaction = async (id) => {
     return await axiosInstance.delete(`/transactions/${id}`);
 };
 
-export const getTransactionStats = async () => {
-    return await axiosInstance.get('/transactions/stats');
+export const getTransactionStats = async (month) => {
+    return await axiosInstance.get('/transactions/stats', { params: { month } });
 };
