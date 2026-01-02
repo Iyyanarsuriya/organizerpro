@@ -13,7 +13,8 @@ const pool = mysql.createPool({
     queueLimit: 0,
 
     connectTimeout: 30000,
-    timezone: '+00:00', // Ensure UTC consistency
 });
 
 module.exports = pool.promise();
+
+

@@ -28,6 +28,25 @@ exports.createTransaction = async (req, res) => {
     }
 };
 
+exports.updateTransaction = async (req, res) => {
+    const { id } = req.params;
+    const { title, amount, type, category, date } = req.body;
+    try {
+        const success = await Transaction.update(id, req.user.id, {
+            title,
+            amount,
+            type,
+            category,
+            date
+        });
+        if (!success) return res.status(404).json({ error: 'Transaction not found' });
+        res.json({ message: 'Transaction updated' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
 exports.deleteTransaction = async (req, res) => {
     const { id } = req.params;
     try {

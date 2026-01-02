@@ -8,6 +8,10 @@ export const createTransaction = async (data) => {
     return await axiosInstance.post('/transactions', data);
 };
 
+export const updateTransaction = async (id, data) => {
+    return await axiosInstance.put(`/transactions/${id}`, data);
+};
+
 export const deleteTransaction = async (id) => {
     return await axiosInstance.delete(`/transactions/${id}`);
 };

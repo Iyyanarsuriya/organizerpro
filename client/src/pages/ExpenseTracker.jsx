@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { getTransactions, createTransaction, deleteTransaction, getTransactionStats } from '../api/transactionApi';
+import { getTransactions, createTransaction, updateTransaction, deleteTransaction, getTransactionStats } from '../api/transactionApi';
 import { API_URL } from '../api/axiosInstance';
 import toast from 'react-hot-toast';
 import {
     FaWallet, FaPlus, FaTrash, FaChartBar, FaTag, FaHome,
     FaExchangeAlt, FaPiggyBank, FaFileAlt, FaSignOutAlt, FaTimes,
-    FaArrowLeft
+    FaArrowLeft, FaEdit
 } from 'react-icons/fa';
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
@@ -27,6 +27,7 @@ const ExpenseTracker = () => {
     const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7));
     const [showCategoryManager, setShowCategoryManager] = useState(false);
     const [categories, setCategories] = useState([]);
+    const [deleteModalOuter, setDeleteModalOuter] = useState({ show: false, id: null });
 
     const [formData, setFormData] = useState({
         title: '',
@@ -35,6 +36,7 @@ const ExpenseTracker = () => {
         category: 'Food',
         date: new Date().toISOString().split('T')[0]
     });
+    const [editingId, setEditingId] = useState(null);
 
     const [filterType, setFilterType] = useState('all');
     const [filterCat, setFilterCat] = useState('all');
@@ -45,6 +47,24 @@ const ExpenseTracker = () => {
 
     const expenseCategories = ['Food', 'Shopping', 'Rent', 'Transport', 'Utilities', 'Entertainment', 'Health', 'Other'];
     const incomeCategories = ['Salary', 'Freelance', 'Investment', 'Gift', 'Other'];
+
+    const formatAmount = (value) => {
+        const num = parseFloat(value || 0);
+        return num % 1 === 0 ? num.toString() : num.toFixed(2);
+    };
+
+    const formatDateTime = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        }).replace(',', ' -');
+    };
 
     const fetchData = async () => {
         try {
@@ -70,9 +90,15 @@ const ExpenseTracker = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const res = await createTransaction(formData);
-            toast.success("Transaction added!");
+            if (editingId) {
+                await updateTransaction(editingId, formData);
+                toast.success("Transaction updated!");
+            } else {
+                await createTransaction(formData);
+                toast.success("Transaction added!");
+            }
             setShowAddModal(false);
+            setEditingId(null);
             setFormData({
                 title: '',
                 amount: '',
@@ -82,18 +108,35 @@ const ExpenseTracker = () => {
             });
             fetchData();
         } catch (error) {
-            toast.error("Failed to add transaction");
+            toast.error(editingId ? "Failed to update transaction" : "Failed to add transaction");
         }
+    };
+
+    const handleEdit = (transaction) => {
+        setFormData({
+            title: transaction.title,
+            amount: transaction.amount,
+            type: transaction.type,
+            category: transaction.category,
+            date: new Date(transaction.date).toISOString().split('T')[0]
+        });
+        setEditingId(transaction.id);
+        setShowAddModal(true);
     };
 
     const handleDelete = async (id) => {
         try {
             await deleteTransaction(id);
             toast.success("Transaction deleted");
+            setDeleteModalOuter({ show: false, id: null });
             fetchData();
         } catch (error) {
             toast.error("Failed to delete transaction");
         }
+    };
+
+    const confirmDelete = (id) => {
+        setDeleteModalOuter({ show: true, id });
     };
 
     const handleShowTransactions = (type) => {
@@ -217,17 +260,17 @@ const ExpenseTracker = () => {
                     <div className="animate-in fade-in duration-500">
                         {/* Summary Cards */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[16px] sm:gap-[24px] mb-[32px] lg:mb-[48px]">
-                            <StatCard title="Total Balance" value={`₹${totalBalance.toFixed(2)}`} color="text-slate-800" subtitle={`${totalBalance >= 0 ? '+' : ''}0% from last month`} />
+                            <StatCard title="Total Balance" value={`₹${formatAmount(totalBalance)}`} color="text-slate-800" subtitle={`${totalBalance >= 0 ? '+' : ''}0% from last month`} />
                             <StatCard
                                 title="Monthly Income"
-                                value={`₹${parseFloat(stats.summary?.total_income || 0).toFixed(2)}`}
+                                value={`₹${formatAmount(stats.summary?.total_income)}`}
                                 color="text-blue-500"
                                 subtitle="This month"
                                 onClick={() => handleShowTransactions('income')}
                             />
                             <StatCard
                                 title="Monthly Expenses"
-                                value={`₹${parseFloat(stats.summary?.total_expense || 0).toFixed(2)}`}
+                                value={`₹${formatAmount(stats.summary?.total_expense)}`}
                                 color="text-red-500"
                                 subtitle="This month"
                                 onClick={() => handleShowTransactions('expense')}
@@ -329,7 +372,7 @@ const ExpenseTracker = () => {
                                                 </div>
                                             </div>
                                             <p className={`font-black text-[13px] sm:text-[14px] ${t.type === 'income' ? 'text-blue-500' : 'text-red-500'}`}>
-                                                {t.type === 'income' ? '+' : '-'}₹{parseFloat(t.amount).toFixed(2)}
+                                                {t.type === 'income' ? '+' : '-'}₹{formatAmount(t.amount)}
                                             </p>
                                         </div>
                                     ))}
@@ -397,15 +440,18 @@ const ExpenseTracker = () => {
                                             <div className="flex items-center gap-[12px] mt-[4px]">
                                                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t.category}</span>
                                                 <span className="w-[4px] h-[4px] rounded-full bg-slate-300"></span>
-                                                <span className="text-[10px] font-bold text-slate-400">{new Date(t.date).toLocaleDateString()}</span>
+                                                <span className="text-[10px] font-bold text-slate-400">{formatDateTime(t.updated_at || t.created_at)}</span>
                                             </div>
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between sm:justify-end gap-[12px] sm:gap-[24px]">
                                         <p className={`text-[18px] sm:text-[20px] font-black tracking-tighter ${t.type === 'income' ? 'text-blue-500' : 'text-red-500'}`}>
-                                            {t.type === 'income' ? '+' : '-'}₹{parseFloat(t.amount).toFixed(2)}
+                                            {t.type === 'income' ? '+' : '-'}₹{formatAmount(t.amount)}
                                         </p>
-                                        <button onClick={() => handleDelete(t.id)} className="p-[12px] text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-[12px] transition-all opacity-100 sm:opacity-0 group-hover:opacity-100 cursor-pointer">
+                                        <button onClick={() => handleEdit(t)} className="p-[12px] text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-[12px] transition-all opacity-100 sm:opacity-0 group-hover:opacity-100 cursor-pointer">
+                                            <FaEdit />
+                                        </button>
+                                        <button onClick={() => confirmDelete(t.id)} className="p-[12px] text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-[12px] transition-all opacity-100 sm:opacity-0 group-hover:opacity-100 cursor-pointer">
                                             <FaTrash />
                                         </button>
                                     </div>
@@ -554,12 +600,12 @@ const ExpenseTracker = () => {
             {showAddModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
                     <div className="bg-white rounded-[40px] p-[32px] sm:p-[40px] w-full max-w-[448px] shadow-2xl relative animate-in zoom-in-95 duration-300">
-                        <button onClick={() => setShowAddModal(false)} className="absolute top-[32px] right-[32px] text-slate-400 hover:text-slate-800 transition-colors">
+                        <button onClick={() => { setShowAddModal(false); setEditingId(null); }} className="absolute top-[32px] right-[32px] text-slate-400 hover:text-slate-800 transition-colors">
                             <FaTimes />
                         </button>
                         <h2 className="text-[24px] font-black mb-[32px] flex items-center gap-[12px]">
                             <div className="w-[8px] h-[32px] bg-blue-500 rounded-full"></div>
-                            Add {formData.type === 'income' ? 'Income' : 'Expense'}
+                            {editingId ? 'Edit Transaction' : `Add ${formData.type === 'income' ? 'Income' : 'Expense'}`}
                         </h2>
 
                         <form onSubmit={handleSubmit} className="space-y-[24px]">
@@ -594,7 +640,7 @@ const ExpenseTracker = () => {
                             </div>
 
                             <button type="submit" className="w-full bg-[#1a1c21] hover:bg-slate-800 text-white font-black py-[20px] rounded-[24px] transition-all active:scale-95 shadow-xl shadow-blue-500/10 flex items-center justify-center gap-[12px] text-[14px]">
-                                <FaPlus /> Save Transaction
+                                {editingId ? <FaEdit /> : <FaPlus />} {editingId ? 'Update Transaction' : 'Save Transaction'}
                             </button>
                         </form>
                     </div>
@@ -658,7 +704,7 @@ const ExpenseTracker = () => {
                                                 </div>
                                                 <div className={`text-lg font-black ${transaction.type === 'income' ? 'text-blue-600' : 'text-red-600'
                                                     }`}>
-                                                    ₹{parseFloat(transaction.amount).toFixed(2)}
+                                                    ₹{formatAmount(transaction.amount)}
                                                 </div>
                                             </div>
                                         </div>
@@ -676,6 +722,36 @@ const ExpenseTracker = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            {deleteModalOuter.show && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[32px] p-[32px] w-full max-w-[400px] shadow-2xl animate-in zoom-in-95 duration-300 border border-white">
+                        <div className="w-[64px] h-[64px] bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-[24px] mx-auto">
+                            <FaTrash className="text-[24px]" />
+                        </div>
+                        <h3 className="text-[20px] font-black text-center text-slate-800 mb-[12px]">Delete Transaction?</h3>
+                        <p className="text-center text-slate-500 text-[14px] font-medium mb-[32px]">
+                            Are you sure you want to delete this transaction? This action cannot be undone.
+                        </p>
+                        <div className="flex gap-[16px]">
+                            <button
+                                onClick={() => setDeleteModalOuter({ show: false, id: null })}
+                                className="flex-1 py-[16px] rounded-[16px] font-black text-[14px] bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all uppercase tracking-widest"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => handleDelete(deleteModalOuter.id)}
+                                className="flex-1 py-[16px] rounded-[16px] font-black text-[14px] bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all uppercase tracking-widest"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Category Manager Modal */}
             {showCategoryManager && (
                 <CategoryManager

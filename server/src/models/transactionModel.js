@@ -18,6 +18,15 @@ class Transaction {
         return rows;
     }
 
+    static async update(id, userId, data) {
+        const { title, amount, type, category, date } = data;
+        const [result] = await db.query(
+            'UPDATE transactions SET title = ?, amount = ?, type = ?, category = ?, date = ? WHERE id = ? AND user_id = ?',
+            [title, amount, type, category, date, id, userId]
+        );
+        return result.affectedRows > 0;
+    }
+
     static async delete(id, userId) {
         const [result] = await db.query(
             'DELETE FROM transactions WHERE id = ? AND user_id = ?',
