@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { getWorkers, createWorker, updateWorker, deleteWorker } from '../api/workerApi';
+import { getTransactions } from '../api/transactionApi';
 import toast from 'react-hot-toast';
-import { FaTimes, FaPlus, FaEdit, FaTrash, FaUser, FaBriefcase, FaPhone, FaEnvelope } from 'react-icons/fa';
+import { FaTimes, FaPlus, FaEdit, FaTrash, FaUser, FaBriefcase, FaPhone, FaEnvelope, FaHistory, FaMoneyBillWave, FaUniversity } from 'react-icons/fa';
 
 const WorkerManager = ({ onClose, onUpdate }) => {
     const [workers, setWorkers] = useState([]);
@@ -15,6 +16,9 @@ const WorkerManager = ({ onClose, onUpdate }) => {
     });
     const [editingId, setEditingId] = useState(null);
     const [deleteModal, setDeleteModal] = useState({ show: false, id: null });
+    const [viewingPayments, setViewingPayments] = useState(null); // Worker object
+    const [payments, setPayments] = useState([]);
+    const [paymentsLoading, setPaymentsLoading] = useState(false);
 
     const fetchWorkers = async () => {
         try {
@@ -79,6 +83,19 @@ const WorkerManager = ({ onClose, onUpdate }) => {
     const resetForm = () => {
         setFormData({ name: '', role: '', phone: '', email: '', status: 'active' });
         setEditingId(null);
+    };
+
+    const handleViewPayments = async (worker) => {
+        setViewingPayments(worker);
+        setPaymentsLoading(true);
+        try {
+            const res = await getTransactions({ workerId: worker.id });
+            setPayments(res.data);
+        } catch (error) {
+            toast.error("Failed to fetch payment history");
+        } finally {
+            setPaymentsLoading(false);
+        }
     };
 
     return (
@@ -234,6 +251,13 @@ const WorkerManager = ({ onClose, onUpdate }) => {
                                     </div>
                                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button
+                                            onClick={() => handleViewPayments(worker)}
+                                            className="p-3 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
+                                            title="Payment History"
+                                        >
+                                            <FaUniversity />
+                                        </button>
+                                        <button
                                             onClick={() => handleEdit(worker)}
                                             className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
                                         >
@@ -282,6 +306,76 @@ const WorkerManager = ({ onClose, onUpdate }) => {
                                 >
                                     Delete
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Payment History Modal */}
+                {viewingPayments && (
+                    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+                        <div className="bg-white rounded-[40px] p-8 sm:p-10 w-full max-w-2xl shadow-2xl relative animate-in zoom-in-95 duration-300 max-h-[85vh] flex flex-col">
+                            <button
+                                onClick={() => setViewingPayments(null)}
+                                className="absolute top-8 right-8 text-slate-400 hover:text-slate-800 transition-colors"
+                            >
+                                <FaTimes className="text-xl" />
+                            </button>
+
+                            <div className="mb-8">
+                                <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
+                                    <div className="w-2 h-8 bg-emerald-500 rounded-full"></div>
+                                    Payment History: {viewingPayments.name}
+                                </h2>
+                                <p className="text-slate-500 text-sm mt-2 ml-5 uppercase font-bold tracking-widest">Financial records for this worker</p>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+                                {paymentsLoading ? (
+                                    <div className="flex justify-center py-20">
+                                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
+                                    </div>
+                                ) : payments.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {payments.map(p => (
+                                            <div key={p.id} className="flex justify-between items-center p-6 bg-slate-50 rounded-3xl border border-slate-100 hover:border-emerald-200 transition-all">
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg ${p.type === 'income' ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-600'}`}>
+                                                        {p.type === 'income' ? <FaPlus /> : <FaMoneyBillWave />}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-black text-slate-800">{p.title}</p>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{p.category}</span>
+                                                            <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                                                            <span className="text-[10px] font-bold text-slate-400">{new Date(p.date).toLocaleDateString()}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className={`text-xl font-black tracking-tighter ${p.type === 'income' ? 'text-blue-600' : 'text-red-600'}`}>
+                                                        {p.type === 'income' ? '+' : '-'}₹{p.amount}
+                                                    </p>
+                                                    {p.project_name && <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Sod: {p.project_name}</p>}
+                                                </div>
+                                            </div>
+                                        ))}
+                                        <div className="pt-6 border-t border-slate-100 sticky bottom-0 bg-white">
+                                            <div className="flex justify-between items-center p-6 bg-slate-900 rounded-[24px] text-white">
+                                                <span className="font-black uppercase tracking-widest text-xs">Total Paid</span>
+                                                <span className="text-2xl font-black tracking-tighter">
+                                                    ₹{payments.reduce((acc, p) => p.type === 'expense' ? acc + parseFloat(p.amount) : acc - parseFloat(p.amount), 0).toFixed(2)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-20 text-slate-400">
+                                        <FaHistory className="text-6xl mx-auto mb-4 opacity-10" />
+                                        <p className="font-black uppercase tracking-widest text-sm">No payment records found</p>
+                                        <p className="text-xs mt-2">Add an expense and link this worker to see history</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

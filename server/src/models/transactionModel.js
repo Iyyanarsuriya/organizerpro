@@ -2,21 +2,30 @@ const db = require('../config/db');
 
 class Transaction {
     static async create(data) {
-        const { user_id, title, amount, type, category, date, project_id } = data;
+        const { user_id, title, amount, type, category, date, project_id, worker_id } = data;
         const [result] = await db.query(
-            'INSERT INTO transactions (user_id, title, amount, type, category, date, project_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [user_id, title, amount, type, category, date, project_id || null]
+            'INSERT INTO transactions (user_id, title, amount, type, category, date, project_id, worker_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [user_id, title, amount, type, category, date, project_id || null, worker_id || null]
         );
         return { id: result.insertId, ...data };
     }
 
     static async getAllByUserId(userId, filters = {}) {
-        let query = 'SELECT t.*, p.name as project_name FROM transactions t LEFT JOIN projects p ON t.project_id = p.id WHERE t.user_id = ?';
+        let query = `SELECT t.*, p.name as project_name, w.name as worker_name 
+                    FROM transactions t 
+                    LEFT JOIN projects p ON t.project_id = p.id 
+                    LEFT JOIN workers w ON t.worker_id = w.id
+                    WHERE t.user_id = ?`;
         const params = [userId];
 
         if (filters.projectId) {
             query += ' AND t.project_id = ?';
             params.push(filters.projectId);
+        }
+
+        if (filters.workerId) {
+            query += ' AND t.worker_id = ?';
+            params.push(filters.workerId);
         }
 
         if (filters.period) {
@@ -51,10 +60,10 @@ class Transaction {
     }
 
     static async update(id, userId, data) {
-        const { title, amount, type, category, date, project_id } = data;
+        const { title, amount, type, category, date, project_id, worker_id } = data;
         const [result] = await db.query(
-            'UPDATE transactions SET title = ?, amount = ?, type = ?, category = ?, date = ?, project_id = ? WHERE id = ? AND user_id = ?',
-            [title, amount, type, category, date, project_id || null, id, userId]
+            'UPDATE transactions SET title = ?, amount = ?, type = ?, category = ?, date = ?, project_id = ?, worker_id = ? WHERE id = ? AND user_id = ?',
+            [title, amount, type, category, date, project_id || null, worker_id || null, id, userId]
         );
         return result.affectedRows > 0;
     }

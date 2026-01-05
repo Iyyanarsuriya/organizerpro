@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import {
     FaWallet, FaPlus, FaTrash, FaChartBar, FaTag, FaHome,
     FaExchangeAlt, FaPiggyBank, FaFileAlt, FaSignOutAlt, FaTimes,
-    FaArrowLeft, FaEdit, FaFolderPlus, FaUserCheck
+    FaArrowLeft, FaEdit, FaFolderPlus, FaUserCheck, FaUserEdit
 } from 'react-icons/fa';
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
@@ -16,8 +16,10 @@ import {
 import { Settings, Folder } from 'lucide-react';
 import { getExpenseCategories, createExpenseCategory, deleteExpenseCategory } from '../api/expenseCategoryApi';
 import { getProjects, createProject, deleteProject } from '../api/projectApi';
+import { getActiveWorkers } from '../api/workerApi';
 import CategoryManager from '../components/CategoryManager';
 import ProjectManager from '../components/ProjectManager';
+import WorkerManager from '../components/WorkerManager';
 
 const ExpenseTracker = () => {
     const navigate = useNavigate();
@@ -34,9 +36,12 @@ const ExpenseTracker = () => {
 
     const [showCategoryManager, setShowCategoryManager] = useState(false);
     const [showProjectManager, setShowProjectManager] = useState(false);
+    const [showWorkerManager, setShowWorkerManager] = useState(false);
     const [categories, setCategories] = useState([]);
     const [projects, setProjects] = useState([]); // Projects list
+    const [workers, setWorkers] = useState([]); // Workers list
     const [filterProject, setFilterProject] = useState(''); // Filter by project ID
+    const [filterWorker, setFilterWorker] = useState(''); // Filter by worker ID
     const [deleteModalOuter, setDeleteModalOuter] = useState({ show: false, id: null });
 
     const [formData, setFormData] = useState({
@@ -45,7 +50,8 @@ const ExpenseTracker = () => {
         type: 'expense',
         category: 'Food',
         date: new Date().toISOString().split('T')[0],
-        project_id: ''
+        project_id: '',
+        worker_id: ''
     });
     const [editingId, setEditingId] = useState(null);
 
@@ -89,16 +95,24 @@ const ExpenseTracker = () => {
             // Let's only fetch if both are set or if not range.
             if (isRange && (!rangeStart || !rangeEnd)) return;
 
-            const [transRes, statsRes, catsRes, projRes] = await Promise.all([
-                getTransactions({ projectId: filterProject, period: isRange ? null : currentPeriod, startDate: rangeStart, endDate: rangeEnd }),
+            const [transRes, statsRes, catsRes, projRes, workersRes] = await Promise.all([
+                getTransactions({
+                    projectId: filterProject,
+                    workerId: filterWorker,
+                    period: isRange ? null : currentPeriod,
+                    startDate: rangeStart,
+                    endDate: rangeEnd
+                }),
                 getTransactionStats(isRange ? null : currentPeriod, filterProject, rangeStart, rangeEnd),
                 getExpenseCategories(),
-                getProjects()
+                getProjects(),
+                getActiveWorkers()
             ]);
             setTransactions(transRes.data);
             setStats(statsRes.data);
             setCategories(catsRes.data);
             setProjects(projRes.data);
+            setWorkers(workersRes.data.data);
             setLoading(false);
         } catch (error) {
             console.error("Fetch Data Error Details:", error.response || error);
@@ -157,7 +171,8 @@ const ExpenseTracker = () => {
                 type: 'expense',
                 category: 'Food',
                 date: new Date().toISOString().split('T')[0],
-                project_id: filterProject || ''
+                project_id: filterProject || '',
+                worker_id: filterWorker || ''
             });
             fetchData();
         } catch (error) {
@@ -172,7 +187,8 @@ const ExpenseTracker = () => {
             type: transaction.type,
             category: transaction.category,
             date: new Date(transaction.date).toISOString().split('T')[0],
-            project_id: transaction.project_id || ''
+            project_id: transaction.project_id || '',
+            worker_id: transaction.worker_id || ''
         });
         setEditingId(transaction.id);
         setShowAddModal(true);
@@ -185,7 +201,8 @@ const ExpenseTracker = () => {
             type: 'expense',
             category: 'Food',
             date: new Date().toISOString().split('T')[0],
-            project_id: filterProject || ''
+            project_id: filterProject || '',
+            worker_id: filterWorker || ''
         });
         setEditingId(null);
         setShowAddModal(true);
@@ -226,8 +243,9 @@ const ExpenseTracker = () => {
                 // Note: transactions fetched are already filtered by Project via API if filterProject is set.
                 // But strictly speaking, if we want client side filtering on top of server side optional filtering:
                 const matchesProject = !filterProject || (t.project_id == filterProject);
+                const matchesWorker = !filterWorker || (t.worker_id == filterWorker);
 
-                return matchesType && matchesCat && matchesSearch && matchesProject;
+                return matchesType && matchesCat && matchesSearch && matchesProject && matchesWorker;
             })
             .sort((a, b) => {
                 if (sortBy === 'date_desc') return new Date(b.date) - new Date(a.date);
@@ -592,6 +610,24 @@ const ExpenseTracker = () => {
                                     <option value="amount_desc">Highest Amount</option>
                                     <option value="amount_asc">Lowest Amount</option>
                                 </select>
+                                {/* Worker Filter and Manage Button */}
+                                <div className="flex items-center gap-2">
+                                    <select
+                                        value={filterWorker}
+                                        onChange={(e) => setFilterWorker(e.target.value)}
+                                        className="h-[40px] bg-white border border-slate-200 rounded-xl px-4 text-xs font-black uppercase tracking-widest text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer shadow-sm"
+                                    >
+                                        <option value="">All Workers</option>
+                                        {workers.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                                    </select>
+                                    <button
+                                        onClick={() => setShowWorkerManager(true)}
+                                        className="w-[40px] h-[40px] bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center hover:bg-orange-50 hover:text-orange-600 transition-all shadow-sm border border-slate-200 shrink-0"
+                                        title="Manage Workers"
+                                    >
+                                        <FaUserEdit />
+                                    </button>
+                                </div>
                                 <button onClick={handleAddNewTransaction} className="bg-[#2d5bff] text-white p-[12px] rounded-[12px] shadow-lg shadow-blue-500/20 hover:scale-105 transition-transform">
                                     <FaPlus />
                                 </button>
@@ -607,8 +643,16 @@ const ExpenseTracker = () => {
                                         </div>
                                         <div>
                                             <h4 className="font-black text-slate-800 text-[14px] sm:text-[16px]">{t.title}</h4>
-                                            <div className="flex items-center gap-[12px] mt-[4px]">
+                                            <div className="flex flex-wrap items-center gap-[12px] mt-[4px]">
                                                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t.category}</span>
+                                                {t.worker_name && (
+                                                    <>
+                                                        <span className="w-[4px] h-[4px] rounded-full bg-slate-300"></span>
+                                                        <span className="text-[10px] font-black uppercase tracking-widest text-blue-500 flex items-center gap-1">
+                                                            <FaUserCheck className="text-[8px]" /> {t.worker_name}
+                                                        </span>
+                                                    </>
+                                                )}
                                                 <span className="w-[4px] h-[4px] rounded-full bg-slate-300"></span>
                                                 <span className="text-[10px] font-bold text-slate-400">{formatDateTime(t.updated_at || t.created_at)}</span>
                                             </div>
@@ -791,25 +835,28 @@ const ExpenseTracker = () => {
                                         <input required type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[16px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-['Outfit']" placeholder="Electricity, Salary..." />
                                     </div>
 
-                                    {/* Project Selection */}
-                                    <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Project (Optional)</label>
-                                        <div className="flex gap-2">
+                                    <div className="grid grid-cols-2 gap-[16px]">
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[8px]">Project</label>
                                             <select
                                                 value={formData.project_id}
                                                 onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
-                                                className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[16px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-['Outfit'] cursor-pointer"
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-[20px] px-[20px] py-[14px] text-[12px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
                                             >
                                                 <option value="">No Project</option>
                                                 {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                             </select>
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowProjectManager(true)}
-                                                className="bg-slate-100 hover:bg-blue-50 text-slate-500 hover:text-blue-500 px-4 rounded-[16px] border border-slate-200 transition-colors"
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[8px]">Worker</label>
+                                            <select
+                                                value={formData.worker_id}
+                                                onChange={(e) => setFormData({ ...formData, worker_id: e.target.value })}
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-[20px] px-[20px] py-[14px] text-[12px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
                                             >
-                                                <FaPlus />
-                                            </button>
+                                                <option value="">No Worker</option>
+                                                {workers.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                                            </select>
                                         </div>
                                     </div>
 
@@ -972,11 +1019,18 @@ const ExpenseTracker = () => {
                         projects={projects}
                         onCreate={createProject}
                         onDelete={deleteProject}
+                        onRefresh={fetchData}
                         onClose={() => setShowProjectManager(false)}
-                        onRefresh={() => getProjects().then(res => setProjects(res.data))}
                     />
                 )
             }
+
+            {showWorkerManager && (
+                <WorkerManager
+                    onUpdate={fetchData}
+                    onClose={() => setShowWorkerManager(false)}
+                />
+            )}
         </div >
     );
 };
