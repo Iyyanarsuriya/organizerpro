@@ -58,8 +58,6 @@ const ExpenseTracker = () => {
     const [editingId, setEditingId] = useState(null);
 
     const [filterType, setFilterType] = useState('all');
-    const [showExportModal, setShowExportModal] = useState(false);
-    const [exportType, setExportType] = useState(null);
     const [filterCat, setFilterCat] = useState('all');
     const [sortBy, setSortBy] = useState('date_desc');
     const [searchQuery, setSearchQuery] = useState('');
@@ -1385,50 +1383,6 @@ const ExpenseTracker = () => {
                 )
             }
 
-            {/* Modern Export Confirmation Modal */}
-            {
-                showExportModal && (
-                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl flex items-center justify-center z-200 p-[24px] animate-in fade-in duration-500">
-                        <div className="bg-white rounded-[48px] p-[48px] w-full max-w-[480px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] border border-slate-100 animate-in zoom-in-95 slide-in-from-bottom-10 duration-500 relative overflow-hidden group">
-                            <div className="absolute top-0 left-0 w-full h-[6px] bg-linear-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
-                            <div className="absolute -top-[100px] -right-[100px] w-[200px] h-[200px] bg-blue-500/5 rounded-full blur-[80px]"></div>
-
-                            <div className="relative">
-                                <div className="w-[100px] h-[100px] rounded-[36px] bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center mb-[40px] mx-auto shadow-2xl shadow-blue-500/30 group-hover:scale-110 transition-transform duration-700">
-                                    <FaFileAlt className="text-[40px] text-white" />
-                                </div>
-
-                                <div className="text-center space-y-[16px] mb-[48px]">
-                                    <h3 className="text-[28px] font-black text-slate-800 tracking-tight leading-tight">Export Statement</h3>
-                                    <p className="text-slate-500 font-bold leading-relaxed px-[10px]">
-                                        Generate a high-resolution <span className="text-blue-600 font-black">{exportType}</span> report for the period of <span className="text-indigo-600 font-black">{currentPeriod}</span>?
-                                    </p>
-                                </div>
-
-                                <div className="flex flex-col gap-[12px]">
-                                    <button
-                                        onClick={() => {
-                                            setShowExportModal(false);
-                                            if (exportType === 'PDF') handleExportPDF();
-                                            else if (exportType === 'CSV') handleExportCSV();
-                                            else if (exportType === 'Text') handleExportTXT();
-                                        }}
-                                        className="w-full px-[32px] py-[22px] rounded-[24px] text-[14px] font-black uppercase tracking-widest bg-slate-900 text-white shadow-2xl shadow-slate-900/20 hover:bg-blue-600 hover:shadow-blue-500/40 hover:-translate-y-1 active:translate-y-0 transition-all duration-300"
-                                    >
-                                        Confirm & Download
-                                    </button>
-                                    <button
-                                        onClick={() => setShowExportModal(false)}
-                                        className="w-full px-[32px] py-[20px] rounded-[24px] text-[12px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all duration-300"
-                                    >
-                                        Go Back
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
         </div>
     );
 };

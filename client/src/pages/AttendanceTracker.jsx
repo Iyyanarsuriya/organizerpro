@@ -21,8 +21,6 @@ import {
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend
 } from 'recharts';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { exportToCSV, exportToTXT, exportToPDF } from '../utils/exportUtils';
 import ExportButtons from '../components/ExportButtons';
 import { FaFileAlt } from 'react-icons/fa';
