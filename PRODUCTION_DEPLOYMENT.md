@@ -2,35 +2,73 @@
 
 ## ⚠️ Current Issue
 
-Your production backend on Render is showing these errors:
-- `404 Not Found` for `/api/members/active` - Route exists but database table doesn't
+Your production backend on Vercel/Render is showing these errors:
+- `Unknown column 'a.member_id' in 'on clause'` - Database still has `worker_id` column
 - `500 Internal Server Error` for `/api/attendance/summary` - Database still has `workers` table
 
-**Root Cause:** The production database hasn't been migrated from `workers` to `members` yet.
+**Root Cause:** The production database (Railway) hasn't been migrated from `workers` to `members` yet.
 
 ---
 
 ## 🔧 Solution: Deploy Migration to Production
 
-### Option 1: Run Migration Directly on Production Database (Recommended)
+### Option 1: Use Automated Migration Script (Recommended & Easiest)
 
-#### Step 1: Connect to Production Database
+We've created a script that will safely run the migration on your Railway database.
 
-You need to run the migration SQL on your production database. You can do this in several ways:
+#### Step 1: Update Your .env File
+
+Make sure your `server/.env` file has the **Railway production database credentials**:
+
+```env
+DB_HOST=your-railway-db-host.railway.app
+DB_USER=root
+DB_PASSWORD=your-railway-db-password
+DB_NAME=railway
+```
+
+#### Step 2: Run the Migration Script
+
+```bash
+cd server
+node run-migration.js
+```
+
+The script will:
+- ✅ Connect to your Railway database
+- ✅ Show you the SQL that will be executed
+- ✅ Wait 5 seconds (giving you time to cancel with Ctrl+C)
+- ✅ Execute the migration
+- ✅ Verify the migration was successful
+
+#### Step 3: Verify
+
+The script will automatically verify that:
+- `members` table exists
+- `attendance.member_id` column exists
+- `transactions.member_id` column exists
+
+---
+
+### Option 2: Run Migration Directly on Railway Database
+
+#### Step 1: Connect to Railway Database
+
+You need to run the migration SQL on your Railway database. You can do this in several ways:
 
 **A. Using MySQL Client:**
 ```bash
-mysql -h <your-render-db-host> -u <username> -p <database-name> < server/migrations/generalize_to_members.sql
+mysql -h <your-railway-db-host> -u root -p <database-name> < server/migrations/generalize_to_members.sql
 ```
 
-**B. Using Render Dashboard:**
-1. Go to your Render dashboard
-2. Navigate to your database service
-3. Click "Connect" and use the provided connection string
+**B. Using Railway Dashboard:**
+1. Go to your Railway dashboard
+2. Navigate to your MySQL database service
+3. Click on the "Data" tab or use the connection string
 4. Run the migration SQL manually
 
-**C. Using a Database GUI Tool (e.g., MySQL Workbench, DBeaver):**
-1. Connect to your production database using the credentials from Render
+**C. Using a Database GUI Tool (e.g., MySQL Workbench, DBeaver, TablePlus):**
+1. Connect to your Railway database using the credentials from Railway dashboard
 2. Open `server/migrations/generalize_to_members.sql`
 3. Execute the SQL script
 
