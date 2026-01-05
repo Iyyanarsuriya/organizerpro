@@ -143,9 +143,6 @@ const FinanceProfile = () => {
                         <div className="glass rounded-[32px] p-[16px] border border-white shadow-xl overflow-hidden">
                             <MenuBtn icon={FaChartPie} label="Spending Analysis" color="text-teal-500" onClick={() => navigate('/expenses')} />
                             <MenuBtn icon={FaHistory} label="Attendance History" color="text-orange-500" onClick={() => navigate('/attendance')} />
-                            <MenuBtn icon={FaCreditCard} label="Payment Methods" color="text-blue-500" />
-                            <MenuBtn icon={FaBell} label="Alert Settings" color="text-orange-500" />
-                            <MenuBtn icon={FaLock} label="Security" color="text-red-500" />
                         </div>
                     </div>
 
@@ -177,30 +174,10 @@ const FinanceProfile = () => {
                                         onChange={(val) => setEditData({ ...editData, mobile_number: val })}
                                         placeholder="000-000-0000"
                                     />
-                                    <div>
-                                        <label className="block text-[10px] sm:text-[12px] font-black text-slate-400 uppercase tracking-[0.2em] mb-[8px] sm:mb-[12px] ml-[4px] sm:ml-[8px]">Default Currency</label>
-                                        <select className="w-full bg-slate-50 border border-slate-200 rounded-[12px] sm:rounded-[16px] px-[16px] sm:px-[24px] py-[12px] sm:py-[16px] text-[12px] sm:text-[14px] font-bold text-slate-700 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all cursor-pointer" defaultValue="INR (₹)">
-                                            <option>INR (₹)</option>
-                                            <option>USD ($)</option>
-                                            <option>EUR (€)</option>
-                                            <option>GBP (£)</option>
-                                        </select>
-                                    </div>
+
                                 </div>
 
-                                <div className="bg-blue-50 rounded-[24px] p-[24px] border border-blue-100/50">
-                                    <div className="flex items-start gap-[16px]">
-                                        <div className="w-[40px] h-[40px] bg-blue-500 rounded-[12px] flex items-center justify-center text-white shrink-0 shadow-lg shadow-blue-500/20">
-                                            <FaUserEdit />
-                                        </div>
-                                        <div>
-                                            <h4 className="font-black text-blue-900 text-[14px]">Security Tip</h4>
-                                            <p className="text-blue-800/70 text-[12px] font-medium mt-[4px] leading-relaxed">
-                                                Keep your financial profile updated to receive accurate monthly activity reports and budget breach alerts.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
+
 
                                 <button
                                     type="submit"
