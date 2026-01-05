@@ -16,6 +16,12 @@ export const deleteReminder = async (id) => {
     return await axiosInstance.delete(`/reminders/${id}`);
 };
 
-export const triggerMissedAlert = async (date = null) => {
-    return await axiosInstance.post('/reminders/send-missed-alert', { date });
+export const triggerMissedAlert = async (dateOrOptions = null) => {
+    let payload = {};
+    if (typeof dateOrOptions === 'string') {
+        payload = { date: dateOrOptions };
+    } else if (typeof dateOrOptions === 'object' && dateOrOptions !== null) {
+        payload = dateOrOptions;
+    }
+    return await axiosInstance.post('/reminders/send-missed-alert', payload);
 };

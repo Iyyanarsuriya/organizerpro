@@ -2,8 +2,8 @@ const Transaction = require('../models/transactionModel');
 
 exports.getTransactions = async (req, res) => {
     try {
-        const { projectId, period } = req.query;
-        const transactions = await Transaction.getAllByUserId(req.user.id, { projectId, period });
+        const { projectId, period, startDate, endDate } = req.query;
+        const transactions = await Transaction.getAllByUserId(req.user.id, { projectId, period, startDate, endDate });
         res.json(transactions);
     } catch (error) {
         console.error(error);
@@ -64,10 +64,10 @@ exports.deleteTransaction = async (req, res) => {
 
 exports.getTransactionStats = async (req, res) => {
     try {
-        const { period, projectId } = req.query;
-        // Note: 'period' can now be YYYY-MM or YYYY. 'month' query param is deprecated but we can support it for backward compat if we want, but since I'm controlling frontend, I'll update frontend to use 'period'.
-        const summary = await Transaction.getStats(req.user.id, period, projectId);
-        const categories = await Transaction.getCategoryStats(req.user.id, period, projectId);
+        const { period, projectId, startDate, endDate } = req.query;
+        // Note: 'period' can now be YYYY-MM or YYYY.
+        const summary = await Transaction.getStats(req.user.id, period, projectId, startDate, endDate);
+        const categories = await Transaction.getCategoryStats(req.user.id, period, projectId, startDate, endDate);
         res.json({ summary, categories });
     } catch (error) {
         console.error(error);

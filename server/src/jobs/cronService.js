@@ -5,16 +5,18 @@ const pushService = require('../services/pushNotificationService');
 const User = require('../models/userModel');
 
 // Reusable function to check and send emails
-const runMissedTaskCheck = async (userId = null, date = null) => {
+// Reusable function to check and send emails
+const runMissedTaskCheck = async (userId = null, date = null, endDate = null, customMessage = null) => {
     const targetDate = date || new Date().toISOString().split('T')[0];
-    console.log(`⏰ Running missed task completion check for ${targetDate}... ${userId ? `(Target User: ${userId})` : '(All Users)'}`);
+    const logMsg = endDate ? `${targetDate} to ${endDate}` : targetDate;
+    console.log(`⏰ Running task completion check for ${logMsg}... ${userId ? `(Target User: ${userId})` : '(All Users)'}`);
 
     try {
-        const overdueReminders = await Reminder.getOverdueRemindersForToday(userId, targetDate);
+        const overdueReminders = await Reminder.getOverdueRemindersForToday(userId, targetDate, endDate);
 
         if (overdueReminders.length === 0) {
-            console.log('✅ No missed tasks found.');
-            return { sent: false, message: 'No missed tasks found' };
+            console.log('✅ No pending tasks found.');
+            return { sent: false, message: 'No pending tasks found' };
         }
 
         // Group reminders by user email
@@ -30,9 +32,14 @@ const runMissedTaskCheck = async (userId = null, date = null) => {
             return acc;
         }, {});
 
-        // Format date for display (DD-MM-YYYY)
-        const [year, month, day] = targetDate.split('-');
-        const displayDate = `${day}-${month}-${year}`;
+        // Format date for display
+        const formatDate = (d) => {
+            const [y, m, da] = d.split('-');
+            return `${da}-${m}-${y}`;
+        };
+        const displayDate = endDate ? `${formatDate(targetDate)} to ${formatDate(endDate)}` : formatDate(targetDate);
+        const titleText = customMessage ? 'Custom Task Report' : 'Missed Tasks Alert';
+        const introText = customMessage || `The day is almost over, but you still have <strong>${overdueReminders.length} unfinished tasks</strong> scheduled for today (${displayDate}):`;
 
         // Send email and push to each user
         for (const [email, data] of Object.entries(userReminders)) {
@@ -43,15 +50,15 @@ const runMissedTaskCheck = async (userId = null, date = null) => {
                 <li style="margin-bottom: 10px; padding: 10px; background: #fff1f2; border-left: 4px solid #f43f5e; border-radius: 4px;">
                     <strong style="color: #881337;">${item.title}</strong>
                     ${item.description ? `<p style="margin: 5px 0 0; color: #4c0519; font-size: 13px;">${item.description}</p>` : ''}
-                    <div style="margin-top: 5px; font-size: 11px; font-weight: bold; color: #9f1239; text-transform: uppercase;">Priority: ${item.priority}</div>
+                    <div style="margin-top: 5px; font-size: 11px; font-weight: bold; color: #9f1239; text-transform: uppercase;">Priority: ${item.priority} | Due: ${new Date(item.due_date).toLocaleDateString()}</div>
                 </li>
             `).join('');
 
             const html = `
                 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
-                    <h2 style="color: #1e293b; text-align: center; border-bottom: 2px solid #f43f5e; padding-bottom: 15px;">⚠️ Missed Tasks Alert - ${displayDate}</h2>
+                    <h2 style="color: #1e293b; text-align: center; border-bottom: 2px solid #f43f5e; padding-bottom: 15px;">⚠️ ${titleText} - ${displayDate}</h2>
                     <p style="color: #475569; font-size: 16px;">Hi <strong>${username}</strong>,</p>
-                    <p style="color: #475569;">The day is almost over, but you still have <strong>${items.length} unfinished tasks</strong> scheduled for today (${displayDate}):</p>
+                    <p style="color: #475569;">${customMessage ? customMessage.replace(/\n/g, '<br>') : `You have <strong>${items.length} unfinished tasks</strong>:`}</p>
                     <ul style="list-style: none; padding: 0;">
                         ${taskListHtml}
                     </ul>
@@ -62,18 +69,18 @@ const runMissedTaskCheck = async (userId = null, date = null) => {
                 </div>
             `;
 
-            await emailService.sendEmail(email, `Missed Tasks Alert - ${displayDate}`, html);
+            await emailService.sendEmail(email, `${titleText} - ${displayDate}`, html);
 
             // PUSH NOTIFICATION LOGIC
             await pushService.sendNotification(userId, { // Use userId here
-                title: 'Unfinished Tasks Alert',
-                body: `You have ${items.length} tasks still pending for today. Don't forget them!`,
-                url: '/?filter=overdue', // Deep link if supported
-                tag: 'daily-reminder'
+                title: titleText,
+                body: `You have ${items.length} tasks matching your criteria.`,
+                url: '/?filter=overdue',
+                tag: 'custom-reminder'
             });
         }
 
-        console.log(`📧 Sent missed task emails/push to ${Object.keys(userReminders).length} users.`);
+        console.log(`📧 Sent emails/push to ${Object.keys(userReminders).length} users.`);
         return { sent: true, count: Object.keys(userReminders).length };
 
     } catch (error) {

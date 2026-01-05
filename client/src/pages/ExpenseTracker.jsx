@@ -28,8 +28,9 @@ const ExpenseTracker = () => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user')) || {});
 
-    const [periodType, setPeriodType] = useState('month'); // 'month' or 'year'
-    const [currentPeriod, setCurrentPeriod] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM or YYYY
+    const [periodType, setPeriodType] = useState('month'); // 'month', 'year', 'week', 'day', 'range'
+    const [currentPeriod, setCurrentPeriod] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+    const [customRange, setCustomRange] = useState({ start: '', end: '' });
 
     const [showCategoryManager, setShowCategoryManager] = useState(false);
     const [showProjectManager, setShowProjectManager] = useState(false);
@@ -81,9 +82,16 @@ const ExpenseTracker = () => {
             // Adjust currentPeriod format based on type if needed, but input handles it mostly.
             // When switching to 'year', currentPeriod might need adjustment if it was 'YYYY-MM'
 
+            const isRange = periodType === 'range';
+            const rangeStart = isRange ? customRange.start : null;
+            const rangeEnd = isRange ? customRange.end : null;
+            // If range is selected but not full, don't fetch or maybe fetch empty?
+            // Let's only fetch if both are set or if not range.
+            if (isRange && (!rangeStart || !rangeEnd)) return;
+
             const [transRes, statsRes, catsRes, projRes] = await Promise.all([
-                getTransactions({ projectId: filterProject, period: currentPeriod }),
-                getTransactionStats(currentPeriod, filterProject),
+                getTransactions({ projectId: filterProject, period: isRange ? null : currentPeriod, startDate: rangeStart, endDate: rangeEnd }),
+                getTransactionStats(isRange ? null : currentPeriod, filterProject, rangeStart, rangeEnd),
                 getExpenseCategories(),
                 getProjects()
             ]);
@@ -101,7 +109,7 @@ const ExpenseTracker = () => {
 
     useEffect(() => {
         fetchData();
-    }, [currentPeriod, filterProject]);
+    }, [currentPeriod, filterProject, customRange.start, customRange.end, periodType]);
 
     // Ensure period format is correct when switching types
     useEffect(() => {
@@ -125,6 +133,9 @@ const ExpenseTracker = () => {
             }
         } else if (periodType === 'day') {
             if (currentPeriod.length !== 10) setCurrentPeriod(`${yyyy}-${mm}-${dd}`);
+        } else if (periodType === 'range') {
+            // Initialize range if empty
+            if (!customRange.start) setCustomRange({ start: `${yyyy}-${mm}-${dd}`, end: `${yyyy}-${mm}-${dd}` });
         }
     }, [periodType]);
 
@@ -146,7 +157,7 @@ const ExpenseTracker = () => {
                 type: 'expense',
                 category: 'Food',
                 date: new Date().toISOString().split('T')[0],
-                project_id: ''
+                project_id: filterProject || ''
             });
             fetchData();
         } catch (error) {
@@ -164,6 +175,19 @@ const ExpenseTracker = () => {
             project_id: transaction.project_id || ''
         });
         setEditingId(transaction.id);
+        setShowAddModal(true);
+    };
+
+    const handleAddNewTransaction = () => {
+        setFormData({
+            title: '',
+            amount: '',
+            type: 'expense',
+            category: 'Food',
+            date: new Date().toISOString().split('T')[0],
+            project_id: filterProject || ''
+        });
+        setEditingId(null);
         setShowAddModal(true);
     };
 
@@ -292,24 +316,25 @@ const ExpenseTracker = () => {
                     </div>
 
                     {/* Filters: Project, Period Type, Date */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+                    <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
 
                         {/* Create Project Button */}
                         <button
                             onClick={() => setShowProjectManager(true)}
-                            className="flex items-center gap-2 bg-[#2d5bff] text-white px-4 py-2 rounded-xl shadow-lg shadow-blue-500/20 hover:scale-105 transition-transform shrink-0"
+                            className="h-[40px] flex items-center gap-2 bg-[#2d5bff] text-white px-4 rounded-xl shadow-lg shadow-blue-500/20 hover:scale-105 transition-transform shrink-0"
                         >
                             <FaFolderPlus className="text-sm" />
-                            <span className="text-xs font-black uppercase tracking-widest">New Project</span>
+                            <span className="text-xs font-black uppercase tracking-widest hidden sm:inline">New Project</span>
+                            <span className="text-xs font-black uppercase tracking-widest sm:hidden">New</span>
                         </button>
 
                         {/* Project Filter */}
-                        <div className="flex items-center gap-[8px] bg-white border border-slate-200 p-[8px] rounded-[12px] shadow-sm hover:border-blue-500 transition-colors w-full sm:w-auto">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-[4px] shrink-0">Project:</span>
+                        <div className="h-[40px] flex items-center gap-2 bg-white border border-slate-200 px-3 rounded-[12px] shadow-sm hover:border-blue-500 transition-colors">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 hidden sm:inline">Project:</span>
                             <select
                                 value={filterProject}
                                 onChange={(e) => setFilterProject(e.target.value)}
-                                className="text-[12px] font-bold text-slate-700 outline-none bg-transparent cursor-pointer font-['Outfit'] w-full sm:w-auto min-w-[100px]"
+                                className="text-[12px] font-bold text-slate-700 outline-none bg-transparent cursor-pointer font-['Outfit'] min-w-[80px] sm:min-w-[100px]"
                             >
                                 <option value="">All Projects</option>
                                 {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -317,51 +342,67 @@ const ExpenseTracker = () => {
                         </div>
 
                         {/* Period Type Toggle */}
-                        <div className="flex p-1 bg-white border border-slate-200 rounded-[12px] overflow-x-auto custom-scrollbar max-w-[200px] sm:max-w-none">
-                            {['day', 'week', 'month', 'year'].map((type) => (
+                        <div className="h-[40px] flex items-center p-1 bg-white border border-slate-200 rounded-[12px] overflow-x-auto custom-scrollbar max-w-full">
+                            {['day', 'week', 'month', 'year', 'range'].map((type) => (
                                 <button
                                     key={type}
                                     onClick={() => setPeriodType(type)}
-                                    className={`px-3 py-1.5 rounded-[8px] text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${periodType === type ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-600'}`}
+                                    className={`h-full px-3 rounded-[8px] text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap flex items-center ${periodType === type ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-600'}`}
                                 >
                                     {type}
                                 </button>
                             ))}
                         </div>
 
-                        {/* Date Picker */}
-                        <div className="flex items-center gap-[8px] bg-white border border-slate-200 p-[8px] rounded-[12px] shadow-sm hover:border-blue-500 transition-colors w-full sm:w-auto">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-[4px] shrink-0">Period:</span>
+                        {/* Date Picker or Range Pickers */}
+                        <div className="h-[40px] flex items-center gap-2 bg-white border border-slate-200 px-3 rounded-[12px] shadow-sm hover:border-blue-500 transition-colors">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 hidden sm:inline">Period:</span>
                             {periodType === 'day' ? (
                                 <input
                                     type="date"
                                     value={currentPeriod.length === 10 ? currentPeriod : ''}
                                     onChange={(e) => setCurrentPeriod(e.target.value)}
-                                    className="text-[12px] font-bold text-slate-700 outline-none bg-transparent cursor-pointer font-['Outfit'] w-full sm:w-auto"
+                                    className="text-[12px] font-bold text-slate-700 outline-none bg-transparent cursor-pointer font-['Outfit']"
                                 />
                             ) : periodType === 'week' ? (
                                 <input
                                     type="week"
                                     value={currentPeriod.includes('W') ? currentPeriod : ''}
                                     onChange={(e) => setCurrentPeriod(e.target.value)}
-                                    className="text-[12px] font-bold text-slate-700 outline-none bg-transparent cursor-pointer font-['Outfit'] w-full sm:w-auto"
+                                    className="text-[12px] font-bold text-slate-700 outline-none bg-transparent cursor-pointer font-['Outfit']"
                                 />
                             ) : periodType === 'month' ? (
                                 <input
                                     type="month"
                                     value={currentPeriod.length === 7 ? currentPeriod : ''}
                                     onChange={(e) => setCurrentPeriod(e.target.value)}
-                                    className="text-[12px] font-bold text-slate-700 outline-none bg-transparent cursor-pointer font-['Outfit'] w-full sm:w-auto"
+                                    className="text-[12px] font-bold text-slate-700 outline-none bg-transparent cursor-pointer font-['Outfit']"
                                 />
-                            ) : (
+                            ) : periodType === 'year' ? (
                                 <input
                                     type="number"
                                     min="2000"
                                     max="2100"
                                     value={currentPeriod.slice(0, 4)}
                                     onChange={(e) => setCurrentPeriod(e.target.value)}
-                                    className="text-[12px] font-bold text-slate-700 outline-none bg-transparent cursor-pointer font-['Outfit'] w-full sm:w-auto"
+                                    className="text-[12px] font-bold text-slate-700 outline-none bg-transparent cursor-pointer font-['Outfit'] w-[60px]"
                                 />
+                            ) : (
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="date"
+                                        value={customRange.start}
+                                        onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })}
+                                        className="text-[10px] sm:text-[12px] font-bold text-slate-700 outline-none bg-transparent cursor-pointer font-['Outfit'] w-[85px] sm:w-[100px]"
+                                    />
+                                    <span className="text-xs text-slate-400">-</span>
+                                    <input
+                                        type="date"
+                                        value={customRange.end}
+                                        onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })}
+                                        className="text-[10px] sm:text-[12px] font-bold text-slate-700 outline-none bg-transparent cursor-pointer font-['Outfit'] w-[85px] sm:w-[100px]"
+                                    />
+                                </div>
                             )}
                         </div>
                     </div>
@@ -388,14 +429,14 @@ const ExpenseTracker = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[16px] sm:gap-[24px] mb-[32px] lg:mb-[48px]">
                             <StatCard title="Total Balance" value={`₹${formatAmount(totalBalance)}`} color="text-slate-800" subtitle={`${totalBalance >= 0 ? '+' : ''}0% from last month`} />
                             <StatCard
-                                title={`${periodType === 'day' ? 'Daily' : periodType === 'week' ? 'Weekly' : periodType === 'month' ? 'Monthly' : 'Yearly'} Income`}
+                                title={`${periodType === 'range' ? 'Range' : periodType === 'day' ? 'Daily' : periodType.charAt(0).toUpperCase() + periodType.slice(1) + 'ly'} Income`}
                                 value={`₹${formatAmount(stats.summary?.total_income)}`}
                                 color="text-blue-500"
-                                subtitle={currentPeriod}
+                                subtitle={periodType === 'range' ? `${customRange.start} to ${customRange.end}` : currentPeriod}
                                 onClick={() => handleShowTransactions('income')}
                             />
                             <StatCard
-                                title={`${periodType === 'day' ? 'Daily' : periodType === 'week' ? 'Weekly' : periodType === 'month' ? 'Monthly' : 'Yearly'} Expenses`}
+                                title={`${periodType === 'range' ? 'Range' : periodType === 'day' ? 'Daily' : periodType.charAt(0).toUpperCase() + periodType.slice(1) + 'ly'} Expenses`}
                                 value={`₹${formatAmount(stats.summary?.total_expense)}`}
                                 color="text-red-500"
                                 subtitle={currentPeriod}
@@ -509,7 +550,7 @@ const ExpenseTracker = () => {
 
                         <div className="flex justify-center mt-[32px]">
                             <button
-                                onClick={() => setShowAddModal(true)}
+                                onClick={handleAddNewTransaction}
                                 className="bg-[#1a1c21] hover:bg-slate-800 text-white font-black px-[48px] py-[20px] rounded-[24px] shadow-2xl transition-all active:scale-95 flex items-center gap-[16px] hover:shadow-blue-500/10 text-[14px]"
                             >
                                 <FaPlus /> Add Transaction
@@ -548,7 +589,7 @@ const ExpenseTracker = () => {
                                     <option value="amount_desc">Highest Amount</option>
                                     <option value="amount_asc">Lowest Amount</option>
                                 </select>
-                                <button onClick={() => setShowAddModal(true)} className="bg-[#2d5bff] text-white p-[12px] rounded-[12px] shadow-lg shadow-blue-500/20 hover:scale-105 transition-transform">
+                                <button onClick={handleAddNewTransaction} className="bg-[#2d5bff] text-white p-[12px] rounded-[12px] shadow-lg shadow-blue-500/20 hover:scale-105 transition-transform">
                                     <FaPlus />
                                 </button>
                             </div>

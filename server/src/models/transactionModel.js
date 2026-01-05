@@ -39,6 +39,11 @@ class Transaction {
             }
         }
 
+        if (filters.startDate && filters.endDate) {
+            query += " AND DATE(t.date) BETWEEN ? AND ?";
+            params.push(filters.startDate, filters.endDate);
+        }
+
         query += ' ORDER BY t.date DESC, t.created_at DESC';
 
         const [rows] = await db.query(query, params);
@@ -62,7 +67,7 @@ class Transaction {
         return result.affectedRows > 0;
     }
 
-    static async getStats(userId, period, projectId) {
+    static async getStats(userId, period, projectId, startDate, endDate) {
         let query = `SELECT 
             SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as total_income,
             SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as total_expense
@@ -71,22 +76,23 @@ class Transaction {
 
         if (period) {
             if (period.length === 10) {
-                // YYYY-MM-DD (Day)
                 query += " AND DATE(date) = ?";
                 params.push(period);
             } else if (period.length === 8 && period.includes('W')) {
-                // YYYY-Www (Week)
                 query += " AND DATE_FORMAT(date, '%Y-W%u') = ?";
                 params.push(period);
             } else if (period.length === 7) {
-                // YYYY-MM (Month)
                 query += " AND DATE_FORMAT(date, '%Y-%m') = ?";
                 params.push(period);
             } else if (period.length === 4) {
-                // YYYY (Year)
                 query += " AND DATE_FORMAT(date, '%Y') = ?";
                 params.push(period);
             }
+        }
+
+        if (startDate && endDate) {
+            query += " AND DATE(date) BETWEEN ? AND ?";
+            params.push(startDate, endDate);
         }
 
         if (projectId) {
@@ -98,29 +104,30 @@ class Transaction {
         return rows[0];
     }
 
-    static async getCategoryStats(userId, period, projectId) {
+    static async getCategoryStats(userId, period, projectId, startDate, endDate) {
         let query = `SELECT category, type, SUM(amount) as total 
              FROM transactions WHERE user_id = ?`;
         const params = [userId];
 
         if (period) {
             if (period.length === 10) {
-                // YYYY-MM-DD (Day)
                 query += " AND DATE(date) = ?";
                 params.push(period);
             } else if (period.length === 8 && period.includes('W')) {
-                // YYYY-Www (Week)
                 query += " AND DATE_FORMAT(date, '%Y-W%u') = ?";
                 params.push(period);
             } else if (period.length === 7) {
-                // YYYY-MM (Month)
                 query += " AND DATE_FORMAT(date, '%Y-%m') = ?";
                 params.push(period);
             } else if (period.length === 4) {
-                // YYYY (Year)
                 query += " AND DATE_FORMAT(date, '%Y') = ?";
                 params.push(period);
             }
+        }
+
+        if (startDate && endDate) {
+            query += " AND DATE(date) BETWEEN ? AND ?";
+            params.push(startDate, endDate);
         }
 
         if (projectId) {
