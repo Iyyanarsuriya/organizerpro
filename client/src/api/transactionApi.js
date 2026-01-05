@@ -1,7 +1,5 @@
-import axiosInstance from './axiosInstance';
-
-export const getTransactions = async () => {
-    return await axiosInstance.get('/transactions');
+export const getTransactions = async (params = {}) => {
+    return await axiosInstance.get('/transactions', { params });
 };
 
 export const createTransaction = async (data) => {
@@ -16,6 +14,6 @@ export const deleteTransaction = async (id) => {
     return await axiosInstance.delete(`/transactions/${id}`);
 };
 
-export const getTransactionStats = async (month) => {
-    return await axiosInstance.get('/transactions/stats', { params: { month } });
+export const getTransactionStats = async (period, projectId) => {
+    return await axiosInstance.get('/transactions/stats', { params: { period, projectId } });
 };

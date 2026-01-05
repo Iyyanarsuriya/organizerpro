@@ -35,6 +35,7 @@ app.use("/api/push", pushRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/expense-categories", expenseCategoryRoutes);
+app.use("/api/projects", require("./routes/projectRoutes"));
 
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);

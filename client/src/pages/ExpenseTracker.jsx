@@ -12,9 +12,12 @@ import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
     BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
-import { Settings } from 'lucide-react';
+import { Utils } from 'recharts';
+import { Settings, Folder } from 'lucide-react';
 import { getExpenseCategories, createExpenseCategory, deleteExpenseCategory } from '../api/expenseCategoryApi';
+import { getProjects, createProject, deleteProject } from '../api/projectApi';
 import CategoryManager from '../components/CategoryManager';
+import ProjectManager from '../components/ProjectManager';
 
 const ExpenseTracker = () => {
     const navigate = useNavigate();
@@ -24,9 +27,15 @@ const ExpenseTracker = () => {
     const [activeTab, setActiveTab] = useState('Dashboard');
     const [showAddModal, setShowAddModal] = useState(false);
     const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user')) || {});
-    const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7));
+
+    const [periodType, setPeriodType] = useState('month'); // 'month' or 'year'
+    const [currentPeriod, setCurrentPeriod] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM or YYYY
+
     const [showCategoryManager, setShowCategoryManager] = useState(false);
+    const [showProjectManager, setShowProjectManager] = useState(false);
     const [categories, setCategories] = useState([]);
+    const [projects, setProjects] = useState([]); // Projects list
+    const [filterProject, setFilterProject] = useState(''); // Filter by project ID
     const [deleteModalOuter, setDeleteModalOuter] = useState({ show: false, id: null });
 
     const [formData, setFormData] = useState({
@@ -34,7 +43,8 @@ const ExpenseTracker = () => {
         amount: '',
         type: 'expense',
         category: 'Food',
-        date: new Date().toISOString().split('T')[0]
+        date: new Date().toISOString().split('T')[0],
+        project_id: ''
     });
     const [editingId, setEditingId] = useState(null);
 
@@ -68,14 +78,19 @@ const ExpenseTracker = () => {
 
     const fetchData = async () => {
         try {
-            const [transRes, statsRes, catsRes] = await Promise.all([
-                getTransactions(),
-                getTransactionStats(currentMonth),
-                getExpenseCategories()
+            // Adjust currentPeriod format based on type if needed, but input handles it mostly.
+            // When switching to 'year', currentPeriod might need adjustment if it was 'YYYY-MM'
+
+            const [transRes, statsRes, catsRes, projRes] = await Promise.all([
+                getTransactions({ projectId: filterProject, period: currentPeriod }),
+                getTransactionStats(currentPeriod, filterProject),
+                getExpenseCategories(),
+                getProjects()
             ]);
             setTransactions(transRes.data);
             setStats(statsRes.data);
             setCategories(catsRes.data);
+            setProjects(projRes.data);
             setLoading(false);
         } catch (error) {
             toast.error("Failed to fetch data");
@@ -85,7 +100,16 @@ const ExpenseTracker = () => {
 
     useEffect(() => {
         fetchData();
-    }, [currentMonth]);
+    }, [currentPeriod, filterProject]);
+
+    // Ensure period format is correct when switching types
+    useEffect(() => {
+        if (periodType === 'year' && currentPeriod.length > 4) {
+            setCurrentPeriod(currentPeriod.slice(0, 4));
+        } else if (periodType === 'month' && currentPeriod.length === 4) {
+            setCurrentPeriod(`${currentPeriod}-01`); // Default to Jan or current month?
+        }
+    }, [periodType]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -104,7 +128,8 @@ const ExpenseTracker = () => {
                 amount: '',
                 type: 'expense',
                 category: 'Food',
-                date: new Date().toISOString().split('T')[0]
+                date: new Date().toISOString().split('T')[0],
+                project_id: ''
             });
             fetchData();
         } catch (error) {
@@ -118,7 +143,8 @@ const ExpenseTracker = () => {
             amount: transaction.amount,
             type: transaction.type,
             category: transaction.category,
-            date: new Date(transaction.date).toISOString().split('T')[0]
+            date: new Date(transaction.date).toISOString().split('T')[0],
+            project_id: transaction.project_id || ''
         });
         setEditingId(transaction.id);
         setShowAddModal(true);
@@ -156,7 +182,11 @@ const ExpenseTracker = () => {
                 const matchesType = filterType === 'all' || t.type === filterType;
                 const matchesCat = filterCat === 'all' || t.category === filterCat;
                 const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase());
-                return matchesType && matchesCat && matchesSearch;
+                // Note: transactions fetched are already filtered by Project via API if filterProject is set.
+                // But strictly speaking, if we want client side filtering on top of server side optional filtering:
+                const matchesProject = !filterProject || (t.project_id == filterProject);
+
+                return matchesType && matchesCat && matchesSearch && matchesProject;
             })
             .sort((a, b) => {
                 if (sortBy === 'date_desc') return new Date(b.date) - new Date(a.date);
@@ -165,7 +195,7 @@ const ExpenseTracker = () => {
                 if (sortBy === 'amount_asc') return a.amount - b.amount;
                 return 0;
             });
-    }, [transactions, filterType, filterCat, sortBy, searchQuery]);
+    }, [transactions, filterType, filterCat, sortBy, searchQuery, filterProject]);
 
     // Derived values
     const totalBalance = (stats.summary?.total_income || 0) - (stats.summary?.total_expense || 0);
@@ -244,15 +274,62 @@ const ExpenseTracker = () => {
                         <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest ml-[52px]">Take control of your finances</p>
                     </div>
 
-                    {/* Month Picker Filter */}
-                    <div className="flex items-center gap-[8px] bg-white border border-slate-200 p-[8px] rounded-[12px] shadow-sm hover:border-blue-500 transition-colors self-start sm:self-auto w-full sm:w-auto">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-[4px] shrink-0">Period:</span>
-                        <input
-                            type="month"
-                            value={currentMonth}
-                            onChange={(e) => setCurrentMonth(e.target.value)}
-                            className="text-[12px] font-bold text-slate-700 outline-none bg-transparent cursor-pointer font-['Outfit'] w-full sm:w-auto"
-                        />
+                    {/* Filters: Project, Period Type, Date */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+
+                        {/* Project Filter */}
+                        <div className="flex items-center gap-[8px] bg-white border border-slate-200 p-[8px] rounded-[12px] shadow-sm hover:border-blue-500 transition-colors w-full sm:w-auto">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-[4px] shrink-0">Project:</span>
+                            <select
+                                value={filterProject}
+                                onChange={(e) => setFilterProject(e.target.value)}
+                                className="text-[12px] font-bold text-slate-700 outline-none bg-transparent cursor-pointer font-['Outfit'] w-full sm:w-auto min-w-[100px]"
+                            >
+                                <option value="">All Projects</option>
+                                {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                            </select>
+                            <button onClick={() => setShowProjectManager(true)} className="w-[20px] h-[20px] flex items-center justify-center bg-slate-100 rounded-lg text-slate-500 hover:text-blue-500 hover:bg-blue-50 transition-colors border border-slate-200">
+                                <Settings className="w-[12px] h-[12px]" />
+                            </button>
+                        </div>
+
+                        {/* Period Type Toggle */}
+                        <div className="flex p-1 bg-white border border-slate-200 rounded-[12px]">
+                            <button
+                                onClick={() => setPeriodType('month')}
+                                className={`px-3 py-1.5 rounded-[8px] text-[10px] font-black uppercase tracking-widest transition-all ${periodType === 'month' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                Month
+                            </button>
+                            <button
+                                onClick={() => setPeriodType('year')}
+                                className={`px-3 py-1.5 rounded-[8px] text-[10px] font-black uppercase tracking-widest transition-all ${periodType === 'year' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                Year
+                            </button>
+                        </div>
+
+                        {/* Date Picker */}
+                        <div className="flex items-center gap-[8px] bg-white border border-slate-200 p-[8px] rounded-[12px] shadow-sm hover:border-blue-500 transition-colors w-full sm:w-auto">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-[4px] shrink-0">Period:</span>
+                            {periodType === 'month' ? (
+                                <input
+                                    type="month"
+                                    value={currentPeriod.length > 4 ? currentPeriod : ''} // Ensure valid YYYY-MM
+                                    onChange={(e) => setCurrentPeriod(e.target.value)}
+                                    className="text-[12px] font-bold text-slate-700 outline-none bg-transparent cursor-pointer font-['Outfit'] w-full sm:w-auto"
+                                />
+                            ) : (
+                                <input
+                                    type="number"
+                                    min="2000"
+                                    max="2100"
+                                    value={currentPeriod.slice(0, 4)}
+                                    onChange={(e) => setCurrentPeriod(e.target.value)}
+                                    className="text-[12px] font-bold text-slate-700 outline-none bg-transparent cursor-pointer font-['Outfit'] w-full sm:w-auto"
+                                />
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -275,17 +352,17 @@ const ExpenseTracker = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[16px] sm:gap-[24px] mb-[32px] lg:mb-[48px]">
                             <StatCard title="Total Balance" value={`₹${formatAmount(totalBalance)}`} color="text-slate-800" subtitle={`${totalBalance >= 0 ? '+' : ''}0% from last month`} />
                             <StatCard
-                                title="Monthly Income"
+                                title={`${periodType === 'month' ? 'Monthly' : 'Yearly'} Income`}
                                 value={`₹${formatAmount(stats.summary?.total_income)}`}
                                 color="text-blue-500"
-                                subtitle="This month"
+                                subtitle={currentPeriod}
                                 onClick={() => handleShowTransactions('income')}
                             />
                             <StatCard
-                                title="Monthly Expenses"
+                                title={`${periodType === 'month' ? 'Monthly' : 'Yearly'} Expenses`}
                                 value={`₹${formatAmount(stats.summary?.total_expense)}`}
                                 color="text-red-500"
-                                subtitle="This month"
+                                subtitle={currentPeriod}
                                 onClick={() => handleShowTransactions('expense')}
                             />
                             <StatCard title="Savings Rate" value={`${savingsRate}%`} color="text-emerald-500" subtitle="% of income" />
@@ -633,6 +710,28 @@ const ExpenseTracker = () => {
                                     <input required type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[16px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-['Outfit']" placeholder="Electricity, Salary..." />
                                 </div>
 
+                                {/* Project Selection */}
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Project (Optional)</label>
+                                    <div className="flex gap-2">
+                                        <select
+                                            value={formData.project_id}
+                                            onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[16px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-['Outfit'] cursor-pointer"
+                                        >
+                                            <option value="">No Project</option>
+                                            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                        </select>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowProjectManager(true)}
+                                            className="bg-slate-100 hover:bg-blue-50 text-slate-500 hover:text-blue-500 px-4 rounded-[16px] border border-slate-200 transition-colors"
+                                        >
+                                            <FaPlus />
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <div className="grid grid-cols-2 gap-[16px]">
                                     <div>
                                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Amount</label>
@@ -775,6 +874,17 @@ const ExpenseTracker = () => {
                     onCreate={createExpenseCategory}
                     onDelete={deleteExpenseCategory}
                     onClose={() => setShowCategoryManager(false)}
+                />
+            )}
+
+            {/* Project Manager Modal */}
+            {showProjectManager && (
+                <ProjectManager
+                    projects={projects}
+                    onCreate={createProject}
+                    onDelete={deleteProject}
+                    onClose={() => setShowProjectManager(false)}
+                    onRefresh={() => getProjects().then(res => setProjects(res.data))}
                 />
             )}
         </div>

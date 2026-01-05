@@ -2,7 +2,8 @@ const Transaction = require('../models/transactionModel');
 
 exports.getTransactions = async (req, res) => {
     try {
-        const transactions = await Transaction.getAllByUserId(req.user.id);
+        const { projectId, period } = req.query;
+        const transactions = await Transaction.getAllByUserId(req.user.id, { projectId, period });
         res.json(transactions);
     } catch (error) {
         console.error(error);
@@ -11,7 +12,7 @@ exports.getTransactions = async (req, res) => {
 };
 
 exports.createTransaction = async (req, res) => {
-    const { title, amount, type, category, date } = req.body;
+    const { title, amount, type, category, date, project_id } = req.body;
     try {
         const newTransaction = await Transaction.create({
             user_id: req.user.id,
@@ -19,7 +20,8 @@ exports.createTransaction = async (req, res) => {
             amount,
             type,
             category,
-            date
+            date,
+            project_id
         });
         res.status(201).json(newTransaction);
     } catch (error) {
@@ -30,14 +32,15 @@ exports.createTransaction = async (req, res) => {
 
 exports.updateTransaction = async (req, res) => {
     const { id } = req.params;
-    const { title, amount, type, category, date } = req.body;
+    const { title, amount, type, category, date, project_id } = req.body;
     try {
         const success = await Transaction.update(id, req.user.id, {
             title,
             amount,
             type,
             category,
-            date
+            date,
+            project_id
         });
         if (!success) return res.status(404).json({ error: 'Transaction not found' });
         res.json({ message: 'Transaction updated' });
@@ -61,9 +64,10 @@ exports.deleteTransaction = async (req, res) => {
 
 exports.getTransactionStats = async (req, res) => {
     try {
-        const { month } = req.query;
-        const summary = await Transaction.getStats(req.user.id, month);
-        const categories = await Transaction.getCategoryStats(req.user.id, month);
+        const { period, projectId } = req.query;
+        // Note: 'period' can now be YYYY-MM or YYYY. 'month' query param is deprecated but we can support it for backward compat if we want, but since I'm controlling frontend, I'll update frontend to use 'period'.
+        const summary = await Transaction.getStats(req.user.id, period, projectId);
+        const categories = await Transaction.getCategoryStats(req.user.id, period, projectId);
         res.json({ summary, categories });
     } catch (error) {
         console.error(error);
