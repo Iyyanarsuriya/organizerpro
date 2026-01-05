@@ -7,7 +7,7 @@ const {
     deleteAttendance,
     getAttendanceStats
 } = require('../controllers/attendanceController');
-const { authenticateToken } = require('../middlewares/authMiddleware');
+const authenticateToken = require('../middlewares/authMiddleware');
 
 router.use(authenticateToken);
 
