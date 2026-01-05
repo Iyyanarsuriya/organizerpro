@@ -66,11 +66,13 @@ exports.deleteTransaction = async (req, res) => {
 
 exports.getTransactionStats = async (req, res) => {
     try {
-        const { period, projectId, startDate, endDate } = req.query;
+        const { period, projectId, workerId, startDate, endDate } = req.query;
         // Note: 'period' can now be YYYY-MM or YYYY.
-        const summary = await Transaction.getStats(req.user.id, period, projectId, startDate, endDate);
-        const categories = await Transaction.getCategoryStats(req.user.id, period, projectId, startDate, endDate);
-        res.json({ summary, categories });
+        const summary = await Transaction.getStats(req.user.id, period, projectId, startDate, endDate, workerId);
+        const categories = await Transaction.getCategoryStats(req.user.id, period, projectId, startDate, endDate, workerId);
+        const lifetime = await Transaction.getLifetimeStats(req.user.id, projectId, workerId);
+        const workerProjects = workerId ? await Transaction.getWorkerProjectStats(req.user.id, workerId) : null;
+        res.json({ summary, categories, lifetime, workerProjects });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal Server Error' });

@@ -103,7 +103,7 @@ const ExpenseTracker = () => {
                     startDate: rangeStart,
                     endDate: rangeEnd
                 }),
-                getTransactionStats(isRange ? null : currentPeriod, filterProject, rangeStart, rangeEnd),
+                getTransactionStats(isRange ? null : currentPeriod, filterProject, rangeStart, rangeEnd, filterWorker),
                 getExpenseCategories(),
                 getProjects(),
                 getActiveWorkers()
@@ -123,7 +123,7 @@ const ExpenseTracker = () => {
 
     useEffect(() => {
         fetchData();
-    }, [currentPeriod, filterProject, customRange.start, customRange.end, periodType]);
+    }, [currentPeriod, filterProject, filterWorker, customRange.start, customRange.end, periodType]);
 
     // Ensure period format is correct when switching types
     useEffect(() => {
@@ -254,13 +254,24 @@ const ExpenseTracker = () => {
                 if (sortBy === 'amount_asc') return a.amount - b.amount;
                 return 0;
             });
-    }, [transactions, filterType, filterCat, sortBy, searchQuery, filterProject]);
+    }, [transactions, filterType, filterCat, sortBy, searchQuery, filterProject, filterWorker]);
 
     // Derived values
     const totalBalance = (stats.summary?.total_income || 0) - (stats.summary?.total_expense || 0);
     const savingsRate = stats.summary?.total_income > 0
         ? (((stats.summary.total_income - stats.summary.total_expense) / stats.summary.total_income) * 100).toFixed(1)
         : 0;
+
+    const workerStats = useMemo(() => {
+        if (!filterWorker) return null;
+        const totalSalary = transactions
+            .filter(t => t.category.toLowerCase().includes('salary'))
+            .reduce((acc, t) => acc + parseFloat(t.amount), 0);
+        const totalAdvances = transactions
+            .filter(t => t.category.toLowerCase().includes('advance'))
+            .reduce((acc, t) => acc + parseFloat(t.amount), 0);
+        return { totalSalary, totalAdvances };
+    }, [transactions, filterWorker]);
 
     // Charts Data
     const pieData = stats.categories
@@ -362,6 +373,26 @@ const ExpenseTracker = () => {
                             </select>
                         </div>
 
+                        {/* Worker Filter and Manage Button */}
+                        <div className="h-[40px] flex items-center gap-2 bg-white border border-slate-200 px-3 rounded-[12px] shadow-sm hover:border-blue-500 transition-colors">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 hidden sm:inline">Worker:</span>
+                            <select
+                                value={filterWorker}
+                                onChange={(e) => setFilterWorker(e.target.value)}
+                                className="text-[12px] font-bold text-slate-700 outline-none bg-transparent cursor-pointer font-['Outfit'] min-w-[80px] sm:min-w-[100px]"
+                            >
+                                <option value="">All Workers</option>
+                                {workers.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                            </select>
+                            <button
+                                onClick={() => setShowWorkerManager(true)}
+                                className="w-[24px] h-[24px] bg-slate-100 text-slate-500 rounded-[8px] flex items-center justify-center hover:bg-orange-50 hover:text-orange-600 transition-all border border-slate-200 shrink-0"
+                                title="Manage Workers"
+                            >
+                                <FaUserEdit className="text-[12px]" />
+                            </button>
+                        </div>
+
                         {/* Period Type Toggle */}
                         <div className="h-[40px] flex items-center p-1 bg-white border border-slate-200 rounded-[12px] overflow-x-auto custom-scrollbar max-w-full">
                             {['day', 'week', 'month', 'year', 'range'].map((type) => (
@@ -427,7 +458,7 @@ const ExpenseTracker = () => {
                             )}
                         </div>
                     </div>
-                </div >
+                </div>
 
                 {/* Mobile Tab Navigation */}
                 < div className="lg:hidden flex overflow-x-auto gap-3 mb-8 pb-2 custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0" >
@@ -610,24 +641,6 @@ const ExpenseTracker = () => {
                                     <option value="amount_desc">Highest Amount</option>
                                     <option value="amount_asc">Lowest Amount</option>
                                 </select>
-                                {/* Worker Filter and Manage Button */}
-                                <div className="flex items-center gap-2">
-                                    <select
-                                        value={filterWorker}
-                                        onChange={(e) => setFilterWorker(e.target.value)}
-                                        className="h-[40px] bg-white border border-slate-200 rounded-xl px-4 text-xs font-black uppercase tracking-widest text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer shadow-sm"
-                                    >
-                                        <option value="">All Workers</option>
-                                        {workers.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                                    </select>
-                                    <button
-                                        onClick={() => setShowWorkerManager(true)}
-                                        className="w-[40px] h-[40px] bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center hover:bg-orange-50 hover:text-orange-600 transition-all shadow-sm border border-slate-200 shrink-0"
-                                        title="Manage Workers"
-                                    >
-                                        <FaUserEdit />
-                                    </button>
-                                </div>
                                 <button onClick={handleAddNewTransaction} className="bg-[#2d5bff] text-white p-[12px] rounded-[12px] shadow-lg shadow-blue-500/20 hover:scale-105 transition-transform">
                                     <FaPlus />
                                 </button>
@@ -739,31 +752,151 @@ const ExpenseTracker = () => {
                                         <FaFileAlt />
                                     </div>
                                     <div>
-                                        <h3 className="text-[20px] font-black">Monthly Summary</h3>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">December 2023 Performance</p>
+                                        <h3 className="text-[20px] font-black">
+                                            {filterWorker
+                                                ? `${workers.find(w => w.id == filterWorker)?.name}'s Report`
+                                                : filterProject
+                                                    ? `${projects.find(p => p.id == filterProject)?.name} Report`
+                                                    : 'Financial Summary'}
+                                        </h3>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                            {periodType} Performance: {periodType === 'range' ? `${customRange.start} to ${customRange.end}` : currentPeriod}
+                                        </p>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-[32px] mb-[64px]">
-                                    <div className="p-[24px] bg-slate-50 rounded-[24px] border border-slate-100">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px]">Savings Ratio</p>
-                                        <p className="text-[32px] font-black tracking-tighter text-slate-800">{savingsRate}%</p>
-                                        <div className="mt-[16px] flex items-center gap-[8px]">
-                                            <div className="w-[8px] h-[8px] rounded-full bg-emerald-500"></div>
-                                            <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Healthy</span>
+                                    {filterWorker ? (
+                                        <>
+                                            <div className="p-[24px] bg-blue-50/50 rounded-[24px] border border-blue-100">
+                                                <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-[8px]">Total Salary Paid</p>
+                                                <p className="text-[32px] font-black tracking-tighter text-blue-600">₹{formatAmount(workerStats?.totalSalary || 0)}</p>
+                                                <div className="mt-[16px] flex items-center gap-[8px]">
+                                                    <div className="w-[8px] h-[8px] rounded-full bg-blue-500"></div>
+                                                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Fixed Payouts</span>
+                                                </div>
+                                            </div>
+                                            <div className="p-[24px] bg-orange-50/50 rounded-[24px] border border-orange-100">
+                                                <p className="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-[8px]">Total Advances</p>
+                                                <p className="text-[32px] font-black tracking-tighter text-orange-600">₹{formatAmount(workerStats?.totalAdvances || 0)}</p>
+                                                <div className="mt-[16px] flex items-center gap-[8px]">
+                                                    <div className="w-[8px] h-[8px] rounded-full bg-orange-500"></div>
+                                                    <span className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Ad-hoc Payments</span>
+                                                </div>
+                                            </div>
+                                            <div className="p-[24px] bg-slate-900 rounded-[24px] border border-slate-800 shadow-xl shadow-slate-900/20">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px]">Lifetime Payout</p>
+                                                <p className="text-[32px] font-black tracking-tighter text-white">₹{formatAmount(stats.lifetime?.total_expense - stats.lifetime?.total_income)}</p>
+                                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-[16px]">Total across all time</p>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="p-[24px] bg-slate-50 rounded-[24px] border border-slate-100">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px]">Savings Ratio</p>
+                                                <p className="text-[32px] font-black tracking-tighter text-slate-800">{savingsRate}%</p>
+                                                <div className="mt-[16px] flex items-center gap-[8px]">
+                                                    <div className="w-[8px] h-[8px] rounded-full bg-emerald-500"></div>
+                                                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Healthy</span>
+                                                </div>
+                                            </div>
+                                            <div className="p-[24px] bg-slate-50 rounded-[24px] border border-slate-100">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px]">Total Wealth</p>
+                                                <p className="text-[32px] font-black tracking-tighter text-slate-800">₹{formatAmount(totalBalance)}</p>
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-[16px]">Net Balance</p>
+                                            </div>
+                                            <div className="p-[24px] bg-slate-50 rounded-[24px] border border-slate-100">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px]">Income Growth</p>
+                                                <p className="text-[32px] font-black tracking-tighter text-blue-500">+12%</p>
+                                                <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mt-[16px]">from last month</p>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+
+                                {filterWorker && (
+                                    <div className="mb-[64px] animate-in fade-in slide-in-from-bottom-5 duration-700">
+                                        <div className="flex items-center gap-[12px] mb-[24px]">
+                                            <div className="w-[8px] h-[24px] bg-emerald-500 rounded-full"></div>
+                                            <h4 className="text-[16px] font-black uppercase tracking-widest text-slate-800">Worker Ledger: Salaries & Advances</h4>
+                                        </div>
+                                        <div className="overflow-x-auto rounded-[24px] border border-slate-100 bg-slate-50/50">
+                                            <table className="w-full text-left border-collapse">
+                                                <thead>
+                                                    <tr className="border-b border-slate-100">
+                                                        <th className="px-[24px] py-[16px] text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
+                                                        <th className="px-[24px] py-[16px] text-[10px] font-black text-slate-400 uppercase tracking-widest">Description</th>
+                                                        <th className="px-[24px] py-[16px] text-[10px] font-black text-slate-400 uppercase tracking-widest">Category</th>
+                                                        <th className="px-[24px] py-[16px] text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Amount</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {transactions.length > 0 ? (
+                                                        [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date)).map((t) => (
+                                                            <tr key={t.id} className="border-b border-slate-50 hover:bg-white transition-colors group">
+                                                                <td className="px-[24px] py-[16px]">
+                                                                    <p className="text-[12px] font-bold text-slate-600">{new Date(t.date).toLocaleDateString('en-GB')}</p>
+                                                                </td>
+                                                                <td className="px-[24px] py-[16px]">
+                                                                    <p className="text-[14px] font-black text-slate-800">{t.title}</p>
+                                                                </td>
+                                                                <td className="px-[24px] py-[16px]">
+                                                                    <span className={`px-[12px] py-[4px] rounded-full text-[10px] font-black uppercase tracking-widest ${t.category.toLowerCase().includes('salary') ? 'bg-blue-100 text-blue-600' : t.category.toLowerCase().includes('advance') ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-500'}`}>
+                                                                        {t.category}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-[24px] py-[16px] text-right">
+                                                                    <p className={`text-[14px] font-black ${t.type === 'income' ? 'text-blue-500' : 'text-red-500'}`}>
+                                                                        {t.type === 'income' ? '+' : '-'}₹{formatAmount(t.amount)}
+                                                                    </p>
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    ) : (
+                                                        <tr>
+                                                            <td colSpan="4" className="px-[24px] py-[48px] text-center">
+                                                                <p className="text-[12px] font-bold text-slate-400 uppercase tracking-widest">No transaction history for this worker in the selected period.</p>
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                                {transactions.length > 0 && (
+                                                    <tfoot>
+                                                        <tr className="bg-slate-900 text-white">
+                                                            <td colSpan="3" className="px-[24px] py-[20px] rounded-bl-[24px]">
+                                                                <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Net Paid (Period Total)</p>
+                                                            </td>
+                                                            <td className="px-[24px] py-[20px] text-right rounded-br-[24px]">
+                                                                <p className="text-[18px] font-black tracking-tighter">
+                                                                    ₹{formatAmount(stats.summary?.total_expense - stats.summary?.total_income)}
+                                                                </p>
+                                                            </td>
+                                                        </tr>
+                                                    </tfoot>
+                                                )}
+                                            </table>
                                         </div>
                                     </div>
-                                    <div className="p-[24px] bg-slate-50 rounded-[24px] border border-slate-100">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px]">Average Expense</p>
-                                        <p className="text-[32px] font-black tracking-tighter text-slate-800">₹42.50</p>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-[16px]">per transaction</p>
+                                )}
+                                {filterWorker && stats.workerProjects && stats.workerProjects.length > 0 && (
+                                    <div className="mb-[64px] animate-in fade-in slide-in-from-bottom-5 duration-1000">
+                                        <div className="flex items-center gap-[12px] mb-[24px]">
+                                            <div className="w-[8px] h-[24px] bg-blue-500 rounded-full"></div>
+                                            <h4 className="text-[16px] font-black uppercase tracking-widest text-slate-800">Project Breakdown (Lifetime)</h4>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
+                                            {stats.workerProjects.map((pw, i) => (
+                                                <div key={i} className="bg-slate-50 border border-slate-100 p-[20px] rounded-[24px] flex justify-between items-center group hover:bg-white hover:shadow-lg transition-all">
+                                                    <div>
+                                                        <p className="text-[12px] font-black text-slate-800 uppercase tracking-widest mb-[4px]">{pw.project_name}</p>
+                                                        <p className="text-[10px] font-bold text-slate-400">Total Contribution</p>
+                                                    </div>
+                                                    <p className="text-[18px] font-black text-blue-500 group-hover:scale-110 transition-transform">₹{formatAmount(pw.total)}</p>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-                                    <div className="p-[24px] bg-slate-50 rounded-[24px] border border-slate-100">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px]">Income Growth</p>
-                                        <p className="text-[32px] font-black tracking-tighter text-blue-500">+12%</p>
-                                        <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mt-[16px]">from last month</p>
-                                    </div>
-                                </div>
+                                )}
 
                                 <div className="flex justify-center">
                                     <button className="text-[12px] font-black text-blue-500 uppercase tracking-widest hover:bg-blue-50 px-[32px] py-[12px] rounded-[16px] transition-all">Generate Custom Report</button>

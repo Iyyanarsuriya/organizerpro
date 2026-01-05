@@ -76,7 +76,7 @@ class Transaction {
         return result.affectedRows > 0;
     }
 
-    static async getStats(userId, period, projectId, startDate, endDate) {
+    static async getStats(userId, period, projectId, startDate, endDate, workerId) {
         let query = `SELECT 
             SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as total_income,
             SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as total_expense
@@ -109,11 +109,47 @@ class Transaction {
             params.push(projectId);
         }
 
+        if (workerId) {
+            query += ` AND worker_id = ?`;
+            params.push(workerId);
+        }
+
         const [rows] = await db.query(query, params);
         return rows[0];
     }
 
-    static async getCategoryStats(userId, period, projectId, startDate, endDate) {
+    static async getLifetimeStats(userId, projectId, workerId) {
+        let query = `SELECT 
+            SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as total_income,
+            SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as total_expense
+             FROM transactions WHERE user_id = ?`;
+        const params = [userId];
+
+        if (projectId) {
+            query += ` AND project_id = ?`;
+            params.push(projectId);
+        }
+
+        if (workerId) {
+            query += ` AND worker_id = ?`;
+            params.push(workerId);
+        }
+
+        const [rows] = await db.query(query, params);
+        return rows[0];
+    }
+
+    static async getWorkerProjectStats(userId, workerId) {
+        let query = `SELECT p.name as project_name, SUM(t.amount) as total
+                    FROM transactions t
+                    JOIN projects p ON t.project_id = p.id
+                    WHERE t.user_id = ? AND t.worker_id = ? AND t.type = 'expense'
+                    GROUP BY t.project_id`;
+        const [rows] = await db.query(query, [userId, workerId]);
+        return rows;
+    }
+
+    static async getCategoryStats(userId, period, projectId, startDate, endDate, workerId) {
         let query = `SELECT category, type, SUM(amount) as total 
              FROM transactions WHERE user_id = ?`;
         const params = [userId];
@@ -142,6 +178,11 @@ class Transaction {
         if (projectId) {
             query += ` AND project_id = ?`;
             params.push(projectId);
+        }
+
+        if (workerId) {
+            query += ` AND worker_id = ?`;
+            params.push(workerId);
         }
 
         query += ` GROUP BY category, type`;

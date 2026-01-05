@@ -16,6 +16,6 @@ export const deleteTransaction = async (id) => {
     return await axiosInstance.delete(`/transactions/${id}`);
 };
 
-export const getTransactionStats = async (period, projectId, startDate, endDate) => {
-    return await axiosInstance.get('/transactions/stats', { params: { period, projectId, startDate, endDate } });
+export const getTransactionStats = async (period, projectId, startDate, endDate, workerId) => {
+    return await axiosInstance.get('/transactions/stats', { params: { period, projectId, startDate, endDate, workerId } });
 };
