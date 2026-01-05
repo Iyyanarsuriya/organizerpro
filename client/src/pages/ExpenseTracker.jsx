@@ -17,10 +17,10 @@ import autoTable from 'jspdf-autotable';
 import { Settings, Folder } from 'lucide-react';
 import { getExpenseCategories, createExpenseCategory, deleteExpenseCategory } from '../api/expenseCategoryApi';
 import { getProjects, createProject, deleteProject } from '../api/projectApi';
-import { getActiveWorkers } from '../api/workerApi';
+import { getActiveMembers } from '../api/memberApi';
 import CategoryManager from '../components/CategoryManager';
 import ProjectManager from '../components/ProjectManager';
-import WorkerManager from '../components/WorkerManager';
+import MemberManager from '../components/MemberManager';
 
 const ExpenseTracker = () => {
     const navigate = useNavigate();
@@ -37,12 +37,12 @@ const ExpenseTracker = () => {
 
     const [showCategoryManager, setShowCategoryManager] = useState(false);
     const [showProjectManager, setShowProjectManager] = useState(false);
-    const [showWorkerManager, setShowWorkerManager] = useState(false);
+    const [showMemberManager, setShowMemberManager] = useState(false);
     const [categories, setCategories] = useState([]);
     const [projects, setProjects] = useState([]); // Projects list
-    const [workers, setWorkers] = useState([]); // Workers list
+    const [members, setMembers] = useState([]); // Members list
     const [filterProject, setFilterProject] = useState(''); // Filter by project ID
-    const [filterWorker, setFilterWorker] = useState(''); // Filter by worker ID
+    const [filterMember, setFilterMember] = useState(''); // Filter by member ID
     const [deleteModalOuter, setDeleteModalOuter] = useState({ show: false, id: null });
 
     const [formData, setFormData] = useState({
@@ -52,7 +52,7 @@ const ExpenseTracker = () => {
         category: 'Food',
         date: new Date().toISOString().split('T')[0],
         project_id: '',
-        worker_id: ''
+        member_id: ''
     });
     const [editingId, setEditingId] = useState(null);
 
@@ -70,7 +70,7 @@ const ExpenseTracker = () => {
         startDate: new Date().toISOString().split('T')[0],
         endDate: new Date().toISOString().split('T')[0],
         projectId: '',
-        workerId: '',
+        memberId: '',
         category: 'all',
         type: 'all'
     });
@@ -98,34 +98,31 @@ const ExpenseTracker = () => {
 
     const fetchData = async () => {
         try {
-            // Adjust currentPeriod format based on type if needed, but input handles it mostly.
-            // When switching to 'year', currentPeriod might need adjustment if it was 'YYYY-MM'
-
             const isRange = periodType === 'range';
             const rangeStart = isRange ? customRange.start : null;
             const rangeEnd = isRange ? customRange.end : null;
-            // If range is selected but not full, don't fetch or maybe fetch empty?
-            // Let's only fetch if both are set or if not range.
             if (isRange && (!rangeStart || !rangeEnd)) return;
 
-            const [transRes, statsRes, catsRes, projRes, workersRes] = await Promise.all([
-                getTransactions({
-                    projectId: filterProject,
-                    workerId: filterWorker,
-                    period: isRange ? null : currentPeriod,
-                    startDate: rangeStart,
-                    endDate: rangeEnd
-                }),
-                getTransactionStats(isRange ? null : currentPeriod, filterProject, rangeStart, rangeEnd, filterWorker),
+            const params = {
+                projectId: filterProject,
+                memberId: filterMember,
+                period: isRange ? null : currentPeriod,
+                startDate: rangeStart,
+                endDate: rangeEnd
+            };
+
+            const [transRes, statsRes, catRes, projRes, membersRes] = await Promise.all([
+                getTransactions(params),
+                getTransactionStats(params),
                 getExpenseCategories(),
                 getProjects(),
-                getActiveWorkers()
+                getActiveMembers()
             ]);
             setTransactions(transRes.data);
             setStats(statsRes.data);
-            setCategories(catsRes.data);
+            setCategories(catRes.data);
             setProjects(projRes.data);
-            setWorkers(workersRes.data.data);
+            setMembers(membersRes.data.data);
             setLoading(false);
         } catch (error) {
             console.error("Fetch Data Error Details:", error.response || error);
@@ -136,7 +133,7 @@ const ExpenseTracker = () => {
 
     useEffect(() => {
         fetchData();
-    }, [currentPeriod, filterProject, filterWorker, customRange.start, customRange.end, periodType]);
+    }, [currentPeriod, filterProject, filterMember, customRange.start, customRange.end, periodType]);
 
     // Ensure period format is correct when switching types
     useEffect(() => {
@@ -189,7 +186,7 @@ const ExpenseTracker = () => {
                 category: 'Food',
                 date: new Date().toISOString().split('T')[0],
                 project_id: filterProject || '',
-                worker_id: filterWorker || ''
+                member_id: filterMember || ''
             });
             fetchData();
         } catch (error) {
@@ -205,7 +202,7 @@ const ExpenseTracker = () => {
             category: transaction.category,
             date: new Date(transaction.date).toISOString().split('T')[0],
             project_id: transaction.project_id || '',
-            worker_id: transaction.worker_id || ''
+            member_id: transaction.member_id || ''
         });
         setEditingId(transaction.id);
         setShowAddModal(true);
@@ -219,7 +216,7 @@ const ExpenseTracker = () => {
             category: 'Food',
             date: new Date().toISOString().split('T')[0],
             project_id: filterProject || '',
-            worker_id: filterWorker || ''
+            member_id: filterMember || ''
         });
         setEditingId(null);
         setShowAddModal(true);
@@ -260,9 +257,9 @@ const ExpenseTracker = () => {
                 // Note: transactions fetched are already filtered by Project via API if filterProject is set.
                 // But strictly speaking, if we want client side filtering on top of server side optional filtering:
                 const matchesProject = !filterProject || (t.project_id == filterProject);
-                const matchesWorker = !filterWorker || (t.worker_id == filterWorker);
+                const matchesMember = !filterMember || (t.member_id == filterMember);
 
-                return matchesType && matchesCat && matchesSearch && matchesProject && matchesWorker;
+                return matchesType && matchesCat && matchesSearch && matchesProject && matchesMember;
             })
             .sort((a, b) => {
                 if (sortBy === 'date_desc') return new Date(b.date) - new Date(a.date);
@@ -271,13 +268,13 @@ const ExpenseTracker = () => {
                 if (sortBy === 'amount_asc') return a.amount - b.amount;
                 return 0;
             });
-    }, [transactions, filterType, filterCat, sortBy, searchQuery, filterProject, filterWorker]);
+    }, [transactions, filterType, filterCat, sortBy, searchQuery, filterProject, filterMember]);
 
     // Derived values
     const totalBalance = (stats.summary?.total_income || 0) - (stats.summary?.total_expense || 0);
 
-    const workerStats = useMemo(() => {
-        if (!filterWorker) return null;
+    const memberStats = useMemo(() => {
+        if (!filterMember) return null;
         const totalSalary = transactions
             .filter(t => t.category.toLowerCase().includes('salary'))
             .reduce((acc, t) => acc + parseFloat(t.amount), 0);
@@ -285,7 +282,7 @@ const ExpenseTracker = () => {
             .filter(t => t.category.toLowerCase().includes('advance'))
             .reduce((acc, t) => acc + parseFloat(t.amount), 0);
         return { totalSalary, totalAdvances };
-    }, [transactions, filterWorker]);
+    }, [transactions, filterMember]);
 
     // Export Functions
     const handleExportCSV = (data = transactions, filters = {}) => {
@@ -295,7 +292,7 @@ const ExpenseTracker = () => {
             return;
         }
 
-        const headers = ["Date", "Title", "Amount", "Type", "Category", "Project", "Worker"];
+        const headers = ["Date", "Title", "Amount", "Type", "Category", "Project", "Member"];
         const rows = reportTransactions.map(t => [
             new Date(t.date).toLocaleDateString('en-GB'),
             t.title,
@@ -303,7 +300,7 @@ const ExpenseTracker = () => {
             t.type,
             t.category,
             t.project_name || 'N/A',
-            t.worker_name || 'N/A'
+            t.member_name || 'N/A'
         ]);
 
         const periodStr = filters.startDate && filters.endDate
@@ -370,7 +367,7 @@ const ExpenseTracker = () => {
         }
 
         const doc = new jsPDF();
-        const workerName = filters.workerId ? workers.find(w => w.id == filters.workerId)?.name : (filterWorker ? workers.find(w => w.id == filterWorker)?.name : 'All Workers');
+        const memberName = filters.memberId ? members.find(m => m.id == filters.memberId)?.name : (filterMember ? members.find(m => m.id == filterMember)?.name : 'Everyone');
         const projectName = filters.projectId ? projects.find(p => p.id == filters.projectId)?.name : (filterProject ? projects.find(p => p.id == filterProject)?.name : 'All Projects');
 
         doc.setFontSize(20);
@@ -388,7 +385,7 @@ const ExpenseTracker = () => {
             : (periodType === 'range' ? `${customRange.start} to ${customRange.end}` : currentPeriod);
 
         doc.text(`Period: ${periodStr}`, 14, 35);
-        doc.text(`Worker: ${workerName} | Project: ${projectName}`, 14, 40);
+        doc.text(`Member: ${memberName} | Project: ${projectName}`, 14, 40);
 
         // Summary Boxes
         doc.setDrawColor(230);
@@ -402,7 +399,7 @@ const ExpenseTracker = () => {
 
         autoTable(doc, {
             startY: 75,
-            head: [['Date', 'Description', 'Category', 'Type', 'Amount']],
+            head: [['Date', 'Description', 'Category', 'Type', 'Member', 'Amount']],
             body: reportTransactions.map(t => {
                 const d = new Date(t.date);
                 const dateFmt = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
@@ -411,6 +408,7 @@ const ExpenseTracker = () => {
                     t.title,
                     t.category,
                     t.type.toUpperCase(),
+                    t.member_name || 'N/A',
                     `₹${formatAmount(t.amount)}`
                 ];
             }),
@@ -430,16 +428,17 @@ const ExpenseTracker = () => {
 
         setCustomReportLoading(format);
         try {
+            const params = {
+                projectId: customReportForm.projectId,
+                memberId: customReportForm.memberId,
+                startDate: customReportForm.startDate,
+                endDate: customReportForm.endDate,
+                category: customReportForm.category === 'all' ? null : customReportForm.category,
+                type: customReportForm.type === 'all' ? null : customReportForm.type
+            };
             const [transRes, statsRes] = await Promise.all([
-                getTransactions({
-                    projectId: customReportForm.projectId,
-                    workerId: customReportForm.workerId,
-                    startDate: customReportForm.startDate,
-                    endDate: customReportForm.endDate,
-                    category: customReportForm.category === 'all' ? null : customReportForm.category,
-                    type: customReportForm.type === 'all' ? null : customReportForm.type
-                }),
-                getTransactionStats(null, customReportForm.projectId, customReportForm.startDate, customReportForm.endDate, customReportForm.workerId)
+                getTransactions(params),
+                getTransactionStats(params)
             ]);
 
             if (format === 'PDF') handleExportPDF(transRes.data, statsRes.data, customReportForm);
@@ -608,19 +607,19 @@ const ExpenseTracker = () => {
                             </select>
                         </div>
 
-                        {/* Worker Filter */}
+                        {/* Member Filter */}
                         <div className="col-span-1 h-[40px] flex items-center gap-[8px] bg-white border border-slate-200 px-[12px] rounded-[12px] shadow-sm hover:border-blue-500 transition-colors">
                             <select
-                                value={filterWorker}
-                                onChange={(e) => setFilterWorker(e.target.value)}
+                                value={filterMember}
+                                onChange={(e) => setFilterMember(e.target.value)}
                                 className="w-full text-[12px] font-bold text-slate-700 outline-none bg-transparent cursor-pointer font-['Outfit']"
                             >
-                                <option value="">Workers</option>
-                                {workers.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                                <option value="">Everyone</option>
+                                {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                             </select>
                         </div>
 
-                        {/* Actions: New Project/Manage Workers */}
+                        {/* Actions: New Project/Manage Members */}
                         <div className="col-span-2 flex items-center gap-[8px] xl:w-auto">
                             <button
                                 onClick={() => setShowProjectManager(true)}
@@ -631,9 +630,9 @@ const ExpenseTracker = () => {
                                 <span className="text-[10px] font-black uppercase tracking-widest">Project</span>
                             </button>
                             <button
-                                onClick={() => setShowWorkerManager(true)}
+                                onClick={() => setShowMemberManager(true)}
                                 className="w-[40px] h-[40px] bg-white text-slate-500 rounded-[12px] flex items-center justify-center hover:bg-orange-50 hover:text-orange-600 transition-all border border-slate-200 shadow-sm shrink-0"
-                                title="Manage Workers"
+                                title="Manage Members"
                             >
                                 <FaUserEdit className="text-[16px]" />
                             </button>
@@ -822,11 +821,11 @@ const ExpenseTracker = () => {
                                             <h4 className="font-black text-slate-800 text-[14px] sm:text-[16px]">{t.title}</h4>
                                             <div className="flex flex-wrap items-center gap-[12px] mt-[4px]">
                                                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t.category}</span>
-                                                {t.worker_name && (
+                                                {t.member_name && (
                                                     <>
                                                         <span className="w-[4px] h-[4px] rounded-full bg-slate-300"></span>
                                                         <span className="text-[10px] font-black uppercase tracking-widest text-blue-500 flex items-center gap-1">
-                                                            <FaUserCheck className="text-[8px]" /> {t.worker_name}
+                                                            <FaUserCheck className="text-[8px]" /> {t.member_name}
                                                         </span>
                                                     </>
                                                 )}
@@ -892,8 +891,8 @@ const ExpenseTracker = () => {
                                     </div>
                                     <div>
                                         <h3 className="text-[20px] font-black">
-                                            {filterWorker
-                                                ? `${workers.find(w => w.id == filterWorker)?.name}'s Report`
+                                            {filterMember
+                                                ? `${members.find(w => w.id == filterMember)?.name}'s Report`
                                                 : filterProject
                                                     ? `${projects.find(p => p.id == filterProject)?.name} Report`
                                                     : 'Financial Summary'}
@@ -905,11 +904,11 @@ const ExpenseTracker = () => {
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-[32px] mb-[64px]">
-                                    {filterWorker ? (
+                                    {filterMember ? (
                                         <>
                                             <div className="p-[24px] bg-blue-50/50 rounded-[24px] border border-blue-100">
                                                 <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-[8px]">Total Salary Paid</p>
-                                                <p className="text-[32px] font-black tracking-tighter text-blue-600">₹{formatAmount(workerStats?.totalSalary || 0)}</p>
+                                                <p className="text-[32px] font-black tracking-tighter text-blue-600">₹{formatAmount(memberStats?.totalSalary || 0)}</p>
                                                 <div className="mt-[16px] flex items-center gap-[8px]">
                                                     <div className="w-[8px] h-[8px] rounded-full bg-blue-500"></div>
                                                     <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Fixed Payouts</span>
@@ -917,7 +916,7 @@ const ExpenseTracker = () => {
                                             </div>
                                             <div className="p-[24px] bg-orange-50/50 rounded-[24px] border border-orange-100">
                                                 <p className="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-[8px]">Total Advances</p>
-                                                <p className="text-[32px] font-black tracking-tighter text-orange-600">₹{formatAmount(workerStats?.totalAdvances || 0)}</p>
+                                                <p className="text-[32px] font-black tracking-tighter text-orange-600">₹{formatAmount(memberStats?.totalAdvances || 0)}</p>
                                                 <div className="mt-[16px] flex items-center gap-[8px]">
                                                     <div className="w-[8px] h-[8px] rounded-full bg-orange-500"></div>
                                                     <span className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Ad-hoc Payments</span>
@@ -955,11 +954,11 @@ const ExpenseTracker = () => {
                                     )}
                                 </div>
 
-                                {filterWorker && (
+                                {filterMember && (
                                     <div className="mb-[64px] animate-in fade-in slide-in-from-bottom-5 duration-700">
                                         <div className="flex items-center gap-[12px] mb-[24px]">
                                             <div className="w-[8px] h-[24px] bg-emerald-500 rounded-full"></div>
-                                            <h4 className="text-[16px] font-black uppercase tracking-widest text-slate-800">Worker Ledger: Salaries & Advances</h4>
+                                            <h4 className="text-[16px] font-black uppercase tracking-widest text-slate-800">Member Ledger: Salaries & Advances</h4>
                                         </div>
                                         <div className="overflow-x-auto rounded-[24px] border border-slate-100 bg-slate-50/50">
                                             <table className="w-full text-left border-collapse">
@@ -1001,7 +1000,7 @@ const ExpenseTracker = () => {
                                                     ) : (
                                                         <tr>
                                                             <td colSpan="4" className="px-[24px] py-[48px] text-center">
-                                                                <p className="text-[12px] font-bold text-slate-400 uppercase tracking-widest">No transaction history for this worker in the selected period.</p>
+                                                                <p className="text-[12px] font-bold text-slate-400 uppercase tracking-widest">No transaction history for this member in the selected period.</p>
                                                             </td>
                                                         </tr>
                                                     )}
@@ -1024,14 +1023,14 @@ const ExpenseTracker = () => {
                                         </div>
                                     </div>
                                 )}
-                                {filterWorker && stats.workerProjects && stats.workerProjects.length > 0 && (
+                                {filterMember && stats.memberProjects && stats.memberProjects.length > 0 && (
                                     <div className="mb-[64px] animate-in fade-in slide-in-from-bottom-5 duration-1000">
                                         <div className="flex items-center gap-[12px] mb-[24px]">
                                             <div className="w-[8px] h-[24px] bg-blue-500 rounded-full"></div>
                                             <h4 className="text-[16px] font-black uppercase tracking-widest text-slate-800">Project Breakdown (Lifetime)</h4>
                                         </div>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
-                                            {stats.workerProjects.map((pw, i) => (
+                                            {stats.memberProjects.map((pw, i) => (
                                                 <div key={i} className="bg-slate-50 border border-slate-100 p-[20px] rounded-[24px] flex justify-between items-center group hover:bg-white hover:shadow-lg transition-all">
                                                     <div>
                                                         <p className="text-[12px] font-black text-slate-800 uppercase tracking-widest mb-[4px]">{pw.project_name}</p>
@@ -1050,7 +1049,7 @@ const ExpenseTracker = () => {
                                             setCustomReportForm({
                                                 ...customReportForm,
                                                 projectId: filterProject,
-                                                workerId: filterWorker,
+                                                memberId: filterMember,
                                                 startDate: periodType === 'range' ? customRange.start : (currentPeriod || new Date().toISOString().split('T')[0]),
                                                 endDate: periodType === 'range' ? customRange.end : (currentPeriod || new Date().toISOString().split('T')[0])
                                             });
@@ -1105,14 +1104,14 @@ const ExpenseTracker = () => {
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[8px]">Worker</label>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[8px]">Member</label>
                                             <select
-                                                value={formData.worker_id}
-                                                onChange={(e) => setFormData({ ...formData, worker_id: e.target.value })}
+                                                value={formData.member_id}
+                                                onChange={(e) => setFormData({ ...formData, member_id: e.target.value })}
                                                 className="w-full bg-slate-50 border border-slate-200 rounded-[20px] px-[20px] py-[14px] text-[12px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
                                             >
-                                                <option value="">No Worker</option>
-                                                {workers.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                                                <option value="">No Member</option>
+                                                {members.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
                                             </select>
                                         </div>
                                     </div>
@@ -1283,10 +1282,10 @@ const ExpenseTracker = () => {
             }
 
             {
-                showWorkerManager && (
-                    <WorkerManager
+                showMemberManager && (
+                    <MemberManager
                         onUpdate={fetchData}
-                        onClose={() => setShowWorkerManager(false)}
+                        onClose={() => setShowMemberManager(false)}
                     />
                 )
             }
@@ -1339,14 +1338,14 @@ const ExpenseTracker = () => {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Worker</label>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Member</label>
                                         <select
-                                            value={customReportForm.workerId}
-                                            onChange={(e) => setCustomReportForm({ ...customReportForm, workerId: e.target.value })}
+                                            value={customReportForm.memberId}
+                                            onChange={(e) => setCustomReportForm({ ...customReportForm, memberId: e.target.value })}
                                             className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[12px] text-[12px] font-bold text-slate-700 outline-none focus:border-indigo-500 transition-all cursor-pointer"
                                         >
-                                            <option value="">All Workers</option>
-                                            {workers.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                                            <option value="">Everyone</option>
+                                            {members.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
                                         </select>
                                     </div>
                                 </div>

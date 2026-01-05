@@ -6,11 +6,11 @@ import {
     updateAttendance,
     deleteAttendance,
     getAttendanceStats,
-    getWorkerSummary,
+    getMemberSummary,
     quickMarkAttendance
 } from '../api/attendanceApi';
 import { getProjects, createProject, deleteProject } from '../api/projectApi';
-import { getActiveWorkers } from '../api/workerApi';
+import { getActiveMembers } from '../api/memberApi';
 import toast from 'react-hot-toast';
 import {
     FaCheckCircle, FaTimesCircle, FaClock, FaExclamationCircle,
@@ -25,7 +25,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { FaFileAlt } from 'react-icons/fa';
 import ProjectManager from '../components/ProjectManager';
-import WorkerManager from '../components/WorkerManager';
+import MemberManager from '../components/MemberManager';
 
 const AttendanceTracker = () => {
     const navigate = useNavigate();
@@ -35,16 +35,16 @@ const AttendanceTracker = () => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [projects, setProjects] = useState([]);
-    const [workers, setWorkers] = useState([]);
+    const [members, setMembers] = useState([]);
     const [showProjectManager, setShowProjectManager] = useState(false);
-    const [showWorkerManager, setShowWorkerManager] = useState(false);
+    const [showMemberManager, setShowMemberManager] = useState(false);
     const [filterProject, setFilterProject] = useState('');
-    const [filterWorker, setFilterWorker] = useState('');
+    const [filterMember, setFilterMember] = useState('');
     const [periodType, setPeriodType] = useState('day'); // 'month', 'year', 'day', 'range'
     const [currentPeriod, setCurrentPeriod] = useState(new Date().toISOString().split('T')[0]); // YYYY-MM-DD
     const [customRange, setCustomRange] = useState({ start: '', end: '' });
     const [searchQuery, setSearchQuery] = useState('');
-    const [workerSummary, setWorkerSummary] = useState([]);
+    const [memberSummary, setMemberSummary] = useState([]);
     const [activeTab, setActiveTab] = useState('records'); // 'records', 'summary', 'quick'
     const [showCustomReportModal, setShowCustomReportModal] = useState(false);
     const [customReportLoading, setCustomReportLoading] = useState(false);
@@ -52,7 +52,7 @@ const AttendanceTracker = () => {
         startDate: new Date().toISOString().split('T')[0],
         endDate: new Date().toISOString().split('T')[0],
         projectId: '',
-        workerId: '',
+        memberId: '',
         status: 'all'
     });
 
@@ -62,7 +62,7 @@ const AttendanceTracker = () => {
         date: new Date().toISOString().split('T')[0],
         note: '',
         project_id: '',
-        worker_id: ''
+        member_id: ''
     });
 
     const statusOptions = [
@@ -80,35 +80,35 @@ const AttendanceTracker = () => {
 
             if (isRange && (!rangeStart || !rangeEnd)) return;
 
-            const [attRes, statsRes, summaryRes, projRes, workersRes] = await Promise.all([
+            const [attRes, statsRes, summaryRes, projRes, membersRes] = await Promise.all([
                 getAttendances({
                     projectId: filterProject,
-                    workerId: filterWorker,
+                    memberId: filterMember,
                     period: isRange ? null : currentPeriod,
                     startDate: rangeStart,
                     endDate: rangeEnd
                 }),
                 getAttendanceStats({
                     projectId: filterProject,
-                    workerId: filterWorker,
+                    memberId: filterMember,
                     period: isRange ? null : currentPeriod,
                     startDate: rangeStart,
                     endDate: rangeEnd
                 }),
-                getWorkerSummary({
+                getMemberSummary({
                     projectId: filterProject,
                     period: isRange ? null : currentPeriod,
                     startDate: rangeStart,
                     endDate: rangeEnd
                 }),
                 getProjects(),
-                getActiveWorkers()
+                getActiveMembers()
             ]);
             setAttendances(attRes.data.data);
             setStats(attRes.data.data.length > 0 ? statsRes.data.data : []);
-            setWorkerSummary(summaryRes.data.data);
+            setMemberSummary(summaryRes.data.data);
             setProjects(projRes.data);
-            setWorkers(workersRes.data.data);
+            setMembers(membersRes.data.data);
             setLoading(false);
         } catch (error) {
             toast.error("Failed to fetch attendance data");
@@ -135,7 +135,7 @@ const AttendanceTracker = () => {
 
     useEffect(() => {
         fetchData();
-    }, [currentPeriod, filterProject, filterWorker, periodType, customRange.start, customRange.end]);
+    }, [currentPeriod, filterProject, filterMember, periodType, customRange.start, customRange.end]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -156,11 +156,11 @@ const AttendanceTracker = () => {
         }
     };
 
-    const handleQuickMark = async (workerId, status) => {
+    const handleQuickMark = async (memberId, status) => {
         try {
             const date = periodType === 'day' ? currentPeriod : new Date().toISOString().split('T')[0];
             await quickMarkAttendance({
-                worker_id: workerId,
+                member_id: memberId,
                 status,
                 date,
                 project_id: filterProject || null,
@@ -180,7 +180,7 @@ const AttendanceTracker = () => {
             date: new Date().toISOString().split('T')[0],
             note: '',
             project_id: filterProject || '',
-            worker_id: ''
+            member_id: ''
         });
         setEditingId(null);
     };
@@ -192,7 +192,7 @@ const AttendanceTracker = () => {
             date: new Date(item.date).toISOString().split('T')[0],
             note: item.note || '',
             project_id: item.project_id || '',
-            worker_id: item.worker_id || ''
+            member_id: item.member_id || ''
         });
         setEditingId(item.id);
         setShowAddModal(true);
@@ -218,10 +218,10 @@ const AttendanceTracker = () => {
             return;
         }
 
-        const headers = ["Date", "Worker", "Status", "Subject", "Project", "Note"];
+        const headers = ["Date", "Member", "Status", "Subject", "Project", "Note"];
         const rows = reportData.map(a => [
             new Date(a.date).toLocaleDateString('en-GB'),
-            a.worker_name || 'N/A',
+            a.member_name || 'N/A',
             a.status.toUpperCase(),
             a.subject,
             a.project_name || 'N/A',
@@ -271,7 +271,7 @@ const AttendanceTracker = () => {
         reportData.forEach(a => {
             const d = new Date(a.date);
             const dateFmt = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-            txt += `${dateFmt} | ${a.worker_name?.padEnd(20) || 'N/A'.padEnd(20)} | ${a.status.toUpperCase().padEnd(10)} | ${a.subject}\n`;
+            txt += `${dateFmt} | ${a.member_name?.padEnd(20) || 'N/A'.padEnd(20)} | ${a.status.toUpperCase().padEnd(10)} | ${a.subject}\n`;
         });
 
         const blob = new Blob([txt], { type: 'text/plain;charset=utf-8;' });
@@ -289,7 +289,7 @@ const AttendanceTracker = () => {
         }
 
         const doc = new jsPDF();
-        const workerName = filters.workerId ? workers.find(w => w.id == filters.workerId)?.name : (filterWorker ? workers.find(w => w.id == filterWorker)?.name : 'All Workers');
+        const memberName = filters.memberId ? members.find(m => m.id == filters.memberId)?.name : (filterMember ? members.find(m => m.id == filterMember)?.name : 'Everyone');
         const projectName = filters.projectId ? projects.find(p => p.id == filters.projectId)?.name : (filterProject ? projects.find(p => p.id == filterProject)?.name : 'All Projects');
 
         doc.setFontSize(20);
@@ -307,9 +307,9 @@ const AttendanceTracker = () => {
             : (periodType === 'range' ? `${customRange.start} to ${customRange.end}` : currentPeriod);
 
         doc.text(`Period: ${periodStr}`, 14, 35);
-        doc.text(`Worker: ${workerName} | Project: ${projectName}`, 14, 40);
+        doc.text(`Member: ${memberName} | Project: ${projectName}`, 14, 40);
 
-        // Stats Summary Summary
+        // Stats Summary
         doc.setDrawColor(230);
         doc.setFillColor(245, 247, 250);
         doc.rect(14, 45, 182, 20, 'F');
@@ -324,13 +324,13 @@ const AttendanceTracker = () => {
 
         autoTable(doc, {
             startY: 70,
-            head: [['Date', 'Worker', 'Status', 'Subject', 'Project']],
+            head: [['Date', 'Member', 'Status', 'Subject', 'Project']],
             body: reportData.map(a => {
                 const d = new Date(a.date);
                 const dateFmt = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
                 return [
                     dateFmt,
-                    a.worker_name || 'N/A',
+                    a.member_name || 'N/A',
                     a.status.toUpperCase(),
                     a.subject,
                     a.project_name || 'N/A'
@@ -355,14 +355,14 @@ const AttendanceTracker = () => {
             const [attRes, statsRes] = await Promise.all([
                 getAttendances({
                     projectId: customReportForm.projectId,
-                    workerId: customReportForm.workerId,
+                    memberId: customReportForm.memberId,
                     startDate: customReportForm.startDate,
                     endDate: customReportForm.endDate,
                     status: customReportForm.status === 'all' ? null : customReportForm.status
                 }),
                 getAttendanceStats({
                     projectId: customReportForm.projectId,
-                    workerId: customReportForm.workerId,
+                    memberId: customReportForm.memberId,
                     startDate: customReportForm.startDate,
                     endDate: customReportForm.endDate,
                     status: customReportForm.status === 'all' ? null : customReportForm.status
@@ -389,12 +389,12 @@ const AttendanceTracker = () => {
         );
     }, [attendances, searchQuery]);
 
-    const activeWorkersAttendanceMat = useMemo(() => {
+    const activeMembersAttendanceMat = useMemo(() => {
         if (periodType !== 'day') return {};
         const map = {};
         attendances.forEach(a => {
-            if (a.worker_id) {
-                map[a.worker_id] = a.status;
+            if (a.member_id) {
+                map[a.member_id] = a.status;
             }
         });
         return map;
@@ -450,7 +450,7 @@ const AttendanceTracker = () => {
                                     <button
                                         key={type}
                                         onClick={() => setPeriodType(type)}
-                                        className={`flex-1 h-full px-3 sm:px-4 rounded-[8px] text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap flex items-center justify-center ${periodType === type ? 'bg-slate-900 text-white shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
+                                        className={`flex-1 px-3 py-1.5 rounded-[8px] text-[9px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${periodType === type ? 'bg-white text-blue-600 shadow-xs border border-blue-100 ring-2 ring-blue-500/5' : 'text-slate-400 hover:text-slate-600'}`}
                                     >
                                         {type}
                                     </button>
@@ -520,17 +520,17 @@ const AttendanceTracker = () => {
 
                             <div className="col-span-1 flex items-center gap-1.5">
                                 <select
-                                    value={filterWorker}
-                                    onChange={(e) => setFilterWorker(e.target.value)}
+                                    value={filterMember}
+                                    onChange={(e) => setFilterMember(e.target.value)}
                                     className="flex-1 bg-white border border-slate-200 rounded-xl px-2 sm:px-4 h-[40px] text-[11px] sm:text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer shadow-sm"
                                 >
-                                    <option value="">Workers</option>
-                                    {workers.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                                    <option value="">Everyone</option>
+                                    {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                                 </select>
                                 <button
-                                    onClick={() => setShowWorkerManager(true)}
+                                    onClick={() => setShowMemberManager(true)}
                                     className="w-[40px] h-[40px] bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center hover:bg-orange-50 hover:text-orange-600 transition-all shadow-sm border border-slate-200 shrink-0"
-                                    title="Manage Workers"
+                                    title="Manage Members"
                                 >
                                     <FaUserEdit />
                                 </button>
@@ -656,7 +656,7 @@ const AttendanceTracker = () => {
                                                                     })()}
                                                                 </span>
                                                                 {item.project_name && <span className="flex items-center gap-1.5 text-blue-500 bg-blue-50 px-2 py-0.5 rounded-md font-['Outfit']"><FaFilter className="text-[10px]" />{item.project_name}</span>}
-                                                                {item.worker_name && <span className="flex items-center gap-1.5 text-orange-500 bg-orange-50 px-2 py-0.5 rounded-md font-['Outfit']"><FaUserCheck className="text-[10px]" />{item.worker_name}</span>}
+                                                                {item.member_name && <span className="flex items-center gap-1.5 text-orange-500 bg-orange-50 px-2 py-0.5 rounded-md font-['Outfit']"><FaUserCheck className="text-[10px]" />{item.member_name}</span>}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -683,8 +683,8 @@ const AttendanceTracker = () => {
                         <div className="p-8 border-b border-slate-100 bg-slate-50/50">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div>
-                                    <h3 className="text-xl font-black text-slate-900 font-['Outfit']">Worker Attendance Summary</h3>
-                                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1 font-['Outfit']">Aggregated performance for selected period</p>
+                                    <h3 className="text-xl font-black text-slate-900 font-['Outfit']">Attendance Summary</h3>
+                                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1 font-['Outfit']">Aggregated statistics for the selected period</p>
                                 </div>
                                 <div className="flex flex-wrap items-center gap-4">
                                     <button
@@ -692,7 +692,7 @@ const AttendanceTracker = () => {
                                             setCustomReportForm({
                                                 ...customReportForm,
                                                 projectId: filterProject,
-                                                workerId: filterWorker,
+                                                memberId: filterMember,
                                                 startDate: periodType === 'range' ? customRange.start : (currentPeriod || new Date().toISOString().split('T')[0]),
                                                 endDate: periodType === 'range' ? customRange.end : (currentPeriod || new Date().toISOString().split('T')[0])
                                             });
@@ -706,12 +706,12 @@ const AttendanceTracker = () => {
                                     <div className="flex bg-white p-1 rounded-xl border border-slate-200">
                                         <div className="px-4 py-2 text-center border-r border-slate-100">
                                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest font-['Outfit']">Total</p>
-                                            <p className="text-sm font-black text-slate-900 font-['Outfit']">{workerSummary.length}</p>
+                                            <p className="text-sm font-black text-slate-900 font-['Outfit']">{memberSummary.length}</p>
                                         </div>
                                         <div className="px-4 py-2 text-center">
                                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest font-['Outfit']">Avg Rate</p>
                                             <p className="text-sm font-black text-blue-600 font-['Outfit']">
-                                                {workerSummary.length > 0 ? (workerSummary.reduce((acc, w) => acc + (w.total > 0 ? (w.present + w.half_day * 0.5) / w.total : 0), 0) / workerSummary.length * 100).toFixed(0) + '%' : '0%'}
+                                                {memberSummary.length > 0 ? (memberSummary.reduce((acc, w) => acc + (w.total > 0 ? (w.present + w.half_day * 0.5) / w.total : 0), 0) / memberSummary.length * 100).toFixed(0) + '%' : '0%'}
                                             </p>
                                         </div>
                                     </div>
@@ -722,7 +722,7 @@ const AttendanceTracker = () => {
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-slate-50/50">
-                                        <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 font-['Outfit']">Worker</th>
+                                        <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 font-['Outfit']">Member</th>
                                         <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-emerald-500 text-center font-['Outfit']">P</th>
                                         <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-red-500 text-center font-['Outfit']">A</th>
                                         <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-amber-500 text-center font-['Outfit']">L</th>
@@ -732,7 +732,7 @@ const AttendanceTracker = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {workerSummary.map((w) => {
+                                    {memberSummary.map((w) => {
                                         const rate = w.total > 0 ? ((w.present + w.half_day * 0.5) / w.total * 100) : 0;
                                         return (
                                             <tr key={w.id} className="hover:bg-slate-50/80 transition-colors group">
@@ -774,11 +774,11 @@ const AttendanceTracker = () => {
                                             </tr>
                                         );
                                     })}
-                                    {workerSummary.length === 0 && (
+                                    {memberSummary.length === 0 && (
                                         <tr>
                                             <td colSpan="7" className="px-8 py-20 text-center">
                                                 <FaInbox className="text-5xl mx-auto mb-4 text-slate-200" />
-                                                <p className="text-sm font-black text-slate-400 uppercase tracking-widest font-['Outfit']">No worker data available</p>
+                                                <p className="text-sm font-black text-slate-400 uppercase tracking-widest font-['Outfit']">No statistics available</p>
                                             </td>
                                         </tr>
                                     )}
@@ -815,14 +815,14 @@ const AttendanceTracker = () => {
                                     <table className="w-full text-left">
                                         <thead>
                                             <tr className="bg-slate-50/50">
-                                                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 font-['Outfit']">Worker Name</th>
-                                                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center font-['Outfit']">Attendance Marking</th>
-                                                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right font-['Outfit']">Status</th>
+                                                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 font-['Outfit']">Name</th>
+                                                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center font-['Outfit']">Attendance Status</th>
+                                                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right font-['Outfit']">Current</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
-                                            {workers.map(w => {
-                                                const currentStatus = activeWorkersAttendanceMat[w.id];
+                                            {members.map(w => {
+                                                const currentStatus = activeMembersAttendanceMat[w.id];
                                                 const option = statusOptions.find(o => o.id === currentStatus);
                                                 return (
                                                     <tr key={w.id} className="hover:bg-slate-50/50 transition-colors group">
@@ -868,12 +868,12 @@ const AttendanceTracker = () => {
                                                     </tr>
                                                 );
                                             })}
-                                            {workers.length === 0 && (
+                                            {members.length === 0 && (
                                                 <tr>
                                                     <td colSpan="3" className="px-8 py-20 text-center">
                                                         <FaInbox className="text-6xl mx-auto mb-6 opacity-10" />
-                                                        <h4 className="text-lg font-black text-slate-900 mb-2 font-['Outfit']">No Workers Found</h4>
-                                                        <p className="text-slate-500 text-sm font-medium font-['Outfit']">Add some workers first to start using the Daily Sheet</p>
+                                                        <h4 className="text-lg font-black text-slate-900 mb-2 font-['Outfit']">No Members Found</h4>
+                                                        <p className="text-slate-500 text-sm font-medium font-['Outfit']">Add some people first to start using the Daily Sheet</p>
                                                     </td>
                                                 </tr>
                                             )}
@@ -916,7 +916,7 @@ const AttendanceTracker = () => {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">Date</label><div className="relative"><FaCalendarAlt className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" /><input required type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-14 pr-6 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition-all font-['Outfit'] cursor-pointer" /></div></div>
                                     <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">Project (Optional)</label><select value={formData.project_id} onChange={(e) => setFormData({ ...formData, project_id: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer font-['Outfit']"><option value="">No Project</option>{projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
-                                    <div className="sm:col-span-2"><label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">Worker (Optional)</label><select value={formData.worker_id} onChange={(e) => setFormData({ ...formData, worker_id: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer font-['Outfit']"><option value="">No Worker</option>{workers.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}</select></div>
+                                    <div className="sm:col-span-2"><label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">Member (Optional)</label><select value={formData.member_id} onChange={(e) => setFormData({ ...formData, member_id: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer font-['Outfit']"><option value="">No Member</option>{members.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}</select></div>
                                 </div>
                                 <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">Note (Optional)</label><textarea value={formData.note} onChange={(e) => setFormData({ ...formData, note: e.target.value })} placeholder="Add more details..." rows="3" className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition-all resize-none font-['Outfit']"></textarea></div>
                             </div>
@@ -937,7 +937,7 @@ const AttendanceTracker = () => {
                     />
                 )
             }
-            {showWorkerManager && <WorkerManager onClose={() => { setShowWorkerManager(false); fetchData(); }} onUpdate={fetchData} />}
+            {showMemberManager && <MemberManager onClose={() => { setShowMemberManager(false); fetchData(); }} onUpdate={fetchData} />}
 
             {/* Custom Report Modal */}
             {
@@ -987,14 +987,14 @@ const AttendanceTracker = () => {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Worker</label>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Member</label>
                                         <select
-                                            value={customReportForm.workerId}
-                                            onChange={(e) => setCustomReportForm({ ...customReportForm, workerId: e.target.value })}
+                                            value={customReportForm.memberId}
+                                            onChange={(e) => setCustomReportForm({ ...customReportForm, memberId: e.target.value })}
                                             className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[12px] text-[12px] font-bold text-slate-700 outline-none focus:border-blue-600 transition-all cursor-pointer font-['Outfit']"
                                         >
-                                            <option value="">All Workers</option>
-                                            {workers.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                                            <option value="">Everyone</option>
+                                            {members.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
                                         </select>
                                     </div>
                                 </div>

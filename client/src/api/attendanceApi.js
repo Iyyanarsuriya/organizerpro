@@ -6,4 +6,4 @@ export const quickMarkAttendance = (data) => axiosInstance.post('/attendance/qui
 export const updateAttendance = (id, data) => axiosInstance.put(`/attendance/${id}`, data);
 export const deleteAttendance = (id) => axiosInstance.delete(`/attendance/${id}`);
 export const getAttendanceStats = (params) => axiosInstance.get('/attendance/stats', { params });
-export const getWorkerSummary = (params) => axiosInstance.get('/attendance/summary', { params });
+export const getMemberSummary = (params) => axiosInstance.get('/attendance/summary', { params });
