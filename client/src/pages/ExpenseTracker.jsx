@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import {
     FaWallet, FaPlus, FaTrash, FaChartBar, FaTag, FaHome,
     FaExchangeAlt, FaPiggyBank, FaFileAlt, FaSignOutAlt, FaTimes,
-    FaArrowLeft, FaEdit
+    FaArrowLeft, FaEdit, FaFolderPlus
 } from 'react-icons/fa';
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
@@ -93,7 +93,8 @@ const ExpenseTracker = () => {
             setProjects(projRes.data);
             setLoading(false);
         } catch (error) {
-            toast.error("Failed to fetch data");
+            console.error("Fetch Data Error Details:", error.response || error);
+            toast.error(`Failed to fetch data: ${error.response?.data?.message || error.message}`);
             setLoading(false);
         }
     };
@@ -104,10 +105,26 @@ const ExpenseTracker = () => {
 
     // Ensure period format is correct when switching types
     useEffect(() => {
-        if (periodType === 'year' && currentPeriod.length > 4) {
-            setCurrentPeriod(currentPeriod.slice(0, 4));
-        } else if (periodType === 'month' && currentPeriod.length === 4) {
-            setCurrentPeriod(`${currentPeriod}-01`); // Default to Jan or current month?
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+
+        if (periodType === 'year') {
+            if (currentPeriod.length !== 4) setCurrentPeriod(`${yyyy}`);
+        } else if (periodType === 'month') {
+            if (currentPeriod.length !== 7) setCurrentPeriod(`${yyyy}-${mm}`);
+        } else if (periodType === 'week') {
+            // Simple week calculation for default
+            if (!currentPeriod.includes('W')) {
+                // Gets current week number approx
+                const start = new Date(today.getFullYear(), 0, 1);
+                const days = Math.floor((today - start) / (24 * 60 * 60 * 1000));
+                const weekNumber = Math.ceil(days / 7);
+                setCurrentPeriod(`${yyyy}-W${String(weekNumber).padStart(2, '0')}`);
+            }
+        } else if (periodType === 'day') {
+            if (currentPeriod.length !== 10) setCurrentPeriod(`${yyyy}-${mm}-${dd}`);
         }
     }, [periodType]);
 
@@ -277,6 +294,15 @@ const ExpenseTracker = () => {
                     {/* Filters: Project, Period Type, Date */}
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
 
+                        {/* Create Project Button */}
+                        <button
+                            onClick={() => setShowProjectManager(true)}
+                            className="flex items-center gap-2 bg-[#2d5bff] text-white px-4 py-2 rounded-xl shadow-lg shadow-blue-500/20 hover:scale-105 transition-transform shrink-0"
+                        >
+                            <FaFolderPlus className="text-sm" />
+                            <span className="text-xs font-black uppercase tracking-widest">New Project</span>
+                        </button>
+
                         {/* Project Filter */}
                         <div className="flex items-center gap-[8px] bg-white border border-slate-200 p-[8px] rounded-[12px] shadow-sm hover:border-blue-500 transition-colors w-full sm:w-auto">
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-[4px] shrink-0">Project:</span>
@@ -288,34 +314,42 @@ const ExpenseTracker = () => {
                                 <option value="">All Projects</option>
                                 {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                             </select>
-                            <button onClick={() => setShowProjectManager(true)} className="w-[20px] h-[20px] flex items-center justify-center bg-slate-100 rounded-lg text-slate-500 hover:text-blue-500 hover:bg-blue-50 transition-colors border border-slate-200">
-                                <Settings className="w-[12px] h-[12px]" />
-                            </button>
                         </div>
 
                         {/* Period Type Toggle */}
-                        <div className="flex p-1 bg-white border border-slate-200 rounded-[12px]">
-                            <button
-                                onClick={() => setPeriodType('month')}
-                                className={`px-3 py-1.5 rounded-[8px] text-[10px] font-black uppercase tracking-widest transition-all ${periodType === 'month' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-600'}`}
-                            >
-                                Month
-                            </button>
-                            <button
-                                onClick={() => setPeriodType('year')}
-                                className={`px-3 py-1.5 rounded-[8px] text-[10px] font-black uppercase tracking-widest transition-all ${periodType === 'year' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-600'}`}
-                            >
-                                Year
-                            </button>
+                        <div className="flex p-1 bg-white border border-slate-200 rounded-[12px] overflow-x-auto custom-scrollbar max-w-[200px] sm:max-w-none">
+                            {['day', 'week', 'month', 'year'].map((type) => (
+                                <button
+                                    key={type}
+                                    onClick={() => setPeriodType(type)}
+                                    className={`px-3 py-1.5 rounded-[8px] text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${periodType === type ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    {type}
+                                </button>
+                            ))}
                         </div>
 
                         {/* Date Picker */}
                         <div className="flex items-center gap-[8px] bg-white border border-slate-200 p-[8px] rounded-[12px] shadow-sm hover:border-blue-500 transition-colors w-full sm:w-auto">
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-[4px] shrink-0">Period:</span>
-                            {periodType === 'month' ? (
+                            {periodType === 'day' ? (
+                                <input
+                                    type="date"
+                                    value={currentPeriod.length === 10 ? currentPeriod : ''}
+                                    onChange={(e) => setCurrentPeriod(e.target.value)}
+                                    className="text-[12px] font-bold text-slate-700 outline-none bg-transparent cursor-pointer font-['Outfit'] w-full sm:w-auto"
+                                />
+                            ) : periodType === 'week' ? (
+                                <input
+                                    type="week"
+                                    value={currentPeriod.includes('W') ? currentPeriod : ''}
+                                    onChange={(e) => setCurrentPeriod(e.target.value)}
+                                    className="text-[12px] font-bold text-slate-700 outline-none bg-transparent cursor-pointer font-['Outfit'] w-full sm:w-auto"
+                                />
+                            ) : periodType === 'month' ? (
                                 <input
                                     type="month"
-                                    value={currentPeriod.length > 4 ? currentPeriod : ''} // Ensure valid YYYY-MM
+                                    value={currentPeriod.length === 7 ? currentPeriod : ''}
                                     onChange={(e) => setCurrentPeriod(e.target.value)}
                                     className="text-[12px] font-bold text-slate-700 outline-none bg-transparent cursor-pointer font-['Outfit'] w-full sm:w-auto"
                                 />
@@ -331,20 +365,22 @@ const ExpenseTracker = () => {
                             )}
                         </div>
                     </div>
-                </div>
+                </div >
 
                 {/* Mobile Tab Navigation */}
-                <div className="lg:hidden flex overflow-x-auto gap-3 mb-8 pb-2 custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
-                    {['Dashboard', 'Transactions', 'Budgets', 'Reports', 'Savings Goals'].map((tab) => (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            className={`whitespace-nowrap px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-[#2d5bff] text-white shadow-lg shadow-blue-500/30' : 'bg-white text-slate-500 border border-slate-200'}`}
-                        >
-                            {tab}
-                        </button>
-                    ))}
-                </div>
+                < div className="lg:hidden flex overflow-x-auto gap-3 mb-8 pb-2 custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0" >
+                    {
+                        ['Dashboard', 'Transactions', 'Budgets', 'Reports', 'Savings Goals'].map((tab) => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`whitespace-nowrap px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-[#2d5bff] text-white shadow-lg shadow-blue-500/30' : 'bg-white text-slate-500 border border-slate-200'}`}
+                            >
+                                {tab}
+                            </button>
+                        ))
+                    }
+                </div >
 
                 {activeTab === 'Dashboard' ? (
                     <div className="animate-in fade-in duration-500">
@@ -352,14 +388,14 @@ const ExpenseTracker = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[16px] sm:gap-[24px] mb-[32px] lg:mb-[48px]">
                             <StatCard title="Total Balance" value={`₹${formatAmount(totalBalance)}`} color="text-slate-800" subtitle={`${totalBalance >= 0 ? '+' : ''}0% from last month`} />
                             <StatCard
-                                title={`${periodType === 'month' ? 'Monthly' : 'Yearly'} Income`}
+                                title={`${periodType === 'day' ? 'Daily' : periodType === 'week' ? 'Weekly' : periodType === 'month' ? 'Monthly' : 'Yearly'} Income`}
                                 value={`₹${formatAmount(stats.summary?.total_income)}`}
                                 color="text-blue-500"
                                 subtitle={currentPeriod}
                                 onClick={() => handleShowTransactions('income')}
                             />
                             <StatCard
-                                title={`${periodType === 'month' ? 'Monthly' : 'Yearly'} Expenses`}
+                                title={`${periodType === 'day' ? 'Daily' : periodType === 'week' ? 'Weekly' : periodType === 'month' ? 'Monthly' : 'Yearly'} Expenses`}
                                 value={`₹${formatAmount(stats.summary?.total_expense)}`}
                                 color="text-red-500"
                                 subtitle={currentPeriod}
@@ -684,210 +720,220 @@ const ExpenseTracker = () => {
                     </div>
                 )}
 
-            </main>
+            </main >
 
             {/* Add Modal */}
-            {showAddModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[40px] p-[32px] sm:p-[40px] w-full max-w-[448px] shadow-2xl relative animate-in zoom-in-95 duration-300">
-                        <button onClick={() => { setShowAddModal(false); setEditingId(null); }} className="absolute top-[32px] right-[32px] text-slate-400 hover:text-slate-800 transition-colors">
-                            <FaTimes />
-                        </button>
-                        <h2 className="text-[24px] font-black mb-[32px] flex items-center gap-[12px]">
-                            <div className="w-[8px] h-[32px] bg-blue-500 rounded-full"></div>
-                            {editingId ? 'Edit Transaction' : `Add ${formData.type === 'income' ? 'Income' : 'Expense'}`}
-                        </h2>
-
-                        <form onSubmit={handleSubmit} className="space-y-[24px]">
-                            <div className="flex p-[4px] bg-slate-100 rounded-[16px] mb-[32px]">
-                                <button type="button" onClick={() => setFormData({ ...formData, type: 'expense', category: 'Food' })} className={`flex-1 py-[12px] px-[16px] rounded-[12px] text-[10px] font-black uppercase tracking-widest transition-all ${formData.type === 'expense' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'}`}>Expense</button>
-                                <button type="button" onClick={() => setFormData({ ...formData, type: 'income', category: 'Salary' })} className={`flex-1 py-[12px] px-[16px] rounded-[12px] text-[10px] font-black uppercase tracking-widest transition-all ${formData.type === 'income' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'}`}>Income</button>
-                            </div>
-
-                            <div className="space-y-[16px]">
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Label</label>
-                                    <input required type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[16px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-['Outfit']" placeholder="Electricity, Salary..." />
-                                </div>
-
-                                {/* Project Selection */}
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Project (Optional)</label>
-                                    <div className="flex gap-2">
-                                        <select
-                                            value={formData.project_id}
-                                            onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[16px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-['Outfit'] cursor-pointer"
-                                        >
-                                            <option value="">No Project</option>
-                                            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                        </select>
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowProjectManager(true)}
-                                            className="bg-slate-100 hover:bg-blue-50 text-slate-500 hover:text-blue-500 px-4 rounded-[16px] border border-slate-200 transition-colors"
-                                        >
-                                            <FaPlus />
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-[16px]">
-                                    <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Amount</label>
-                                        <input required type="number" step="0.01" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[16px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-['Outfit']" placeholder="0.00" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Category</label>
-                                        <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[16px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-['Outfit'] cursor-pointer">
-                                            {[...new Set([...(formData.type === 'expense' ? expenseCategories : incomeCategories), ...categories.map(c => c.name)])].map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Date</label>
-                                    <input required type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[16px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-['Outfit'] cursor-pointer" />
-                                </div>
-                            </div>
-
-                            <button type="submit" className="w-full bg-[#1a1c21] hover:bg-slate-800 text-white font-black py-[20px] rounded-[24px] transition-all active:scale-95 shadow-xl shadow-blue-500/10 flex items-center justify-center gap-[12px] text-[14px]">
-                                {editingId ? <FaEdit /> : <FaPlus />} {editingId ? 'Update Transaction' : 'Save Transaction'}
+            {
+                showAddModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+                        <div className="bg-white rounded-[40px] p-[32px] sm:p-[40px] w-full max-w-[448px] shadow-2xl relative animate-in zoom-in-95 duration-300">
+                            <button onClick={() => { setShowAddModal(false); setEditingId(null); }} className="absolute top-[32px] right-[32px] text-slate-400 hover:text-slate-800 transition-colors">
+                                <FaTimes />
                             </button>
-                        </form>
+                            <h2 className="text-[24px] font-black mb-[32px] flex items-center gap-[12px]">
+                                <div className="w-[8px] h-[32px] bg-blue-500 rounded-full"></div>
+                                {editingId ? 'Edit Transaction' : `Add ${formData.type === 'income' ? 'Income' : 'Expense'}`}
+                            </h2>
+
+                            <form onSubmit={handleSubmit} className="space-y-[24px]">
+                                <div className="flex p-[4px] bg-slate-100 rounded-[16px] mb-[32px]">
+                                    <button type="button" onClick={() => setFormData({ ...formData, type: 'expense', category: 'Food' })} className={`flex-1 py-[12px] px-[16px] rounded-[12px] text-[10px] font-black uppercase tracking-widest transition-all ${formData.type === 'expense' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'}`}>Expense</button>
+                                    <button type="button" onClick={() => setFormData({ ...formData, type: 'income', category: 'Salary' })} className={`flex-1 py-[12px] px-[16px] rounded-[12px] text-[10px] font-black uppercase tracking-widest transition-all ${formData.type === 'income' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'}`}>Income</button>
+                                </div>
+
+                                <div className="space-y-[16px]">
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Label</label>
+                                        <input required type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[16px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-['Outfit']" placeholder="Electricity, Salary..." />
+                                    </div>
+
+                                    {/* Project Selection */}
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Project (Optional)</label>
+                                        <div className="flex gap-2">
+                                            <select
+                                                value={formData.project_id}
+                                                onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[16px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-['Outfit'] cursor-pointer"
+                                            >
+                                                <option value="">No Project</option>
+                                                {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                            </select>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowProjectManager(true)}
+                                                className="bg-slate-100 hover:bg-blue-50 text-slate-500 hover:text-blue-500 px-4 rounded-[16px] border border-slate-200 transition-colors"
+                                            >
+                                                <FaPlus />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-[16px]">
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Amount</label>
+                                            <input required type="number" step="0.01" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[16px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-['Outfit']" placeholder="0.00" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Category</label>
+                                            <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[16px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-['Outfit'] cursor-pointer">
+                                                {[...new Set([...(formData.type === 'expense' ? expenseCategories : incomeCategories), ...categories.map(c => c.name)])].map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Date</label>
+                                        <input required type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[16px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-['Outfit'] cursor-pointer" />
+                                    </div>
+                                </div>
+
+                                <button type="submit" className="w-full bg-[#1a1c21] hover:bg-slate-800 text-white font-black py-[20px] rounded-[24px] transition-all active:scale-95 shadow-xl shadow-blue-500/10 flex items-center justify-center gap-[12px] text-[14px]">
+                                    {editingId ? <FaEdit /> : <FaPlus />} {editingId ? 'Update Transaction' : 'Save Transaction'}
+                                </button>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Transaction Details Modal */}
-            {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    {/* Backdrop */}
-                    <div
-                        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                        onClick={() => setShowModal(null)}
-                    ></div>
+            {
+                showModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        {/* Backdrop */}
+                        <div
+                            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                            onClick={() => setShowModal(null)}
+                        ></div>
 
-                    {/* Modal Content */}
-                    <div className="relative bg-white rounded-[32px] shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden z-10">
-                        {/* Modal Header */}
-                        <div className="sticky top-0 bg-white border-b border-slate-100 p-6 flex items-center justify-between z-10">
-                            <h3 className="text-xl font-black text-slate-800">
-                                {showModal === 'income' ? 'Income Transactions' : 'Expense Transactions'}
-                            </h3>
-                            <button
-                                onClick={() => setShowModal(null)}
-                                className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
-                            >
-                                <FaTimes className="w-5 h-5 text-slate-600" />
-                            </button>
-                        </div>
+                        {/* Modal Content */}
+                        <div className="relative bg-white rounded-[32px] shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden z-10">
+                            {/* Modal Header */}
+                            <div className="sticky top-0 bg-white border-b border-slate-100 p-6 flex items-center justify-between z-10">
+                                <h3 className="text-xl font-black text-slate-800">
+                                    {showModal === 'income' ? 'Income Transactions' : 'Expense Transactions'}
+                                </h3>
+                                <button
+                                    onClick={() => setShowModal(null)}
+                                    className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+                                >
+                                    <FaTimes className="w-5 h-5 text-slate-600" />
+                                </button>
+                            </div>
 
-                        {/* Modal Body */}
-                        <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)]">
-                            {modalTransactions.length > 0 ? (
-                                <div className="space-y-3">
-                                    {modalTransactions.map((transaction) => (
-                                        <div
-                                            key={transaction.id}
-                                            className="bg-slate-50 rounded-2xl p-4 border border-slate-100 hover:border-blue-200 transition-all"
-                                        >
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div className="flex-1">
-                                                    <h4 className="font-bold text-slate-800 mb-1">{transaction.title}</h4>
-                                                    <div className="flex flex-wrap gap-2 text-xs">
-                                                        <span className={`px-2 py-1 rounded-full font-bold ${transaction.type === 'income'
-                                                            ? 'bg-blue-100 text-blue-600'
-                                                            : 'bg-red-100 text-red-600'
-                                                            }`}>
-                                                            {transaction.type}
-                                                        </span>
-                                                        {transaction.category && (
-                                                            <span className="px-2 py-1 rounded-full bg-slate-200 text-slate-700 font-bold">
-                                                                {transaction.category}
+                            {/* Modal Body */}
+                            <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)]">
+                                {modalTransactions.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {modalTransactions.map((transaction) => (
+                                            <div
+                                                key={transaction.id}
+                                                className="bg-slate-50 rounded-2xl p-4 border border-slate-100 hover:border-blue-200 transition-all"
+                                            >
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div className="flex-1">
+                                                        <h4 className="font-bold text-slate-800 mb-1">{transaction.title}</h4>
+                                                        <div className="flex flex-wrap gap-2 text-xs">
+                                                            <span className={`px-2 py-1 rounded-full font-bold ${transaction.type === 'income'
+                                                                ? 'bg-blue-100 text-blue-600'
+                                                                : 'bg-red-100 text-red-600'
+                                                                }`}>
+                                                                {transaction.type}
                                                             </span>
-                                                        )}
-                                                        {transaction.date && (
-                                                            <span className="px-2 py-1 rounded-full bg-slate-200 text-slate-700 font-bold">
-                                                                {new Date(transaction.date).toLocaleDateString()}
-                                                            </span>
-                                                        )}
+                                                            {transaction.category && (
+                                                                <span className="px-2 py-1 rounded-full bg-slate-200 text-slate-700 font-bold">
+                                                                    {transaction.category}
+                                                                </span>
+                                                            )}
+                                                            {transaction.date && (
+                                                                <span className="px-2 py-1 rounded-full bg-slate-200 text-slate-700 font-bold">
+                                                                    {new Date(transaction.date).toLocaleDateString()}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className={`text-lg font-black ${transaction.type === 'income' ? 'text-blue-600' : 'text-red-600'
+                                                        }`}>
+                                                        ₹{formatAmount(transaction.amount)}
                                                     </div>
                                                 </div>
-                                                <div className={`text-lg font-black ${transaction.type === 'income' ? 'text-blue-600' : 'text-red-600'
-                                                    }`}>
-                                                    ₹{formatAmount(transaction.amount)}
-                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="text-center py-12">
-                                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <FaWallet className="w-8 h-8 text-slate-400" />
+                                        ))}
                                     </div>
-                                    <p className="text-slate-500 font-bold">No {showModal} transactions found</p>
-                                </div>
-                            )}
+                                ) : (
+                                    <div className="text-center py-12">
+                                        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <FaWallet className="w-8 h-8 text-slate-400" />
+                                        </div>
+                                        <p className="text-slate-500 font-bold">No {showModal} transactions found</p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Delete Confirmation Modal */}
-            {deleteModalOuter.show && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[32px] p-[32px] w-full max-w-[400px] shadow-2xl animate-in zoom-in-95 duration-300 border border-white">
-                        <div className="w-[64px] h-[64px] bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-[24px] mx-auto">
-                            <FaTrash className="text-[24px]" />
-                        </div>
-                        <h3 className="text-[20px] font-black text-center text-slate-800 mb-[12px]">Delete Transaction?</h3>
-                        <p className="text-center text-slate-500 text-[14px] font-medium mb-[32px]">
-                            Are you sure you want to delete this transaction? This action cannot be undone.
-                        </p>
-                        <div className="flex gap-[16px]">
-                            <button
-                                onClick={() => setDeleteModalOuter({ show: false, id: null })}
-                                className="flex-1 py-[16px] rounded-[16px] font-black text-[14px] bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all uppercase tracking-widest"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={() => handleDelete(deleteModalOuter.id)}
-                                className="flex-1 py-[16px] rounded-[16px] font-black text-[14px] bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all uppercase tracking-widest"
-                            >
-                                Delete
-                            </button>
+            {
+                deleteModalOuter.show && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+                        <div className="bg-white rounded-[32px] p-[32px] w-full max-w-[400px] shadow-2xl animate-in zoom-in-95 duration-300 border border-white">
+                            <div className="w-[64px] h-[64px] bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-[24px] mx-auto">
+                                <FaTrash className="text-[24px]" />
+                            </div>
+                            <h3 className="text-[20px] font-black text-center text-slate-800 mb-[12px]">Delete Transaction?</h3>
+                            <p className="text-center text-slate-500 text-[14px] font-medium mb-[32px]">
+                                Are you sure you want to delete this transaction? This action cannot be undone.
+                            </p>
+                            <div className="flex gap-[16px]">
+                                <button
+                                    onClick={() => setDeleteModalOuter({ show: false, id: null })}
+                                    className="flex-1 py-[16px] rounded-[16px] font-black text-[14px] bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all uppercase tracking-widest"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(deleteModalOuter.id)}
+                                    className="flex-1 py-[16px] rounded-[16px] font-black text-[14px] bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all uppercase tracking-widest"
+                                >
+                                    Delete
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Category Manager Modal */}
-            {showCategoryManager && (
-                <CategoryManager
-                    categories={categories}
-                    onUpdate={() => {
-                        getExpenseCategories().then(res => setCategories(res.data));
-                    }}
-                    onCreate={createExpenseCategory}
-                    onDelete={deleteExpenseCategory}
-                    onClose={() => setShowCategoryManager(false)}
-                />
-            )}
+            {
+                showCategoryManager && (
+                    <CategoryManager
+                        categories={categories}
+                        onUpdate={() => {
+                            getExpenseCategories().then(res => setCategories(res.data));
+                        }}
+                        onCreate={createExpenseCategory}
+                        onDelete={deleteExpenseCategory}
+                        onClose={() => setShowCategoryManager(false)}
+                    />
+                )
+            }
 
             {/* Project Manager Modal */}
-            {showProjectManager && (
-                <ProjectManager
-                    projects={projects}
-                    onCreate={createProject}
-                    onDelete={deleteProject}
-                    onClose={() => setShowProjectManager(false)}
-                    onRefresh={() => getProjects().then(res => setProjects(res.data))}
-                />
-            )}
-        </div>
+            {
+                showProjectManager && (
+                    <ProjectManager
+                        projects={projects}
+                        onCreate={createProject}
+                        onDelete={deleteProject}
+                        onClose={() => setShowProjectManager(false)}
+                        onRefresh={() => getProjects().then(res => setProjects(res.data))}
+                    />
+                )
+            }
+        </div >
     );
 };
 

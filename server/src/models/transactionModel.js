@@ -20,12 +20,20 @@ class Transaction {
         }
 
         if (filters.period) {
-            if (filters.period.length === 7) {
-                // YYYY-MM
+            if (filters.period.length === 10) {
+                // YYYY-MM-DD (Day)
+                query += " AND DATE(t.date) = ?";
+                params.push(filters.period);
+            } else if (filters.period.length === 8 && filters.period.includes('W')) {
+                // YYYY-Www (Week)
+                query += " AND DATE_FORMAT(t.date, '%Y-W%u') = ?";
+                params.push(filters.period);
+            } else if (filters.period.length === 7) {
+                // YYYY-MM (Month)
                 query += " AND DATE_FORMAT(t.date, '%Y-%m') = ?";
                 params.push(filters.period);
             } else if (filters.period.length === 4) {
-                // YYYY
+                // YYYY (Year)
                 query += " AND DATE_FORMAT(t.date, '%Y') = ?";
                 params.push(filters.period);
             }
@@ -62,12 +70,21 @@ class Transaction {
         const params = [userId];
 
         if (period) {
-            // Check if period is YYYY-MM or YYYY
-            if (period.length === 7) {
-                query += ` AND DATE_FORMAT(date, '%Y-%m') = ?`;
+            if (period.length === 10) {
+                // YYYY-MM-DD (Day)
+                query += " AND DATE(date) = ?";
+                params.push(period);
+            } else if (period.length === 8 && period.includes('W')) {
+                // YYYY-Www (Week)
+                query += " AND DATE_FORMAT(date, '%Y-W%u') = ?";
+                params.push(period);
+            } else if (period.length === 7) {
+                // YYYY-MM (Month)
+                query += " AND DATE_FORMAT(date, '%Y-%m') = ?";
                 params.push(period);
             } else if (period.length === 4) {
-                query += ` AND DATE_FORMAT(date, '%Y') = ?`;
+                // YYYY (Year)
+                query += " AND DATE_FORMAT(date, '%Y') = ?";
                 params.push(period);
             }
         }
@@ -87,11 +104,21 @@ class Transaction {
         const params = [userId];
 
         if (period) {
-            if (period.length === 7) {
-                query += ` AND DATE_FORMAT(date, '%Y-%m') = ?`;
+            if (period.length === 10) {
+                // YYYY-MM-DD (Day)
+                query += " AND DATE(date) = ?";
+                params.push(period);
+            } else if (period.length === 8 && period.includes('W')) {
+                // YYYY-Www (Week)
+                query += " AND DATE_FORMAT(date, '%Y-W%u') = ?";
+                params.push(period);
+            } else if (period.length === 7) {
+                // YYYY-MM (Month)
+                query += " AND DATE_FORMAT(date, '%Y-%m') = ?";
                 params.push(period);
             } else if (period.length === 4) {
-                query += ` AND DATE_FORMAT(date, '%Y') = ?`;
+                // YYYY (Year)
+                query += " AND DATE_FORMAT(date, '%Y') = ?";
                 params.push(period);
             }
         }

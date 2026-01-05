@@ -1,3 +1,5 @@
+import axiosInstance from './axiosInstance';
+
 export const getTransactions = async (params = {}) => {
     return await axiosInstance.get('/transactions', { params });
 };
