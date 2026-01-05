@@ -1,11 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import ReactDOM from 'react-dom';
 import { getTransactions, createTransaction, updateTransaction, deleteTransaction, getTransactionStats } from '../api/transactionApi';
 import { API_URL } from '../api/axiosInstance';
 import toast from 'react-hot-toast';
 import {
     FaWallet, FaPlus, FaTrash, FaChartBar, FaExchangeAlt, FaFileAlt, FaEdit, FaTimes,
-    FaPlusCircle, FaArrowRight, FaArrowLeft, FaCheckCircle, FaUserCheck, FaFolderPlus, FaUserEdit
+    FaPlusCircle, FaArrowRight, FaArrowLeft, FaCheckCircle, FaUserCheck, FaFolderPlus, FaUserEdit,
+    FaCheck, FaQuestionCircle
 } from 'react-icons/fa';
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
@@ -70,9 +72,10 @@ const ExpenseTracker = () => {
         endDate: new Date().toISOString().split('T')[0],
         projectId: '',
         memberId: '',
-        category: 'all',
-        type: 'all'
+        type: 'all',
+        category: 'all'
     });
+    const [confirmModal, setConfirmModal] = useState({ show: false, type: null, label: '' });
 
     const expenseCategories = ['Food', 'Shopping', 'Rent', 'Transport', 'Utilities', 'Entertainment', 'Health', 'Other'];
     const incomeCategories = ['Salary', 'Freelance', 'Investment', 'Gift', 'Other'];
@@ -573,10 +576,9 @@ const ExpenseTracker = () => {
                         {/* Actions: New Project/Manage Members */}
                         <div className="col-span-2 flex items-center gap-[8px] xl:w-auto">
                             <ExportButtons
-                                data={transactions}
-                                onExportCSV={handleExportCSV}
-                                onExportPDF={handleExportPDF}
-                                onExportTXT={handleExportTXT}
+                                onExportCSV={() => setConfirmModal({ show: true, type: 'CSV', label: 'CSV Report' })}
+                                onExportPDF={() => setConfirmModal({ show: true, type: 'PDF', label: 'PDF Report' })}
+                                onExportTXT={() => setConfirmModal({ show: true, type: 'TXT', label: 'Plain Text Report' })}
                             />
                             <button
                                 onClick={() => setShowProjectManager(true)}
@@ -1383,6 +1385,44 @@ const ExpenseTracker = () => {
                 )
             }
 
+            {/* Export Confirmation Modal (Portal) */}
+            {confirmModal.show && ReactDOM.createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-[16px] w-full h-full">
+                    <div
+                        className="absolute inset-0 bg-[#0f172a]/70 backdrop-blur-md animate-in fade-in duration-300"
+                        onClick={() => setConfirmModal({ show: false, type: null, label: '' })}
+                    ></div>
+                    <div className="relative bg-white rounded-[32px] p-[32px] w-full max-w-[400px] shadow-2xl animate-in zoom-in duration-300 text-center border border-white">
+                        <div className="w-[80px] h-[80px] bg-blue-50 rounded-[28px] flex items-center justify-center mx-auto mb-[24px] text-blue-500 transform -rotate-6">
+                            <FaQuestionCircle size={40} />
+                        </div>
+                        <h3 className="text-[24px] font-black text-slate-800 mb-[12px] tracking-tight">Export {confirmModal.label}?</h3>
+                        <p className="text-slate-500 text-[15px] font-medium mb-[32px] leading-relaxed">
+                            Are you sure you want to download this <span className="text-slate-900 font-bold">{confirmModal.type}</span> report?
+                        </p>
+                        <div className="grid grid-cols-2 gap-[16px]">
+                            <button
+                                onClick={() => setConfirmModal({ show: false, type: null, label: '' })}
+                                className="py-[16px] rounded-[20px] bg-slate-100 text-slate-600 text-[13px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (confirmModal.type === 'CSV') handleExportCSV(transactions);
+                                    if (confirmModal.type === 'PDF') handleExportPDF(transactions);
+                                    if (confirmModal.type === 'TXT') handleExportTXT(transactions);
+                                    setConfirmModal({ show: false, type: null, label: '' });
+                                }}
+                                className="py-[16px] rounded-[20px] bg-slate-900 text-white text-[13px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/20 cursor-pointer flex items-center justify-center gap-[10px]"
+                            >
+                                <FaCheck /> Confirm
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 };
