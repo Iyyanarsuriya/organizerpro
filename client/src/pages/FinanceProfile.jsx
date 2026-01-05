@@ -23,6 +23,7 @@ const FinanceProfile = () => {
     });
     const [selectedFile, setSelectedFile] = useState(null);
     const [previewImage, setPreviewImage] = useState(null);
+    const [imgErr, setImgErr] = useState(false);
 
     const fetchData = async () => {
         try {
@@ -99,13 +100,18 @@ const FinanceProfile = () => {
                             <div className="absolute inset-0 bg-linear-to-br from-emerald-500/5 to-teal-500/5"></div>
                             <div className="relative z-10 flex flex-col items-center">
                                 <div className="relative mb-[24px]">
-                                    <div className="w-[96px] h-[96px] sm:w-[128px] sm:h-[128px] rounded-[24px] sm:rounded-[32px] bg-slate-100 flex items-center justify-center border-4 border-white shadow-2xl overflow-hidden group-hover:scale-105 transition-transform duration-500">
-                                        {previewImage ? (
-                                            <img src={previewImage} className="w-full h-full object-cover" alt="Preview" />
-                                        ) : user.profile_image ? (
-                                            <img src={`${API_URL}${user.profile_image}`} className="w-full h-full object-cover" alt="Profile" />
+                                    <div className="w-[96px] h-[96px] sm:w-[128px] sm:h-[128px] rounded-full bg-slate-100 flex items-center justify-center border-4 border-white shadow-2xl overflow-hidden group-hover:scale-105 transition-transform duration-500 relative">
+                                        {(previewImage || (user?.profile_image && !imgErr)) ? (
+                                            <img
+                                                src={previewImage || `${API_URL}${user?.profile_image}`}
+                                                className="w-full h-full object-cover"
+                                                alt="Profile"
+                                                onError={() => !previewImage && setImgErr(true)}
+                                            />
                                         ) : (
-                                            <div className="text-[32px] sm:text-[40px] font-black text-emerald-500">{user.username?.charAt(0).toUpperCase()}</div>
+                                            <div className="text-[32px] sm:text-[40px] font-black text-emerald-500 uppercase">
+                                                {user?.username ? user.username.charAt(0) : '?'}
+                                            </div>
                                         )}
                                     </div>
                                     <label className="absolute -bottom-[8px] -right-[8px] w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] bg-emerald-500 text-white rounded-[12px] flex items-center justify-center cursor-pointer hover:bg-emerald-600 transition-colors shadow-lg border-2 border-white">
