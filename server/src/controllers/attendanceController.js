@@ -81,11 +81,24 @@ const getWorkerSummary = async (req, res) => {
     }
 };
 
+const quickMarkAttendance = async (req, res) => {
+    try {
+        const attendance = await Attendance.quickMark({
+            ...req.body,
+            user_id: req.user.id
+        });
+        res.status(attendance.updated ? 200 : 201).json({ success: true, data: attendance });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     createAttendance,
     getAttendances,
     updateAttendance,
     deleteAttendance,
     getAttendanceStats,
-    getWorkerSummary
+    getWorkerSummary,
+    quickMarkAttendance
 };

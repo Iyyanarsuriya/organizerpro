@@ -162,6 +162,39 @@ class Attendance {
         const [rows] = await db.query(query, params);
         return rows;
     }
+
+    static async quickMark(data) {
+        const { user_id, worker_id, date, status, project_id, subject } = data;
+
+        // Find existing record for this worker on this date and project
+        let checkQuery = 'SELECT id FROM attendance WHERE user_id = ? AND worker_id = ? AND DATE(date) = ?';
+        const checkParams = [user_id, worker_id, date];
+
+        if (project_id) {
+            checkQuery += ' AND project_id = ?';
+            checkParams.push(project_id);
+        } else {
+            checkQuery += ' AND project_id IS NULL';
+        }
+
+        const [existing] = await db.query(checkQuery, checkParams);
+
+        if (existing.length > 0) {
+            // Update existing record
+            await db.query(
+                'UPDATE attendance SET status = ? WHERE id = ?',
+                [status, existing[0].id]
+            );
+            return { id: existing[0].id, ...data, updated: true };
+        } else {
+            // Create new record
+            const [result] = await db.query(
+                'INSERT INTO attendance (user_id, worker_id, date, status, project_id, subject) VALUES (?, ?, ?, ?, ?, ?)',
+                [user_id, worker_id, date, status, project_id || null, subject || 'Daily Attendance']
+            );
+            return { id: result.insertId, ...data, created: true };
+        }
+    }
 }
 
 module.exports = Attendance;

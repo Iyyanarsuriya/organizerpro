@@ -6,13 +6,15 @@ const {
     updateAttendance,
     deleteAttendance,
     getAttendanceStats,
-    getWorkerSummary
+    getWorkerSummary,
+    quickMarkAttendance
 } = require('../controllers/attendanceController');
 const authenticateToken = require('../middlewares/authMiddleware');
 
 router.use(authenticateToken);
 
 router.post('/', createAttendance);
+router.post('/quick', quickMarkAttendance);
 router.get('/', getAttendances);
 router.get('/stats', getAttendanceStats);
 router.get('/summary', getWorkerSummary);

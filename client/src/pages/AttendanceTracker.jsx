@@ -6,7 +6,8 @@ import {
     updateAttendance,
     deleteAttendance,
     getAttendanceStats,
-    getWorkerSummary
+    getWorkerSummary,
+    quickMarkAttendance
 } from '../api/attendanceApi';
 import { getProjects } from '../api/projectApi';
 import { getActiveWorkers } from '../api/workerApi';
@@ -15,7 +16,7 @@ import {
     FaCheckCircle, FaTimesCircle, FaClock, FaExclamationCircle,
     FaPlus, FaTrash, FaEdit, FaCalendarAlt, FaSearch,
     FaFilter, FaChartBar, FaUserCheck, FaChevronLeft, FaChevronRight,
-    FaFolderPlus, FaTimes, FaInbox
+    FaFolderPlus, FaTimes, FaInbox, FaUserEdit
 } from 'react-icons/fa';
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend
@@ -41,7 +42,7 @@ const AttendanceTracker = () => {
     const [customRange, setCustomRange] = useState({ start: '', end: '' });
     const [searchQuery, setSearchQuery] = useState('');
     const [workerSummary, setWorkerSummary] = useState([]);
-    const [activeTab, setActiveTab] = useState('records'); // 'records' or 'summary'
+    const [activeTab, setActiveTab] = useState('records'); // 'records', 'summary', 'quick'
 
     const [formData, setFormData] = useState({
         subject: '',
@@ -143,6 +144,23 @@ const AttendanceTracker = () => {
         }
     };
 
+    const handleQuickMark = async (workerId, status) => {
+        try {
+            const date = periodType === 'day' ? currentPeriod : new Date().toISOString().split('T')[0];
+            await quickMarkAttendance({
+                worker_id: workerId,
+                status,
+                date,
+                project_id: filterProject || null,
+                subject: `Daily Attendance`
+            });
+            toast.success("Marked successfully");
+            fetchData();
+        } catch (error) {
+            toast.error("Failed to mark attendance");
+        }
+    };
+
     const resetForm = () => {
         setFormData({
             subject: '',
@@ -185,6 +203,17 @@ const AttendanceTracker = () => {
             a.subject.toLowerCase().includes(searchQuery.toLowerCase())
         );
     }, [attendances, searchQuery]);
+
+    const activeWorkersAttendanceMat = useMemo(() => {
+        if (periodType !== 'day') return {};
+        const map = {};
+        attendances.forEach(a => {
+            if (a.worker_id) {
+                map[a.worker_id] = a.status;
+            }
+        });
+        return map;
+    }, [attendances, periodType]);
 
     const pieData = stats.map(s => {
         const option = statusOptions.find(o => o.id === s.status);
@@ -314,24 +343,24 @@ const AttendanceTracker = () => {
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* View Selector */}
-                <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-200 w-fit mb-8">
-                    <button
-                        onClick={() => setActiveTab('records')}
-                        className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'records' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-500 hover:text-slate-800'}`}
-                    >
-                        Attendance Records
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('summary')}
-                        className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'summary' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-500 hover:text-slate-800'}`}
-                    >
-                        Worker Summary
-                    </button>
+                <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-200 w-fit mb-8 overflow-hidden">
+                    {[
+                        { id: 'records', label: 'Attendance Records' },
+                        { id: 'summary', label: 'Worker Summary' },
+                        { id: 'quick', label: 'Daily Sheet' }
+                    ].map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-500 hover:text-slate-800'}`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
                 </div>
 
                 {activeTab === 'records' ? (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Stats Panel */}
                         <div className="lg:col-span-1 space-y-6">
                             <div className="bg-white rounded-3xl p-8 shadow-xl border border-slate-100">
                                 <h3 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-2">
@@ -374,23 +403,16 @@ const AttendanceTracker = () => {
                                     )}
                                 </div>
                             </div>
-
                             <div className="bg-white rounded-3xl p-8 shadow-xl border border-slate-100">
                                 <h3 className="text-lg font-black text-slate-900 mb-6">Management</h3>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <button
-                                        onClick={() => setShowProjectManager(true)}
-                                        className="p-4 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-all group flex flex-col items-center gap-2"
-                                    >
+                                    <button onClick={() => setShowProjectManager(true)} className="p-4 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-all group flex flex-col items-center gap-2">
                                         <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400 group-hover:text-blue-500 shadow-sm transition-colors">
                                             <FaFolderPlus />
                                         </div>
                                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Projects</span>
                                     </button>
-                                    <button
-                                        onClick={() => setShowWorkerManager(true)}
-                                        className="p-4 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-all group flex flex-col items-center gap-2"
-                                    >
+                                    <button onClick={() => setShowWorkerManager(true)} className="p-4 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-all group flex flex-col items-center gap-2">
                                         <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400 group-hover:text-orange-500 shadow-sm transition-colors">
                                             <FaUserCheck />
                                         </div>
@@ -400,7 +422,6 @@ const AttendanceTracker = () => {
                             </div>
                         </div>
 
-                        {/* List Panel */}
                         <div className="lg:col-span-2">
                             <div className="bg-white rounded-3xl p-8 shadow-xl border border-slate-100 min-h-[500px]">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -412,11 +433,10 @@ const AttendanceTracker = () => {
                                             placeholder="Search subject..."
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
-                                            className="w-full pl-11 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                            className="w-full pl-11 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-['Outfit']"
                                         />
                                     </div>
                                 </div>
-
                                 <div className="space-y-4">
                                     {filteredAttendances.length > 0 ? filteredAttendances.map((item) => {
                                         const option = statusOptions.find(o => o.id === item.status);
@@ -429,7 +449,7 @@ const AttendanceTracker = () => {
                                                         </div>
                                                         <div>
                                                             <div className="flex items-center gap-2 mb-1">
-                                                                <h4 className="font-black text-slate-900">{item.subject}</h4>
+                                                                <h4 className="font-black text-slate-900 leading-tight">{item.subject}</h4>
                                                                 <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tighter ${option?.bg} ${option?.color} border ${option?.border}`}>
                                                                     {option?.label}
                                                                 </span>
@@ -439,35 +459,17 @@ const AttendanceTracker = () => {
                                                                     <FaCalendarAlt className="text-[10px]" />
                                                                     {new Date(item.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                                                                 </span>
-                                                                {item.project_name && (
-                                                                    <span className="flex items-center gap-1.5 text-blue-500">
-                                                                        <FaFilter className="text-[10px]" />
-                                                                        {item.project_name}
-                                                                    </span>
-                                                                )}
-                                                                {item.worker_name && (
-                                                                    <span className="flex items-center gap-1.5 text-orange-500 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-100">
-                                                                        <FaUserCheck className="text-[10px]" />
-                                                                        {item.worker_name}
-                                                                    </span>
-                                                                )}
+                                                                {item.project_name && <span className="flex items-center gap-1.5 text-blue-500"><FaFilter className="text-[10px]" />{item.project_name}</span>}
+                                                                {item.worker_name && <span className="flex items-center gap-1.5 text-orange-500 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-100"><FaUserCheck className="text-[10px]" />{item.worker_name}</span>}
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button onClick={() => handleEdit(item)} className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all">
-                                                            <FaEdit />
-                                                        </button>
-                                                        <button onClick={() => handleDelete(item.id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
-                                                            <FaTrash />
-                                                        </button>
+                                                        <button onClick={() => handleEdit(item)} className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"><FaEdit /></button>
+                                                        <button onClick={() => handleDelete(item.id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"><FaTrash /></button>
                                                     </div>
                                                 </div>
-                                                {item.note && (
-                                                    <div className="mt-4 pt-4 border-t border-slate-50 italic text-slate-500 text-xs">
-                                                        "{item.note}"
-                                                    </div>
-                                                )}
+                                                {item.note && <div className="mt-4 pt-4 border-t border-slate-50 italic text-slate-500 text-xs text-left">"{item.note}"</div>}
                                             </div>
                                         );
                                     }) : (
@@ -480,8 +482,7 @@ const AttendanceTracker = () => {
                             </div>
                         </div>
                     </div>
-                ) : (
-                    /* Worker Summary Table */
+                ) : activeTab === 'summary' ? (
                     <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden animate-in fade-in duration-500">
                         <div className="p-8 border-b border-slate-100">
                             <h3 className="text-lg font-black text-slate-900">Worker Attendance Summary</h3>
@@ -505,176 +506,144 @@ const AttendanceTracker = () => {
                                         const attendanceRate = w.total > 0 ? ((w.present + w.half_day * 0.5) / w.total * 100).toFixed(1) : '0.0';
                                         return (
                                             <tr key={w.id} className="hover:bg-slate-50 transition-colors">
-                                                <td className="px-8 py-5">
-                                                    <span className="font-black text-slate-700">{w.name}</span>
-                                                </td>
-                                                <td className="px-6 py-5 text-center">
-                                                    <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full font-black text-xs">{w.present}</span>
-                                                </td>
-                                                <td className="px-6 py-5 text-center">
-                                                    <span className="px-3 py-1 bg-red-50 text-red-600 rounded-full font-black text-xs">{w.absent}</span>
-                                                </td>
-                                                <td className="px-6 py-5 text-center">
-                                                    <span className="px-3 py-1 bg-amber-50 text-amber-600 rounded-full font-black text-xs">{w.late}</span>
-                                                </td>
-                                                <td className="px-6 py-5 text-center">
-                                                    <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full font-black text-xs">{w.half_day}</span>
-                                                </td>
-                                                <td className="px-6 py-5 text-center">
-                                                    <span className="font-black text-slate-900">{w.total}</span>
-                                                </td>
+                                                <td className="px-8 py-5"><span className="font-black text-slate-700">{w.name}</span></td>
+                                                <td className="px-6 py-5 text-center"><span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full font-black text-xs">{w.present}</span></td>
+                                                <td className="px-6 py-5 text-center"><span className="px-3 py-1 bg-red-50 text-red-600 rounded-full font-black text-xs">{w.absent}</span></td>
+                                                <td className="px-6 py-5 text-center"><span className="px-3 py-1 bg-amber-50 text-amber-600 rounded-full font-black text-xs">{w.late}</span></td>
+                                                <td className="px-6 py-5 text-center"><span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full font-black text-xs">{w.half_day}</span></td>
+                                                <td className="px-6 py-5 text-center"><span className="font-black text-slate-900">{w.total}</span></td>
                                                 <td className="px-8 py-5 text-right">
                                                     <div className="flex items-center justify-end gap-3">
                                                         <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
-                                                            <div
-                                                                className={`h-full rounded-full transition-all duration-1000 ${parseFloat(attendanceRate) >= 90 ? 'bg-emerald-500' :
-                                                                        parseFloat(attendanceRate) >= 75 ? 'bg-blue-500' :
-                                                                            parseFloat(attendanceRate) >= 50 ? 'bg-amber-500' : 'bg-red-500'
-                                                                    }`}
-                                                                style={{ width: `${attendanceRate}%` }}
-                                                            ></div>
+                                                            <div className={`h-full rounded-full transition-all duration-1000 ${parseFloat(attendanceRate) >= 90 ? 'bg-emerald-500' : parseFloat(attendanceRate) >= 75 ? 'bg-blue-500' : parseFloat(attendanceRate) >= 50 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${attendanceRate}%` }}></div>
                                                         </div>
-                                                        <span className="font-black text-slate-700 text-xs min-w-[3rem]">{attendanceRate}%</span>
+                                                        <span className="font-black text-slate-700 text-xs min-w-12 text-right">{attendanceRate}%</span>
                                                     </div>
                                                 </td>
                                             </tr>
                                         );
                                     })}
                                     {workerSummary.length === 0 && (
-                                        <tr>
-                                            <td colSpan="7" className="px-8 py-20 text-center text-slate-400">
-                                                <FaInbox className="text-4xl mx-auto mb-4 opacity-20" />
-                                                <p className="font-black uppercase tracking-widest text-xs">No workers found</p>
-                                            </td>
-                                        </tr>
+                                        <tr><td colSpan="7" className="px-8 py-20 text-center text-slate-400"><FaInbox className="text-4xl mx-auto mb-4 opacity-20" /><p className="font-black uppercase tracking-widest text-xs">No workers found</p></td></tr>
                                     )}
                                 </tbody>
                             </table>
                         </div>
                     </div>
+                ) : (
+                    /* Daily Quick Mark View */
+                    <div className="bg-white rounded-[40px] shadow-xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="p-8 sm:p-12 border-b border-slate-100 bg-linear-to-br from-slate-900 to-slate-800 text-white">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                                <div>
+                                    <h3 className="text-2xl font-black mb-2">Daily Attendance Sheet</h3>
+                                    <div className="flex items-center gap-3">
+                                        <FaCalendarAlt className="text-blue-400" />
+                                        <span className="text-slate-400 font-bold uppercase tracking-widest text-xs">
+                                            {periodType === 'day' ? new Date(currentPeriod).toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }) : 'Please select a specific day to use the sheet'}
+                                        </span>
+                                    </div>
+                                </div>
+                                {periodType === 'day' && (
+                                    <div className="bg-white/10 px-6 py-3 rounded-2xl border border-white/10 backdrop-blur-md">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-300 mb-1">Marking Mode</p>
+                                        <p className="text-sm font-black">Single Click Upsert</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {periodType === 'day' ? (
+                            <div className="p-8 sm:p-12">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {workers.map(w => {
+                                        const currentStatus = activeWorkersAttendanceMat[w.id];
+                                        return (
+                                            <div key={w.id} className="p-6 bg-slate-50 rounded-[32px] border border-slate-100 hover:border-blue-500/20 hover:bg-white hover:shadow-2xl transition-all group">
+                                                <div className="flex items-center gap-4 mb-6">
+                                                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-blue-500 group-hover:text-white shadow-sm transition-all">
+                                                        <FaUserEdit />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-black text-slate-900 leading-tight">{w.name}</h4>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-0.5">Active Worker</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    {statusOptions.map(opt => (
+                                                        <button
+                                                            key={opt.id}
+                                                            onClick={() => handleQuickMark(w.id, opt.id)}
+                                                            className={`flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border-2 ${currentStatus === opt.id
+                                                                ? `${opt.bg} ${opt.color} ${opt.border} scale-105 shadow-md`
+                                                                : 'bg-white border-transparent text-slate-400 hover:border-slate-200'
+                                                                }`}
+                                                        >
+                                                            <opt.icon className="text-xs" />
+                                                            {opt.id === 'present' ? 'P' : opt.id === 'absent' ? 'A' : opt.id === 'late' ? 'L' : 'H'}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    {workers.length === 0 && (
+                                        <div className="col-span-full py-20 text-center">
+                                            <FaInbox className="text-6xl mx-auto mb-6 opacity-10" />
+                                            <h4 className="text-lg font-black text-slate-900 mb-2">No Workers Found</h4>
+                                            <p className="text-slate-500 text-sm font-medium">Add some workers first to start using the Daily Sheet</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="p-20 text-center">
+                                <div className="w-24 h-24 bg-blue-50 rounded-[40px] flex items-center justify-center mx-auto mb-8">
+                                    <FaCalendarAlt className="text-4xl text-blue-500 opacity-20" />
+                                </div>
+                                <h4 className="text-xl font-black text-slate-900 mb-4">Select a Day to Begin</h4>
+                                <p className="text-slate-500 max-w-sm mx-auto font-medium">The Daily Sheet works only when a specific day is selected from the filters above.</p>
+                                <button
+                                    onClick={() => setPeriodType('day')}
+                                    className="mt-8 bg-slate-900 text-white px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-xl"
+                                >
+                                    Switch to Day View
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 )}
             </main>
 
-            {/* Add/Edit Modal */}
+            {/* Modal & Managers (Unchanged) */}
             {showAddModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
                     <div className="bg-white rounded-[40px] p-8 sm:p-10 w-full max-w-lg shadow-2xl relative animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto custom-scrollbar">
-                        <button
-                            onClick={() => { setShowAddModal(false); resetForm(); }}
-                            className="absolute top-8 right-8 text-slate-400 hover:text-slate-800 transition-colors"
-                        >
-                            <FaTimes />
-                        </button>
-
-                        <div className="mb-8">
-                            <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
-                                <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
-                                {editingId ? 'Edit Record' : 'Mark Attendance'}
-                            </h2>
-                        </div>
-
+                        <button onClick={() => { setShowAddModal(false); resetForm(); }} className="absolute top-8 right-8 text-slate-400 hover:text-slate-800 transition-colors"><FaTimes /></button>
+                        <div className="mb-8"><h2 className="text-2xl font-black text-slate-900 flex items-center gap-3"><div className="w-2 h-8 bg-blue-600 rounded-full"></div>{editingId ? 'Edit Record' : 'Mark Attendance'}</h2></div>
                         <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* Status Selector */}
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                 {statusOptions.map(opt => (
-                                    <button
-                                        key={opt.id}
-                                        type="button"
-                                        onClick={() => setFormData({ ...formData, status: opt.id })}
-                                        className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${formData.status === opt.id
-                                            ? 'border-blue-500 bg-blue-50 scale-105'
-                                            : 'border-slate-100 bg-slate-50/50 hover:bg-slate-50'
-                                            }`}
-                                    >
-                                        <opt.icon className={`text-xl ${formData.status === opt.id ? 'text-blue-500' : 'text-slate-400'}`} />
-                                        <span className={`text-[10px] font-black uppercase tracking-widest ${formData.status === opt.id ? 'text-blue-700' : 'text-slate-500'}`}>
-                                            {opt.label}
-                                        </span>
-                                    </button>
+                                    <button key={opt.id} type="button" onClick={() => setFormData({ ...formData, status: opt.id })} className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${formData.status === opt.id ? 'border-blue-500 bg-blue-50 scale-105' : 'border-slate-100 bg-slate-50/50 hover:bg-slate-50'}`}><opt.icon className={`text-xl ${formData.status === opt.id ? 'text-blue-500' : 'text-slate-400'}`} /><span className={`text-[10px] font-black uppercase tracking-widest ${formData.status === opt.id ? 'text-blue-700' : 'text-slate-500'}`}>{opt.label}</span></button>
                                 ))}
                             </div>
-
                             <div className="space-y-4">
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">Subject / Label</label>
-                                    <input
-                                        required
-                                        type="text"
-                                        value={formData.subject}
-                                        onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                                        placeholder="E.g. Office, College, Gym..."
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-['Outfit']"
-                                    />
-                                </div>
-
+                                <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">Subject / Label</label><input required type="text" value={formData.subject} onChange={(e) => setFormData({ ...formData, subject: e.target.value })} placeholder="E.g. Office, College, Gym..." className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-['Outfit']" /></div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">Date</label>
-                                        <div className="relative">
-                                            <FaCalendarAlt className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" />
-                                            <input
-                                                required
-                                                type="date"
-                                                value={formData.date}
-                                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-14 pr-6 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition-all font-['Outfit'] cursor-pointer"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">Project (Optional)</label>
-                                        <select
-                                            value={formData.project_id}
-                                            onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
-                                        >
-                                            <option value="">No Project</option>
-                                            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                        </select>
-                                    </div>
-                                    <div className="sm:col-span-2">
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">Worker (Optional)</label>
-                                        <select
-                                            value={formData.worker_id}
-                                            onChange={(e) => setFormData({ ...formData, worker_id: e.target.value })}
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
-                                        >
-                                            <option value="">No Worker</option>
-                                            {workers.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                                        </select>
-                                    </div>
+                                    <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">Date</label><div className="relative"><FaCalendarAlt className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" /><input required type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-14 pr-6 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition-all font-['Outfit'] cursor-pointer" /></div></div>
+                                    <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">Project (Optional)</label><select value={formData.project_id} onChange={(e) => setFormData({ ...formData, project_id: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer font-['Outfit']"><option value="">No Project</option>{projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
+                                    <div className="sm:col-span-2"><label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">Worker (Optional)</label><select value={formData.worker_id} onChange={(e) => setFormData({ ...formData, worker_id: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer font-['Outfit']"><option value="">No Worker</option>{workers.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}</select></div>
                                 </div>
-
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">Note (Optional)</label>
-                                    <textarea
-                                        value={formData.note}
-                                        onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                                        placeholder="Add more details..."
-                                        rows="3"
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition-all resize-none font-['Outfit']"
-                                    ></textarea>
-                                </div>
+                                <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">Note (Optional)</label><textarea value={formData.note} onChange={(e) => setFormData({ ...formData, note: e.target.value })} placeholder="Add more details..." rows="3" className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition-all resize-none font-['Outfit']"></textarea></div>
                             </div>
-
-                            <button
-                                type="submit"
-                                className="w-full bg-slate-900 hover:bg-slate-800 text-white py-5 rounded-2xl text-sm font-black uppercase tracking-widest shadow-2xl transition-all hover:scale-[1.02] active:scale-95 mt-4"
-                            >
-                                {editingId ? 'Update Record' : 'Mark Attendance'}
-                            </button>
+                            <button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white py-5 rounded-2xl text-sm font-black uppercase tracking-widest shadow-2xl transition-all hover:scale-[1.02] active:scale-95 mt-4 font-['Outfit']">{editingId ? 'Update Record' : 'Mark Attendance'}</button>
                         </form>
                     </div>
                 </div>
             )}
-
-            {showProjectManager && (
-                <ProjectManager onClose={() => { setShowProjectManager(false); fetchData(); }} />
-            )}
-
-            {showWorkerManager && (
-                <WorkerManager onClose={() => { setShowWorkerManager(false); fetchData(); }} />
-            )}
+            {showProjectManager && <ProjectManager onClose={() => { setShowProjectManager(false); fetchData(); }} />}
+            {showWorkerManager && <WorkerManager onClose={() => { setShowWorkerManager(false); fetchData(); }} />}
         </div>
     );
 };
