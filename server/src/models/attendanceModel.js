@@ -2,21 +2,30 @@ const db = require('../config/db');
 
 class Attendance {
     static async create(data) {
-        const { user_id, subject, status, date, note, project_id } = data;
+        const { user_id, subject, status, date, note, project_id, worker_id } = data;
         const [result] = await db.query(
-            'INSERT INTO attendance (user_id, subject, status, date, note, project_id) VALUES (?, ?, ?, ?, ?, ?)',
-            [user_id, subject, status, date, note, project_id || null]
+            'INSERT INTO attendance (user_id, subject, status, date, note, project_id, worker_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [user_id, subject, status, date, note, project_id || null, worker_id || null]
         );
         return { id: result.insertId, ...data };
     }
 
     static async getAllByUserId(userId, filters = {}) {
-        let query = 'SELECT a.*, p.name as project_name FROM attendance a LEFT JOIN projects p ON a.project_id = p.id WHERE a.user_id = ?';
+        let query = `SELECT a.*, p.name as project_name, w.name as worker_name 
+                     FROM attendance a 
+                     LEFT JOIN projects p ON a.project_id = p.id 
+                     LEFT JOIN workers w ON a.worker_id = w.id 
+                     WHERE a.user_id = ?`;
         const params = [userId];
 
         if (filters.projectId) {
             query += ' AND a.project_id = ?';
             params.push(filters.projectId);
+        }
+
+        if (filters.workerId) {
+            query += ' AND a.worker_id = ?';
+            params.push(filters.workerId);
         }
 
         if (filters.date) {
@@ -36,10 +45,10 @@ class Attendance {
     }
 
     static async update(id, userId, data) {
-        const { subject, status, date, note, project_id } = data;
+        const { subject, status, date, note, project_id, worker_id } = data;
         const [result] = await db.query(
-            'UPDATE attendance SET subject = ?, status = ?, date = ?, note = ?, project_id = ? WHERE id = ? AND user_id = ?',
-            [subject, status, date, note, project_id || null, id, userId]
+            'UPDATE attendance SET subject = ?, status = ?, date = ?, note = ?, project_id = ?, worker_id = ? WHERE id = ? AND user_id = ?',
+            [subject, status, date, note, project_id || null, worker_id || null, id, userId]
         );
         return result.affectedRows > 0;
     }
@@ -70,6 +79,11 @@ class Attendance {
         if (filters.projectId) {
             query += " AND project_id = ?";
             params.push(filters.projectId);
+        }
+
+        if (filters.workerId) {
+            query += " AND worker_id = ?";
+            params.push(filters.workerId);
         }
 
         query += " GROUP BY status";

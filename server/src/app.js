@@ -37,6 +37,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/expense-categories", expenseCategoryRoutes);
 app.use("/api/projects", require("./routes/projectRoutes"));
 app.use("/api/attendance", require("./routes/attendanceRoutes"));
+app.use("/api/workers", require("./routes/workerRoutes"));
 
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);

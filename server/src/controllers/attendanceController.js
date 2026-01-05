@@ -13,6 +13,7 @@ const getAttendances = async (req, res) => {
     try {
         const filters = {
             projectId: req.query.projectId,
+            workerId: req.query.workerId,
             date: req.query.date,
             month: req.query.month
         };
@@ -53,7 +54,8 @@ const getAttendanceStats = async (req, res) => {
     try {
         const stats = await Attendance.getStats(req.user.id, {
             month: req.query.month,
-            projectId: req.query.projectId
+            projectId: req.query.projectId,
+            workerId: req.query.workerId
         });
         res.status(200).json({ success: true, data: stats });
     } catch (error) {

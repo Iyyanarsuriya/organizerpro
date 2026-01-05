@@ -8,6 +8,7 @@ import {
     getAttendanceStats
 } from '../api/attendanceApi';
 import { getProjects } from '../api/projectApi';
+import { getActiveWorkers } from '../api/workerApi';
 import toast from 'react-hot-toast';
 import {
     FaCheckCircle, FaTimesCircle, FaClock, FaExclamationCircle,
@@ -19,6 +20,7 @@ import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend
 } from 'recharts';
 import ProjectManager from '../components/ProjectManager';
+import WorkerManager from '../components/WorkerManager';
 
 const AttendanceTracker = () => {
     const navigate = useNavigate();
@@ -28,8 +30,11 @@ const AttendanceTracker = () => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [projects, setProjects] = useState([]);
+    const [workers, setWorkers] = useState([]);
     const [showProjectManager, setShowProjectManager] = useState(false);
+    const [showWorkerManager, setShowWorkerManager] = useState(false);
     const [filterProject, setFilterProject] = useState('');
+    const [filterWorker, setFilterWorker] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
 
@@ -38,7 +43,8 @@ const AttendanceTracker = () => {
         status: 'present',
         date: new Date().toISOString().split('T')[0],
         note: '',
-        project_id: ''
+        project_id: '',
+        worker_id: ''
     });
 
     const statusOptions = [
@@ -50,14 +56,16 @@ const AttendanceTracker = () => {
 
     const fetchData = async () => {
         try {
-            const [attRes, statsRes, projRes] = await Promise.all([
-                getAttendances({ projectId: filterProject, month: currentMonth }),
-                getAttendanceStats({ month: currentMonth, projectId: filterProject }),
-                getProjects()
+            const [attRes, statsRes, projRes, workersRes] = await Promise.all([
+                getAttendances({ projectId: filterProject, workerId: filterWorker, month: currentMonth }),
+                getAttendanceStats({ month: currentMonth, projectId: filterProject, workerId: filterWorker }),
+                getProjects(),
+                getActiveWorkers()
             ]);
             setAttendances(attRes.data.data);
             setStats(statsRes.data.data);
             setProjects(projRes.data);
+            setWorkers(workersRes.data.data);
             setLoading(false);
         } catch (error) {
             toast.error("Failed to fetch attendance data");
@@ -67,7 +75,7 @@ const AttendanceTracker = () => {
 
     useEffect(() => {
         fetchData();
-    }, [currentMonth, filterProject]);
+    }, [currentMonth, filterProject, filterWorker]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -94,7 +102,8 @@ const AttendanceTracker = () => {
             status: 'present',
             date: new Date().toISOString().split('T')[0],
             note: '',
-            project_id: filterProject || ''
+            project_id: filterProject || '',
+            worker_id: ''
         });
         setEditingId(null);
     };
@@ -105,7 +114,8 @@ const AttendanceTracker = () => {
             status: item.status,
             date: new Date(item.date).toISOString().split('T')[0],
             note: item.note || '',
-            project_id: item.project_id || ''
+            project_id: item.project_id || '',
+            worker_id: item.worker_id || ''
         });
         setEditingId(item.id);
         setShowAddModal(true);
@@ -191,6 +201,15 @@ const AttendanceTracker = () => {
                                 {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                             </select>
 
+                            <select
+                                value={filterWorker}
+                                onChange={(e) => setFilterWorker(e.target.value)}
+                                className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer shadow-sm"
+                            >
+                                <option value="">All Workers</option>
+                                {workers.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                            </select>
+
                             <button
                                 onClick={() => setShowAddModal(true)}
                                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl text-sm font-black uppercase tracking-widest shadow-lg shadow-blue-600/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
@@ -273,6 +292,21 @@ const AttendanceTracker = () => {
                                 Manage Projects
                             </button>
                         </div>
+
+                        {/* Worker Management */}
+                        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-[32px] p-8 text-white shadow-2xl relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
+                            <h3 className="text-lg font-black mb-6 flex items-center gap-3">
+                                <FaUserCheck className="text-white" />
+                                Workers
+                            </h3>
+                            <button
+                                onClick={() => setShowWorkerManager(true)}
+                                className="w-full bg-white/10 hover:bg-white/20 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border border-white/10"
+                            >
+                                Manage Workers
+                            </button>
+                        </div>
                     </div>
 
                     {/* Attendance List */}
@@ -314,6 +348,14 @@ const AttendanceTracker = () => {
                                                                     <span className="w-1 h-1 rounded-full bg-slate-200"></span>
                                                                     <span className="text-[10px] font-black uppercase tracking-widest text-blue-500 bg-blue-50 px-2 py-0.5 rounded-md">
                                                                         {item.project_name}
+                                                                    </span>
+                                                                </>
+                                                            )}
+                                                            {item.worker_name && (
+                                                                <>
+                                                                    <span className="w-1 h-1 rounded-full bg-slate-200"></span>
+                                                                    <span className="text-[10px] font-black uppercase tracking-widest text-orange-500 bg-orange-50 px-2 py-0.5 rounded-md">
+                                                                        {item.worker_name}
                                                                     </span>
                                                                 </>
                                                             )}
@@ -383,8 +425,8 @@ const AttendanceTracker = () => {
                                         type="button"
                                         onClick={() => setFormData({ ...formData, status: opt.id })}
                                         className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${formData.status === opt.id
-                                                ? 'border-blue-500 bg-blue-50 scale-105'
-                                                : 'border-slate-100 bg-slate-50/50 hover:bg-slate-50'
+                                            ? 'border-blue-500 bg-blue-50 scale-105'
+                                            : 'border-slate-100 bg-slate-50/50 hover:bg-slate-50'
                                             }`}
                                     >
                                         <opt.icon className={`text-xl ${formData.status === opt.id ? 'text-blue-500' : 'text-slate-400'}`} />
@@ -433,6 +475,17 @@ const AttendanceTracker = () => {
                                             {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                         </select>
                                     </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">Worker (Optional)</label>
+                                        <select
+                                            value={formData.worker_id}
+                                            onChange={(e) => setFormData({ ...formData, worker_id: e.target.value })}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
+                                        >
+                                            <option value="">No Worker</option>
+                                            {workers.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <div>
@@ -462,6 +515,14 @@ const AttendanceTracker = () => {
             {showProjectManager && (
                 <ProjectManager
                     onClose={() => setShowProjectManager(false)}
+                    onUpdate={fetchData}
+                />
+            )}
+
+            {/* Worker Manager Modal */}
+            {showWorkerManager && (
+                <WorkerManager
+                    onClose={() => setShowWorkerManager(false)}
                     onUpdate={fetchData}
                 />
             )}
