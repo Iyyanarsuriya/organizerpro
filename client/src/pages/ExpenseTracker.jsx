@@ -28,8 +28,8 @@ const ExpenseTracker = () => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user')) || {});
 
-    const [periodType, setPeriodType] = useState('month'); // 'month', 'year', 'week', 'day', 'range'
-    const [currentPeriod, setCurrentPeriod] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+    const [periodType, setPeriodType] = useState('day'); // 'month', 'year', 'week', 'day', 'range'
+    const [currentPeriod, setCurrentPeriod] = useState(new Date().toISOString().split('T')[0]); // YYYY-MM-DD
     const [customRange, setCustomRange] = useState({ start: '', end: '' });
 
     const [showCategoryManager, setShowCategoryManager] = useState(false);
@@ -287,7 +287,6 @@ const ExpenseTracker = () => {
                 <nav className="flex-1 space-y-2">
                     <SidebarItem icon={FaChartBar} label="Dashboard" />
                     <SidebarItem icon={FaExchangeAlt} label="Transactions" />
-                    <SidebarItem icon={FaUserCheck} label="Attendance" />
                     <SidebarItem icon={FaWallet} label="Budgets" />
                     <SidebarItem icon={FaFileAlt} label="Reports" />
                     <SidebarItem icon={FaPiggyBank} label="Savings Goals" />

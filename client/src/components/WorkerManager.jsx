@@ -14,6 +14,7 @@ const WorkerManager = ({ onClose, onUpdate }) => {
         status: 'active'
     });
     const [editingId, setEditingId] = useState(null);
+    const [deleteModal, setDeleteModal] = useState({ show: false, id: null });
 
     const fetchWorkers = async () => {
         try {
@@ -59,16 +60,19 @@ const WorkerManager = ({ onClose, onUpdate }) => {
         setEditingId(worker.id);
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm("Delete this worker? Their attendance records will remain.")) {
-            try {
-                await deleteWorker(id);
-                toast.success("Worker deleted");
-                fetchWorkers();
-                if (onUpdate) onUpdate();
-            } catch (error) {
-                toast.error("Failed to delete worker");
-            }
+    const handleDeleteClick = (id) => {
+        setDeleteModal({ show: true, id });
+    };
+
+    const confirmDelete = async () => {
+        try {
+            await deleteWorker(deleteModal.id);
+            toast.success("Worker deleted");
+            setDeleteModal({ show: false, id: null });
+            fetchWorkers();
+            if (onUpdate) onUpdate();
+        } catch (error) {
+            toast.error("Failed to delete worker");
         }
     };
 
@@ -201,8 +205,8 @@ const WorkerManager = ({ onClose, onUpdate }) => {
                                         <div className="flex items-center gap-3 mb-2">
                                             <h4 className="text-lg font-black text-slate-900">{worker.name}</h4>
                                             <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${worker.status === 'active'
-                                                    ? 'bg-emerald-50 text-emerald-600'
-                                                    : 'bg-slate-100 text-slate-500'
+                                                ? 'bg-emerald-50 text-emerald-600'
+                                                : 'bg-slate-100 text-slate-500'
                                                 }`}>
                                                 {worker.status}
                                             </span>
@@ -236,7 +240,7 @@ const WorkerManager = ({ onClose, onUpdate }) => {
                                             <FaEdit />
                                         </button>
                                         <button
-                                            onClick={() => handleDelete(worker.id)}
+                                            onClick={() => handleDeleteClick(worker.id)}
                                             className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
                                         >
                                             <FaTrash />
@@ -253,6 +257,35 @@ const WorkerManager = ({ onClose, onUpdate }) => {
                         </div>
                     )}
                 </div>
+
+                {/* Custom Delete Confirmation Modal */}
+                {deleteModal.show && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white rounded-[32px] p-8 w-full max-w-xs shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100">
+                            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-6">
+                                <FaTrash />
+                            </div>
+                            <h3 className="text-xl font-black text-slate-900 text-center mb-2">Delete Worker?</h3>
+                            <p className="text-slate-500 text-xs font-bold text-center mb-8 px-2 leading-relaxed">
+                                This action cannot be undone. Their past attendance records will remain in the system.
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setDeleteModal({ show: false, id: null })}
+                                    className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-red-500/20"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { FaPlus, FaTrash, FaTimes, FaFolder } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
-const ProjectManager = ({ projects, onCreate, onDelete, onClose, onRefresh }) => {
+const ProjectManager = ({ projects = [], onCreate, onDelete, onClose, onRefresh }) => {
     const [newProjectName, setNewProjectName] = useState('');
     const [description, setDescription] = useState('');
     const [loading, setLoading] = useState(false);
+
+    const [deleteModal, setDeleteModal] = useState({ show: false, id: null });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -25,11 +27,15 @@ const ProjectManager = ({ projects, onCreate, onDelete, onClose, onRefresh }) =>
         }
     };
 
-    const handleDelete = async (id) => {
-        if (!window.confirm("Are you sure? Transactions will be unlinked.")) return;
+    const handleDeleteClick = (id) => {
+        setDeleteModal({ show: true, id });
+    };
+
+    const confirmDelete = async () => {
         try {
-            await onDelete(id);
+            await onDelete(deleteModal.id);
             toast.success("Project deleted");
+            setDeleteModal({ show: false, id: null });
             onRefresh();
         } catch (error) {
             toast.error("Failed to delete project");
@@ -96,7 +102,7 @@ const ProjectManager = ({ projects, onCreate, onDelete, onClose, onRefresh }) =>
                                 </div>
                             </div>
                             <button
-                                onClick={() => handleDelete(project.id)}
+                                onClick={() => handleDeleteClick(project.id)}
                                 className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors opacity-0 group-hover:opacity-100"
                             >
                                 <FaTrash />
@@ -107,6 +113,35 @@ const ProjectManager = ({ projects, onCreate, onDelete, onClose, onRefresh }) =>
                         <p className="text-center text-slate-400 text-xs font-bold py-8 uppercase tracking-widest">No projects found</p>
                     )}
                 </div>
+
+                {/* Custom Delete Confirmation Modal */}
+                {deleteModal.show && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white rounded-[32px] p-8 w-full max-w-xs shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100">
+                            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-6">
+                                <FaTrash />
+                            </div>
+                            <h3 className="text-xl font-black text-slate-900 text-center mb-2">Delete Project?</h3>
+                            <p className="text-slate-500 text-xs font-bold text-center mb-8 px-2 leading-relaxed">
+                                This action cannot be undone. Transactions associated with this project will be unlinked.
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setDeleteModal({ show: false, id: null })}
+                                    className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-red-500/20"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
