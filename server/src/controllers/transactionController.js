@@ -2,8 +2,8 @@ const Transaction = require('../models/transactionModel');
 
 exports.getTransactions = async (req, res) => {
     try {
-        const { projectId, workerId, period, startDate, endDate } = req.query;
-        const transactions = await Transaction.getAllByUserId(req.user.id, { projectId, workerId, period, startDate, endDate });
+        const { projectId, memberId, period, startDate, endDate } = req.query;
+        const transactions = await Transaction.getAllByUserId(req.user.id, { projectId, memberId, period, startDate, endDate });
         res.json(transactions);
     } catch (error) {
         console.error(error);
@@ -12,7 +12,7 @@ exports.getTransactions = async (req, res) => {
 };
 
 exports.createTransaction = async (req, res) => {
-    const { title, amount, type, category, date, project_id, worker_id } = req.body;
+    const { title, amount, type, category, date, project_id, member_id } = req.body;
     try {
         const newTransaction = await Transaction.create({
             user_id: req.user.id,
@@ -22,7 +22,7 @@ exports.createTransaction = async (req, res) => {
             category,
             date,
             project_id,
-            worker_id
+            member_id
         });
         res.status(201).json(newTransaction);
     } catch (error) {
@@ -33,7 +33,7 @@ exports.createTransaction = async (req, res) => {
 
 exports.updateTransaction = async (req, res) => {
     const { id } = req.params;
-    const { title, amount, type, category, date, project_id, worker_id } = req.body;
+    const { title, amount, type, category, date, project_id, member_id } = req.body;
     try {
         const success = await Transaction.update(id, req.user.id, {
             title,
@@ -42,7 +42,7 @@ exports.updateTransaction = async (req, res) => {
             category,
             date,
             project_id,
-            worker_id
+            member_id
         });
         if (!success) return res.status(404).json({ error: 'Transaction not found' });
         res.json({ message: 'Transaction updated' });
@@ -66,13 +66,13 @@ exports.deleteTransaction = async (req, res) => {
 
 exports.getTransactionStats = async (req, res) => {
     try {
-        const { period, projectId, workerId, startDate, endDate } = req.query;
+        const { period, projectId, memberId, startDate, endDate } = req.query;
         // Note: 'period' can now be YYYY-MM or YYYY.
-        const summary = await Transaction.getStats(req.user.id, period, projectId, startDate, endDate, workerId);
-        const categories = await Transaction.getCategoryStats(req.user.id, period, projectId, startDate, endDate, workerId);
-        const lifetime = await Transaction.getLifetimeStats(req.user.id, projectId, workerId);
-        const workerProjects = workerId ? await Transaction.getWorkerProjectStats(req.user.id, workerId) : null;
-        res.json({ summary, categories, lifetime, workerProjects });
+        const summary = await Transaction.getStats(req.user.id, period, projectId, startDate, endDate, memberId);
+        const categories = await Transaction.getCategoryStats(req.user.id, period, projectId, startDate, endDate, memberId);
+        const lifetime = await Transaction.getLifetimeStats(req.user.id, projectId, memberId);
+        const memberProjects = memberId ? await Transaction.getMemberProjectStats(req.user.id, memberId) : null;
+        res.json({ summary, categories, lifetime, memberProjects });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal Server Error' });

@@ -2,19 +2,19 @@ const db = require('../config/db');
 
 class Attendance {
     static async create(data) {
-        const { user_id, subject, status, date, note, project_id, worker_id } = data;
+        const { user_id, subject, status, date, note, project_id, member_id } = data;
         const [result] = await db.query(
-            'INSERT INTO attendance (user_id, subject, status, date, note, project_id, worker_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [user_id, subject, status, date, note, project_id || null, worker_id || null]
+            'INSERT INTO attendance (user_id, subject, status, date, note, project_id, member_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [user_id, subject, status, date, note, project_id || null, member_id || null]
         );
         return { id: result.insertId, ...data };
     }
 
     static async getAllByUserId(userId, filters = {}) {
-        let query = `SELECT a.*, p.name as project_name, w.name as worker_name 
+        let query = `SELECT a.*, p.name as project_name, w.name as member_name 
                      FROM attendance a 
                      LEFT JOIN projects p ON a.project_id = p.id 
-                     LEFT JOIN workers w ON a.worker_id = w.id 
+                     LEFT JOIN members w ON a.member_id = w.id 
                      WHERE a.user_id = ?`;
         const params = [userId];
 
@@ -23,9 +23,9 @@ class Attendance {
             params.push(filters.projectId);
         }
 
-        if (filters.workerId) {
-            query += ' AND a.worker_id = ?';
-            params.push(filters.workerId);
+        if (filters.memberId) {
+            query += ' AND a.member_id = ?';
+            params.push(filters.memberId);
         }
 
         if (filters.period) {
@@ -56,10 +56,10 @@ class Attendance {
     }
 
     static async update(id, userId, data) {
-        const { subject, status, date, note, project_id, worker_id } = data;
+        const { subject, status, date, note, project_id, member_id } = data;
         const [result] = await db.query(
-            'UPDATE attendance SET subject = ?, status = ?, date = ?, note = ?, project_id = ?, worker_id = ? WHERE id = ? AND user_id = ?',
-            [subject, status, date, note, project_id || null, worker_id || null, id, userId]
+            'UPDATE attendance SET subject = ?, status = ?, date = ?, note = ?, project_id = ?, member_id = ? WHERE id = ? AND user_id = ?',
+            [subject, status, date, note, project_id || null, member_id || null, id, userId]
         );
         return result.affectedRows > 0;
     }
@@ -100,9 +100,9 @@ class Attendance {
             params.push(filters.startDate, filters.endDate);
         }
 
-        if (filters.workerId) {
-            query += " AND worker_id = ?";
-            params.push(filters.workerId);
+        if (filters.memberId) {
+            query += " AND member_id = ?";
+            params.push(filters.memberId);
         }
 
         query += " GROUP BY status";
@@ -111,7 +111,7 @@ class Attendance {
         return rows;
     }
 
-    static async getWorkerSummary(userId, filters = {}) {
+    static async getMemberSummary(userId, filters = {}) {
         let query = `
             SELECT 
                 w.id,
@@ -121,8 +121,8 @@ class Attendance {
                 COUNT(CASE WHEN a.status = 'late' THEN 1 END) as late,
                 COUNT(CASE WHEN a.status = 'half-day' THEN 1 END) as half_day,
                 COUNT(a.id) as total
-            FROM workers w
-            LEFT JOIN attendance a ON w.id = a.worker_id
+            FROM members w
+            LEFT JOIN attendance a ON w.id = a.member_id
         `;
         const params = [];
         let joinConditions = [];
@@ -164,11 +164,11 @@ class Attendance {
     }
 
     static async quickMark(data) {
-        const { user_id, worker_id, date, status, project_id, subject } = data;
+        const { user_id, member_id, date, status, project_id, subject } = data;
 
-        // Find existing record for this worker on this date and project
-        let checkQuery = 'SELECT id FROM attendance WHERE user_id = ? AND worker_id = ? AND DATE(date) = ?';
-        const checkParams = [user_id, worker_id, date];
+        // Find existing record for this member on this date and project
+        let checkQuery = 'SELECT id FROM attendance WHERE user_id = ? AND member_id = ? AND DATE(date) = ?';
+        const checkParams = [user_id, member_id, date];
 
         if (project_id) {
             checkQuery += ' AND project_id = ?';
@@ -189,8 +189,8 @@ class Attendance {
         } else {
             // Create new record
             const [result] = await db.query(
-                'INSERT INTO attendance (user_id, worker_id, date, status, project_id, subject) VALUES (?, ?, ?, ?, ?, ?)',
-                [user_id, worker_id, date, status, project_id || null, subject || 'Daily Attendance']
+                'INSERT INTO attendance (user_id, member_id, date, status, project_id, subject) VALUES (?, ?, ?, ?, ?, ?)',
+                [user_id, member_id, date, status, project_id || null, subject || 'Daily Attendance']
             );
             return { id: result.insertId, ...data, created: true };
         }

@@ -2,19 +2,19 @@ const db = require('../config/db');
 
 class Transaction {
     static async create(data) {
-        const { user_id, title, amount, type, category, date, project_id, worker_id } = data;
+        const { user_id, title, amount, type, category, date, project_id, member_id } = data;
         const [result] = await db.query(
-            'INSERT INTO transactions (user_id, title, amount, type, category, date, project_id, worker_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            [user_id, title, amount, type, category, date, project_id || null, worker_id || null]
+            'INSERT INTO transactions (user_id, title, amount, type, category, date, project_id, member_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [user_id, title, amount, type, category, date, project_id || null, member_id || null]
         );
         return { id: result.insertId, ...data };
     }
 
     static async getAllByUserId(userId, filters = {}) {
-        let query = `SELECT t.*, p.name as project_name, w.name as worker_name 
+        let query = `SELECT t.*, p.name as project_name, w.name as member_name 
                     FROM transactions t 
                     LEFT JOIN projects p ON t.project_id = p.id 
-                    LEFT JOIN workers w ON t.worker_id = w.id
+                    LEFT JOIN members w ON t.member_id = w.id
                     WHERE t.user_id = ?`;
         const params = [userId];
 
@@ -23,9 +23,9 @@ class Transaction {
             params.push(filters.projectId);
         }
 
-        if (filters.workerId) {
-            query += ' AND t.worker_id = ?';
-            params.push(filters.workerId);
+        if (filters.memberId) {
+            query += ' AND t.member_id = ?';
+            params.push(filters.memberId);
         }
 
         if (filters.period) {
@@ -60,10 +60,10 @@ class Transaction {
     }
 
     static async update(id, userId, data) {
-        const { title, amount, type, category, date, project_id, worker_id } = data;
+        const { title, amount, type, category, date, project_id, member_id } = data;
         const [result] = await db.query(
-            'UPDATE transactions SET title = ?, amount = ?, type = ?, category = ?, date = ?, project_id = ?, worker_id = ? WHERE id = ? AND user_id = ?',
-            [title, amount, type, category, date, project_id || null, worker_id || null, id, userId]
+            'UPDATE transactions SET title = ?, amount = ?, type = ?, category = ?, date = ?, project_id = ?, member_id = ? WHERE id = ? AND user_id = ?',
+            [title, amount, type, category, date, project_id || null, member_id || null, id, userId]
         );
         return result.affectedRows > 0;
     }
@@ -76,7 +76,7 @@ class Transaction {
         return result.affectedRows > 0;
     }
 
-    static async getStats(userId, period, projectId, startDate, endDate, workerId) {
+    static async getStats(userId, period, projectId, startDate, endDate, memberId) {
         let query = `SELECT 
             SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as total_income,
             SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as total_expense
@@ -109,16 +109,16 @@ class Transaction {
             params.push(projectId);
         }
 
-        if (workerId) {
-            query += ` AND worker_id = ?`;
-            params.push(workerId);
+        if (memberId) {
+            query += ` AND member_id = ?`;
+            params.push(memberId);
         }
 
         const [rows] = await db.query(query, params);
         return rows[0];
     }
 
-    static async getLifetimeStats(userId, projectId, workerId) {
+    static async getLifetimeStats(userId, projectId, memberId) {
         let query = `SELECT 
             SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as total_income,
             SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as total_expense
@@ -130,26 +130,26 @@ class Transaction {
             params.push(projectId);
         }
 
-        if (workerId) {
-            query += ` AND worker_id = ?`;
-            params.push(workerId);
+        if (memberId) {
+            query += ` AND member_id = ?`;
+            params.push(memberId);
         }
 
         const [rows] = await db.query(query, params);
         return rows[0];
     }
 
-    static async getWorkerProjectStats(userId, workerId) {
+    static async getMemberProjectStats(userId, memberId) {
         let query = `SELECT p.name as project_name, SUM(t.amount) as total
                     FROM transactions t
                     JOIN projects p ON t.project_id = p.id
-                    WHERE t.user_id = ? AND t.worker_id = ? AND t.type = 'expense'
+                    WHERE t.user_id = ? AND t.member_id = ? AND t.type = 'expense'
                     GROUP BY t.project_id`;
-        const [rows] = await db.query(query, [userId, workerId]);
+        const [rows] = await db.query(query, [userId, memberId]);
         return rows;
     }
 
-    static async getCategoryStats(userId, period, projectId, startDate, endDate, workerId) {
+    static async getCategoryStats(userId, period, projectId, startDate, endDate, memberId) {
         let query = `SELECT category, type, SUM(amount) as total 
              FROM transactions WHERE user_id = ?`;
         const params = [userId];
@@ -180,9 +180,9 @@ class Transaction {
             params.push(projectId);
         }
 
-        if (workerId) {
-            query += ` AND worker_id = ?`;
-            params.push(workerId);
+        if (memberId) {
+            query += ` AND member_id = ?`;
+            params.push(memberId);
         }
 
         query += ` GROUP BY category, type`;

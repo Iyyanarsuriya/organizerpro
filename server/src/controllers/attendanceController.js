@@ -13,7 +13,7 @@ const getAttendances = async (req, res) => {
     try {
         const filters = {
             projectId: req.query.projectId,
-            workerId: req.query.workerId,
+            memberId: req.query.memberId,
             period: req.query.period,
             startDate: req.query.startDate,
             endDate: req.query.endDate
@@ -58,7 +58,7 @@ const getAttendanceStats = async (req, res) => {
             startDate: req.query.startDate,
             endDate: req.query.endDate,
             projectId: req.query.projectId,
-            workerId: req.query.workerId
+            memberId: req.query.memberId
         });
         res.status(200).json({ success: true, data: stats });
     } catch (error) {
@@ -66,7 +66,7 @@ const getAttendanceStats = async (req, res) => {
     }
 };
 
-const getWorkerSummary = async (req, res) => {
+const getMemberSummary = async (req, res) => {
     try {
         const filters = {
             period: req.query.period,
@@ -74,7 +74,7 @@ const getWorkerSummary = async (req, res) => {
             endDate: req.query.endDate,
             projectId: req.query.projectId
         };
-        const summary = await Attendance.getWorkerSummary(req.user.id, filters);
+        const summary = await Attendance.getMemberSummary(req.user.id, filters);
         res.status(200).json({ success: true, data: summary });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -99,6 +99,6 @@ module.exports = {
     updateAttendance,
     deleteAttendance,
     getAttendanceStats,
-    getWorkerSummary,
+    getMemberSummary,
     quickMarkAttendance
 };
