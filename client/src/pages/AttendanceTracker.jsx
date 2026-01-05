@@ -5,7 +5,8 @@ import {
     createAttendance,
     updateAttendance,
     deleteAttendance,
-    getAttendanceStats
+    getAttendanceStats,
+    getWorkerSummary
 } from '../api/attendanceApi';
 import { getProjects } from '../api/projectApi';
 import { getActiveWorkers } from '../api/workerApi';
@@ -39,6 +40,8 @@ const AttendanceTracker = () => {
     const [currentPeriod, setCurrentPeriod] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
     const [customRange, setCustomRange] = useState({ start: '', end: '' });
     const [searchQuery, setSearchQuery] = useState('');
+    const [workerSummary, setWorkerSummary] = useState([]);
+    const [activeTab, setActiveTab] = useState('records'); // 'records' or 'summary'
 
     const [formData, setFormData] = useState({
         subject: '',
@@ -64,7 +67,7 @@ const AttendanceTracker = () => {
 
             if (isRange && (!rangeStart || !rangeEnd)) return;
 
-            const [attRes, statsRes, projRes, workersRes] = await Promise.all([
+            const [attRes, statsRes, summaryRes, projRes, workersRes] = await Promise.all([
                 getAttendances({
                     projectId: filterProject,
                     workerId: filterWorker,
@@ -79,11 +82,18 @@ const AttendanceTracker = () => {
                     startDate: rangeStart,
                     endDate: rangeEnd
                 }),
+                getWorkerSummary({
+                    projectId: filterProject,
+                    period: isRange ? null : currentPeriod,
+                    startDate: rangeStart,
+                    endDate: rangeEnd
+                }),
                 getProjects(),
                 getActiveWorkers()
             ]);
             setAttendances(attRes.data.data);
-            setStats(attRes.data.data.length > 0 ? statsRes.data.data : []); // Fallback if no records
+            setStats(attRes.data.data.length > 0 ? statsRes.data.data : []);
+            setWorkerSummary(summaryRes.data.data);
             setProjects(projRes.data);
             setWorkers(workersRes.data.data);
             setLoading(false);
@@ -195,8 +205,6 @@ const AttendanceTracker = () => {
         }
     }
 
-    const COLORS = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6'];
-
     if (loading) return (
         <div className="h-screen flex items-center justify-center bg-slate-50">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -305,180 +313,246 @@ const AttendanceTracker = () => {
             </header>
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* View Selector */}
+                <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-200 w-fit mb-8">
+                    <button
+                        onClick={() => setActiveTab('records')}
+                        className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'records' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-500 hover:text-slate-800'}`}
+                    >
+                        Attendance Records
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('summary')}
+                        className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'summary' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-500 hover:text-slate-800'}`}
+                    >
+                        Worker Summary
+                    </button>
+                </div>
 
-                    {/* Stats & Charts */}
-                    <div className="lg:col-span-1 space-y-8">
-                        {/* Summary Card */}
-                        <div className="bg-white rounded-[32px] p-8 shadow-xl border border-slate-100 overflow-hidden relative">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
-                            <h3 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-3">
-                                <FaChartBar className="text-blue-500" />
-                                Monthly Stats
-                            </h3>
-
-                            <div className="h-[250px] w-full">
-                                {stats.length > 0 ? (
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <PieChart>
-                                            <Pie
-                                                data={pieData}
-                                                cx="50%"
-                                                cy="50%"
-                                                innerRadius={60}
-                                                outerRadius={80}
-                                                paddingAngle={8}
-                                                dataKey="value"
-                                            >
-                                                {pieData.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={entry.color} />
-                                                ))}
-                                            </Pie>
-                                            <Tooltip
-                                                contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                                            />
-                                            <Legend verticalAlign="bottom" height={36} />
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                ) : (
-                                    <div className="h-full flex flex-col items-center justify-center text-slate-400">
-                                        <FaInbox className="text-4xl mb-2 opacity-20" />
-                                        <p className="text-xs font-bold uppercase tracking-widest">No data for this month</p>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="mt-8 grid grid-cols-2 gap-4">
-                                {statusOptions.map(opt => {
-                                    const count = stats.find(s => s.status === opt.id)?.count || 0;
-                                    return (
-                                        <div key={opt.id} className={`${opt.bg} p-4 rounded-2xl border ${opt.border}`}>
-                                            <p className={`text-[10px] font-black uppercase tracking-widest ${opt.color}`}>{opt.label}</p>
-                                            <p className="text-2xl font-black text-slate-900">{count}</p>
+                {activeTab === 'records' ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Stats Panel */}
+                        <div className="lg:col-span-1 space-y-6">
+                            <div className="bg-white rounded-3xl p-8 shadow-xl border border-slate-100">
+                                <h3 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-2">
+                                    <FaChartBar className="text-blue-500" />
+                                    {periodType.charAt(0).toUpperCase() + periodType.slice(1)} Stats
+                                </h3>
+                                <div className="h-64">
+                                    {stats.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={pieData}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={60}
+                                                    outerRadius={80}
+                                                    paddingAngle={5}
+                                                    dataKey="value"
+                                                >
+                                                    {pieData.map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip
+                                                    contentStyle={{
+                                                        borderRadius: '16px',
+                                                        border: 'none',
+                                                        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
+                                                        padding: '12px'
+                                                    }}
+                                                />
+                                                <Legend />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    ) : (
+                                        <div className="h-full flex flex-col items-center justify-center text-slate-400">
+                                            <FaInbox className="text-4xl mb-4 opacity-20" />
+                                            <p className="text-xs font-bold uppercase tracking-widest">No data available</p>
                                         </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* Project Quick View */}
-                        <div className="bg-slate-900 rounded-[32px] p-8 text-white shadow-2xl relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
-                            <h3 className="text-lg font-black mb-6 flex items-center gap-3">
-                                <FaFolderPlus className="text-blue-400" />
-                                Projects
-                            </h3>
-                            <button
-                                onClick={() => setShowProjectManager(true)}
-                                className="w-full bg-white/10 hover:bg-white/20 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border border-white/10"
-                            >
-                                Manage Projects
-                            </button>
-                        </div>
-
-                        {/* Worker Management */}
-                        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-[32px] p-8 text-white shadow-2xl relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
-                            <h3 className="text-lg font-black mb-6 flex items-center gap-3">
-                                <FaUserCheck className="text-white" />
-                                Workers
-                            </h3>
-                            <button
-                                onClick={() => setShowWorkerManager(true)}
-                                className="w-full bg-white/10 hover:bg-white/20 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border border-white/10"
-                            >
-                                Manage Workers
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Attendance List */}
-                    <div className="lg:col-span-2">
-                        <div className="bg-white rounded-[40px] shadow-xl border border-slate-100 min-h-[600px] flex flex-col overflow-hidden">
-                            <div className="p-8 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                                <h3 className="text-xl font-black text-slate-900">Attendance Records</h3>
-                                <div className="relative">
-                                    <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                                    <input
-                                        type="text"
-                                        placeholder="Search records..."
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-6 py-3 text-sm font-bold text-slate-700 focus:border-blue-500 focus:bg-white transition-all outline-none w-full sm:w-64"
-                                    />
+                                    )}
                                 </div>
                             </div>
 
-                            <div className="flex-1 p-8 space-y-4">
-                                {filteredAttendances.length > 0 ? (
-                                    filteredAttendances.map(item => {
-                                        const status = statusOptions.find(o => o.id === item.status) || statusOptions[0];
+                            <div className="bg-white rounded-3xl p-8 shadow-xl border border-slate-100">
+                                <h3 className="text-lg font-black text-slate-900 mb-6">Management</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button
+                                        onClick={() => setShowProjectManager(true)}
+                                        className="p-4 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-all group flex flex-col items-center gap-2"
+                                    >
+                                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400 group-hover:text-blue-500 shadow-sm transition-colors">
+                                            <FaFolderPlus />
+                                        </div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Projects</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setShowWorkerManager(true)}
+                                        className="p-4 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-all group flex flex-col items-center gap-2"
+                                    >
+                                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400 group-hover:text-orange-500 shadow-sm transition-colors">
+                                            <FaUserCheck />
+                                        </div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Workers</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* List Panel */}
+                        <div className="lg:col-span-2">
+                            <div className="bg-white rounded-3xl p-8 shadow-xl border border-slate-100 min-h-[500px]">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                                    <h3 className="text-lg font-black text-slate-900">Recent Records</h3>
+                                    <div className="relative flex-1 max-w-xs">
+                                        <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
+                                        <input
+                                            type="text"
+                                            placeholder="Search subject..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="w-full pl-11 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    {filteredAttendances.length > 0 ? filteredAttendances.map((item) => {
+                                        const option = statusOptions.find(o => o.id === item.status);
                                         return (
-                                            <div key={item.id} className="group bg-slate-50 hover:bg-white border border-transparent hover:border-slate-200 p-6 rounded-[28px] transition-all duration-300 flex flex-col sm:flex-row sm:items-center justify-between gap-6 hover:shadow-lg hover:-translate-y-1">
-                                                <div className="flex items-center gap-6">
-                                                    <div className={`w-14 h-14 rounded-2xl ${status.bg} border ${status.border} flex items-center justify-center text-2xl ${status.color} shadow-sm group-hover:scale-110 transition-transform`}>
-                                                        <status.icon />
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="text-lg font-black text-slate-900 leading-tight">{item.subject}</h4>
-                                                        <div className="flex items-center gap-3 mt-1">
-                                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1">
-                                                                <FaCalendarAlt className="text-[8px]" />
-                                                                {new Date(item.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                                            </span>
-                                                            {item.project_name && (
-                                                                <>
-                                                                    <span className="w-1 h-1 rounded-full bg-slate-200"></span>
-                                                                    <span className="text-[10px] font-black uppercase tracking-widest text-blue-500 bg-blue-50 px-2 py-0.5 rounded-md">
+                                            <div key={item.id} className="group p-4 bg-white border border-slate-100 rounded-2xl hover:shadow-lg hover:border-blue-500/20 transition-all">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`w-12 h-12 ${option?.bg} rounded-xl flex items-center justify-center text-xl ${option?.color}`}>
+                                                            {option && <option.icon />}
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <h4 className="font-black text-slate-900">{item.subject}</h4>
+                                                                <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tighter ${option?.bg} ${option?.color} border ${option?.border}`}>
+                                                                    {option?.label}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400 font-bold uppercase tracking-wider">
+                                                                <span className="flex items-center gap-1.5">
+                                                                    <FaCalendarAlt className="text-[10px]" />
+                                                                    {new Date(item.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                                </span>
+                                                                {item.project_name && (
+                                                                    <span className="flex items-center gap-1.5 text-blue-500">
+                                                                        <FaFilter className="text-[10px]" />
                                                                         {item.project_name}
                                                                     </span>
-                                                                </>
-                                                            )}
-                                                            {item.worker_name && (
-                                                                <>
-                                                                    <span className="w-1 h-1 rounded-full bg-slate-200"></span>
-                                                                    <span className="text-[10px] font-black uppercase tracking-widest text-orange-500 bg-orange-50 px-2 py-0.5 rounded-md">
+                                                                )}
+                                                                {item.worker_name && (
+                                                                    <span className="flex items-center gap-1.5 text-orange-500 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-100">
+                                                                        <FaUserCheck className="text-[10px]" />
                                                                         {item.worker_name}
                                                                     </span>
-                                                                </>
-                                                            )}
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                        {item.note && (
-                                                            <p className="text-xs text-slate-500 mt-2 font-medium italic">"{item.note}"</p>
-                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button onClick={() => handleEdit(item)} className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all">
+                                                            <FaEdit />
+                                                        </button>
+                                                        <button onClick={() => handleDelete(item.id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                                                            <FaTrash />
+                                                        </button>
                                                     </div>
                                                 </div>
-
-                                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button
-                                                        onClick={() => handleEdit(item)}
-                                                        className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-                                                    >
-                                                        <FaEdit />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(item.id)}
-                                                        className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                                                    >
-                                                        <FaTrash />
-                                                    </button>
-                                                </div>
+                                                {item.note && (
+                                                    <div className="mt-4 pt-4 border-t border-slate-50 italic text-slate-500 text-xs">
+                                                        "{item.note}"
+                                                    </div>
+                                                )}
                                             </div>
                                         );
-                                    })
-                                ) : (
-                                    <div className="h-full flex flex-col items-center justify-center text-slate-400 py-32">
-                                        <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-6">
-                                            <FaUserCheck className="text-3xl opacity-20" />
+                                    }) : (
+                                        <div className="py-20 flex flex-col items-center justify-center text-slate-300">
+                                            <FaInbox className="text-6xl mb-4 opacity-10" />
+                                            <p className="text-sm font-black uppercase tracking-widest">No records found</p>
                                         </div>
-                                        <p className="text-sm font-black uppercase tracking-widest">No records found</p>
-                                        <p className="text-xs font-medium mt-2">Try adjusting your filters or search</p>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                ) : (
+                    /* Worker Summary Table */
+                    <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden animate-in fade-in duration-500">
+                        <div className="p-8 border-b border-slate-100">
+                            <h3 className="text-lg font-black text-slate-900">Worker Attendance Summary</h3>
+                            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Aggregate statistics for the selected period</p>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead>
+                                    <tr className="bg-slate-50/50">
+                                        <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Worker Name</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-emerald-500 text-center">Present</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-red-500 text-center">Absent</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-amber-500 text-center">Late</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-blue-500 text-center">Half Day</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-900 text-center">Total</th>
+                                        <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Attendance %</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {workerSummary.map((w) => {
+                                        const attendanceRate = w.total > 0 ? ((w.present + w.half_day * 0.5) / w.total * 100).toFixed(1) : '0.0';
+                                        return (
+                                            <tr key={w.id} className="hover:bg-slate-50 transition-colors">
+                                                <td className="px-8 py-5">
+                                                    <span className="font-black text-slate-700">{w.name}</span>
+                                                </td>
+                                                <td className="px-6 py-5 text-center">
+                                                    <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full font-black text-xs">{w.present}</span>
+                                                </td>
+                                                <td className="px-6 py-5 text-center">
+                                                    <span className="px-3 py-1 bg-red-50 text-red-600 rounded-full font-black text-xs">{w.absent}</span>
+                                                </td>
+                                                <td className="px-6 py-5 text-center">
+                                                    <span className="px-3 py-1 bg-amber-50 text-amber-600 rounded-full font-black text-xs">{w.late}</span>
+                                                </td>
+                                                <td className="px-6 py-5 text-center">
+                                                    <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full font-black text-xs">{w.half_day}</span>
+                                                </td>
+                                                <td className="px-6 py-5 text-center">
+                                                    <span className="font-black text-slate-900">{w.total}</span>
+                                                </td>
+                                                <td className="px-8 py-5 text-right">
+                                                    <div className="flex items-center justify-end gap-3">
+                                                        <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                                            <div
+                                                                className={`h-full rounded-full transition-all duration-1000 ${parseFloat(attendanceRate) >= 90 ? 'bg-emerald-500' :
+                                                                        parseFloat(attendanceRate) >= 75 ? 'bg-blue-500' :
+                                                                            parseFloat(attendanceRate) >= 50 ? 'bg-amber-500' : 'bg-red-500'
+                                                                    }`}
+                                                                style={{ width: `${attendanceRate}%` }}
+                                                            ></div>
+                                                        </div>
+                                                        <span className="font-black text-slate-700 text-xs min-w-[3rem]">{attendanceRate}%</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                    {workerSummary.length === 0 && (
+                                        <tr>
+                                            <td colSpan="7" className="px-8 py-20 text-center text-slate-400">
+                                                <FaInbox className="text-4xl mx-auto mb-4 opacity-20" />
+                                                <p className="font-black uppercase tracking-widest text-xs">No workers found</p>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
             </main>
 
             {/* Add/Edit Modal */}
@@ -529,7 +603,7 @@ const AttendanceTracker = () => {
                                         value={formData.subject}
                                         onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                                         placeholder="E.g. Office, College, Gym..."
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-['Outfit']"
                                     />
                                 </div>
 
@@ -558,7 +632,7 @@ const AttendanceTracker = () => {
                                             {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                         </select>
                                     </div>
-                                    <div>
+                                    <div className="sm:col-span-2">
                                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">Worker (Optional)</label>
                                         <select
                                             value={formData.worker_id}
@@ -578,7 +652,7 @@ const AttendanceTracker = () => {
                                         onChange={(e) => setFormData({ ...formData, note: e.target.value })}
                                         placeholder="Add more details..."
                                         rows="3"
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition-all resize-none"
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition-all resize-none font-['Outfit']"
                                     ></textarea>
                                 </div>
                             </div>
@@ -594,20 +668,12 @@ const AttendanceTracker = () => {
                 </div>
             )}
 
-            {/* Project Manager Modal */}
             {showProjectManager && (
-                <ProjectManager
-                    onClose={() => setShowProjectManager(false)}
-                    onUpdate={fetchData}
-                />
+                <ProjectManager onClose={() => { setShowProjectManager(false); fetchData(); }} />
             )}
 
-            {/* Worker Manager Modal */}
             {showWorkerManager && (
-                <WorkerManager
-                    onClose={() => setShowWorkerManager(false)}
-                    onUpdate={fetchData}
-                />
+                <WorkerManager onClose={() => { setShowWorkerManager(false); fetchData(); }} />
             )}
         </div>
     );

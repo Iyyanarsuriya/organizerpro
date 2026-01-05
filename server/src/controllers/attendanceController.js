@@ -66,10 +66,26 @@ const getAttendanceStats = async (req, res) => {
     }
 };
 
+const getWorkerSummary = async (req, res) => {
+    try {
+        const filters = {
+            period: req.query.period,
+            startDate: req.query.startDate,
+            endDate: req.query.endDate,
+            projectId: req.query.projectId
+        };
+        const summary = await Attendance.getWorkerSummary(req.user.id, filters);
+        res.status(200).json({ success: true, data: summary });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     createAttendance,
     getAttendances,
     updateAttendance,
     deleteAttendance,
-    getAttendanceStats
+    getAttendanceStats,
+    getWorkerSummary
 };

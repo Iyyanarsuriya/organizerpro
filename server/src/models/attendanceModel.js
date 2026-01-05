@@ -110,6 +110,58 @@ class Attendance {
         const [rows] = await db.query(query, params);
         return rows;
     }
+
+    static async getWorkerSummary(userId, filters = {}) {
+        let query = `
+            SELECT 
+                w.id,
+                w.name,
+                COUNT(CASE WHEN a.status = 'present' THEN 1 END) as present,
+                COUNT(CASE WHEN a.status = 'absent' THEN 1 END) as absent,
+                COUNT(CASE WHEN a.status = 'late' THEN 1 END) as late,
+                COUNT(CASE WHEN a.status = 'half-day' THEN 1 END) as half_day,
+                COUNT(a.id) as total
+            FROM workers w
+            LEFT JOIN attendance a ON w.id = a.worker_id
+        `;
+        const params = [];
+        let joinConditions = [];
+
+        if (filters.period) {
+            if (filters.period.length === 10) {
+                joinConditions.push("DATE(a.date) = ?");
+                params.push(filters.period);
+            } else if (filters.period.length === 7) {
+                joinConditions.push("DATE_FORMAT(a.date, '%Y-%m') = ?");
+                params.push(filters.period);
+            } else if (filters.period.length === 4) {
+                joinConditions.push("DATE_FORMAT(a.date, '%Y') = ?");
+                params.push(filters.period);
+            }
+        }
+
+        if (filters.startDate && filters.endDate) {
+            joinConditions.push("DATE(a.date) BETWEEN ? AND ?");
+            params.push(filters.startDate, filters.endDate);
+        }
+
+        if (filters.projectId) {
+            joinConditions.push("a.project_id = ?");
+            params.push(filters.projectId);
+        }
+
+        if (joinConditions.length > 0) {
+            query += " AND " + joinConditions.join(' AND ');
+        }
+
+        query += " WHERE w.user_id = ? AND w.status = 'active'";
+        params.push(userId);
+
+        query += " GROUP BY w.id, w.name ORDER BY w.name ASC";
+
+        const [rows] = await db.query(query, params);
+        return rows;
+    }
 }
 
 module.exports = Attendance;
