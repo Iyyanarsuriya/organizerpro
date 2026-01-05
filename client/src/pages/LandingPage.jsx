@@ -253,12 +253,6 @@ const LandingPage = ({ token, user, onProfileClick, onSignupClick }) => {
                     </div>
                 </div>
 
-                {/* Decorative Star */}
-                <div className="absolute bottom-12 right-12 w-32 h-32 opacity-20 pointer-events-none">
-                    <svg viewBox="0 0 100 100" fill="white">
-                        <path d="M50 0 L53 47 L100 50 L53 53 L50 100 L47 53 L0 50 L47 47 Z" />
-                    </svg>
-                </div>
             </section>
         </div>
     );

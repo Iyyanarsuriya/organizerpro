@@ -59,21 +59,21 @@ const GlobalModals = ({
             {/* Profile Modal */}
             {showProfileModal && (
                 <div className="fixed inset-0 z-200 flex items-center justify-center p-[16px] bg-[#0f172a]/70 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[40px] w-full max-w-[440px] shadow-2xl overflow-hidden animate-in zoom-in duration-300 border border-white">
+                    <div className="bg-white rounded-[32px] sm:rounded-[40px] w-full max-w-[440px] max-h-[90vh] overflow-y-auto custom-scrollbar shadow-2xl animate-in zoom-in duration-300 border border-white mx-auto">
                         {/* Header */}
-                        <div className="bg-linear-to-br from-[#2d5bff] to-[#6366f1] p-[40px] text-center relative">
+                        <div className="bg-linear-to-br from-[#2d5bff] to-[#6366f1] p-[24px] sm:p-[40px] text-center relative">
                             <button
                                 onClick={() => {
                                     setShowProfileModal(false);
                                     setIsEditingProfile(false);
                                     setPreviewImage(null);
                                 }}
-                                className="absolute top-[24px] right-[24px] w-[36px] h-[36px] rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-all cursor-pointer z-10"
+                                className="absolute top-[16px] sm:top-[24px] right-[16px] sm:right-[24px] w-[32px] h-[32px] sm:w-[36px] sm:h-[36px] rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-all cursor-pointer z-10"
                             >
                                 <X className="w-5 h-5" />
                             </button>
 
-                            <div className="relative group mx-auto w-[120px] h-[120px] mb-[20px]">
+                            <div className="relative group mx-auto w-[80px] h-[80px] sm:w-[120px] sm:h-[120px] mb-[12px] sm:mb-[20px]">
                                 <div className="w-full h-full rounded-full flex items-center justify-center border-4 border-white shadow-2xl overflow-hidden bg-slate-100 relative">
                                     {(previewImage || (user?.profile_image && !imgErr)) ? (
                                         <img
@@ -95,14 +95,14 @@ const GlobalModals = ({
                                 </div>
                             </div>
 
-                            <h3 className="text-white text-[24px] font-black tracking-tight">{user?.username}</h3>
-                            <p className="text-white/70 text-[11px] font-black uppercase tracking-widest mt-1">
+                            <h3 className="text-white text-[20px] sm:text-[24px] font-black tracking-tight">{user?.username}</h3>
+                            <p className="text-white/70 text-[10px] sm:text-[11px] font-black uppercase tracking-widest mt-1">
                                 {isEditingProfile ? 'Edit your information' : 'Member Account'}
                             </p>
                         </div>
 
                         {/* Content */}
-                        <div className="p-[40px] pt-[32px]">
+                        <div className="p-[24px] sm:p-[40px] pt-[24px] sm:pt-[32px]">
                             {isEditingProfile ? (
                                 <form onSubmit={handleUpdateProfile} className="space-y-[20px] animate-in slide-in-from-bottom-4 duration-300">
                                     <div className="space-y-[12px]">
@@ -158,9 +158,9 @@ const GlobalModals = ({
                                     </div>
                                 </form>
                             ) : (
-                                <div className="space-y-[24px] animate-in slide-in-from-bottom-4 duration-500">
-                                    <div className="space-y-[12px]">
-                                        <div className="flex items-center gap-[16px] p-[16px] bg-slate-50 rounded-[20px] border border-slate-100 group">
+                                <div className="space-y-[16px] sm:space-y-[24px] animate-in slide-in-from-bottom-4 duration-500">
+                                    <div className="space-y-[8px] sm:space-y-[12px]">
+                                        <div className="flex items-center gap-[12px] sm:gap-[16px] p-[12px] sm:p-[16px] bg-slate-50 rounded-[20px] border border-slate-100 group">
                                             <div className="w-[44px] h-[44px] bg-blue-50 rounded-[12px] flex items-center justify-center text-[#2d5bff] group-hover:scale-110 transition-transform">
                                                 <svg className="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                                             </div>
@@ -197,13 +197,13 @@ const GlobalModals = ({
                                                 setEditData({ username: user?.username || '', mobile_number: user?.mobile_number || '' });
                                                 setIsEditingProfile(true);
                                             }}
-                                            className="flex-1 bg-slate-900 text-white py-[16px] rounded-[22px] text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 cursor-pointer shadow-xl shadow-slate-900/10"
+                                            className="flex-1 bg-slate-900 text-white py-[14px] sm:py-[16px] rounded-[18px] sm:rounded-[22px] text-[11px] sm:text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 cursor-pointer shadow-xl shadow-slate-900/10"
                                         >
                                             Edit Profile
                                         </button>
                                         <button
                                             onClick={handleLogout}
-                                            className="flex-1 bg-rose-50 hover:bg-rose-100 text-rose-500 py-[16px] rounded-[22px] text-[12px] font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer"
+                                            className="flex-1 bg-rose-50 hover:bg-rose-100 text-rose-500 py-[14px] sm:py-[16px] rounded-[18px] sm:rounded-[22px] text-[11px] sm:text-[12px] font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer"
                                         >
                                             Sign Out
                                         </button>

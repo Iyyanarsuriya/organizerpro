@@ -147,28 +147,28 @@ const ReminderDashboard = () => {
                     {/* Total Tasks */}
                     <button
                         onClick={() => handleShowTasks('all')}
-                        className="bg-white rounded-[40px] p-[32px] shadow-sm border border-slate-100 flex flex-col items-center text-center group hover:shadow-md transition-all cursor-pointer"
+                        className="bg-white rounded-[32px] sm:rounded-[40px] p-[24px] sm:p-[32px] shadow-sm border border-slate-100 flex flex-col items-center text-center group hover:shadow-md transition-all cursor-pointer"
                     >
-                        <span className="text-slate-400 text-[12px] font-black uppercase tracking-widest mb-2 group-hover:text-blue-500 transition-colors">Total Tasks</span>
-                        <h2 className="text-[64px] font-black text-[#2d5bff] leading-none">{stats.total}</h2>
+                        <span className="text-slate-400 text-[10px] sm:text-[12px] font-black uppercase tracking-widest mb-1 sm:mb-2 group-hover:text-blue-500 transition-colors">Total Tasks</span>
+                        <h2 className="text-[48px] sm:text-[64px] font-black text-[#2d5bff] leading-none">{stats.total}</h2>
                     </button>
 
                     {/* Completed */}
                     <button
                         onClick={() => handleShowTasks('completed')}
-                        className="bg-white rounded-[40px] p-[32px] shadow-sm border border-slate-100 flex flex-col items-center text-center group hover:shadow-md transition-all cursor-pointer"
+                        className="bg-white rounded-[32px] sm:rounded-[40px] p-[24px] sm:p-[32px] shadow-sm border border-slate-100 flex flex-col items-center text-center group hover:shadow-md transition-all cursor-pointer"
                     >
-                        <span className="text-[#00d1a0] text-[12px] font-black uppercase tracking-widest mb-2">Completed</span>
-                        <h2 className="text-[64px] font-black text-[#00d1a0] leading-none">{stats.completed}</h2>
+                        <span className="text-[#00d1a0] text-[10px] sm:text-[12px] font-black uppercase tracking-widest mb-1 sm:mb-2">Completed</span>
+                        <h2 className="text-[48px] sm:text-[64px] font-black text-[#00d1a0] leading-none">{stats.completed}</h2>
                     </button>
 
                     {/* Remaining */}
                     <button
                         onClick={() => handleShowTasks('pending')}
-                        className="bg-white rounded-[40px] p-[32px] shadow-sm border border-slate-100 flex flex-col items-center text-center group hover:shadow-md transition-all cursor-pointer"
+                        className="bg-white rounded-[32px] sm:rounded-[40px] p-[24px] sm:p-[32px] shadow-sm border border-slate-100 flex flex-col items-center text-center group hover:shadow-md transition-all cursor-pointer"
                     >
-                        <span className="text-amber-500 text-[12px] font-black uppercase tracking-widest mb-2">Remaining</span>
-                        <h2 className="text-[64px] font-black text-amber-500 leading-none">{stats.pending}</h2>
+                        <span className="text-amber-500 text-[10px] sm:text-[12px] font-black uppercase tracking-widest mb-1 sm:mb-2">Remaining</span>
+                        <h2 className="text-[48px] sm:text-[64px] font-black text-amber-500 leading-none">{stats.pending}</h2>
                     </button>
                 </div>
 
