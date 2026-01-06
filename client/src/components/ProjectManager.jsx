@@ -61,29 +61,29 @@ const ProjectManager = ({ projects = [], onCreate, onDelete, onClose, onRefresh 
                 <form onSubmit={handleSubmit} className="mb-8 p-6 bg-slate-50 rounded-[24px] border border-slate-100">
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-[8px] sm:text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[4px] sm:mb-[6px] md:mb-[8px] ml-[4px] sm:ml-[6px] md:ml-[8px]">Project Name</label>
+                            <label className="block text-[8px] sm:text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[4px] sm:mb-[6px] md:mb-[7px] ml-[4px] sm:ml-[6px] md:ml-[7px]">Project Name</label>
                             <input
                                 type="text"
                                 value={newProjectName}
                                 onChange={(e) => setNewProjectName(e.target.value)}
                                 placeholder="New Project..."
-                                className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[14px] lg:rounded-[16px] px-[12px] sm:px-[14px] md:px-[16px] lg:px-[20px] h-[32px] sm:h-[36px] md:h-[40px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold outline-none focus:border-blue-500 transition-all shadow-sm"
+                                className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] px-[12px] sm:px-[14px] md:px-[16px] lg:px-[20px] h-[32px] sm:h-[36px] md:h-[38px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold outline-none focus:border-blue-500 transition-all shadow-sm"
                             />
                         </div>
                         <div>
-                            <label className="block text-[8px] sm:text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[4px] sm:mb-[6px] md:mb-[8px] ml-[4px] sm:ml-[6px] md:ml-[8px]">Description (Optional)</label>
+                            <label className="block text-[8px] sm:text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[4px] sm:mb-[6px] md:mb-[7px] ml-[4px] sm:ml-[6px] md:ml-[7px]">Description (Optional)</label>
                             <input
                                 type="text"
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
                                 placeholder="Details..."
-                                className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[14px] lg:rounded-[16px] px-[12px] sm:px-[14px] md:px-[16px] lg:px-[20px] h-[32px] sm:h-[36px] md:h-[40px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold outline-none focus:border-blue-500 transition-all shadow-sm"
+                                className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] px-[12px] sm:px-[14px] md:px-[16px] lg:px-[20px] h-[32px] sm:h-[36px] md:h-[38px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold outline-none focus:border-blue-500 transition-all shadow-sm"
                             />
                         </div>
                         <button
                             type="submit"
                             disabled={loading || !newProjectName}
-                            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-black h-[36px] sm:h-[40px] md:h-[44px] lg:h-[48px] rounded-[10px] sm:rounded-[12px] md:rounded-[14px] lg:rounded-[16px] transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 text-[10px] sm:text-[11px] md:text-[12px] uppercase tracking-widest"
+                            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-black h-[36px] sm:h-[40px] md:h-[42px] lg:h-[48px] rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 text-[10px] sm:text-[11px] md:text-[12px] uppercase tracking-widest"
                         >
                             <FaPlus /> Create Project
                         </button>

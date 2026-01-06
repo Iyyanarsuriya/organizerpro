@@ -68,7 +68,7 @@ const CategoryManager = ({ categories, onUpdate, onClose, onCreate, onDelete }) 
                                 value={newCategory}
                                 onChange={(e) => setNewCategory(e.target.value)}
                                 placeholder="New category name..."
-                                className="flex-1 bg-slate-50 border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[14px] px-[12px] sm:px-[14px] md:px-[16px] h-[32px] sm:h-[36px] md:h-[40px] text-slate-800 outline-none focus:border-blue-500 transition-all font-bold text-[11px] sm:text-[12px] md:text-[14px]"
+                                className="flex-1 bg-slate-50 border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[13px] px-[12px] sm:px-[14px] md:px-[15px] h-[32px] sm:h-[36px] md:h-[38px] text-slate-800 outline-none focus:border-blue-500 transition-all font-bold text-[11px] sm:text-[12px] md:text-[13px]"
                             />
                             <button
                                 type="submit"

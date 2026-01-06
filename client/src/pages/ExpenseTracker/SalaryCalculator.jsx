@@ -57,7 +57,7 @@ const SalaryCalculator = ({
                     <p className="text-slate-400 text-[12px] font-bold uppercase tracking-widest mb-[32px] max-w-sm mx-auto">Please select a member from the filters above to calculate their salary</p>
                     <select
                         onChange={(e) => setFilterMember(e.target.value)}
-                        className="w-full sm:w-auto px-[32px] py-[16px] bg-slate-100 rounded-[20px] font-black text-[12px] uppercase tracking-widest outline-none cursor-pointer hover:bg-slate-200 transition-all"
+                        className="w-full sm:w-auto px-[24px] sm:px-[32px] h-[44px] sm:h-[48px] md:h-[52px] bg-slate-100 rounded-[16px] sm:rounded-[20px] font-black text-[11px] sm:text-[12px] uppercase tracking-widest outline-none cursor-pointer hover:bg-slate-200 transition-all appearance-none text-center flex items-center justify-center border-2 border-slate-200 hover:border-slate-300"
                     >
                         <option value="">Choose Member...</option>
                         {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}

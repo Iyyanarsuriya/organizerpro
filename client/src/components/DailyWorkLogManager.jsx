@@ -179,7 +179,7 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                                             required
                                             value={formData.member_id}
                                             onChange={(e) => handleMemberChange(e.target.value)}
-                                            className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[14px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[20px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[40px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 sm:focus:ring-4 focus:ring-indigo-500/10 transition-all cursor-pointer"
+                                            className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[18px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[38px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 sm:focus:ring-4 focus:ring-indigo-500/10 transition-all cursor-pointer"
                                         >
                                             <option value="">Select Member</option>
                                             {members.map(m => (
@@ -198,7 +198,7 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                                             type="date"
                                             value={formData.date}
                                             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                            className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[14px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[20px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[40px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 sm:focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                                            className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[18px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[38px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 sm:focus:ring-4 focus:ring-indigo-500/10 transition-all"
                                         />
                                     </div>
                                     <div>
@@ -212,7 +212,7 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                                             value={formData.units_produced}
                                             onChange={(e) => setFormData({ ...formData, units_produced: e.target.value })}
                                             placeholder="e.g., 100"
-                                            className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[14px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[20px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[40px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 sm:focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                                            className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[18px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[38px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 sm:focus:ring-4 focus:ring-indigo-500/10 transition-all"
                                         />
                                     </div>
                                     <div>
@@ -226,7 +226,7 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                                             value={formData.rate_per_unit}
                                             onChange={(e) => setFormData({ ...formData, rate_per_unit: e.target.value })}
                                             placeholder="e.g., 5.50"
-                                            className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[14px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[20px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[40px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 sm:focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                                            className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[18px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[38px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 sm:focus:ring-4 focus:ring-indigo-500/10 transition-all"
                                         />
                                     </div>
                                     <div className="md:col-span-2">
@@ -238,23 +238,23 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                                             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                             placeholder="Optional notes..."
                                             rows="2"
-                                            className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[14px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[20px] lg:px-[24px] py-[8px] sm:py-[10px] md:py-[12px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 sm:focus:ring-4 focus:ring-indigo-500/10 transition-all resize-none"
+                                            className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[18px] lg:px-[24px] py-[8px] sm:py-[10px] md:py-[11px] lg:py-[12px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 sm:focus:ring-4 focus:ring-indigo-500/10 transition-all resize-none"
                                         />
                                     </div>
                                 </div>
                                 <div className="flex gap-2 sm:gap-3">
                                     <button
                                         type="submit"
-                                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white h-[36px] sm:h-[40px] md:h-[44px] lg:h-[48px] rounded-[10px] sm:rounded-[12px] md:rounded-[14px] lg:rounded-[16px] text-[10px] sm:text-[11px] md:text-[12px] lg:text-[13px] font-black uppercase tracking-widest shadow-lg transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
+                                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white h-[36px] sm:h-[40px] md:h-[42px] lg:h-[48px] rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] text-[10px] sm:text-[11px] md:text-[12px] lg:text-[13px] font-black uppercase tracking-widest shadow-lg transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
                                     >
-                                        <FaPlus className="text-[8px] sm:text-[10px] md:text-[12px]" />
+                                        <FaPlus className="text-[8px] sm:text-[10px] md:text-[11px] lg:text-[12px]" />
                                         {editingId ? 'Update Log' : 'Add Log'}
                                     </button>
                                     {editingId && (
                                         <button
                                             type="button"
                                             onClick={resetForm}
-                                            className="px-[12px] sm:px-[16px] md:px-[20px] lg:px-[24px] bg-slate-200 hover:bg-slate-300 text-slate-700 h-[36px] sm:h-[40px] md:h-[44px] lg:h-[48px] rounded-[10px] sm:rounded-[12px] md:rounded-[14px] lg:rounded-[16px] text-[10px] sm:text-[11px] md:text-[12px] lg:text-[13px] font-black uppercase tracking-widest transition-all"
+                                            className="px-[12px] sm:px-[16px] md:px-[18px] lg:px-[24px] bg-slate-200 hover:bg-slate-300 text-slate-700 h-[36px] sm:h-[40px] md:h-[42px] lg:h-[48px] rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] text-[10px] sm:text-[11px] md:text-[12px] lg:text-[13px] font-black uppercase tracking-widest transition-all"
                                         >
                                             Cancel
                                         </button>

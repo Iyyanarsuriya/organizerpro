@@ -140,7 +140,7 @@ const MemberManager = ({ onClose, onUpdate }) => {
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     placeholder="Full name"
-                                    className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[14px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[20px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[40px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 sm:focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                    className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[18px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[38px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 sm:focus:ring-4 focus:ring-blue-500/10 transition-all"
                                 />
                             </div>
                             <div>
@@ -152,7 +152,7 @@ const MemberManager = ({ onClose, onUpdate }) => {
                                     value={formData.role}
                                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                                     placeholder="e.g. Student, Staff, Regular"
-                                    className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[14px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[20px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[40px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 sm:focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                    className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[18px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[38px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 sm:focus:ring-4 focus:ring-blue-500/10 transition-all"
                                 />
                             </div>
                             <div>
@@ -164,7 +164,7 @@ const MemberManager = ({ onClose, onUpdate }) => {
                                     value={formData.phone}
                                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                     placeholder="Contact number"
-                                    className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[14px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[20px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[40px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 sm:focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                    className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[18px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[38px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 sm:focus:ring-4 focus:ring-blue-500/10 transition-all"
                                 />
                             </div>
                             <div>
@@ -176,7 +176,7 @@ const MemberManager = ({ onClose, onUpdate }) => {
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     placeholder="Email address"
-                                    className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[14px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[20px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[40px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 sm:focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                    className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[18px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[38px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 sm:focus:ring-4 focus:ring-blue-500/10 transition-all"
                                 />
                             </div>
                             <div>
@@ -186,7 +186,7 @@ const MemberManager = ({ onClose, onUpdate }) => {
                                 <select
                                     value={formData.wage_type}
                                     onChange={(e) => setFormData({ ...formData, wage_type: e.target.value })}
-                                    className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[14px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[20px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[40px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
+                                    className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[18px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[38px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
                                 >
                                     <option value="daily">Daily Wage</option>
                                     <option value="monthly">Monthly Salary</option>
@@ -202,7 +202,7 @@ const MemberManager = ({ onClose, onUpdate }) => {
                                     value={formData.daily_wage}
                                     onChange={(e) => setFormData({ ...formData, daily_wage: e.target.value })}
                                     placeholder="0.00"
-                                    className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[14px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[20px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[40px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 sm:focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                    className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[18px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[38px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 sm:focus:ring-4 focus:ring-blue-500/10 transition-all"
                                 />
                             </div>
                             <div className="md:col-span-2">
@@ -212,7 +212,7 @@ const MemberManager = ({ onClose, onUpdate }) => {
                                 <select
                                     value={formData.status}
                                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                    className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[14px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[20px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[40px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
+                                    className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[18px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[38px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
                                 >
                                     <option value="active">Active</option>
                                     <option value="inactive">Inactive</option>
@@ -222,16 +222,16 @@ const MemberManager = ({ onClose, onUpdate }) => {
                         <div className="flex gap-2 sm:gap-3">
                             <button
                                 type="submit"
-                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white h-[36px] sm:h-[40px] md:h-[44px] lg:h-[48px] rounded-[10px] sm:rounded-[12px] md:rounded-[14px] lg:rounded-[16px] text-[10px] sm:text-[11px] md:text-[12px] lg:text-[13px] font-black uppercase tracking-widest shadow-lg transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white h-[36px] sm:h-[40px] md:h-[42px] lg:h-[48px] rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] text-[10px] sm:text-[11px] md:text-[12px] lg:text-[13px] font-black uppercase tracking-widest shadow-lg transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
                             >
-                                <FaPlus className="text-[8px] sm:text-[10px] md:text-[12px]" />
+                                <FaPlus className="text-[8px] sm:text-[10px] md:text-[11px] lg:text-[12px]" />
                                 {editingId ? 'Update Member' : 'Add Member'}
                             </button>
                             {editingId && (
                                 <button
                                     type="button"
                                     onClick={resetForm}
-                                    className="px-[12px] sm:px-[16px] md:px-[20px] lg:px-[24px] bg-slate-200 hover:bg-slate-300 text-slate-700 h-[36px] sm:h-[40px] md:h-[44px] lg:h-[48px] rounded-[10px] sm:rounded-[12px] md:rounded-[14px] lg:rounded-[16px] text-[10px] sm:text-[11px] md:text-[12px] lg:text-[13px] font-black uppercase tracking-widest transition-all"
+                                    className="px-[12px] sm:px-[16px] md:px-[18px] lg:px-[24px] bg-slate-200 hover:bg-slate-300 text-slate-700 h-[36px] sm:h-[40px] md:h-[42px] lg:h-[48px] rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] text-[10px] sm:text-[11px] md:text-[12px] lg:text-[13px] font-black uppercase tracking-widest transition-all"
                                 >
                                     Cancel
                                 </button>
