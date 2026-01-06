@@ -11,7 +11,7 @@ function ReminderForm({ onAdd, categories = [] }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!title) return;
+    if (!title || !dueDate) return;
 
     onAdd({
       title,
@@ -74,6 +74,7 @@ function ReminderForm({ onAdd, categories = [] }) {
             onChange={(e) => setDueDate(e.target.value)}
             min={new Date().toISOString().slice(0, 16)}
             className="w-full bg-slate-50 border border-slate-200 rounded-[8px] sm:rounded-[10px] md:rounded-[11px] px-[12px] sm:px-[14px] md:px-[15px] h-[32px] sm:h-[36px] md:h-[38px] text-slate-800 input-focus text-[11px] sm:text-[12px] md:text-[13px] placeholder:text-slate-400 font-medium outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+            required
           />
         </div>
 
