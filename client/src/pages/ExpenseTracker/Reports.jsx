@@ -96,13 +96,13 @@ const Reports = ({
                             <>
                                 <div className="p-[24px] bg-slate-50 rounded-[24px] border border-slate-100">
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px]">Total Income</p>
-                                    <p className="text-[32px] font-black tracking-tighter text-emerald-600">₹{formatAmount(stats.lifetime?.total_income || 0)}</p>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-[16px]">Lifetime Earnings</p>
+                                    <p className="text-[32px] font-black tracking-tighter text-emerald-600">₹{formatAmount(stats.summary?.total_income || 0)}</p>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-[16px]">Period Earnings</p>
                                 </div>
                                 <div className="p-[24px] bg-slate-50 rounded-[24px] border border-slate-100">
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px]">Total Expense</p>
-                                    <p className="text-[32px] font-black tracking-tighter text-rose-600">₹{formatAmount(stats.lifetime?.total_expense || 0)}</p>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-[16px]">Lifetime Spending</p>
+                                    <p className="text-[32px] font-black tracking-tighter text-rose-600">₹{formatAmount(stats.summary?.total_expense || 0)}</p>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-[16px]">Period Spending</p>
                                 </div>
                             </>
                         )}
