@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ReactDOM from 'react-dom';
+import ConfirmModal from '../../components/modals/ConfirmModal';
 import {
     getAttendances,
     createAttendance,
@@ -57,7 +57,7 @@ const AttendanceTracker = () => {
         status: 'all'
     });
 
-    const [confirmModal, setConfirmModal] = useState({ show: false, type: null, label: '' });
+    const [confirmModal, setConfirmModal] = useState({ show: false, type: null, label: '', id: null });
     const [formData, setFormData] = useState({
         subject: '',
         status: 'present',
@@ -200,16 +200,24 @@ const AttendanceTracker = () => {
         setShowAddModal(true);
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm("Are you sure you want to delete this record?")) {
+    const handleDelete = (id) => {
+        setConfirmModal({ show: true, type: 'DELETE', label: 'Delete Record', id });
+    };
+
+    const handleModalConfirm = async () => {
+        if (confirmModal.type === 'DELETE') {
             try {
-                await deleteAttendance(id);
+                await deleteAttendance(confirmModal.id);
                 toast.success("Record deleted");
                 fetchData();
             } catch (error) {
                 toast.error("Failed to delete record");
             }
-        }
+        } else if (confirmModal.type === 'CSV') handleExportCSV(attendances);
+        else if (confirmModal.type === 'PDF') handleExportPDF(attendances);
+        else if (confirmModal.type === 'TXT') handleExportTXT(attendances);
+
+        setConfirmModal({ show: false, type: null, label: '', id: null });
     };
 
     // Export Functions
@@ -913,44 +921,19 @@ const AttendanceTracker = () => {
             }
             {showMemberManager && <MemberManager onClose={() => { setShowMemberManager(false); fetchData(); }} onUpdate={fetchData} />}
 
-            {/* Export Confirmation Modal (Portal) */}
-            {confirmModal.show && ReactDOM.createPortal(
-                <div className="fixed inset-0 z-9999 flex items-center justify-center p-[16px] w-full h-full">
-                    <div
-                        className="absolute inset-0 bg-[#0f172a]/70 backdrop-blur-md animate-in fade-in duration-300"
-                        onClick={() => setConfirmModal({ show: false, type: null, label: '' })}
-                    ></div>
-                    <div className="relative bg-white rounded-[32px] p-[32px] w-full max-w-[400px] shadow-2xl animate-in zoom-in duration-300 text-center border border-white">
-                        <div className="w-[80px] h-[80px] bg-blue-50 rounded-[28px] flex items-center justify-center mx-auto mb-[24px] text-blue-500 transform -rotate-6">
-                            <FaQuestionCircle size={40} />
-                        </div>
-                        <h3 className="text-[24px] font-black text-slate-800 mb-[12px] tracking-tight">Export {confirmModal.label}?</h3>
-                        <p className="text-slate-500 text-[15px] font-medium mb-[32px] leading-relaxed">
-                            Are you sure you want to download this <span className="text-slate-900 font-bold">{confirmModal.type}</span> report?
-                        </p>
-                        <div className="grid grid-cols-2 gap-[16px]">
-                            <button
-                                onClick={() => setConfirmModal({ show: false, type: null, label: '' })}
-                                className="py-[16px] rounded-[20px] bg-slate-100 text-slate-600 text-[13px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all cursor-pointer"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={() => {
-                                    if (confirmModal.type === 'CSV') handleExportCSV(attendances);
-                                    if (confirmModal.type === 'PDF') handleExportPDF(attendances);
-                                    if (confirmModal.type === 'TXT') handleExportTXT(attendances);
-                                    setConfirmModal({ show: false, type: null, label: '' });
-                                }}
-                                className="py-[16px] rounded-[20px] bg-slate-900 text-white text-[13px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/20 cursor-pointer flex items-center justify-center gap-[10px]"
-                            >
-                                <FaCheck /> Confirm
-                            </button>
-                        </div>
-                    </div>
-                </div>,
-                document.body
-            )}
+            {/* Generic Confirmation Modal */}
+            <ConfirmModal
+                isOpen={confirmModal.show}
+                title={confirmModal.type === 'DELETE' ? "Delete Record?" : `Export ${confirmModal.label}?`}
+                message={confirmModal.type === 'DELETE'
+                    ? "Are you sure you want to delete this attendance record?"
+                    : `Are you sure you want to download this ${confirmModal.type} report?`}
+                onConfirm={handleModalConfirm}
+                onCancel={() => setConfirmModal({ show: false, type: null, label: '', id: null })}
+                confirmText={confirmModal.type === 'DELETE' ? "Delete" : "Confirm"}
+                cancelText="Cancel"
+                type={confirmModal.type === 'DELETE' ? "danger" : "info"}
+            />
 
             {/* Custom Report Modal */}
             {

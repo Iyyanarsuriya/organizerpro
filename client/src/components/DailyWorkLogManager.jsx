@@ -3,6 +3,7 @@ import { getWorkLogs, createWorkLog, updateWorkLog, deleteWorkLog, getMonthlyTot
 import { getActiveMembers } from '../api/memberApi';
 import toast from 'react-hot-toast';
 import { FaTimes, FaPlus, FaEdit, FaTrash, FaCalendarAlt, FaMoneyBillWave, FaBoxes, FaStickyNote } from 'react-icons/fa';
+import ConfirmModal from './modals/ConfirmModal';
 
 const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().split('T')[0] }) => {
     const [workLogs, setWorkLogs] = useState([]);
@@ -19,6 +20,7 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
     });
     const [editingId, setEditingId] = useState(null);
     const [viewMode, setViewMode] = useState('daily'); // 'daily' or 'monthly'
+    const [confirmModal, setConfirmModal] = useState({ show: false, id: null });
 
     const fetchData = async () => {
         try {
@@ -88,16 +90,20 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
         setEditingId(log.id);
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm("Delete this work log?")) {
-            try {
-                await deleteWorkLog(id);
-                toast.success("Work log deleted");
-                fetchData();
-                if (viewMode === 'monthly') fetchMonthlyTotals();
-            } catch (error) {
-                toast.error("Failed to delete");
-            }
+    const handleDeleteClick = (id) => {
+        setConfirmModal({ show: true, id });
+    };
+
+    const confirmDelete = async () => {
+        try {
+            await deleteWorkLog(confirmModal.id);
+            toast.success("Work log deleted");
+            fetchData();
+            if (viewMode === 'monthly') fetchMonthlyTotals();
+        } catch (error) {
+            toast.error("Failed to delete");
+        } finally {
+            setConfirmModal({ show: false, id: null });
         }
     };
 
@@ -304,7 +310,7 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                                                     <FaEdit />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDelete(log.id)}
+                                                    onClick={() => handleDeleteClick(log.id)}
                                                     className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
                                                 >
                                                     <FaTrash />
@@ -357,6 +363,17 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                     </div>
                 )}
             </div>
+
+            <ConfirmModal
+                isOpen={confirmModal.show}
+                title="Delete Work Log?"
+                message="Are you sure you want to delete this daily work log?"
+                onConfirm={confirmDelete}
+                onCancel={() => setConfirmModal({ show: false, id: null })}
+                confirmText="Delete"
+                cancelText="Cancel"
+                type="danger"
+            />
         </div>
     );
 };

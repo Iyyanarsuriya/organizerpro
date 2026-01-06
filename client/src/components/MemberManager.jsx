@@ -3,6 +3,7 @@ import { getMembers, createMember, updateMember, deleteMember } from '../api/mem
 import { getTransactions } from '../api/transactionApi';
 import toast from 'react-hot-toast';
 import { FaTimes, FaPlus, FaEdit, FaTrash, FaUser, FaBriefcase, FaPhone, FaEnvelope, FaHistory, FaMoneyBillWave, FaUniversity } from 'react-icons/fa';
+import ConfirmModal from './modals/ConfirmModal';
 
 const MemberManager = ({ onClose, onUpdate }) => {
     const [members, setMembers] = useState([]);
@@ -320,33 +321,16 @@ const MemberManager = ({ onClose, onUpdate }) => {
                 </div>
 
                 {/* Custom Delete Confirmation Modal */}
-                {deleteModal.show && (
-                    <div className="fixed inset-0 z-110 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-                        <div className="bg-white rounded-[32px] p-8 w-full max-w-xs shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100 font-['Outfit']">
-                            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-6">
-                                <FaTrash />
-                            </div>
-                            <h3 className="text-xl font-black text-slate-900 text-center mb-2">Delete Member?</h3>
-                            <p className="text-slate-500 text-[10px] font-bold text-center mb-8 px-2 leading-relaxed uppercase tracking-widest">
-                                This action cannot be undone. Their past attendance records will remain in the system.
-                            </p>
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => setDeleteModal({ show: false, id: null })}
-                                    className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={confirmDelete}
-                                    className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-red-500/20"
-                                >
-                                    Delete
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                <ConfirmModal
+                    isOpen={deleteModal.show}
+                    title="Delete Member?"
+                    message="This action cannot be undone. Their past attendance records will remain in the system."
+                    onConfirm={confirmDelete}
+                    onCancel={() => setDeleteModal({ show: false, id: null })}
+                    confirmText="Delete"
+                    cancelText="Cancel"
+                    type="danger"
+                />
 
                 {/* history Modal */}
                 {viewingPayments && (

@@ -6,6 +6,7 @@ import { API_URL } from '../../api/axiosInstance';
 import toast from 'react-hot-toast';
 import { FaGoogle } from 'react-icons/fa';
 import { Settings, LogOut, Calendar, LayoutDashboard, ArrowLeft } from 'lucide-react';
+import ConfirmModal from '../../components/modals/ConfirmModal';
 
 const ReminderDashboard = () => {
     const [user, setUser] = useState(() => {
@@ -18,6 +19,7 @@ const ReminderDashboard = () => {
     const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
     const [showModal, setShowModal] = useState(null); // 'all', 'completed', 'pending', or null
     const [modalTasks, setModalTasks] = useState([]);
+    const [showDisconnectModal, setShowDisconnectModal] = useState(false);
     const navigate = useNavigate();
 
     const fetchProfileData = async () => {
@@ -67,14 +69,19 @@ const ReminderDashboard = () => {
         }
     };
 
-    const handleGoogleDisconnect = async () => {
-        if (!window.confirm("Disconnect Google Calendar?")) return;
+    const handleGoogleDisconnectClick = () => {
+        setShowDisconnectModal(true);
+    };
+
+    const confirmDisconnect = async () => {
         try {
             await disconnectGoogle();
             toast.success("Disconnected from Google Calendar");
             fetchProfileData();
         } catch (error) {
             toast.error("Failed to disconnect");
+        } finally {
+            setShowDisconnectModal(false);
         }
     };
 
@@ -186,7 +193,7 @@ const ReminderDashboard = () => {
                         </div>
                     </div>
                     <button
-                        onClick={user?.google_refresh_token ? handleGoogleDisconnect : handleGoogleConnect}
+                        onClick={user?.google_refresh_token ? handleGoogleDisconnectClick : handleGoogleConnect}
                         className="w-full sm:w-auto flex items-center justify-center gap-[12px] bg-[#2d5bff] hover:bg-blue-600 text-white px-[32px] py-[16px] rounded-[24px] font-black text-[14px] tracking-widest uppercase transition-all shadow-lg active:scale-95 cursor-pointer"
                     >
                         <Calendar className="w-5 h-5" />
@@ -308,6 +315,17 @@ const ReminderDashboard = () => {
                         </div>
                     </div>
                 )}
+
+                <ConfirmModal
+                    isOpen={showDisconnectModal}
+                    title="Disconnect Google?"
+                    message="Are you sure you want to disconnect your Google Calendar? Events will no longer sync."
+                    onConfirm={confirmDisconnect}
+                    onCancel={() => setShowDisconnectModal(false)}
+                    confirmText="Disconnect"
+                    cancelText="Cancel"
+                    type="danger"
+                />
 
             </div>
         </div>
