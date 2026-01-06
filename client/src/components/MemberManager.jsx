@@ -104,34 +104,35 @@ const MemberManager = ({ onClose, onUpdate }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] px-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="bg-white rounded-[32px] sm:rounded-[40px] w-full max-w-[896px] shadow-2xl relative animate-in zoom-in-95 duration-300 h-auto max-h-[80vh] flex flex-col font-['Outfit'] overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-[12vh] sm:pt-[10vh] px-3 sm:px-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="bg-white rounded-[24px] sm:rounded-[32px] md:rounded-[40px] w-full max-w-[896px] shadow-2xl relative animate-in zoom-in-95 duration-300 h-auto max-h-[84vh] sm:max-h-[80vh] flex flex-col font-['Outfit'] overflow-hidden mb-[4vh] sm:mb-0">
                 {/* Fixed Header */}
-                <div className="p-[24px] sm:p-[40px] pb-0 shrink-0 flex items-start justify-between bg-white z-10">
+                <div className="p-[16px] sm:p-[24px] md:p-[40px] pb-0 shrink-0 flex items-start justify-between bg-white z-10">
                     <div>
-                        <h2 className="text-[20px] sm:text-[24px] font-black text-slate-900 flex items-center gap-3">
-                            <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
+                        <h2 className="text-[18px] sm:text-[20px] md:text-[24px] font-black text-slate-900 flex items-center gap-2 sm:gap-3">
+                            <div className="w-1.5 sm:w-2 h-6 sm:h-8 bg-blue-600 rounded-full"></div>
                             Manage Members
                         </h2>
-                        <p className="text-slate-500 text-[12px] sm:text-[14px] mt-2 ml-5">Add and manage people in your list</p>
+                        <p className="text-slate-500 text-[11px] sm:text-[12px] md:text-[14px] mt-1 sm:mt-2 ml-3 sm:ml-5">Add and manage people in your list</p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="text-slate-400 hover:text-slate-800 transition-colors p-2 hover:bg-slate-100 rounded-xl"
+                        className="text-slate-400 hover:text-slate-800 transition-colors p-1.5 sm:p-2 hover:bg-slate-100 rounded-xl"
                     >
-                        <FaTimes className="text-[20px]" />
+                        <FaTimes className="text-[18px] sm:text-[20px]" />
                     </button>
                 </div>
 
+
                 {/* Scrollable Content */}
-                <div className="p-[24px] sm:p-[40px] pt-6 overflow-y-auto custom-scrollbar flex-1">
+                <div className="p-[16px] sm:p-[24px] md:p-[40px] pt-4 sm:pt-6 overflow-y-auto custom-scrollbar flex-1">
 
                     {/* Add/Edit Form */}
-                    <form onSubmit={handleSubmit} className="mb-8 p-[24px] bg-slate-50 rounded-[24px] border border-slate-100 font-['Outfit']">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px] mb-[16px]">
+                    <form onSubmit={handleSubmit} className="mb-6 sm:mb-8 p-[16px] sm:p-[20px] md:p-[24px] bg-slate-50 rounded-[20px] sm:rounded-[24px] border border-slate-100 font-['Outfit']">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-[12px] sm:gap-[14px] md:gap-[16px] mb-[12px] sm:mb-[14px] md:mb-[16px]">
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[8px]">
-                                    <FaUser className="inline mr-1" /> Name *
+                                <label className="block text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[6px] sm:mb-[8px] ml-[6px] sm:ml-[8px]">
+                                    <FaUser className="inline mr-1 text-[8px] sm:text-[10px]" /> Name *
                                 </label>
                                 <input
                                     required
@@ -139,53 +140,53 @@ const MemberManager = ({ onClose, onUpdate }) => {
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     placeholder="Full name"
-                                    className="w-full bg-white border border-slate-200 rounded-[16px] px-[24px] py-[12px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                    className="w-full bg-white border border-slate-200 rounded-[12px] sm:rounded-[14px] md:rounded-[16px] px-[16px] sm:px-[20px] md:px-[24px] h-[40px] sm:h-[44px] md:h-[48px] text-[13px] sm:text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 sm:focus:ring-4 focus:ring-blue-500/10 transition-all"
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[8px]">
-                                    <FaBriefcase className="inline mr-1" /> Role/Group
+                                <label className="block text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[6px] sm:mb-[8px] ml-[6px] sm:ml-[8px]">
+                                    <FaBriefcase className="inline mr-1 text-[8px] sm:text-[10px]" /> Role/Group
                                 </label>
                                 <input
                                     type="text"
                                     value={formData.role}
                                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                                     placeholder="e.g. Student, Staff, Regular"
-                                    className="w-full bg-white border border-slate-200 rounded-[16px] px-[24px] py-[12px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                    className="w-full bg-white border border-slate-200 rounded-[12px] sm:rounded-[14px] md:rounded-[16px] px-[16px] sm:px-[20px] md:px-[24px] h-[40px] sm:h-[44px] md:h-[48px] text-[13px] sm:text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 sm:focus:ring-4 focus:ring-blue-500/10 transition-all"
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[8px]">
-                                    <FaPhone className="inline mr-1" /> Phone
+                                <label className="block text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[6px] sm:mb-[8px] ml-[6px] sm:ml-[8px]">
+                                    <FaPhone className="inline mr-1 text-[8px] sm:text-[10px]" /> Phone
                                 </label>
                                 <input
                                     type="tel"
                                     value={formData.phone}
                                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                     placeholder="Contact number"
-                                    className="w-full bg-white border border-slate-200 rounded-[16px] px-[24px] py-[12px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                    className="w-full bg-white border border-slate-200 rounded-[12px] sm:rounded-[14px] md:rounded-[16px] px-[16px] sm:px-[20px] md:px-[24px] h-[40px] sm:h-[44px] md:h-[48px] text-[13px] sm:text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 sm:focus:ring-4 focus:ring-blue-500/10 transition-all"
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[8px]">
-                                    <FaEnvelope className="inline mr-1" /> Email
+                                <label className="block text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[6px] sm:mb-[8px] ml-[6px] sm:ml-[8px]">
+                                    <FaEnvelope className="inline mr-1 text-[8px] sm:text-[10px]" /> Email
                                 </label>
                                 <input
                                     type="email"
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     placeholder="Email address"
-                                    className="w-full bg-white border border-slate-200 rounded-[16px] px-[24px] py-[12px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                    className="w-full bg-white border border-slate-200 rounded-[12px] sm:rounded-[14px] md:rounded-[16px] px-[16px] sm:px-[20px] md:px-[24px] h-[40px] sm:h-[44px] md:h-[48px] text-[13px] sm:text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 sm:focus:ring-4 focus:ring-blue-500/10 transition-all"
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[8px]">
+                                <label className="block text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[6px] sm:mb-[8px] ml-[6px] sm:ml-[8px]">
                                     Salary Type
                                 </label>
                                 <select
                                     value={formData.wage_type}
                                     onChange={(e) => setFormData({ ...formData, wage_type: e.target.value })}
-                                    className="w-full bg-white border border-slate-200 rounded-[16px] px-[24px] py-[12px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
+                                    className="w-full bg-white border border-slate-200 rounded-[12px] sm:rounded-[14px] md:rounded-[16px] px-[16px] sm:px-[20px] md:px-[24px] h-[40px] sm:h-[44px] md:h-[48px] text-[13px] sm:text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
                                 >
                                     <option value="daily">Daily Wage</option>
                                     <option value="monthly">Monthly Salary</option>
@@ -193,7 +194,7 @@ const MemberManager = ({ onClose, onUpdate }) => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[8px]">
+                                <label className="block text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[6px] sm:mb-[8px] ml-[6px] sm:ml-[8px]">
                                     {formData.wage_type === 'piece_rate' ? 'Rate per Unit' : formData.wage_type === 'monthly' ? 'Monthly Salary' : 'Daily Wage'}
                                 </label>
                                 <input
@@ -201,36 +202,36 @@ const MemberManager = ({ onClose, onUpdate }) => {
                                     value={formData.daily_wage}
                                     onChange={(e) => setFormData({ ...formData, daily_wage: e.target.value })}
                                     placeholder="0.00"
-                                    className="w-full bg-white border border-slate-200 rounded-[16px] px-[24px] py-[12px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                    className="w-full bg-white border border-slate-200 rounded-[12px] sm:rounded-[14px] md:rounded-[16px] px-[16px] sm:px-[20px] md:px-[24px] h-[40px] sm:h-[44px] md:h-[48px] text-[13px] sm:text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 sm:focus:ring-4 focus:ring-blue-500/10 transition-all"
                                 />
                             </div>
                             <div className="md:col-span-2">
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[8px]">
+                                <label className="block text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[6px] sm:mb-[8px] ml-[6px] sm:ml-[8px]">
                                     Status
                                 </label>
                                 <select
                                     value={formData.status}
                                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                    className="w-full bg-white border border-slate-200 rounded-[16px] px-[24px] py-[12px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
+                                    className="w-full bg-white border border-slate-200 rounded-[12px] sm:rounded-[14px] md:rounded-[16px] px-[16px] sm:px-[20px] md:px-[24px] h-[40px] sm:h-[44px] md:h-[48px] text-[13px] sm:text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
                                 >
                                     <option value="active">Active</option>
                                     <option value="inactive">Inactive</option>
                                 </select>
                             </div>
                         </div>
-                        <div className="flex gap-3">
+                        <div className="flex gap-2 sm:gap-3">
                             <button
                                 type="submit"
-                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-[12px] rounded-[16px] text-[14px] font-black uppercase tracking-widest shadow-lg transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white h-[40px] sm:h-[44px] md:h-[48px] rounded-[12px] sm:rounded-[14px] md:rounded-[16px] text-[12px] sm:text-[13px] md:text-[14px] font-black uppercase tracking-widest shadow-lg transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
                             >
-                                <FaPlus />
+                                <FaPlus className="text-[10px] sm:text-[12px]" />
                                 {editingId ? 'Update Member' : 'Add Member'}
                             </button>
                             {editingId && (
                                 <button
                                     type="button"
                                     onClick={resetForm}
-                                    className="px-[24px] bg-slate-200 hover:bg-slate-300 text-slate-700 py-[12px] rounded-[16px] text-[14px] font-black uppercase tracking-widest transition-all"
+                                    className="px-[16px] sm:px-[20px] md:px-[24px] bg-slate-200 hover:bg-slate-300 text-slate-700 h-[40px] sm:h-[44px] md:h-[48px] rounded-[12px] sm:rounded-[14px] md:rounded-[16px] text-[12px] sm:text-[13px] md:text-[14px] font-black uppercase tracking-widest transition-all"
                                 >
                                     Cancel
                                 </button>
