@@ -77,12 +77,16 @@ const FinanceProfile = () => {
 
     if (loading) return <div className="h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-emerald-500"></div></div>;
 
-    const totalBalance = (stats.summary?.total_income || 0) - (stats.summary?.total_expense || 0);
+    const income = parseFloat(stats.summary?.total_income || 0);
+    const expense = parseFloat(stats.summary?.total_expense || 0);
+    const totalBalance = income - expense;
 
     const formatCurrency = (val) => {
         const absVal = Math.abs(val || 0);
         return '₹' + formatAmount(absVal);
     };
+
+    const efficiency = income > 0 ? ((totalBalance / income) * 100).toFixed(0) : 0;
 
     return (
         <div className="min-h-screen bg-slate-50 p-[16px] sm:p-[32px] lg:p-[48px] font-['Outfit']">
@@ -140,7 +144,7 @@ const FinanceProfile = () => {
                                     <div>
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Efficiency</p>
                                         <p className="text-[16px] sm:text-[18px] font-black text-blue-500">
-                                            {stats.summary?.total_income > 0 ? ((totalBalance / stats.summary.total_income) * 100).toFixed(0) : 0}%
+                                            {efficiency}%
                                         </p>
                                     </div>
                                 </div>
