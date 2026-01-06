@@ -11,12 +11,12 @@ import GlobalModals from './components/modals/GlobalModals';
 // Pages (Lazy Loaded)
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const Home = lazy(() => import('./pages/Home'));
-const Reminders = lazy(() => import('./pages/Reminders'));
-const Profile = lazy(() => import('./pages/ReminderDashboard'));
-const FinanceProfile = lazy(() => import('./pages/FinanceProfile'));
-const ExpenseTracker = lazy(() => import('./pages/ExpenseTracker'));
-const AttendanceTracker = lazy(() => import('./pages/AttendanceTracker'));
-const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const Reminders = lazy(() => import('./pages/ReminderTracker/Reminders'));
+const Profile = lazy(() => import('./pages/ReminderTracker/ReminderDashboard'));
+const FinanceProfile = lazy(() => import('./pages/ExpenseTracker/FinanceProfile'));
+const ExpenseTracker = lazy(() => import('./pages/ExpenseTracker/ExpenseTrackerMain'));
+const AttendanceTracker = lazy(() => import('./pages/AttendanceTracker/AttendanceTracker'));
+const ForgotPassword = lazy(() => import('./pages/Authentication/ForgotPassword'));
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {

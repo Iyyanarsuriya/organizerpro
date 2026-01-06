@@ -72,7 +72,8 @@ exports.getTransactionStats = async (req, res) => {
         const categories = await Transaction.getCategoryStats(req.user.id, period, projectId, startDate, endDate, memberId);
         const lifetime = await Transaction.getLifetimeStats(req.user.id, projectId, memberId);
         const memberProjects = memberId ? await Transaction.getMemberProjectStats(req.user.id, memberId) : null;
-        res.json({ summary, categories, lifetime, memberProjects });
+        const memberExpenses = !memberId ? await Transaction.getMemberExpenseSummary(req.user.id, period, projectId, startDate, endDate) : null;
+        res.json({ summary, categories, lifetime, memberProjects, memberExpenses });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal Server Error' });

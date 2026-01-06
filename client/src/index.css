@@ -162,3 +162,15 @@ body {
 .animate-leave {
   animation: leave 0.15s ease-in forwards;
 }
+
+/* Hide number input spinners (arrows) */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: none;
+}

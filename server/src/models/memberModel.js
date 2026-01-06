@@ -2,10 +2,10 @@ const db = require('../config/db');
 
 class Member {
     static async create(data) {
-        const { user_id, name, role, phone, email, status } = data;
+        const { user_id, name, role, phone, email, status, wage_type, daily_wage } = data;
         const [result] = await db.query(
-            'INSERT INTO members (user_id, name, role, phone, email, status) VALUES (?, ?, ?, ?, ?, ?)',
-            [user_id, name, role || null, phone || null, email || null, status || 'active']
+            'INSERT INTO members (user_id, name, role, phone, email, status, wage_type, daily_wage) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [user_id, name, role || null, phone || null, email || null, status || 'active', wage_type || 'daily', daily_wage || 0]
         );
         return { id: result.insertId, ...data };
     }
@@ -27,10 +27,10 @@ class Member {
     }
 
     static async update(id, userId, data) {
-        const { name, role, phone, email, status } = data;
+        const { name, role, phone, email, status, wage_type, daily_wage } = data;
         const [result] = await db.query(
-            'UPDATE members SET name = ?, role = ?, phone = ?, email = ?, status = ? WHERE id = ? AND user_id = ?',
-            [name, role || null, phone || null, email || null, status || 'active', id, userId]
+            'UPDATE members SET name = ?, role = ?, phone = ?, email = ?, status = ?, wage_type = ?, daily_wage = ? WHERE id = ? AND user_id = ?',
+            [name, role || null, phone || null, email || null, status || 'active', wage_type || 'daily', daily_wage || 0, id, userId]
         );
         return result.affectedRows > 0;
     }

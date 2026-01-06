@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { forgotPassword, verifyOTP, resetPasswordWithOTP } from '../api/authApi';
+import { forgotPassword, verifyOTP, resetPasswordWithOTP } from '../../api/authApi';
 import toast from 'react-hot-toast';
 
 const ForgotPassword = () => {
@@ -20,10 +20,7 @@ const ForgotPassword = () => {
             toast.dismiss();
             toast.success(response.data.message);
             setStep(2);
-            if (response.data.testOTP) {
-                console.log("TEST OTP (Dev):", response.data.testOTP);
-                toast('Check console for test OTP', { icon: '🐛' });
-            }
+
         } catch (error) {
             toast.dismiss();
             toast.error(error.response?.data?.error || "Failed to send OTP");
@@ -79,10 +76,7 @@ const ForgotPassword = () => {
         try {
             const response = await forgotPassword(email);
             toast.success('New OTP sent to your email!');
-            if (response.data.testOTP) {
-                console.log("TEST OTP (Dev):", response.data.testOTP);
-                toast('Check console for test OTP', { icon: '🐛' });
-            }
+
         } catch (error) {
             toast.error(error.response?.data?.error || "Failed to resend OTP");
         } finally {

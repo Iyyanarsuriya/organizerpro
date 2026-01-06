@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { getReminders, createReminder, updateReminder, deleteReminder, triggerMissedAlert } from '../api/homeApi';
-import { getMe } from '../api/authApi';
-import { API_URL } from '../api/axiosInstance';
-import ReminderForm from '../components/ReminderForm';
-import ReminderList from '../components/ReminderList';
+import { getReminders, createReminder, updateReminder, deleteReminder, triggerMissedAlert } from '../../api/homeApi';
+import { getMe } from '../../api/authApi';
+import { API_URL } from '../../api/axiosInstance';
+import ReminderForm from '../../components/ReminderForm';
+import ReminderList from '../../components/ReminderList';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { FaBell, FaTimes } from 'react-icons/fa';
 import { LayoutDashboard, Settings } from 'lucide-react';
-import { getCategories, createCategory, deleteCategory } from '../api/categoryApi';
-import CategoryManager from '../components/CategoryManager';
+import { getCategories, createCategory, deleteCategory } from '../../api/categoryApi';
+import CategoryManager from '../../components/CategoryManager';
 
 const Reminders = () => {
     const [reminders, setReminders] = useState([]);

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { login } from '../api/authApi';
+import { login } from '../../api/authApi';
 import toast from 'react-hot-toast';
 
 const Login = ({ setToken, onClose, onSwitch }) => {

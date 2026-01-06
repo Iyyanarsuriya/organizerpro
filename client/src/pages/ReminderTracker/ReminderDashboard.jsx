@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getReminders } from '../api/homeApi';
-import { disconnectGoogle, getGoogleAuthUrl, getMe } from '../api/authApi';
-import { API_URL } from '../api/axiosInstance';
+import { getReminders } from '../../api/homeApi';
+import { disconnectGoogle, getGoogleAuthUrl, getMe } from '../../api/authApi';
+import { API_URL } from '../../api/axiosInstance';
 import toast from 'react-hot-toast';
 import { FaGoogle } from 'react-icons/fa';
 import { Settings, LogOut, Calendar, LayoutDashboard, ArrowLeft } from 'lucide-react';

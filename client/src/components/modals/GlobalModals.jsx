@@ -1,7 +1,7 @@
 import { X, Camera, Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import Login from '../../pages/Login';
-import Signup from '../../pages/Signup';
+import Login from '../../pages/Authentication/Login';
+import Signup from '../../pages/Authentication/Signup';
 import { API_URL } from '../../api/axiosInstance';
 
 const GlobalModals = ({

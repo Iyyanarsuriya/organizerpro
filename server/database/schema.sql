@@ -1,5 +1,5 @@
 -- Updated Database Schema (After Worker → Member Migration)
--- Generated: 2026-01-05
+-- Generated: 2026-01-06
 -- Database: Reminder App with Attendance & Expense Tracking
 
 -- ============================================================================
@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS members (
     role VARCHAR(255),
     phone VARCHAR(20),
     email VARCHAR(255),
+    wage_type ENUM('daily', 'monthly', 'piece_rate') DEFAULT 'daily',
+    daily_wage DECIMAL(10, 2) DEFAULT 0.00,
     status ENUM('active', 'inactive') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -163,4 +165,12 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 --   2. Renamed column: attendance.worker_id → attendance.member_id
 --   3. Renamed column: transactions.worker_id → transactions.member_id
 --   4. Updated all foreign key constraints to reference members table
+-- ============================================================================
+
+-- Migration: add_salary_fields_to_members.sql
+-- Date: 2026-01-06
+-- Changes:
+--   1. Added column: members.wage_type ENUM('daily', 'monthly', 'piece_rate')
+--   2. Added column: members.daily_wage DECIMAL(10, 2)
+--   3. Allows tracking of different salary/wage types for members
 -- ============================================================================

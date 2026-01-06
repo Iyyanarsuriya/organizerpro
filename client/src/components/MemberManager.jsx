@@ -12,6 +12,8 @@ const MemberManager = ({ onClose, onUpdate }) => {
         role: '',
         phone: '',
         email: '',
+        wage_type: 'daily',
+        daily_wage: '',
         status: 'active'
     });
     const [editingId, setEditingId] = useState(null);
@@ -59,6 +61,8 @@ const MemberManager = ({ onClose, onUpdate }) => {
             role: member.role || '',
             phone: member.phone || '',
             email: member.email || '',
+            wage_type: member.wage_type || 'daily',
+            daily_wage: member.daily_wage || '',
             status: member.status
         });
         setEditingId(member.id);
@@ -81,7 +85,7 @@ const MemberManager = ({ onClose, onUpdate }) => {
     };
 
     const resetForm = () => {
-        setFormData({ name: '', role: '', phone: '', email: '', status: 'active' });
+        setFormData({ name: '', role: '', phone: '', email: '', wage_type: 'daily', daily_wage: '', status: 'active' });
         setEditingId(null);
     };
 
@@ -168,19 +172,45 @@ const MemberManager = ({ onClose, onUpdate }) => {
                                 className="w-full bg-white border border-slate-200 rounded-2xl px-6 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
                             />
                         </div>
-                    </div>
-                    <div className="mb-4">
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">
-                            Status
-                        </label>
-                        <select
-                            value={formData.status}
-                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                            className="w-full bg-white border border-slate-200 rounded-2xl px-6 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
-                        >
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                        </select>
+                        <div>
+                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">
+                                Salary Type
+                            </label>
+                            <select
+                                value={formData.wage_type}
+                                onChange={(e) => setFormData({ ...formData, wage_type: e.target.value })}
+                                className="w-full bg-white border border-slate-200 rounded-2xl px-6 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
+                            >
+                                <option value="daily">Daily Wage</option>
+                                <option value="monthly">Monthly Salary</option>
+                                <option value="piece_rate">Piece Rate</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">
+                                {formData.wage_type === 'piece_rate' ? 'Rate per Unit' : formData.wage_type === 'monthly' ? 'Monthly Salary' : 'Daily Wage'}
+                            </label>
+                            <input
+                                type="number"
+                                value={formData.daily_wage}
+                                onChange={(e) => setFormData({ ...formData, daily_wage: e.target.value })}
+                                placeholder="0.00"
+                                className="w-full bg-white border border-slate-200 rounded-2xl px-6 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                            />
+                        </div>
+                        <div className="md:col-span-2">
+                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">
+                                Status
+                            </label>
+                            <select
+                                value={formData.status}
+                                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                className="w-full bg-white border border-slate-200 rounded-2xl px-6 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
+                            >
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
                     </div>
                     <div className="flex gap-3">
                         <button
@@ -247,6 +277,13 @@ const MemberManager = ({ onClose, onUpdate }) => {
                                                     <span className="font-medium">{member.email}</span>
                                                 </div>
                                             )}
+                                            <div className="flex items-center gap-2">
+                                                <FaMoneyBillWave className="text-slate-400 text-xs" />
+                                                <span className="font-medium">
+                                                    {member.wage_type === 'piece_rate' ? 'Piece Rate' : member.wage_type === 'monthly' ? 'Monthly' : 'Daily'}:
+                                                    ₹{member.daily_wage || 0}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

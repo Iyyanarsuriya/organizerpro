@@ -190,6 +190,45 @@ class Transaction {
         const [rows] = await db.query(query, params);
         return rows;
     }
+
+    static async getMemberExpenseSummary(userId, period, projectId, startDate, endDate) {
+        let query = `SELECT m.name as member_name, SUM(t.amount) as total 
+                    FROM transactions t
+                    JOIN members m ON t.member_id = m.id
+                    WHERE t.user_id = ? AND t.type = 'expense'`;
+        const params = [userId];
+
+        if (period) {
+            if (period.length === 10) {
+                query += " AND DATE(t.date) = ?";
+                params.push(period);
+            } else if (period.length === 8 && period.includes('W')) {
+                query += " AND DATE_FORMAT(t.date, '%x-W%v') = ?";
+                params.push(period);
+            } else if (period.length === 7) {
+                query += " AND DATE_FORMAT(t.date, '%Y-%m') = ?";
+                params.push(period);
+            } else if (period.length === 4) {
+                query += " AND DATE_FORMAT(t.date, '%Y') = ?";
+                params.push(period);
+            }
+        }
+
+        if (startDate && endDate) {
+            query += " AND DATE(t.date) BETWEEN ? AND ?";
+            params.push(startDate, endDate);
+        }
+
+        if (projectId) {
+            query += ` AND t.project_id = ?`;
+            params.push(projectId);
+        }
+
+        query += ` GROUP BY t.member_id`;
+
+        const [rows] = await db.query(query, params);
+        return rows;
+    }
 }
 
 module.exports = Transaction;

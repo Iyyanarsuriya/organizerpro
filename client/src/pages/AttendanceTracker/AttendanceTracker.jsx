@@ -9,9 +9,9 @@ import {
     getAttendanceStats,
     getMemberSummary,
     quickMarkAttendance
-} from '../api/attendanceApi';
-import { getProjects, createProject, deleteProject } from '../api/projectApi';
-import { getActiveMembers } from '../api/memberApi';
+} from '../../api/attendanceApi';
+import { getProjects, createProject, deleteProject } from '../../api/projectApi';
+import { getActiveMembers } from '../../api/memberApi';
 import toast from 'react-hot-toast';
 import {
     FaCheckCircle, FaTimesCircle, FaClock, FaExclamationCircle,
@@ -22,11 +22,11 @@ import {
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend
 } from 'recharts';
-import { exportToCSV, exportToTXT, exportToPDF } from '../utils/exportUtils';
-import ExportButtons from '../components/ExportButtons';
+import { exportToCSV, exportToTXT, exportToPDF } from '../../utils/exportUtils';
+import ExportButtons from '../../components/ExportButtons';
 import { FaFileAlt } from 'react-icons/fa';
-import ProjectManager from '../components/ProjectManager';
-import MemberManager from '../components/MemberManager';
+import ProjectManager from '../../components/ProjectManager';
+import MemberManager from '../../components/MemberManager';
 
 const AttendanceTracker = () => {
     const navigate = useNavigate();
@@ -915,7 +915,7 @@ const AttendanceTracker = () => {
 
             {/* Export Confirmation Modal (Portal) */}
             {confirmModal.show && ReactDOM.createPortal(
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-[16px] w-full h-full">
+                <div className="fixed inset-0 z-9999 flex items-center justify-center p-[16px] w-full h-full">
                     <div
                         className="absolute inset-0 bg-[#0f172a]/70 backdrop-blur-md animate-in fade-in duration-300"
                         onClick={() => setConfirmModal({ show: false, type: null, label: '' })}
