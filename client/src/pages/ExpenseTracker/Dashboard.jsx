@@ -42,14 +42,14 @@ const Dashboard = ({
                     title={`${periodType === 'range' ? 'Range' : periodType === 'day' ? 'Daily' : periodType.charAt(0).toUpperCase() + periodType.slice(1) + 'ly'} Income`}
                     value={formatCurrency(stats.summary?.total_income)}
                     color="text-emerald-500"
-                    subtitle={periodType === 'range' ? `${customRange.start} to ${customRange.end}` : currentPeriod}
+                    subtitle={periodType === 'range' ? `${customRange.start} to ${customRange.end}` : (currentPeriod ? currentPeriod.split('-').reverse().join('/') : '')}
                     onClick={() => handleShowTransactions('income')}
                 />
                 <StatCard
                     title={`${periodType === 'range' ? 'Range' : periodType === 'day' ? 'Daily' : periodType.charAt(0).toUpperCase() + periodType.slice(1) + 'ly'} Expense`}
                     value={formatCurrency(stats.summary?.total_expense)}
                     color="text-rose-500"
-                    subtitle={periodType === 'range' ? `${customRange.start} to ${customRange.end}` : currentPeriod}
+                    subtitle={periodType === 'range' ? `${customRange.start} to ${customRange.end}` : (currentPeriod ? currentPeriod.split('-').reverse().join('/') : '')}
                     onClick={() => handleShowTransactions('expense')}
                 />
             </div>
