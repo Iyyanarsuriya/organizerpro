@@ -133,7 +133,7 @@ class Attendance {
             SELECT 
                 w.id,
                 w.name,
-                COUNT(CASE WHEN a.status = 'present' THEN 1 END) as present,
+                COUNT(CASE WHEN a.status IN ('present', 'late', 'permission') THEN 1 END) as present,
                 COUNT(CASE WHEN a.status = 'absent' THEN 1 END) as absent,
                 COUNT(CASE WHEN a.status = 'late' THEN 1 END) as late,
                 COUNT(CASE WHEN a.status = 'half-day' THEN 1 END) as half_day,
