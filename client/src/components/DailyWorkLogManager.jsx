@@ -129,38 +129,38 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-[12vh] sm:pt-[10vh] px-3 sm:px-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="bg-white rounded-[24px] sm:rounded-[32px] md:rounded-[40px] w-full max-w-5xl shadow-2xl relative animate-in zoom-in-95 duration-300 h-auto max-h-[84vh] sm:max-h-[80vh] flex flex-col font-['Outfit'] overflow-hidden mb-[4vh] sm:mb-0">
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-3 sm:px-4 py-4 sm:py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="bg-white rounded-[24px] sm:rounded-[28px] w-full max-w-5xl shadow-2xl relative animate-in zoom-in-95 duration-300 max-h-full flex flex-col font-['Outfit'] overflow-hidden">
                 {/* Fixed Header */}
-                <div className="p-[16px] sm:p-[24px] md:p-[40px] pb-0 shrink-0 flex items-start justify-between bg-white z-10">
+                <div className="flex items-center justify-between px-5 sm:px-6 pt-5 sm:pt-6 pb-3 sm:pb-4 shrink-0 border-b border-slate-100">
                     <div>
-                        <h2 className="text-[18px] sm:text-[20px] md:text-[24px] font-black text-slate-900 flex items-center gap-2 sm:gap-3">
-                            <div className="w-1.5 sm:w-2 h-6 sm:h-8 bg-indigo-600 rounded-full"></div>
+                        <h2 className="text-lg sm:text-xl font-black text-slate-900 flex items-center gap-2">
+                            <div className="w-1 h-5 bg-indigo-600 rounded-full"></div>
                             Daily Work Log
                         </h2>
-                        <p className="text-slate-500 text-[11px] sm:text-[12px] md:text-[14px] mt-1 sm:mt-2 ml-3 sm:ml-5">Track daily production and calculate earnings</p>
+                        <p className="text-slate-500 text-[10px] sm:text-xs mt-1 ml-3">Track daily production and calculate earnings</p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="text-slate-400 hover:text-slate-800 transition-colors p-1.5 sm:p-2 hover:bg-slate-100 rounded-xl"
+                        className="text-slate-400 hover:text-slate-800 transition-colors p-1.5 hover:bg-slate-100 rounded-lg"
                     >
-                        <FaTimes className="text-[18px] sm:text-[20px]" />
+                        <FaTimes className="text-lg" />
                     </button>
                 </div>
 
                 {/* Scrollable Content */}
-                <div className="p-[16px] sm:p-[24px] md:p-[40px] pt-4 sm:pt-6 overflow-y-auto custom-scrollbar flex-1">
+                <div className="px-5 sm:px-6 py-4 sm:py-5 overflow-y-auto custom-scrollbar flex-1">
                     {/* View Toggle */}
-                    <div className="flex bg-slate-100 p-1 rounded-xl mb-4 sm:mb-6 w-fit">
+                    <div className="flex bg-slate-100 p-1 rounded-xl mb-4 w-fit">
                         <button
                             onClick={() => setViewMode('daily')}
-                            className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'daily' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                            className={`px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'daily' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
                         >
                             Daily Entry
                         </button>
                         <button
                             onClick={() => setViewMode('monthly')}
-                            className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'monthly' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                            className={`px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'monthly' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
                         >
                             Monthly Summary
                         </button>
@@ -169,17 +169,17 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                     {viewMode === 'daily' ? (
                         <>
                             {/* Add/Edit Form */}
-                            <form onSubmit={handleSubmit} className="mb-6 sm:mb-8 p-[16px] sm:p-[20px] md:p-[24px] bg-slate-50 rounded-[20px] sm:rounded-[24px] md:rounded-3xl border border-slate-100 font-['Outfit']">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-[12px] sm:gap-[14px] md:gap-[16px] mb-[12px] sm:mb-[14px] md:mb-[16px]">
+                            <form onSubmit={handleSubmit} className="mb-5 p-4 bg-slate-50 rounded-2xl border border-slate-100 font-['Outfit']">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                                     <div>
-                                        <label className="block text-[8px] sm:text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[4px] sm:mb-[6px] md:mb-[8px] ml-[4px] sm:ml-[6px] md:ml-[8px]">
+                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
                                             Member *
                                         </label>
                                         <select
                                             required
                                             value={formData.member_id}
                                             onChange={(e) => handleMemberChange(e.target.value)}
-                                            className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[18px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[38px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 sm:focus:ring-4 focus:ring-indigo-500/10 transition-all cursor-pointer"
+                                            className="w-full bg-white border border-slate-200 rounded-xl px-3 h-9 text-xs font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all cursor-pointer"
                                         >
                                             <option value="">Select Member</option>
                                             {members.map(m => (
@@ -190,20 +190,20 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-[8px] sm:text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[4px] sm:mb-[6px] md:mb-[8px] ml-[4px] sm:ml-[6px] md:ml-[8px]">
-                                            <FaCalendarAlt className="inline mr-1 text-[7px] sm:text-[8px] md:text-[10px]" /> Date *
+                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                                            <FaCalendarAlt className="inline mr-1 text-[8px]" /> Date *
                                         </label>
                                         <input
                                             required
                                             type="date"
                                             value={formData.date}
                                             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                            className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[18px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[38px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 sm:focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                                            className="w-full bg-white border border-slate-200 rounded-xl px-3 h-9 text-xs font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-[8px] sm:text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[4px] sm:mb-[6px] md:mb-[8px] ml-[4px] sm:ml-[6px] md:ml-[8px]">
-                                            <FaBoxes className="inline mr-1 text-[7px] sm:text-[8px] md:text-[10px]" /> Units Produced *
+                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                                            <FaBoxes className="inline mr-1 text-[8px]" /> Units Produced *
                                         </label>
                                         <input
                                             required
@@ -212,12 +212,12 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                                             value={formData.units_produced}
                                             onChange={(e) => setFormData({ ...formData, units_produced: e.target.value })}
                                             placeholder="e.g., 100"
-                                            className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[18px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[38px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 sm:focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                                            className="w-full bg-white border border-slate-200 rounded-xl px-3 h-9 text-xs font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-[8px] sm:text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[4px] sm:mb-[6px] md:mb-[8px] ml-[4px] sm:ml-[6px] md:ml-[8px]">
-                                            <FaMoneyBillWave className="inline mr-1 text-[7px] sm:text-[8px] md:text-[10px]" /> Rate per Unit *
+                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                                            <FaMoneyBillWave className="inline mr-1 text-[8px]" /> Rate per Unit *
                                         </label>
                                         <input
                                             required
@@ -226,44 +226,44 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                                             value={formData.rate_per_unit}
                                             onChange={(e) => setFormData({ ...formData, rate_per_unit: e.target.value })}
                                             placeholder="e.g., 5.50"
-                                            className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[18px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[38px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 sm:focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                                            className="w-full bg-white border border-slate-200 rounded-xl px-3 h-9 text-xs font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all"
                                         />
                                     </div>
                                     <div className="md:col-span-2">
-                                        <label className="block text-[8px] sm:text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[4px] sm:mb-[6px] md:mb-[8px] ml-[4px] sm:ml-[6px] md:ml-[8px]">
-                                            <FaStickyNote className="inline mr-1 text-[7px] sm:text-[8px] md:text-[10px]" /> Notes
+                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                                            <FaStickyNote className="inline mr-1 text-[8px]" /> Notes
                                         </label>
                                         <textarea
                                             value={formData.notes}
                                             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                             placeholder="Optional notes..."
                                             rows="2"
-                                            className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[18px] lg:px-[24px] py-[8px] sm:py-[10px] md:py-[11px] lg:py-[12px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 sm:focus:ring-4 focus:ring-indigo-500/10 transition-all resize-none"
+                                            className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all resize-none"
                                         />
                                     </div>
                                 </div>
-                                <div className="flex gap-2 sm:gap-3">
+                                <div className="flex gap-2">
                                     <button
                                         type="submit"
-                                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white h-[36px] sm:h-[40px] md:h-[42px] lg:h-[48px] rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] text-[10px] sm:text-[11px] md:text-[12px] lg:text-[13px] font-black uppercase tracking-widest shadow-lg transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
+                                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white h-10 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
                                     >
-                                        <FaPlus className="text-[8px] sm:text-[10px] md:text-[11px] lg:text-[12px]" />
+                                        <FaPlus className="text-[10px]" />
                                         {editingId ? 'Update Log' : 'Add Log'}
                                     </button>
                                     {editingId && (
                                         <button
                                             type="button"
                                             onClick={resetForm}
-                                            className="px-[12px] sm:px-[16px] md:px-[18px] lg:px-[24px] bg-slate-200 hover:bg-slate-300 text-slate-700 h-[36px] sm:h-[40px] md:h-[42px] lg:h-[48px] rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] text-[10px] sm:text-[11px] md:text-[12px] lg:text-[13px] font-black uppercase tracking-widest transition-all"
+                                            className="px-4 bg-slate-200 hover:bg-slate-300 text-slate-700 h-10 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
                                         >
                                             Cancel
                                         </button>
                                     )}
                                 </div>
                                 {formData.units_produced && formData.rate_per_unit && (
-                                    <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-indigo-50 rounded-[16px] sm:rounded-2xl border border-indigo-100">
-                                        <p className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Total Amount</p>
-                                        <p className="text-[20px] sm:text-2xl font-black text-indigo-600">
+                                    <div className="mt-3 p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Amount</p>
+                                        <p className="text-xl font-black text-indigo-600">
                                             ₹{(parseFloat(formData.units_produced) * parseFloat(formData.rate_per_unit)).toFixed(2)}
                                         </p>
                                     </div>
