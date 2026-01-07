@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS attendance (
     permission_duration VARCHAR(100) DEFAULT NULL,
     permission_start_time VARCHAR(20) DEFAULT NULL,
     permission_end_time VARCHAR(20) DEFAULT NULL,
+    permission_reason TEXT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -237,6 +238,7 @@ CREATE TABLE IF NOT EXISTS member_roles (
 --   2. Added column: attendance.permission_duration (Readable string)
 --   3. Added column: attendance.permission_start_time (24h format)
 --   4. Added column: attendance.permission_end_time (24h format)
---   5. Enhances tracking of partial-day permissions with work notes
+--   5. Added column: attendance.permission_reason (Reason for leaving)
+--   6. Enhances tracking of partial-day permissions with work notes
 -- ============================================================================
 

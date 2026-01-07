@@ -2,10 +2,10 @@ const db = require('../config/db');
 
 class Attendance {
     static async create(data) {
-        const { user_id, subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time } = data;
+        const { user_id, subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason } = data;
         const [result] = await db.query(
-            'INSERT INTO attendance (user_id, subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [user_id, subject, status, date, note, project_id || null, member_id || null, permission_duration || null, permission_start_time || null, permission_end_time || null]
+            'INSERT INTO attendance (user_id, subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [user_id, subject, status, date, note, project_id || null, member_id || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null]
         );
         return { id: result.insertId, ...data };
     }
@@ -56,10 +56,10 @@ class Attendance {
     }
 
     static async update(id, userId, data) {
-        const { subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time } = data;
+        const { subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason } = data;
         const [result] = await db.query(
-            'UPDATE attendance SET subject = ?, status = ?, date = ?, note = ?, project_id = ?, member_id = ?, permission_duration = ?, permission_start_time = ?, permission_end_time = ? WHERE id = ? AND user_id = ?',
-            [subject, status, date, note, project_id || null, member_id || null, permission_duration || null, permission_start_time || null, permission_end_time || null, id, userId]
+            'UPDATE attendance SET subject = ?, status = ?, date = ?, note = ?, project_id = ?, member_id = ?, permission_duration = ?, permission_start_time = ?, permission_end_time = ?, permission_reason = ? WHERE id = ? AND user_id = ?',
+            [subject, status, date, note, project_id || null, member_id || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, id, userId]
         );
         return result.affectedRows > 0;
     }
@@ -171,7 +171,7 @@ class Attendance {
     }
 
     static async quickMark(data) {
-        const { user_id, member_id, date, status, project_id, subject, note, permission_duration, permission_start_time, permission_end_time } = data;
+        const { user_id, member_id, date, status, project_id, subject, note, permission_duration, permission_start_time, permission_end_time, permission_reason } = data;
 
         // Find existing record for this member on this date and project
         let checkQuery = 'SELECT id FROM attendance WHERE user_id = ? AND member_id = ? AND DATE(date) = ?';
@@ -189,15 +189,15 @@ class Attendance {
         if (existing.length > 0) {
             // Update existing record
             await db.query(
-                'UPDATE attendance SET status = ?, note = COALESCE(?, note), permission_duration = COALESCE(?, permission_duration), permission_start_time = COALESCE(?, permission_start_time), permission_end_time = COALESCE(?, permission_end_time) WHERE id = ?',
-                [status, note || null, permission_duration || null, permission_start_time || null, permission_end_time || null, existing[0].id]
+                'UPDATE attendance SET status = COALESCE(?, status), note = COALESCE(?, note), permission_duration = COALESCE(?, permission_duration), permission_start_time = COALESCE(?, permission_start_time), permission_end_time = COALESCE(?, permission_end_time), permission_reason = COALESCE(?, permission_reason) WHERE id = ?',
+                [status || null, note || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, existing[0].id]
             );
             return { id: existing[0].id, ...data, updated: true };
         } else {
             // Create new record
             const [result] = await db.query(
-                'INSERT INTO attendance (user_id, member_id, date, status, project_id, subject, note, permission_duration, permission_start_time, permission_end_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [user_id, member_id, date, status, project_id || null, subject || 'Daily Attendance', note || null, permission_duration || null, permission_start_time || null, permission_end_time || null]
+                'INSERT INTO attendance (user_id, member_id, date, status, project_id, subject, note, permission_duration, permission_start_time, permission_end_time, permission_reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [user_id, member_id, date, status, project_id || null, subject || 'Daily Attendance', note || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null]
             );
             return { id: result.insertId, ...data, created: true };
         }
