@@ -17,6 +17,7 @@ const MemberManager = ({ onClose, onUpdate }) => {
         role: '',
         phone: '',
         email: '',
+        member_type: 'worker',
         wage_type: 'daily',
         daily_wage: '',
         status: 'active'
@@ -67,6 +68,7 @@ const MemberManager = ({ onClose, onUpdate }) => {
             role: member.role || '',
             phone: member.phone || '',
             email: member.email || '',
+            member_type: member.member_type || 'worker',
             wage_type: member.wage_type || 'daily',
             daily_wage: member.daily_wage || '',
             status: member.status
@@ -91,7 +93,7 @@ const MemberManager = ({ onClose, onUpdate }) => {
     };
 
     const resetForm = () => {
-        setFormData({ name: '', role: '', phone: '', email: '', wage_type: 'daily', daily_wage: '', status: 'active' });
+        setFormData({ name: '', role: '', phone: '', email: '', member_type: 'worker', wage_type: 'daily', daily_wage: '', status: 'active' });
         setEditingId(null);
     };
 
@@ -199,12 +201,33 @@ const MemberManager = ({ onClose, onUpdate }) => {
                             </div>
                             <div>
                                 <label className="block text-[8px] sm:text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[4px] sm:mb-[6px] md:mb-[8px] ml-[4px] sm:ml-[6px] md:ml-[8px]">
+                                    Member Type
+                                </label>
+                                <select
+                                    value={formData.member_type}
+                                    onChange={(e) => {
+                                        const type = e.target.value;
+                                        setFormData({
+                                            ...formData,
+                                            member_type: type,
+                                            wage_type: type === 'employee' ? 'monthly' : 'daily'
+                                        });
+                                    }}
+                                    className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[18px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[38px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
+                                >
+                                    <option value="worker">Worker (Daily/Piece)</option>
+                                    <option value="employee">Employee (Monthly)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-[8px] sm:text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[4px] sm:mb-[6px] md:mb-[8px] ml-[4px] sm:ml-[6px] md:ml-[8px]">
                                     Salary Type
                                 </label>
                                 <select
                                     value={formData.wage_type}
                                     onChange={(e) => setFormData({ ...formData, wage_type: e.target.value })}
                                     className="w-full bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] md:rounded-[13px] lg:rounded-[16px] px-[12px] sm:px-[16px] md:px-[18px] lg:px-[24px] h-[32px] sm:h-[36px] md:h-[38px] lg:h-[44px] text-[11px] sm:text-[12px] md:text-[13px] lg:text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
+                                    disabled={formData.member_type === 'employee' && formData.wage_type === 'monthly'}
                                 >
                                     <option value="daily">Daily Wage</option>
                                     <option value="monthly">Monthly Salary</option>
@@ -276,6 +299,12 @@ const MemberManager = ({ onClose, onUpdate }) => {
                                         <div className="flex-1">
                                             <div className="flex items-center gap-3 mb-2">
                                                 <h4 className="text-[18px] font-black text-slate-900">{member.name}</h4>
+                                                <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${member.member_type === 'employee'
+                                                    ? 'bg-blue-50 text-blue-600'
+                                                    : 'bg-amber-50 text-amber-600'
+                                                    }`}>
+                                                    {member.member_type || 'worker'}
+                                                </span>
                                                 <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${member.status === 'active'
                                                     ? 'bg-emerald-50 text-emerald-600'
                                                     : 'bg-slate-100 text-slate-500'
@@ -424,10 +453,19 @@ const MemberManager = ({ onClose, onUpdate }) => {
                                         </div>
                                     ))}
                                     <div className="pt-6 border-t border-slate-100 sticky bottom-0 bg-white">
-                                        <div className="flex justify-between items-center p-[24px] bg-slate-900 rounded-[24px] text-white">
-                                            <span className="font-black uppercase tracking-widest text-[12px]">Total Balance</span>
+                                        <div className={`flex justify-between items-center p-[24px] rounded-[24px] text-white ${(() => {
+                                            const earned = payments.filter(p => p.category === 'Salary Pot').reduce((acc, p) => acc + parseFloat(p.amount), 0);
+                                            const paid = payments.filter(p => ['Salary', 'Advance'].includes(p.category)).reduce((acc, p) => acc + parseFloat(p.amount), 0);
+                                            return (earned - paid) > 0 ? 'bg-amber-600' : 'bg-slate-900';
+                                        })()
+                                            }`}>
+                                            <span className="font-black uppercase tracking-widest text-[12px]">Ledger Balance (Owed)</span>
                                             <span className="text-[24px] font-black tracking-tighter">
-                                                ₹{payments.reduce((acc, p) => p.type === 'expense' ? acc + parseFloat(p.amount) : acc - parseFloat(p.amount), 0).toFixed(2)}
+                                                ₹{(() => {
+                                                    const earned = payments.filter(p => p.category === 'Salary Pot').reduce((acc, p) => acc + parseFloat(p.amount), 0);
+                                                    const paid = payments.filter(p => ['Salary', 'Advance'].includes(p.category)).reduce((acc, p) => acc + parseFloat(p.amount), 0);
+                                                    return (earned - paid).toFixed(2);
+                                                })()}
                                             </span>
                                         </div>
                                     </div>

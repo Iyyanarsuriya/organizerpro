@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaFileAlt, FaMoneyBillWave, FaUserCheck, FaArrowLeft, FaPlusCircle, FaQuestionCircle } from 'react-icons/fa';
+import { FaFileAlt, FaMoneyBillWave, FaUserCheck, FaArrowLeft, FaPlusCircle, FaPlus, FaHistory, FaHandHoldingUsd, FaReceipt } from 'react-icons/fa';
 import { formatAmount } from '../../utils/formatUtils';
 
 const SalaryCalculator = ({
@@ -29,349 +29,392 @@ const SalaryCalculator = ({
     setShowAddModal,
     transactions
 }) => {
+    // Ledger Calculations
+    const ledger = React.useMemo(() => {
+        if (!filterMember) return { earned: 0, paid: 0, advance: 0, balance: 0 };
+
+        const memberTrans = transactions.filter(t => t.member_id == filterMember);
+
+        const earned = memberTrans
+            .filter(t => t.category === 'Salary Pot')
+            .reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
+
+        const advances = memberTrans
+            .filter(t => t.category === 'Advance')
+            .reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
+
+        const salaryPayments = memberTrans
+            .filter(t => t.category === 'Salary')
+            .reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
+
+        return {
+            earned,
+            paid: salaryPayments,
+            advance: advances,
+            totalPaid: salaryPayments + advances,
+            balance: earned - (salaryPayments + advances)
+        };
+    }, [transactions, filterMember]);
+
+    const currentAttendanceEarned = React.useMemo(() => {
+        if (salaryMode === 'daily') {
+            return ((attendanceStats?.summary?.present || 0) * dailyWage) + ((attendanceStats?.summary?.half_day || 0) * (dailyWage / 2));
+        } else if (salaryMode === 'monthly') {
+            return (((attendanceStats?.summary?.present || 0) + (attendanceStats?.summary?.half_day || 0) * 0.5) * (monthlySalary / 30));
+        } else {
+            return (unitsProduced * ratePerUnit);
+        }
+    }, [salaryMode, attendanceStats, dailyWage, monthlySalary, unitsProduced, ratePerUnit]);
+
+    const totalGross = currentAttendanceEarned + parseFloat(bonus || 0);
+    // Note: Deductions usually include both Salary payments and Advances in this period
+    const netPayable = Math.max(0, totalGross - (stats.summary?.total_expense || 0));
+
     return (
-        <div className="animate-in slide-in-from-right-10 duration-500">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-[32px]">
-                <h2 className="text-[20px] sm:text-[24px] font-black">Salary Calculator</h2>
+        <div className="animate-in slide-in-from-right-10 duration-500 pb-20">
+            {/* Header section... */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Salary & Payouts</h2>
                 <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                     {filterMember && (
                         <button
                             onClick={() => handleExportPDF(filteredTransactions)}
-                            className="flex-1 sm:flex-none px-4 py-3 sm:py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-800 transition-all"
+                            className="flex-1 sm:flex-none px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-sm"
                         >
-                            <FaFileAlt /> Download Report
+                            <FaFileAlt size={12} /> Download Report
                         </button>
                     )}
-                    <div className="flex-1 sm:flex-none px-4 py-3 sm:py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest text-center">
-                        Based on {periodType} Attendance
+                    <div className="flex-1 sm:flex-none px-4 py-2 bg-blue-50 text-blue-600 border border-blue-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-center">
+                        {periodType} ATTENDANCE REF
                     </div>
                 </div>
             </div>
 
             {!filterMember ? (
-                <div className="bg-white rounded-[24px] sm:rounded-[40px] p-[32px] sm:p-[64px] text-center border border-slate-100 shadow-xl">
-                    <div className="w-[64px] h-[64px] sm:w-[80px] sm:h-[80px] bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-[24px]">
-                        <FaMoneyBillWave className="text-slate-300 text-[28px] sm:text-[32px]" />
+                <div className="bg-white rounded-[40px] p-12 sm:p-20 text-center border border-slate-100 shadow-sm">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-slate-100 shadow-inner">
+                        <FaMoneyBillWave className="text-slate-300 text-2xl sm:text-3xl" />
                     </div>
-                    <h3 className="text-[18px] font-black text-slate-800 mb-[8px]">Select a Member</h3>
-                    <p className="text-slate-400 text-[12px] font-bold uppercase tracking-widest mb-[32px] max-w-sm mx-auto">Please select a member from the filters above to calculate their salary</p>
-                    <select
-                        onChange={(e) => setFilterMember(e.target.value)}
-                        className="w-full sm:w-auto px-[24px] sm:px-[32px] h-[44px] sm:h-[48px] md:h-[52px] bg-slate-100 rounded-[16px] sm:rounded-[20px] font-black text-[11px] sm:text-[12px] uppercase tracking-widest outline-none cursor-pointer hover:bg-slate-200 transition-all appearance-none text-center flex items-center justify-center border-2 border-slate-200 hover:border-slate-300"
-                    >
-                        <option value="">Choose Member...</option>
-                        {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                    </select>
+                    <h3 className="text-lg font-black text-slate-900 mb-2">Member Selection Required</h3>
+                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-10 max-w-sm mx-auto">Select a member to view their performance metrics and calculate net payable salary</p>
+                    <div className="relative inline-block w-full max-w-xs">
+                        <select
+                            onChange={(e) => setFilterMember(e.target.value)}
+                            className="w-full px-8 h-12 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-[11px] uppercase tracking-widest outline-none cursor-pointer hover:border-slate-300 transition-all appearance-none text-center"
+                        >
+                            <option value="">Select Member...</option>
+                            {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                        </select>
+                    </div>
                 </div>
             ) : salaryLoading ? (
                 <div className="h-[400px] flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-[#2d5bff]"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500"></div>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-[32px]">
-                    {/* Stats Column */}
-                    <div className="lg:col-span-2 space-y-[32px]">
-                        <div className="bg-white rounded-[24px] sm:rounded-[40px] p-[24px] sm:p-[48px] shadow-xl border border-slate-100">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-[40px]">
-                                <div className="flex items-center gap-[16px]">
-                                    <div className="w-[48px] h-[48px] sm:w-[56px] sm:h-[56px] bg-indigo-50 text-indigo-500 rounded-[16px] sm:rounded-[20px] flex items-center justify-center text-[20px] sm:text-[24px]">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Input Column */}
+                    <div className="lg:col-span-2 space-y-8">
+                        {/* Member Quick Stats */}
+                        <div className="bg-white rounded-[40px] p-8 sm:p-12 shadow-sm border border-slate-100">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-10">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center text-2xl shadow-xs border border-indigo-100">
                                         <FaUserCheck />
                                     </div>
                                     <div>
-                                        <h3 className="text-[18px] sm:text-[20px] font-black">{members.find(m => m.id == filterMember)?.name}</h3>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Attendance Summary</p>
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="text-xl font-black text-slate-900 leading-tight">{members.find(m => m.id == filterMember)?.name}</h3>
+                                            <span className={`px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest ${members.find(m => m.id == filterMember)?.member_type === 'employee' ? 'bg-blue-100 text-blue-600' : 'bg-amber-100 text-amber-600'}`}>
+                                                {members.find(m => m.id == filterMember)?.member_type || 'worker'}
+                                            </span>
+                                        </div>
+                                        <div className="h-[8px] mt-1 flex items-center gap-1">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
+                                            <span className="text-[6px] font-black text-slate-400 uppercase tracking-tighter">MEMBER PROFILE</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => setFilterMember('')}
-                                    className="w-full sm:w-auto px-4 py-3 sm:py-2 bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-slate-100 flex items-center justify-center gap-2"
-                                >
-                                    <FaArrowLeft /> Switch Member
-                                </button>
-                            </div>
-
-                            <div className="grid grid-cols-1 xs:grid-cols-3 gap-[12px] sm:gap-[16px] mb-[48px]">
-                                <div className="p-4 sm:p-6 bg-emerald-50 rounded-[20px] sm:rounded-[28px] border border-emerald-100 text-center">
-                                    <p className="text-[20px] sm:text-[24px] font-black text-emerald-600">{attendanceStats?.summary?.present || 0}</p>
-                                    <p className="text-[9px] sm:text-[10px] font-black text-emerald-500 uppercase tracking-widest">Present</p>
-                                </div>
-                                <div className="p-4 sm:p-6 bg-blue-50 rounded-[20px] sm:rounded-[28px] border border-blue-100 text-center">
-                                    <p className="text-[20px] sm:text-[24px] font-black text-blue-600">{attendanceStats?.summary?.half_day || 0}</p>
-                                    <p className="text-[9px] sm:text-[10px] font-black text-blue-500 uppercase tracking-widest">Half Days</p>
-                                </div>
-                                <div className="p-4 sm:p-6 bg-red-50 rounded-[20px] sm:rounded-[28px] border border-red-100 text-center">
-                                    <p className="text-[20px] sm:text-[24px] font-black text-red-600">{attendanceStats?.summary?.absent || 0}</p>
-                                    <p className="text-[9px] sm:text-[10px] font-black text-red-500 uppercase tracking-widest">Absent</p>
+                                <div className="flex gap-2 w-full sm:w-auto">
+                                    <button
+                                        onClick={() => setFilterMember('')}
+                                        className="flex-1 sm:flex-none px-4 py-2 bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-slate-200 flex items-center gap-2 justify-center"
+                                    >
+                                        <FaArrowLeft size={10} /> Change
+                                    </button>
                                 </div>
                             </div>
 
-                            <div className="space-y-[24px]">
-                                <div className="flex items-center justify-between mb-[12px]">
-                                    <div className="flex items-center gap-[12px]">
-                                        <div className="w-[8px] h-[24px] bg-slate-800 rounded-full"></div>
-                                        <h4 className="text-[14px] font-black uppercase tracking-widest">Calculation Mode</h4>
+                            <div className="grid grid-cols-1 xs:grid-cols-3 gap-4 mb-10">
+                                <div className="p-6 bg-emerald-50/50 rounded-3xl border border-emerald-100 text-center">
+                                    <p className="text-3xl font-black text-emerald-600 tracking-tighter">{attendanceStats?.summary?.present || 0}</p>
+                                    <p className="text-[8px] font-black text-emerald-500 uppercase tracking-[0.2em] mt-1">Present</p>
+                                </div>
+                                <div className="p-6 bg-blue-50/50 rounded-3xl border border-blue-100 text-center">
+                                    <p className="text-3xl font-black text-blue-600 tracking-tighter">{attendanceStats?.summary?.half_day || 0}</p>
+                                    <p className="text-[8px] font-black text-blue-500 uppercase tracking-[0.2em] mt-1">Half Days</p>
+                                </div>
+                                <div className="p-6 bg-rose-50/50 rounded-3xl border border-rose-100 text-center">
+                                    <p className="text-3xl font-black text-rose-600 tracking-tighter">{attendanceStats?.summary?.absent || 0}</p>
+                                    <p className="text-[8px] font-black text-rose-500 uppercase tracking-[0.2em] mt-1">Absent</p>
+                                </div>
+                            </div>
+
+                            {/* Payment Controls */}
+                            <div className="space-y-8">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-50">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-1 h-6 bg-slate-900 rounded-full"></div>
+                                        <h4 className="text-xs font-black uppercase tracking-widest text-slate-900">Payment Logic</h4>
                                     </div>
-                                    <div className="flex p-1 bg-slate-100 rounded-xl">
-                                        <button
-                                            onClick={() => setSalaryMode('daily')}
-                                            className={`px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${salaryMode === 'daily' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400'}`}
-                                        >
-                                            Daily
-                                        </button>
-                                        <button
-                                            onClick={() => setSalaryMode('monthly')}
-                                            className={`px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${salaryMode === 'monthly' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400'}`}
-                                        >
-                                            Monthly
-                                        </button>
-                                        <button
-                                            onClick={() => setSalaryMode('production')}
-                                            className={`px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${salaryMode === 'production' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400'}`}
-                                        >
-                                            Piece Rate
-                                        </button>
+                                    <div className="flex p-1 bg-slate-100 rounded-2xl">
+                                        {(members.find(m => m.id == filterMember)?.member_type === 'employee' ? ['monthly'] : ['daily', 'monthly', 'production']).map(mode => (
+                                            <button
+                                                key={mode}
+                                                onClick={() => setSalaryMode(mode)}
+                                                className={`px-4 py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all ${salaryMode === mode ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                            >
+                                                {mode === 'production' ? 'Piece' : mode}
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-[20px] sm:gap-[24px]">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {salaryMode === 'daily' ? (
-                                        <div className="space-y-3 sm:space-y-4">
-                                            <label className="block text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Rate Per Day (₹)</label>
+                                        <div className="space-y-2">
+                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Rate Per Day (₹)</label>
                                             <div className="relative group">
-                                                <FaMoneyBillWave className="absolute left-5 sm:left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors text-[14px] sm:text-base" />
+                                                <FaMoneyBillWave className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" />
                                                 <input
                                                     type="number"
                                                     value={dailyWage}
                                                     onChange={(e) => setDailyWage(parseFloat(e.target.value) || 0)}
-                                                    className="w-full bg-slate-50 border border-slate-200 rounded-[20px] sm:rounded-[24px] pl-12 sm:pl-16 pr-4 sm:pr-8 py-4 sm:py-5 text-[16px] sm:text-[18px] font-black outline-none focus:border-blue-500 focus:bg-white transition-all"
-                                                    placeholder="500"
+                                                    className="w-full bg-slate-50 border border-slate-200 rounded-3xl pl-16 pr-8 py-5 text-2xl font-black outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs"
                                                 />
                                             </div>
                                         </div>
                                     ) : salaryMode === 'monthly' ? (
-                                        <div className="space-y-3 sm:space-y-4">
-                                            <label className="block text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Base Monthly Salary (₹)</label>
+                                        <div className="space-y-2">
+                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Base Salary (₹)</label>
                                             <div className="relative group">
-                                                <FaMoneyBillWave className="absolute left-5 sm:left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors text-[14px] sm:text-base" />
+                                                <FaMoneyBillWave className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
                                                 <input
                                                     type="number"
                                                     value={monthlySalary}
                                                     onChange={(e) => setMonthlySalary(parseFloat(e.target.value) || 0)}
-                                                    className="w-full bg-slate-50 border border-slate-200 rounded-[20px] sm:rounded-[24px] pl-12 sm:pl-16 pr-4 sm:pr-8 py-4 sm:py-5 text-[16px] sm:text-[18px] font-black outline-none focus:border-indigo-500 focus:bg-white transition-all"
-                                                    placeholder="15000"
+                                                    className="w-full bg-slate-50 border border-slate-200 rounded-3xl pl-16 pr-8 py-5 text-2xl font-black outline-none focus:border-indigo-500 focus:bg-white transition-all shadow-xs"
                                                 />
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="space-y-4 col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="space-y-3 sm:space-y-4">
-                                                <label className="block text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Units (Qty)</label>
+                                        <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-2">
+                                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Units Count</label>
                                                 <div className="relative group">
-                                                    <FaPlusCircle className="absolute left-5 sm:left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors text-[14px] sm:text-base" />
+                                                    <FaPlusCircle className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" />
                                                     <input
                                                         type="number"
                                                         value={unitsProduced}
                                                         onChange={(e) => setUnitsProduced(parseFloat(e.target.value) || 0)}
-                                                        className="w-full bg-slate-50 border border-slate-200 rounded-[20px] sm:rounded-[24px] pl-12 sm:pl-16 pr-4 sm:pr-8 py-4 sm:py-5 text-[16px] sm:text-[18px] font-black outline-none focus:border-orange-500 focus:bg-white transition-all"
-                                                        placeholder="100"
+                                                        className="w-full bg-slate-50 border border-slate-200 rounded-3xl pl-16 pr-8 py-5 text-2xl font-black outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs"
                                                     />
                                                 </div>
                                             </div>
-                                            <div className="space-y-3 sm:space-y-4">
-                                                <label className="block text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Rate/Unit (₹)</label>
+                                            <div className="space-y-2">
+                                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Rate/Unit (₹)</label>
                                                 <div className="relative group">
-                                                    <FaMoneyBillWave className="absolute left-5 sm:left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors text-[14px] sm:text-base" />
+                                                    <FaMoneyBillWave className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" />
                                                     <input
                                                         type="number"
                                                         value={ratePerUnit}
                                                         onChange={(e) => setRatePerUnit(parseFloat(e.target.value) || 0)}
-                                                        className="w-full bg-slate-50 border border-slate-200 rounded-[20px] sm:rounded-[24px] pl-12 sm:pl-16 pr-4 sm:pr-8 py-4 sm:py-5 text-[16px] sm:text-[18px] font-black outline-none focus:border-orange-500 focus:bg-white transition-all"
-                                                        placeholder="10"
+                                                        className="w-full bg-slate-50 border border-slate-200 rounded-3xl pl-16 pr-8 py-5 text-2xl font-black outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs"
                                                     />
                                                 </div>
                                             </div>
                                         </div>
                                     )}
-                                    <div className="space-y-3 sm:space-y-4">
-                                        <label className="block text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Bonus (₹)</label>
-                                        <div className="relative group">
-                                            <FaPlusCircle className="absolute left-5 sm:left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-emerald-500 transition-colors text-[14px] sm:text-base" />
-                                            <input
-                                                type="number"
-                                                value={bonus}
-                                                onChange={(e) => setBonus(parseFloat(e.target.value) || 0)}
-                                                className="w-full bg-slate-50 border border-slate-200 rounded-[20px] sm:rounded-[24px] pl-12 sm:pl-16 pr-4 sm:pr-8 py-4 sm:py-5 text-[16px] sm:text-[18px] font-black outline-none focus:border-emerald-500 focus:bg-white transition-all"
-                                                placeholder="0"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                                {salaryMode === 'production' && (
-                                    <div className="space-y-4">
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Extra Bonus (₹)</label>
+                                    <div className="space-y-2">
+                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Extra Bonus (₹)</label>
                                         <div className="relative group">
                                             <FaPlusCircle className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
                                             <input
                                                 type="number"
                                                 value={bonus}
                                                 onChange={(e) => setBonus(parseFloat(e.target.value) || 0)}
-                                                className="w-full bg-slate-50 border border-slate-200 rounded-[24px] pl-16 pr-8 py-5 text-[18px] font-black outline-none focus:border-emerald-500 focus:bg-white transition-all"
-                                                placeholder="0"
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-3xl pl-16 pr-8 py-5 text-2xl font-black outline-none focus:border-emerald-500 focus:bg-white transition-all shadow-xs"
                                             />
                                         </div>
                                     </div>
-                                )}
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+                                    <button
+                                        onClick={() => {
+                                            const isEmployee = members.find(m => m.id == filterMember)?.member_type === 'employee';
+                                            setFormData({
+                                                ...formData,
+                                                title: isEmployee ? `Salary Accrued: ${formatAmount(currentAttendanceEarned)}` : `Daily Work: ${salaryMode.toUpperCase()} (${formatAmount(currentAttendanceEarned)})`,
+                                                amount: currentAttendanceEarned,
+                                                type: 'expense',
+                                                category: 'Salary Pot',
+                                                member_id: filterMember,
+                                                date: new Date().toISOString().split('T')[0]
+                                            });
+                                            setShowAddModal(true);
+                                        }}
+                                        className="h-14 bg-amber-50 text-amber-600 rounded-[20px] font-black text-[10px] uppercase tracking-widest border border-amber-100 flex items-center justify-center gap-2 hover:bg-amber-100 transition-all font-['Outfit']"
+                                    >
+                                        <FaReceipt /> {members.find(m => m.id == filterMember)?.member_type === 'employee' ? 'Post Monthly Accrual' : 'Record Daily Work'}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setFormData({
+                                                ...formData,
+                                                title: `Advance - ${members.find(m => m.id == filterMember)?.name}`,
+                                                amount: '',
+                                                type: 'expense',
+                                                category: 'Advance',
+                                                member_id: filterMember,
+                                                date: new Date().toISOString().split('T')[0]
+                                            });
+                                            setShowAddModal(true);
+                                        }}
+                                        className="h-14 bg-indigo-50 text-indigo-600 rounded-[20px] font-black text-[10px] uppercase tracking-widest border border-indigo-100 flex items-center justify-center gap-2 hover:bg-indigo-100 transition-all"
+                                    >
+                                        <FaHandHoldingUsd /> Give Advance
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Member Ledger (Transactions History) */}
+                        <div className="bg-white rounded-[40px] p-8 sm:p-12 shadow-sm border border-slate-100">
+                            <div className="flex items-center justify-between mb-8">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-1 h-6 bg-slate-900 rounded-full"></div>
+                                    <h4 className="text-xs font-black uppercase tracking-widest text-slate-900">Member History</h4>
+                                </div>
+                                <div className="px-3 py-1 bg-slate-50 rounded-full text-[8px] font-black text-slate-400 uppercase tracking-widest border border-slate-100 italic">Ledger View</div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                                <div className="bg-slate-50 p-6 rounded-[32px] border border-slate-100">
+                                    <p className="text-[7px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Total Earned (Pots)</p>
+                                    <p className="text-2xl font-black text-slate-900">₹{formatAmount(ledger.earned)}</p>
+                                </div>
+                                <div className="bg-slate-50 p-6 rounded-[32px] border border-slate-100">
+                                    <p className="text-[7px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Total Paid (Actual)</p>
+                                    <p className="text-2xl font-black text-slate-900">₹{formatAmount(ledger.totalPaid)}</p>
+                                </div>
+                                <div className={`p-6 rounded-[32px] border ${ledger.balance > 0 ? 'bg-amber-50 border-amber-100' : 'bg-emerald-50 border-emerald-100'}`}>
+                                    <p className="text-[7px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Unpaid Balance</p>
+                                    <p className={`text-2xl font-black ${ledger.balance > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>₹{formatAmount(ledger.balance)}</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                {transactions
+                                    .filter(t => t.member_id == filterMember && ['Salary', 'Advance', 'Salary Pot'].includes(t.category))
+                                    .slice(0, 5)
+                                    .map(t => (
+                                        <div key={t.id} className="group flex items-center justify-between p-4 hover:bg-slate-50 rounded-[20px] transition-all border border-transparent hover:border-slate-100">
+                                            <div className="flex items-center gap-4">
+                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs ${t.category === 'Salary Pot' ? 'bg-amber-50 text-amber-500' : t.category === 'Advance' ? 'bg-indigo-50 text-indigo-500' : 'bg-blue-50 text-blue-500'}`}>
+                                                    {t.category === 'Salary Pot' ? <FaReceipt /> : t.category === 'Advance' ? <FaHandHoldingUsd /> : <FaMoneyBillWave />}
+                                                </div>
+                                                <div>
+                                                    <p className="text-[11px] font-black text-slate-800 tracking-tight leading-none mb-1">{t.title}</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[7px] font-black uppercase tracking-widest text-slate-400">{t.category}</span>
+                                                        <span className="w-1 h-1 rounded-full bg-slate-200"></span>
+                                                        <span className="text-[7px] font-bold text-slate-400 uppercase">{new Date(t.date).toLocaleDateString('en-GB')}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p className={`text-sm font-black ${t.category === 'Salary Pot' ? 'text-amber-500' : 'text-slate-900'}`}>
+                                                {t.category === 'Salary Pot' ? '+' : '-'}₹{formatAmount(t.amount)}
+                                            </p>
+                                        </div>
+                                    ))}
                             </div>
                         </div>
                     </div>
 
-                    {/* Summary Column */}
-                    <div className="space-y-[24px] sm:space-y-[32px]">
-                        <div className="bg-slate-900 rounded-[24px] sm:rounded-[40px] p-[24px] sm:p-[48px] shadow-2xl relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-[200px] h-[200px] bg-blue-500/10 rounded-full blur-[80px] -mr-[100px] -mt-[100px]"></div>
-
+                    {/* Summary Column - FINAL PAYOUT CALCULATION */}
+                    <div className="space-y-8">
+                        <div className="bg-slate-900 rounded-[40px] p-8 sm:p-10 shadow-xl relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl -mr-24 -mt-24"></div>
                             <div className="relative z-10">
-                                <p className="text-blue-400 text-[10px] font-black uppercase tracking-[0.3em] mb-[32px]">Payable Summary</p>
+                                <p className="text-blue-400 text-[8px] font-black uppercase tracking-[0.3em] mb-8">Settlement Tool</p>
 
-                                <div className="space-y-[20px] sm:space-y-[24px] mb-[40px] sm:mb-[48px]">
-                                    {salaryMode === 'daily' ? (
-                                        <>
-                                            <div className="flex justify-between items-center opacity-70">
-                                                <span className="text-white text-[11px] sm:text-[12px] font-bold">Base Pay ({attendanceStats?.summary?.present || 0}d)</span>
-                                                <span className="text-white font-black text-[13px] sm:text-[14px]">₹{formatAmount((attendanceStats?.summary?.present || 0) * dailyWage)}</span>
-                                            </div>
-                                            <div className="flex justify-between items-center opacity-70">
-                                                <span className="text-white text-[11px] sm:text-[12px] font-bold">Half Days ({attendanceStats?.summary?.half_day || 0}d)</span>
-                                                <span className="text-white font-black text-[13px] sm:text-[14px]">₹{formatAmount((attendanceStats?.summary?.half_day || 0) * (dailyWage / 2))}</span>
-                                            </div>
-                                        </>
-                                    ) : salaryMode === 'monthly' ? (
-                                        <>
-                                            <div className="flex justify-between items-center opacity-70">
-                                                <span className="text-white text-[11px] sm:text-[12px] font-bold">Standard Monthly Pay</span>
-                                                <span className="text-white font-black text-[13px] sm:text-[14px]">₹{formatAmount(monthlySalary)}</span>
-                                            </div>
-                                            <div className="flex justify-between items-center text-teal-400">
-                                                <span className="text-[11px] sm:text-[12px] font-bold">Earned ({(attendanceStats?.summary?.present || 0) + (attendanceStats?.summary?.half_day || 0) * 0.5} days worked)</span>
-                                                <span className="font-black text-[13px] sm:text-[14px]">₹{formatAmount(((attendanceStats?.summary?.present || 0) + (attendanceStats?.summary?.half_day || 0) * 0.5) * (monthlySalary / 30))}</span>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <div className="flex justify-between items-center opacity-70">
-                                                <span className="text-white text-[11px] sm:text-[12px] font-bold">Production Pay ({unitsProduced} units)</span>
-                                                <span className="text-white font-black text-[13px] sm:text-[14px]">₹{formatAmount(unitsProduced * ratePerUnit)}</span>
-                                            </div>
-                                            <div className="flex justify-between items-center text-blue-400/70">
-                                                <span className="text-[10px] font-bold uppercase">Rate: ₹{ratePerUnit}/unit</span>
-                                            </div>
-                                        </>
-                                    )}
-                                    <div className="flex justify-between items-center opacity-70">
-                                        <span className="text-white text-[11px] sm:text-[12px] font-bold">Extra Bonus</span>
-                                        <span className="text-white font-black text-[13px] sm:text-[14px]">₹{formatAmount(bonus)}</span>
+                                <div className="space-y-5 mb-10">
+                                    <div className="flex justify-between items-center opacity-60">
+                                        <span className="text-white text-[10px] font-bold uppercase tracking-widest">Live Attendance Pay</span>
+                                        <span className="text-white font-black text-xs">₹{formatAmount(currentAttendanceEarned)}</span>
                                     </div>
-                                    <div className="flex justify-between items-center text-teal-400">
-                                        <span className="text-[11px] sm:text-[12px] font-bold">Already Paid (this period)</span>
-                                        <span className="font-black text-[13px] sm:text-[14px]">₹{formatAmount(stats.summary?.total_expense || 0)}</span>
+                                    <div className="flex justify-between items-center opacity-60">
+                                        <span className="text-white text-[10px] font-bold uppercase tracking-widest">Bonus Credit</span>
+                                        <span className="text-white font-black text-xs">₹{formatAmount(bonus)}</span>
                                     </div>
-                                    <div className="h-px bg-white/10 my-4"></div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-white text-[13px] sm:text-[14px] font-black uppercase tracking-widest">Net Payable</span>
-                                        <span className="text-blue-400 text-[24px] sm:text-[28px] font-black tracking-tighter">
-                                            ₹{formatAmount(Math.max(0, (
-                                                salaryMode === 'daily'
-                                                    ? ((attendanceStats?.summary?.present || 0) * dailyWage) + ((attendanceStats?.summary?.half_day || 0) * (dailyWage / 2)) + bonus
-                                                    : salaryMode === 'monthly'
-                                                        ? (((attendanceStats?.summary?.present || 0) + (attendanceStats?.summary?.half_day || 0) * 0.5) * (monthlySalary / 30)) + bonus
-                                                        : (unitsProduced * ratePerUnit) + bonus
-                                            ) - (stats.summary?.total_expense || 0)))}
-                                        </span>
+                                    <div className="flex justify-between items-center border-t border-white/5 pt-4">
+                                        <span className="text-rose-400 text-[10px] font-bold uppercase tracking-widest">Paid / Advances (Period)</span>
+                                        <span className="text-rose-400 font-black text-xs">-₹{formatAmount(stats.summary?.total_expense || 0)}</span>
+                                    </div>
+                                    <div className="h-px bg-white/10 my-6"></div>
+                                    <div className="flex justify-between items-end">
+                                        <div>
+                                            <p className="text-white/40 text-[6px] font-black uppercase tracking-widest mb-1">TOTAL NET SETTLEMENT</p>
+                                            <p className="text-3xl font-black text-blue-400 tracking-tighter">
+                                                ₹{formatAmount(netPayable)}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <button
                                     onClick={() => {
-                                        const gross = salaryMode === 'daily'
-                                            ? ((attendanceStats?.summary?.present || 0) * dailyWage) + ((attendanceStats?.summary?.half_day || 0) * (dailyWage / 2)) + bonus
-                                            : salaryMode === 'monthly'
-                                                ? (((attendanceStats?.summary?.present || 0) + (attendanceStats?.summary?.half_day || 0) * 0.5) * (monthlySalary / 30)) + bonus
-                                                : (unitsProduced * ratePerUnit) + bonus;
-
-                                        const calculated = Math.max(0, gross - (stats.summary?.total_expense || 0));
                                         setFormData({
                                             ...formData,
-                                            title: `Salary Payout (${salaryMode}) - ${members.find(m => m.id == filterMember)?.name}`,
-                                            amount: calculated,
+                                            title: `Salary Settlement - ${members.find(m => m.id == filterMember)?.name}`,
+                                            amount: netPayable,
                                             type: 'expense',
                                             category: 'Salary',
-                                            member_id: filterMember
+                                            member_id: filterMember,
+                                            date: new Date().toISOString().split('T')[0]
                                         });
                                         setShowAddModal(true);
                                     }}
-                                    className="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-4 sm:py-5 rounded-[20px] sm:rounded-[24px] shadow-xl shadow-blue-500/20 transition-all active:scale-95 flex items-center justify-center gap-3 text-[13px] sm:text-[14px]"
+                                    className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-3xl shadow-xl shadow-blue-500/10 transition-all active:scale-95 flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest"
                                 >
-                                    <FaPlusCircle /> Add to Expenses
+                                    <FaPlusCircle /> Finalize Payout
                                 </button>
                             </div>
                         </div>
-                    </div>
-                    <div className="bg-white rounded-[40px] p-[32px] border border-slate-100 shadow-xl">
-                        <h4 className="text-[14px] font-black mb-[16px] flex items-center gap-2">
-                            <FaQuestionCircle className="text-slate-300" />
-                            {salaryMode === 'daily' ? 'Daily Wage' : salaryMode === 'monthly' ? 'Monthly Salary' : 'Piece Rate'} Logic
-                        </h4>
-                        <p className="text-[12px] text-slate-500 leading-relaxed font-bold">
-                            {salaryMode === 'daily'
-                                ? "Earn for every day you work. Present = 1 day, Half Day = 0.5 days."
-                                : salaryMode === 'monthly'
-                                    ? "Start with a fixed monthly pay. We deduct 1/30th for every day you are absent and 1/60th for every half day."
-                                    : "Pay based on production volume. Total = (Units Produced × Rate Per Piece) + Bonus."
-                            }
-                        </p>
-                    </div>
 
-                    {/* Recent Payouts History */}
-                    {filterMember && (
-                        <div className="bg-white rounded-[40px] p-[32px] border border-slate-100 shadow-xl overflow-hidden">
-                            <div className="flex items-center gap-[12px] mb-[20px]">
-                                <div className="w-[6px] h-[18px] bg-blue-500 rounded-full"></div>
-                                <h4 className="text-[12px] font-black uppercase tracking-widest text-slate-800">Recent Payouts</h4>
+                        {/* Recent Activity Log */}
+                        <div className="bg-white rounded-[40px] p-8 border border-slate-100 shadow-sm">
+                            <div className="flex items-center gap-2 mb-4 border-b border-slate-50 pb-4">
+                                <div className="w-1 h-5 bg-blue-500 rounded-full"></div>
+                                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-800">Payment Summary</h4>
                             </div>
-                            <div className="space-y-3">
-                                {transactions
-                                    .filter(t => t.member_id == filterMember && (
-                                        t.category?.toLowerCase().includes('salary') ||
-                                        t.category?.toLowerCase().includes('advance') ||
-                                        t.title?.toLowerCase().includes('salary') ||
-                                        t.title?.toLowerCase().includes('advance')
-                                    ))
-                                    .slice(0, 5)
-                                    .map(t => (
-                                        <div key={t.id} className="flex justify-between items-center p-3 hover:bg-slate-50 rounded-2xl transition-all border-b border-slate-50 last:border-0">
-                                            <div className="flex-1 pr-2">
-                                                <p className="text-[12px] font-black text-slate-800 line-clamp-1">{t.title}</p>
-                                                <p className="text-[10px] font-bold text-slate-400 capitalize">{t.category}</p>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-[12px] font-black text-rose-500">₹{formatAmount(t.amount)}</p>
-                                                <p className="text-[8px] font-black text-slate-300 uppercase">{new Date(t.date).toLocaleDateString('en-GB')}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                {transactions.filter(t => t.member_id == filterMember && (
-                                    t.category?.toLowerCase().includes('salary') ||
-                                    t.category?.toLowerCase().includes('advance') ||
-                                    t.title?.toLowerCase().includes('salary') ||
-                                    t.title?.toLowerCase().includes('advance')
-                                )).length === 0 && (
-                                        <p className="text-[10px] font-bold text-slate-400 text-center py-4">No recent payouts found</p>
-                                    )}
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Earnings Posted</span>
+                                    <span className="text-[12px] font-black text-amber-500">₹{formatAmount(ledger.earned)}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Advances Paid</span>
+                                    <span className="text-[12px] font-black text-indigo-500">₹{formatAmount(ledger.advance)}</span>
+                                </div>
+                                <div className="flex items-center justify-between border-t border-slate-50 pt-3">
+                                    <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">Total Due (Historical)</span>
+                                    <span className="text-[14px] font-black text-slate-900">₹{formatAmount(ledger.balance)}</span>
+                                </div>
                             </div>
                         </div>
-                    )}
-                    {/* Add Modal logic could also be here if it's specific to this view but it's shared, so we open via showAddModal */}
-                    {/* Note: The SalaryCalculator requires AddModal to be present in the parent or imported here. Since showAddModal is global, we trigger it from parent */}
+                    </div>
                 </div>
             )}
         </div>

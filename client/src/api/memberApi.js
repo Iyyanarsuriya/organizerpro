@@ -1,7 +1,7 @@
 import axiosInstance from './axiosInstance';
 
-export const getMembers = async () => {
-    return await axiosInstance.get('/members');
+export const getMembers = async (params = {}) => {
+    return await axiosInstance.get('/members', { params });
 };
 
 export const getActiveMembers = async () => {

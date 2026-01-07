@@ -75,7 +75,7 @@ const ExpenseTrackerMain = () => {
     });
     const [editingId, setEditingId] = useState(null);
 
-    // Transaction List Filters
+    // Transaction List Filters (These are for the Transactions tab)
     const [filterType, setFilterType] = useState('all');
     const [filterCat, setFilterCat] = useState('all');
     const [sortBy, setSortBy] = useState('date_desc');
@@ -108,8 +108,8 @@ const ExpenseTrackerMain = () => {
     const [bonus, setBonus] = useState(0);
     const [salaryLoading, setSalaryLoading] = useState(false);
 
-    const expenseCategories = ['Food', 'Shopping', 'Rent', 'Transport', 'Utilities', 'Entertainment', 'Health', 'Other'];
-    const incomeCategories = ['Salary', 'Freelance', 'Investment', 'Gift', 'Other'];
+    const expenseCategories = ['Food', 'Shopping', 'Rent', 'Transport', 'Utilities', 'Entertainment', 'Health', 'Salary', 'Advance', 'Salary Pot', 'Other'];
+    const incomeCategories = ['Business Income', 'Freelance', 'Investment', 'Gift', 'Other'];
     const COLORS = ['#2d5bff', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
 
     const fetchData = async () => {
@@ -122,6 +122,7 @@ const ExpenseTrackerMain = () => {
             const params = {
                 projectId: filterProject,
                 memberId: filterMember,
+                memberType: filterMemberType, // NEW
                 period: isRange ? null : currentPeriod,
                 startDate: rangeStart,
                 endDate: rangeEnd
@@ -134,14 +135,25 @@ const ExpenseTrackerMain = () => {
                 getTransactionStats(params),
                 getExpenseCategories(),
                 getProjects(),
-                getActiveMembers(),
+                getMembers({ memberType: filterMemberType }), // Pass memberType to getMembers
                 getMemberRoles()
             ]);
             setTransactions(transRes.data);
-            setStats(statsRes.data);
+
+            // Adjust Stats: Exclude 'Salary Pot' from total_expense for the main business summary
+            // But if it's a member-specific view, we keep everything for the ledger calculation
+            const adjustedStats = { ...statsRes.data };
+            if (!filterMember) {
+                const potsOnly = transRes.data.filter(t => t.category === 'Salary Pot' && t.type === 'expense');
+                const potsTotal = potsOnly.reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
+                adjustedStats.summary.total_expense = Math.max(0, parseFloat(adjustedStats.summary.total_expense) - potsTotal);
+            }
+            setStats(adjustedStats);
+
             setCategories(catRes.data);
             setProjects(projRes.data);
-            setMembers(membersRes.data.data);
+            const rawMembers = membersRes.data.data;
+            setMembers(rawMembers);
             setRoles(roleRes.data.data);
 
             if (filterMember) {
@@ -155,7 +167,8 @@ const ExpenseTrackerMain = () => {
 
                 const statsArray = attRes.data?.data || [];
                 const summary = {
-                    present: statsArray.find(s => s.status === 'present')?.count || 0,
+                    present: statsArray.filter(s => ['present', 'late', 'permission'].includes(s.status))
+                        .reduce((acc, curr) => acc + curr.count, 0),
                     absent: statsArray.find(s => s.status === 'absent')?.count || 0,
                     late: statsArray.find(s => s.status === 'late')?.count || 0,
                     half_day: statsArray.find(s => s.status === 'half-day')?.count || 0,
@@ -178,6 +191,34 @@ const ExpenseTrackerMain = () => {
     useEffect(() => {
         fetchData();
     }, [currentPeriod, filterProject, filterMember, customRange.start, customRange.end, periodType]);
+
+    // Auto-fill Salary Calculator from Member Data
+    useEffect(() => {
+        if (filterMember && members.length > 0) {
+            const member = members.find(m => m.id == filterMember);
+            if (member) {
+                // Map wage_type to salaryMode
+                // If it's 'piece_rate' in DB, it maps to 'production' in SalaryCalculator logic
+                const mode = member.wage_type === 'piece_rate' ? 'production' : member.wage_type;
+                setSalaryMode(mode || 'daily');
+
+                const amount = parseFloat(member.daily_wage) || 0;
+                if (mode === 'daily') {
+                    setDailyWage(amount);
+                } else if (mode === 'monthly') {
+                    setMonthlySalary(amount);
+                } else if (mode === 'production') {
+                    setRatePerUnit(amount);
+                }
+            }
+        } else if (!filterMember) {
+            // Reset to defaults if no member selected
+            setSalaryMode('daily');
+            setDailyWage(0);
+            setMonthlySalary(0);
+            setRatePerUnit(0);
+        }
+    }, [filterMember, members]);
 
     // Period formatting logic
     useEffect(() => {
@@ -429,47 +470,100 @@ const ExpenseTrackerMain = () => {
             {/* Main Content */}
             <main className="flex-1 p-[16px] lg:p-[48px] h-screen overflow-y-auto custom-scrollbar">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6 mb-[32px] lg:mb-[48px]">
-                    <div>
-                        <div className="flex items-center gap-[12px] mb-[8px]">
-                            <button onClick={() => setShowCategoryManager(true)} className="w-[40px] h-[40px] bg-slate-500 rounded-[12px] flex items-center justify-center text-white hover:bg-slate-600 transition-all cursor-pointer shadow-lg shadow-slate-500/20 group/cat-btn shrink-0" title="Manage Categories">
-                                <Settings className="w-[20px] h-[20px] group-hover/cat-btn:rotate-90 transition-transform" />
+                <div className="flex flex-col gap-6 mb-8 lg:mb-12">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setShowCategoryManager(true)}
+                                className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-white hover:bg-slate-900 transition-all shadow-lg shadow-slate-900/20 group/cat-btn"
+                                title="Settings"
+                            >
+                                <Settings className="w-5 h-5 group-hover/cat-btn:rotate-90 transition-transform" />
                             </button>
-                            <h1 className="text-[20px] sm:text-[30px] font-black tracking-tight leading-tight">Income and Expense Tracker</h1>
+                            <div>
+                                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">Expense Tracker</h1>
+                                <div className="h-[8px] mt-0.5 flex gap-1">
+                                    <div className="px-1 bg-emerald-50 text-[6px] font-black text-emerald-600 rounded-full flex items-center uppercase tracking-tighter">FINANCE HUB</div>
+                                    <div className="px-1 bg-blue-50 text-[6px] font-black text-blue-500 rounded-full flex items-center uppercase tracking-tighter">REAL-TIME STATS</div>
+                                </div>
+                            </div>
                         </div>
-                        <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest ml-[52px]">Take control of your finances</p>
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => setShowRoleManager(true)} className="w-10 h-10 bg-white border border-slate-200 text-purple-500 rounded-xl flex items-center justify-center hover:bg-purple-50 transition-all shadow-sm" title="Manage Roles"><FaTag /></button>
+                            <button onClick={() => setShowMemberManager(true)} className="w-10 h-10 bg-white border border-slate-200 text-orange-500 rounded-xl flex items-center justify-center hover:bg-orange-50 transition-all shadow-sm" title="Members"><FaUserEdit /></button>
+                        </div>
                     </div>
 
-                    {/* Filters */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:flex xl:flex-wrap items-center gap-[8px] sm:gap-[12px] w-full xl:w-auto">
-                        <div className="col-span-2 md:col-span-1 h-[40px] flex items-center p-[4px] bg-white border border-slate-200 rounded-[12px] shadow-sm overflow-x-auto custom-scrollbar">
-                            {['day', 'week', 'month', 'year', 'range'].map((type) => (
-                                <button key={type} onClick={() => setPeriodType(type)} className={`flex-1 h-full px-[12px] rounded-[8px] text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap flex items-center justify-center ${periodType === type ? 'bg-slate-800 text-white shadow-md' : 'text-slate-400 hover:text-slate-600'}`}>{type}</button>
-                            ))}
+                    {/* Filter Grid */}
+                    <div className="grid grid-cols-2 md:flex md:flex-wrap items-end gap-3 p-4 bg-white rounded-[32px] border border-slate-100 shadow-sm transition-all hover:shadow-md">
+                        <div className="col-span-2 md:flex-1 min-w-[200px]">
+                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Period Type</label>
+                            <div className="flex p-1 bg-slate-50 rounded-xl border border-slate-100">
+                                {['day', 'week', 'month', 'year', 'range'].map((type) => (
+                                    <button
+                                        key={type}
+                                        onClick={() => setPeriodType(type)}
+                                        className={`flex-1 h-8 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${periodType === type ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                    >
+                                        {type}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                        <div className="col-span-2 md:col-span-1 h-[40px] flex items-center bg-white border border-slate-200 px-[12px] rounded-[12px] shadow-sm">
-                            {periodType === 'day' ? <input type="date" value={currentPeriod.length === 10 ? currentPeriod : ''} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-[12px] font-bold text-slate-700 outline-none bg-transparent" /> : periodType === 'week' ? <input type="week" value={currentPeriod.includes('W') ? currentPeriod : ''} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-[12px] font-bold text-slate-700 outline-none bg-transparent" /> : periodType === 'month' ? <input type="month" value={currentPeriod.length === 7 ? currentPeriod : ''} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-[12px] font-bold text-slate-700 outline-none bg-transparent" /> : periodType === 'year' ? <input type="number" min="2000" max="2100" value={currentPeriod.slice(0, 4)} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-[12px] font-bold text-slate-700 outline-none bg-transparent" /> : <div className="flex items-center gap-[8px] w-full"><input type="date" value={customRange.start} onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })} className="text-[10px] font-bold text-slate-700 w-full" /><span className="text-slate-400">-</span><input type="date" value={customRange.end} onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })} className="text-[10px] font-bold text-slate-700 w-full" /></div>}
+
+                        <div className="col-span-1 md:w-32">
+                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select {periodType}</label>
+                            <div className="h-10 bg-slate-50 border border-slate-100 rounded-xl px-3 flex items-center">
+                                {periodType === 'day' ? <input type="date" value={currentPeriod.length === 10 ? currentPeriod : ''} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-xs font-bold text-slate-700 outline-none bg-transparent" /> :
+                                    periodType === 'week' ? <input type="week" value={currentPeriod.includes('W') ? currentPeriod : ''} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-xs font-bold text-slate-700 outline-none bg-transparent" /> :
+                                        periodType === 'month' ? <input type="month" value={currentPeriod.length === 7 ? currentPeriod : ''} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-xs font-bold text-slate-700 outline-none bg-transparent" /> :
+                                            periodType === 'year' ? <input type="number" min="2000" max="2100" value={currentPeriod.slice(0, 4)} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-xs font-bold text-slate-700 outline-none bg-transparent" /> :
+                                                <div className="flex items-center gap-1 w-full"><input type="date" value={customRange.start} onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })} className="text-[9px] font-bold text-slate-700 w-full bg-transparent" /><span className="text-slate-400">-</span><input type="date" value={customRange.end} onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })} className="text-[9px] font-bold text-slate-700 w-full bg-transparent" /></div>}
+                            </div>
                         </div>
-                        <div className="col-span-1 h-[40px] flex items-center gap-[8px] bg-white border border-slate-200 px-[12px] rounded-[12px] shadow-sm">
-                            <select value={filterProject} onChange={(e) => setFilterProject(e.target.value)} className="w-full text-[12px] font-bold text-slate-700 outline-none bg-transparent"><option value="">Projects</option>{projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
+
+                        <div className="col-span-1 md:w-32">
+                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Project</label>
+                            <select value={filterProject} onChange={(e) => setFilterProject(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
+                                <option value="">All Projects</option>
+                                {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                            </select>
                         </div>
-                        <div className="col-span-1 h-[40px] flex items-center gap-[8px] bg-white border border-slate-200 px-[12px] rounded-[12px] shadow-sm">
-                            <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} className="w-full text-[12px] font-bold text-slate-700 outline-none bg-transparent">
-                                <option value="">All Categories</option>
+
+                        <div className="col-span-1 md:w-32">
+                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Role</label>
+                            <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
+                                <option value="">All Roles</option>
                                 {[...new Set([...roles.map(r => r.name), ...members.map(m => m.role).filter(Boolean)])].sort().map(role => (
                                     <option key={role} value={role}>{role}</option>
                                 ))}
                             </select>
-                            <button onClick={() => setShowRoleManager(true)} className="text-slate-400 hover:text-purple-600 transition-colors" title="Manage Categories"><FaTag /></button>
                         </div>
-                        <div className="col-span-1 h-[40px] flex items-center gap-[8px] bg-white border border-slate-200 px-[12px] rounded-[12px] shadow-sm">
-                            <select value={filterMember} onChange={(e) => setFilterMember(e.target.value)} className="w-full text-[12px] font-bold text-slate-700 outline-none bg-transparent"><option value="">Everyone</option>{members.filter(m => !filterRole || m.role === filterRole).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select>
+
+                        <div className="col-span-1 md:w-32">
+                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Type</label>
+                            <select value={filterMemberType} onChange={(e) => setFilterMemberType(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
+                                <option value="all">Everyone</option>
+                                <option value="worker">Workers</option>
+                                <option value="employee">Employees</option>
+                            </select>
                         </div>
-                        <div className="col-span-2 flex items-center gap-[8px] xl:w-auto">
+
+                        <div className="col-span-1 md:w-32">
+                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Member</label>
+                            <select value={filterMember} onChange={(e) => setFilterMember(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
+                                <option value="">Everyone</option>
+                                {members.filter(m => (!filterRole || m.role === filterRole) && (filterMemberType === 'all' || m.member_type === filterMemberType)).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                            </select>
+                        </div>
+
+                        <div className="col-span-2 md:w-auto md:ml-auto flex items-center gap-2">
                             <ExportButtons onExportCSV={() => setConfirmModal({ show: true, type: 'CSV', label: 'CSV Report' })} onExportPDF={() => setConfirmModal({ show: true, type: 'PDF', label: 'PDF Report' })} onExportTXT={() => setConfirmModal({ show: true, type: 'TXT', label: 'Plain Text Report' })} />
-                            <button onClick={() => setShowProjectManager(true)} className="flex-1 xl:flex-none h-[40px] flex items-center justify-center gap-[8px] bg-[#2d5bff] text-white px-[16px] rounded-[12px] shadow-lg shadow-blue-500/20 hover:scale-105 transition-transform" title="New Project"><FaFolderPlus /><span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Project</span></button>
-                            <button onClick={() => setShowMemberManager(true)} className="w-[40px] h-[40px] bg-white text-slate-500 rounded-[12px] flex items-center justify-center hover:bg-orange-50 transition-all border border-slate-200 shadow-sm"><FaUserEdit /></button>
-                            <button onClick={() => setShowDailyWorkLogManager(true)} className="w-[40px] h-[40px] bg-white text-slate-500 rounded-[12px] flex items-center justify-center hover:bg-indigo-50 transition-all border border-slate-200 shadow-sm" title="Daily Work Logs"><FaBoxes /></button>
+                            <button onClick={() => setShowProjectManager(true)} className="h-10 bg-blue-600 text-white px-4 rounded-xl shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2" title="New Project">
+                                <FaFolderPlus />
+                                <span className="text-[9px] font-black uppercase tracking-widest hidden sm:inline">Project</span>
+                            </button>
+                            <button onClick={() => setShowDailyWorkLogManager(true)} className="w-10 h-10 bg-slate-800 text-white rounded-xl flex items-center justify-center hover:bg-slate-900 transition-all shadow-sm" title="Daily Work Logs"><FaBoxes /></button>
                         </div>
                     </div>
                 </div>
@@ -519,31 +613,76 @@ const ExpenseTrackerMain = () => {
 
             {/* Global Modals */}
             {showAddModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[40px] p-[32px] sm:p-[40px] w-full max-w-[448px] shadow-2xl relative animate-in zoom-in-95 duration-300">
-                        <button onClick={() => { setShowAddModal(false); setEditingId(null); }} className="absolute top-[32px] right-[32px] text-slate-400 hover:text-slate-800 transition-colors"><FaTimes /></button>
-                        <h2 className="text-[24px] font-black mb-[32px] flex items-center gap-[12px]">
-                            <div className="w-[8px] h-[32px] bg-blue-500 rounded-full"></div>
-                            {editingId ? 'Edit Transaction' : `Add ${formData.type === 'income' ? 'Income' : 'Expense'}`}
-                        </h2>
-                        <form onSubmit={handleSubmit} className="space-y-[24px]">
-                            <div className="flex p-[4px] bg-slate-100 rounded-[16px] mb-[32px]">
-                                <button type="button" onClick={() => setFormData({ ...formData, type: 'expense', category: 'Food' })} className={`flex-1 py-[12px] px-[16px] rounded-[12px] text-[10px] font-black uppercase tracking-widest transition-all ${formData.type === 'expense' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'}`}>Expense</button>
-                                <button type="button" onClick={() => setFormData({ ...formData, type: 'income', category: 'Salary' })} className={`flex-1 py-[12px] px-[16px] rounded-[12px] text-[10px] font-black uppercase tracking-widest transition-all ${formData.type === 'income' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'}`}>Income</button>
+                <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[40px] p-8 sm:p-10 w-full max-w-md shadow-2xl relative animate-in zoom-in-95 duration-300 border border-white">
+                        <button onClick={() => { setShowAddModal(false); setEditingId(null); }} className="absolute top-8 right-8 text-slate-400 hover:text-slate-800 transition-colors">
+                            <FaTimes size={18} />
+                        </button>
+
+                        <div className="mb-8">
+                            <h2 className="text-2xl font-black text-slate-900 leading-tight">
+                                {editingId ? 'Edit Record' : `New ${formData.type === 'income' ? 'Income' : 'Expense'}`}
+                            </h2>
+                            <div className="h-[8px] mt-1 flex gap-1">
+                                <div className="px-1 bg-blue-50 text-[6px] font-black text-blue-500 rounded-full flex items-center uppercase tracking-tighter">FINANCIAL RECORD</div>
+                                <div className="px-1 bg-slate-100 text-[6px] font-black text-slate-400 rounded-full flex items-center uppercase tracking-tighter">{formData.type.toUpperCase()}</div>
                             </div>
-                            <div className="space-y-[16px]">
-                                <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Label</label><input required type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[16px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all font-['Outfit']" placeholder="Electricity, Salary..." /></div>
-                                <div className="grid grid-cols-2 gap-[16px]">
-                                    <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[8px]">Project</label><select value={formData.project_id} onChange={(e) => setFormData({ ...formData, project_id: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-[20px] px-[20px] py-[14px] text-[12px] font-bold text-slate-700 outline-none focus:border-blue-500"><option value="">No Project</option>{projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
-                                    <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[8px]">Member</label><select value={formData.member_id} onChange={(e) => setFormData({ ...formData, member_id: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-[20px] px-[20px] py-[14px] text-[12px] font-bold text-slate-700 outline-none focus:border-blue-500"><option value="">No Member</option>{members.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}</select></div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-[16px]">
-                                    <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Amount</label><input required type="number" step="0.01" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[16px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500" placeholder="0.00" /></div>
-                                    <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Category</label><select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[16px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500">{[...new Set([...(formData.type === 'expense' ? expenseCategories : incomeCategories), ...categories.map(c => c.name)])].map(cat => <option key={cat} value={cat}>{cat}</option>)}</select></div>
-                                </div>
-                                <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Date</label><input required type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[16px] text-[14px] font-bold text-slate-700 outline-none focus:border-blue-500" /></div>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div className="flex p-1 bg-slate-100 rounded-2xl">
+                                <button type="button" onClick={() => setFormData({ ...formData, type: 'expense', category: 'Food' })} className={`flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${formData.type === 'expense' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>Expense</button>
+                                <button type="button" onClick={() => setFormData({ ...formData, type: 'income', category: 'Salary' })} className={`flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${formData.type === 'income' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>Income</button>
                             </div>
-                            <button type="submit" className="w-full bg-[#1a1c21] hover:bg-slate-800 text-white font-black py-[20px] rounded-[24px] transition-all active:scale-95 shadow-xl shadow-blue-500/10 flex items-center justify-center gap-[12px] text-[14px]">{editingId ? <FaEdit /> : <FaPlus />} {editingId ? 'Update Transaction' : 'Save Transaction'}</button>
+
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-1 gap-4">
+                                    <div>
+                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Title / Description</label>
+                                        <input required type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs" placeholder="What is this for?" />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Amount (₹)</label>
+                                        <input required type="number" step="0.01" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-black text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs" placeholder="0.00" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Category</label>
+                                        <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs cursor-pointer">
+                                            {[...new Set([...(formData.type === 'expense' ? expenseCategories : incomeCategories), ...categories.map(c => c.name)])].map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Project</label>
+                                        <select value={formData.project_id} onChange={(e) => setFormData({ ...formData, project_id: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs cursor-pointer">
+                                            <option value="">No Project</option>
+                                            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Member</label>
+                                        <select value={formData.member_id} onChange={(e) => setFormData({ ...formData, member_id: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs cursor-pointer">
+                                            <option value="">No Member</option>
+                                            {members.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Transaction Date</label>
+                                    <input required type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs" />
+                                </div>
+                            </div>
+
+                            <button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-5 rounded-[24px] transition-all active:scale-95 shadow-xl shadow-slate-900/10 flex items-center justify-center gap-3 text-sm mt-4">
+                                {editingId ? <FaEdit /> : <FaPlus />}
+                                {editingId ? 'Update Record' : 'Save Record'}
+                            </button>
                         </form>
                     </div>
                 </div>

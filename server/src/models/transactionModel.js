@@ -28,6 +28,11 @@ class Transaction {
             params.push(filters.memberId);
         }
 
+        if (filters.memberType && filters.memberType !== 'all') {
+            query += ' AND w.member_type = ?';
+            params.push(filters.memberType);
+        }
+
         if (filters.period) {
             if (filters.period.length === 10) {
                 // YYYY-MM-DD (Day)
@@ -114,11 +119,17 @@ class Transaction {
             params.push(memberId);
         }
 
+        if (filters && filters.memberType && filters.memberType !== 'all') {
+            query = query.replace('FROM transactions WHERE', 'FROM transactions t JOIN members m ON t.member_id = m.id WHERE');
+            query += ' AND m.member_type = ?';
+            params.push(filters.memberType);
+        }
+
         const [rows] = await db.query(query, params);
         return rows[0];
     }
 
-    static async getLifetimeStats(userId, projectId, memberId) {
+    static async getLifetimeStats(userId, projectId, memberId, filters = {}) {
         let query = `SELECT 
             SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as total_income,
             SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as total_expense
@@ -133,6 +144,12 @@ class Transaction {
         if (memberId) {
             query += ` AND member_id = ?`;
             params.push(memberId);
+        }
+
+        if (filters && filters.memberType && filters.memberType !== 'all') {
+            query = query.replace('FROM transactions WHERE', 'FROM transactions t JOIN members m ON t.member_id = m.id WHERE');
+            query += ' AND m.member_type = ?';
+            params.push(filters.memberType);
         }
 
         const [rows] = await db.query(query, params);
@@ -185,18 +202,29 @@ class Transaction {
             params.push(memberId);
         }
 
+        if (filters && filters.memberType && filters.memberType !== 'all') {
+            query = query.replace('FROM transactions WHERE', 'FROM transactions t JOIN members m ON t.member_id = m.id WHERE');
+            query += ' AND m.member_type = ?';
+            params.push(filters.memberType);
+        }
+
         query += ` GROUP BY category, type`;
 
         const [rows] = await db.query(query, params);
         return rows;
     }
 
-    static async getMemberExpenseSummary(userId, period, projectId, startDate, endDate) {
+    static async getMemberExpenseSummary(userId, period, projectId, startDate, endDate, filters = {}) {
         let query = `SELECT m.name as member_name, SUM(t.amount) as total 
                     FROM transactions t
                     JOIN members m ON t.member_id = m.id
                     WHERE t.user_id = ? AND t.type = 'expense'`;
         const params = [userId];
+
+        if (filters && filters.memberType && filters.memberType !== 'all') {
+            query += ' AND m.member_type = ?';
+            params.push(filters.memberType);
+        }
 
         if (period) {
             if (period.length === 10) {

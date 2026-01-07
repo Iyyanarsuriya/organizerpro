@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaFileAlt } from 'react-icons/fa';
+import { FaFileAlt, FaReceipt, FaHandHoldingUsd, FaMoneyBillWave } from 'react-icons/fa';
 import { formatAmount } from '../../utils/formatUtils';
 
 const Reports = ({
@@ -21,14 +21,22 @@ const Reports = ({
     setCustomReportForm,
     customReportForm
 }) => {
+    // Ledger Logic for Member View
+    const memberLedgerBalance = React.useMemo(() => {
+        if (!filterMember) return { earned: 0, paid: 0, balance: 0 };
+        const earned = transactions.filter(t => t.category === 'Salary Pot').reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
+        const paid = transactions.filter(t => ['Salary', 'Advance'].includes(t.category)).reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
+        return { earned, paid, balance: earned - paid };
+    }, [transactions, filterMember]);
+
     return (
         <div className="animate-in slide-in-from-right-10 duration-500">
             <div className="flex justify-between items-center mb-[32px]">
-                <h2 className="text-[20px] sm:text-[24px] font-black">Financial Reports</h2>
+                <h2 className="text-[20px] sm:text-[24px] font-black tracking-tight text-slate-900">Financial Intelligence</h2>
                 <div className="flex items-center gap-[8px]">
                     <button
                         onClick={() => handleExportPDF(filteredTransactions)}
-                        className="bg-[#1a1c21] text-white px-[16px] py-[10px] rounded-[14px] text-[10px] font-black uppercase tracking-widest shadow-lg shadow-black/10 hover:scale-105 transition-all whitespace-nowrap"
+                        className="bg-slate-900 text-white px-[16px] py-[10px] rounded-[14px] text-[10px] font-black uppercase tracking-widest shadow-lg shadow-black/10 hover:scale-105 transition-all whitespace-nowrap"
                     >
                         PDF
                     </button>
@@ -54,107 +62,131 @@ const Reports = ({
                             <FaFileAlt />
                         </div>
                         <div>
-                            <h3 className="text-[20px] font-black">
+                            <h3 className="text-[20px] font-black text-slate-900">
                                 {filterMember
-                                    ? `${members.find(w => w.id == filterMember)?.name}'s Report`
+                                    ? `${members.find(w => w.id == filterMember)?.name}'s Ledger`
                                     : filterProject
-                                        ? `${projects.find(p => p.id == filterProject)?.name} Report`
-                                        : 'Financial Summary'}
+                                        ? `${projects.find(p => p.id == filterProject)?.name} Analysis`
+                                        : 'Global Performance'}
                             </h3>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                {periodType} Performance: {periodType === 'range' ? `${customRange.start} to ${customRange.end}` : currentPeriod}
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mt-1">
+                                {periodType} VIEW: {periodType === 'range' ? `${customRange.start} to ${customRange.end}` : currentPeriod}
                             </p>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-[32px] mb-[64px]">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
                         {filterMember ? (
                             <>
-                                <div className="p-[24px] bg-blue-50/50 rounded-[24px] border border-blue-100">
-                                    <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-[8px]">Total Salary Paid</p>
-                                    <p className="text-[32px] font-black tracking-tighter text-blue-600">₹{formatAmount(memberStats?.totalSalary || 0)}</p>
-                                    <div className="mt-[16px] flex items-center gap-[8px]">
-                                        <div className="w-[8px] h-[8px] rounded-full bg-blue-500"></div>
-                                        <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Fixed Payouts</span>
+                                <div className="p-6 bg-emerald-50/50 rounded-3xl border border-emerald-100 flex flex-col justify-between min-h-[140px]">
+                                    <div>
+                                        <p className="text-[8px] font-black text-emerald-400 uppercase tracking-[0.2em] mb-1">Unpaid Balance</p>
+                                        <h4 className={`text-3xl font-black tracking-tighter ${memberLedgerBalance.balance > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                            ₹{formatAmount(memberLedgerBalance.balance)}
+                                        </h4>
+                                    </div>
+                                    <div className="h-[8px] flex items-center gap-1">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                                        <span className="text-[6px] font-black text-emerald-600 uppercase tracking-tighter">EARNED - PAID (PERIOD)</span>
                                     </div>
                                 </div>
-                                <div className="p-[24px] bg-orange-50/50 rounded-[24px] border border-orange-100">
-                                    <p className="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-[8px]">Total Advances</p>
-                                    <p className="text-[32px] font-black tracking-tighter text-orange-600">₹{formatAmount(memberStats?.totalAdvances || 0)}</p>
-                                    <div className="mt-[16px] flex items-center gap-[8px]">
-                                        <div className="w-[8px] h-[8px] rounded-full bg-orange-500"></div>
-                                        <span className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Ad-hoc Payments</span>
+                                <div className="p-6 bg-blue-50/50 rounded-3xl border border-blue-100 flex flex-col justify-between min-h-[140px]">
+                                    <div>
+                                        <p className="text-[8px] font-black text-blue-400 uppercase tracking-[0.2em] mb-1">Total Earned (Pots)</p>
+                                        <h4 className="text-3xl font-black tracking-tighter text-blue-600">₹{formatAmount(memberLedgerBalance.earned)}</h4>
+                                    </div>
+                                    <div className="h-[8px] flex items-center gap-1">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                                        <span className="text-[6px] font-black text-blue-600 uppercase tracking-tighter">DAILY POTS POSTED</span>
                                     </div>
                                 </div>
-                                <div className="p-[24px] bg-slate-900 rounded-[24px] border border-slate-800 shadow-xl shadow-slate-900/20">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px]">Lifetime Payout</p>
-                                    <p className="text-[32px] font-black tracking-tighter text-white">₹{formatAmount(stats.lifetime?.total_expense - stats.lifetime?.total_income)}</p>
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-[16px]">Total across all time</p>
+                                <div className="p-6 bg-slate-900 rounded-3xl border border-slate-800 shadow-xl shadow-slate-900/10 flex flex-col justify-between min-h-[140px]">
+                                    <div>
+                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Lifetime Payout</p>
+                                        <h4 className="text-3xl font-black tracking-tighter text-white">₹{formatAmount(stats.lifetime?.total_expense || 0)}</h4>
+                                    </div>
+                                    <div className="h-[8px] flex items-center gap-1">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-600"></div>
+                                        <span className="text-[6px] font-black text-slate-400 uppercase tracking-tighter">TOTAL CASH TRANSFERRED</span>
+                                    </div>
                                 </div>
                             </>
                         ) : (
                             <>
-                                <div className="p-[24px] bg-slate-50 rounded-[24px] border border-slate-100">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px]">Total Income</p>
-                                    <p className="text-[32px] font-black tracking-tighter text-emerald-600">₹{formatAmount(stats.summary?.total_income || 0)}</p>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-[16px]">Period Earnings</p>
+                                <div className="p-6 bg-emerald-50/50 rounded-3xl border border-emerald-100 flex flex-col justify-between min-h-[140px]">
+                                    <div>
+                                        <p className="text-[8px] font-black text-emerald-400 uppercase tracking-[0.2em] mb-1">Total Income</p>
+                                        <h4 className="text-3xl font-black tracking-tighter text-emerald-600">₹{formatAmount(stats.summary?.total_income || 0)}</h4>
+                                    </div>
+                                    <div className="h-[8px] flex items-center gap-1">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                                        <span className="text-[6px] font-black text-emerald-600 uppercase tracking-tighter">PERIOD EARNINGS</span>
+                                    </div>
                                 </div>
-                                <div className="p-[24px] bg-slate-50 rounded-[24px] border border-slate-100">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px]">Total Expense</p>
-                                    <p className="text-[32px] font-black tracking-tighter text-rose-600">₹{formatAmount(stats.summary?.total_expense || 0)}</p>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-[16px]">Period Spending</p>
+                                <div className="p-6 bg-rose-50/50 rounded-3xl border border-rose-100 flex flex-col justify-between min-h-[140px]">
+                                    <div>
+                                        <p className="text-[8px] font-black text-rose-400 uppercase tracking-[0.2em] mb-1">Total Expense</p>
+                                        <h4 className="text-3xl font-black tracking-tighter text-rose-600">₹{formatAmount(stats.summary?.total_expense || 0)}</h4>
+                                    </div>
+                                    <div className="h-[8px] flex items-center gap-1">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
+                                        <span className="text-[6px] font-black text-rose-600 uppercase tracking-tighter">PERIOD SPENDING</span>
+                                    </div>
                                 </div>
                             </>
                         )}
                     </div>
 
                     {filterMember && (
-                        <div className="mb-[64px] animate-in fade-in slide-in-from-bottom-5 duration-700">
-                            <div className="flex items-center gap-[12px] mb-[24px]">
-                                <div className="w-[8px] h-[24px] bg-emerald-500 rounded-full"></div>
-                                <h4 className="text-[16px] font-black uppercase tracking-widest text-slate-800">Member Ledger: Salaries & Advances</h4>
+                        <div className="mb-16 animate-in fade-in slide-in-from-bottom-5 duration-700">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-1 h-6 bg-indigo-500 rounded-full"></div>
+                                <h4 className="text-xs font-black uppercase tracking-widest text-slate-800">Detailed Transaction Ledger</h4>
                             </div>
-                            <div className="overflow-x-auto rounded-[24px] border border-slate-100 bg-slate-50/50">
-                                <table className="w-full text-left border-collapse">
+                            <div className="overflow-x-auto rounded-[32px] border border-slate-100 bg-white shadow-xs overflow-hidden">
+                                <table className="w-full text-left border-collapse min-w-[600px]">
                                     <thead>
-                                        <tr className="border-b border-slate-100">
-                                            <th className="px-[24px] py-[16px] text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
-                                            <th className="px-[24px] py-[16px] text-[10px] font-black text-slate-400 uppercase tracking-widest">Description</th>
-                                            <th className="px-[24px] py-[16px] text-[10px] font-black text-slate-400 uppercase tracking-widest">Category</th>
-                                            <th className="px-[24px] py-[16px] text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Amount</th>
+                                        <tr className="bg-slate-50/80">
+                                            <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Entry Date</th>
+                                            <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Reference Details</th>
+                                            <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Debit / Credit</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody className="divide-y divide-slate-50">
                                         {transactions.length > 0 ? (
                                             [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date)).map((t) => (
-                                                <tr key={t.id} className="border-b border-slate-50 hover:bg-white transition-colors group">
-                                                    <td className="px-[24px] py-[16px]">
-                                                        <p className="text-[12px] font-bold text-slate-600">
-                                                            {(() => {
-                                                                const d = new Date(t.date);
-                                                                return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-                                                            })()}
+                                                <tr key={t.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                    <td className="px-6 py-5">
+                                                        <p className="text-[11px] font-bold text-slate-500">
+                                                            {new Date(t.date).toLocaleDateString('en-GB')}
                                                         </p>
                                                     </td>
-                                                    <td className="px-[24px] py-[16px]">
-                                                        <p className="text-[14px] font-black text-slate-800">{t.title}</p>
+                                                    <td className="px-6 py-5">
+                                                        <p className="text-[13px] font-black text-slate-800 leading-tight mb-1">{t.title}</p>
+                                                        <div className="h-[8px] flex gap-1">
+                                                            <div className={`px-1.5 rounded-full flex items-center text-[6px] font-black uppercase tracking-tighter ${t.category === 'Salary Pot' ? 'bg-amber-100 text-amber-600' :
+                                                                    t.category === 'Advance' ? 'bg-indigo-100 text-indigo-600' :
+                                                                        'bg-blue-100 text-blue-600'
+                                                                }`}>
+                                                                {t.category}
+                                                            </div>
+                                                            {t.project_name && <div className="px-1.5 bg-slate-100 text-[6px] font-black text-slate-400 rounded-full flex items-center uppercase tracking-tighter">{t.project_name}</div>}
+                                                            <div className={`px-1.5 rounded-full flex items-center text-[6px] font-black uppercase tracking-tighter ${t.type === 'income' ? 'bg-emerald-50 text-emerald-500' : 'bg-slate-50 text-slate-400'}`}>
+                                                                {t.type.toUpperCase()}
+                                                            </div>
+                                                        </div>
                                                     </td>
-                                                    <td className="px-[24px] py-[16px]">
-                                                        <span className={`px-[12px] py-[4px] rounded-full text-[10px] font-black uppercase tracking-widest ${t.category.toLowerCase().includes('salary') ? 'bg-blue-100 text-blue-600' : t.category.toLowerCase().includes('advance') ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-500'}`}>
-                                                            {t.category}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-[24px] py-[16px] text-right">
-                                                        <p className={`text-[14px] font-black ${t.type === 'income' ? 'text-blue-500' : 'text-red-500'}`}>
-                                                            {t.type === 'income' ? '+' : '-'}₹{formatAmount(t.amount)}
+                                                    <td className="px-6 py-5 text-right">
+                                                        <p className={`text-[13px] font-black ${t.category === 'Salary Pot' ? 'text-amber-500' : 'text-slate-900'}`}>
+                                                            {t.category === 'Salary Pot' ? '+' : '-'}₹{formatAmount(t.amount)}
                                                         </p>
                                                     </td>
                                                 </tr>
                                             ))
                                         ) : (
                                             <tr>
-                                                <td colSpan="4" className="px-[24px] py-[48px] text-center">
-                                                    <p className="text-[12px] font-bold text-slate-400 uppercase tracking-widest">No transaction history for this member in the selected period.</p>
+                                                <td colSpan="3" className="px-6 py-12 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                    No ledger entries found for this period
                                                 </td>
                                             </tr>
                                         )}
@@ -162,12 +194,12 @@ const Reports = ({
                                     {transactions.length > 0 && (
                                         <tfoot>
                                             <tr className="bg-slate-900 text-white">
-                                                <td colSpan="3" className="px-[24px] py-[20px] rounded-bl-[24px]">
-                                                    <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Net Paid (Period Total)</p>
+                                                <td colSpan="2" className="px-6 py-6 rounded-bl-[32px]">
+                                                    <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Period Net Balance (Unpaid)</p>
                                                 </td>
-                                                <td className="px-[24px] py-[20px] text-right rounded-br-[24px]">
-                                                    <p className="text-[18px] font-black tracking-tighter">
-                                                        ₹{formatAmount(stats.summary?.total_expense - stats.summary?.total_income)}
+                                                <td className="px-6 py-6 text-right rounded-br-[32px]">
+                                                    <p className="text-2xl font-black tracking-tighter text-blue-400">
+                                                        ₹{formatAmount(memberLedgerBalance.balance)}
                                                     </p>
                                                 </td>
                                             </tr>
@@ -177,20 +209,21 @@ const Reports = ({
                             </div>
                         </div>
                     )}
+
                     {filterMember && stats.memberProjects && stats.memberProjects.length > 0 && (
-                        <div className="mb-[64px] animate-in fade-in slide-in-from-bottom-5 duration-1000">
-                            <div className="flex items-center gap-[12px] mb-[24px]">
-                                <div className="w-[8px] h-[24px] bg-blue-500 rounded-full"></div>
-                                <h4 className="text-[16px] font-black uppercase tracking-widest text-slate-800">Project Breakdown (Lifetime)</h4>
+                        <div className="mb-16 animate-in fade-in slide-in-from-bottom-5 duration-1000">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
+                                <h4 className="text-xs font-black uppercase tracking-widest text-slate-800">Project Allocation</h4>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {stats.memberProjects.map((pw, i) => (
-                                    <div key={i} className="bg-slate-50 border border-slate-100 p-[20px] rounded-[24px] flex justify-between items-center group hover:bg-white hover:shadow-lg transition-all">
+                                    <div key={i} className="bg-white border border-slate-100 p-5 rounded-3xl flex justify-between items-center group hover:border-blue-200 transition-all shadow-xs">
                                         <div>
-                                            <p className="text-[12px] font-black text-slate-800 uppercase tracking-widest mb-[4px]">{pw.project_name}</p>
-                                            <p className="text-[10px] font-bold text-slate-400">Total Contribution</p>
+                                            <h5 className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-1">{pw.project_name}</h5>
+                                            <p className="text-[7px] font-bold text-slate-400 uppercase tracking-widest">Member Total Distribution</p>
                                         </div>
-                                        <p className="text-[18px] font-black text-blue-500 group-hover:scale-110 transition-transform">₹{formatAmount(pw.total)}</p>
+                                        <p className="text-xl font-black text-blue-600">₹{formatAmount(pw.total)}</p>
                                     </div>
                                 ))}
                             </div>
@@ -198,29 +231,35 @@ const Reports = ({
                     )}
 
                     {!filterMember && stats.memberExpenses && stats.memberExpenses.length > 0 && (
-                        <div className="mb-[64px] animate-in fade-in slide-in-from-bottom-5 duration-700">
-                            <div className="flex items-center gap-[12px] mb-[24px]">
-                                <div className="w-[8px] h-[24px] bg-blue-500 rounded-full"></div>
-                                <h4 className="text-[16px] font-black uppercase tracking-widest text-slate-800">Labour Payments (This Period)</h4>
+                        <div className="mb-16 animate-in fade-in slide-in-from-bottom-5 duration-700">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-1 h-6 bg-purple-500 rounded-full"></div>
+                                <h4 className="text-xs font-black uppercase tracking-widest text-slate-800">Member Disbursement View</h4>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[16px]">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {stats.memberExpenses.map((me, i) => (
-                                    <div key={i} className="bg-white border border-slate-100 p-[24px] rounded-[32px] shadow-sm hover:shadow-md transition-all group">
-                                        <div className="flex items-center gap-[16px] mb-[12px]">
-                                            <div className="w-[40px] h-[40px] bg-slate-100 rounded-full flex items-center justify-center text-[14px] font-black text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                    <div key={i} className="bg-white border border-slate-100 p-6 rounded-[32px] shadow-xs hover:border-purple-200 transition-all group">
+                                        <div className="flex items-center gap-4 mb-4">
+                                            <div className="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center text-xs font-black">
                                                 {me.member_name.charAt(0)}
                                             </div>
-                                            <p className="font-black text-slate-800">{me.member_name}</p>
+                                            <div>
+                                                <p className="text-[13px] font-black text-slate-900">{me.member_name}</p>
+                                                <div className="h-[8px] flex items-center gap-1">
+                                                    <div className="w-1 h-1 rounded-full bg-blue-500"></div>
+                                                    <span className="text-[6px] font-black text-slate-400 uppercase tracking-tighter">FINANCIAL ASSET</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <p className="text-[20px] font-black text-blue-600">₹{formatAmount(me.total)}</p>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-[4px]">Paid in this period</p>
+                                        <p className="text-2xl font-black text-slate-900 tracking-tighter">₹{formatAmount(me.total)}</p>
+                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">Paid this period</p>
                                     </div>
                                 ))}
                             </div>
                         </div>
                     )}
 
-                    <div className="flex justify-center">
+                    <div className="flex justify-center mt-8">
                         <button
                             onClick={() => {
                                 setCustomReportForm({
@@ -232,9 +271,9 @@ const Reports = ({
                                 });
                                 setShowCustomReportModal(true);
                             }}
-                            className="text-[12px] font-black text-blue-500 uppercase tracking-widest hover:bg-blue-50 px-[32px] py-[12px] rounded-[16px] transition-all"
+                            className="bg-blue-50 text-blue-600 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all border border-blue-100"
                         >
-                            Generate Custom Report
+                            Configure Custom Analytics
                         </button>
                     </div>
                 </div>

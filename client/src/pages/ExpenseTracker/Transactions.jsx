@@ -52,40 +52,47 @@ const Transactions = ({
                 </div>
             </div>
 
-            <div className="space-y-[16px]">
+            <div className="space-y-4">
                 {filteredTransactions.map(t => (
-                    <div key={t.id} className="bg-white p-[20px] sm:p-[24px] rounded-[32px] shadow-sm border border-slate-100 flex flex-col sm:flex-row sm:justify-between sm:items-center group hover:shadow-lg transition-all transform hover:-translate-y-1 gap-[16px]">
-                        <div className="flex items-center gap-[20px]">
-                            <div className={`w-[48px] h-[48px] sm:w-[56px] sm:h-[56px] rounded-[20px] flex items-center justify-center text-[20px] shadow-sm shrink-0 ${t.type === 'income' ? 'bg-blue-50 text-blue-500' : 'bg-red-50 text-red-500'}`}>
+                    <div key={t.id} className="bg-white p-4 sm:p-6 rounded-[32px] shadow-sm border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:shadow-md transition-all">
+                        <div className="flex items-center gap-4">
+                            <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-xl shadow-sm shrink-0 transition-transform group-hover:scale-105 ${t.type === 'income' ? 'bg-blue-50 text-blue-500' : 'bg-red-50 text-red-500'}`}>
                                 {t.type === 'income' ? '↓' : '↑'}
                             </div>
                             <div>
-                                <h4 className="font-black text-slate-800 text-[14px] sm:text-[16px]">{t.title}</h4>
-                                <div className="flex flex-wrap items-center gap-[12px] mt-[4px]">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t.category}</span>
-                                    {t.member_name && (
-                                        <>
-                                            <span className="w-[4px] h-[4px] rounded-full bg-slate-300"></span>
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-blue-500 flex items-center gap-1">
-                                                <FaUserCheck className="text-[8px]" /> {t.member_name}
-                                            </span>
-                                        </>
+                                <h4 className="font-black text-slate-900 text-sm sm:text-base leading-tight">{t.title}</h4>
+                                <div className="h-[8px] mt-1.5 flex flex-wrap gap-1">
+                                    <div className="px-1 bg-slate-100 text-[6px] font-black text-slate-400 rounded-full flex items-center uppercase tracking-tighter">
+                                        {t.category}
+                                    </div>
+                                    {t.project_name && (
+                                        <div className="px-1 bg-blue-50 text-[6px] font-black text-blue-500 rounded-full flex items-center uppercase tracking-tighter">
+                                            {t.project_name}
+                                        </div>
                                     )}
-                                    <span className="w-[4px] h-[4px] rounded-full bg-slate-300"></span>
-                                    <span className="text-[10px] font-bold text-slate-400">{formatDateTime(t.updated_at || t.created_at)}</span>
+                                    {t.member_name && (
+                                        <div className="px-1 bg-orange-50 text-[6px] font-black text-orange-500 rounded-full flex items-center uppercase tracking-tighter">
+                                            {t.member_name}
+                                        </div>
+                                    )}
+                                    <div className="px-1 bg-slate-50 text-[6px] font-black text-slate-300 rounded-full flex items-center uppercase tracking-tighter">
+                                        {formatDateTime(t.updated_at || t.created_at)}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div className="flex items-center justify-between sm:justify-end gap-[12px] sm:gap-[24px]">
-                            <p className={`text-[18px] sm:text-[20px] font-black tracking-tighter ${t.type === 'income' ? 'text-blue-500' : 'text-red-500'}`}>
+                        <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-6 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-50">
+                            <p className={`text-lg sm:text-xl font-black tracking-tight ${t.type === 'income' ? 'text-blue-600' : 'text-red-600'}`}>
                                 {t.type === 'income' ? '+' : '-'}₹{formatAmount(t.amount)}
                             </p>
-                            <button onClick={() => handleEdit(t)} className="p-[12px] text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-[12px] transition-all opacity-100 sm:opacity-0 group-hover:opacity-100 cursor-pointer">
-                                <FaEdit />
-                            </button>
-                            <button onClick={() => confirmDelete(t.id)} className="p-[12px] text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-[12px] transition-all opacity-100 sm:opacity-0 group-hover:opacity-100 cursor-pointer">
-                                <FaTrash />
-                            </button>
+                            <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={() => handleEdit(t)} className="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all cursor-pointer">
+                                    <FaEdit size={14} />
+                                </button>
+                                <button onClick={() => confirmDelete(t.id)} className="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer">
+                                    <FaTrash size={14} />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 ))}

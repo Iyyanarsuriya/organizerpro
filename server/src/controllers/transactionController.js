@@ -2,8 +2,8 @@ const Transaction = require('../models/transactionModel');
 
 exports.getTransactions = async (req, res) => {
     try {
-        const { projectId, memberId, period, startDate, endDate } = req.query;
-        const transactions = await Transaction.getAllByUserId(req.user.id, { projectId, memberId, period, startDate, endDate });
+        const { projectId, memberId, memberType, period, startDate, endDate } = req.query;
+        const transactions = await Transaction.getAllByUserId(req.user.id, { projectId, memberId, memberType, period, startDate, endDate });
         res.json(transactions);
     } catch (error) {
         console.error(error);
@@ -66,13 +66,13 @@ exports.deleteTransaction = async (req, res) => {
 
 exports.getTransactionStats = async (req, res) => {
     try {
-        const { period, projectId, memberId, startDate, endDate } = req.query;
-        // Note: 'period' can now be YYYY-MM or YYYY.
-        const summary = await Transaction.getStats(req.user.id, period, projectId, startDate, endDate, memberId);
-        const categories = await Transaction.getCategoryStats(req.user.id, period, projectId, startDate, endDate, memberId);
-        const lifetime = await Transaction.getLifetimeStats(req.user.id, projectId, memberId);
+        const { period, projectId, memberId, memberType, startDate, endDate } = req.query;
+        const filters = { memberType };
+        const summary = await Transaction.getStats(req.user.id, period, projectId, startDate, endDate, memberId, filters);
+        const categories = await Transaction.getCategoryStats(req.user.id, period, projectId, startDate, endDate, memberId, filters);
+        const lifetime = await Transaction.getLifetimeStats(req.user.id, projectId, memberId, filters);
         const memberProjects = memberId ? await Transaction.getMemberProjectStats(req.user.id, memberId) : null;
-        const memberExpenses = !memberId ? await Transaction.getMemberExpenseSummary(req.user.id, period, projectId, startDate, endDate) : null;
+        const memberExpenses = !memberId ? await Transaction.getMemberExpenseSummary(req.user.id, period, projectId, startDate, endDate, filters) : null;
         res.json({ summary, categories, lifetime, memberProjects, memberExpenses });
     } catch (error) {
         console.error(error);

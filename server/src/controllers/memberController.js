@@ -11,7 +11,8 @@ const createMember = async (req, res) => {
 
 const getMembers = async (req, res) => {
     try {
-        const members = await Member.getAllByUserId(req.user.id);
+        const { memberType } = req.query;
+        const members = await Member.getAllByUserId(req.user.id, memberType);
         res.status(200).json({ success: true, data: members });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -20,7 +21,8 @@ const getMembers = async (req, res) => {
 
 const getActiveMembers = async (req, res) => {
     try {
-        const members = await Member.getActiveMembers(req.user.id);
+        const { memberType } = req.query;
+        const members = await Member.getActiveMembers(req.user.id, memberType);
         res.status(200).json({ success: true, data: members });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
