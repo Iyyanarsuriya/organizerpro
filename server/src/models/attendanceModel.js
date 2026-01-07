@@ -28,6 +28,11 @@ class Attendance {
             params.push(filters.memberId);
         }
 
+        if (filters.role) {
+            query += ' AND w.role = ?';
+            params.push(filters.role);
+        }
+
         if (filters.period) {
             if (filters.period.length === 10) {
                 // YYYY-MM-DD (Day)
@@ -106,6 +111,11 @@ class Attendance {
         if (filters.memberId) {
             query += " AND member_id = ?";
             params.push(filters.memberId);
+        }
+
+        if (filters.role) {
+            query += " AND member_id IN (SELECT id FROM members WHERE user_id = ? AND role = ?)";
+            params.push(userId, filters.role);
         }
 
         query += " GROUP BY status";

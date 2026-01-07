@@ -16,7 +16,8 @@ const getAttendances = async (req, res) => {
             memberId: req.query.memberId,
             period: req.query.period,
             startDate: req.query.startDate,
-            endDate: req.query.endDate
+            endDate: req.query.endDate,
+            role: req.query.role
         };
         const attendances = await Attendance.getAllByUserId(req.user.id, filters);
         res.status(200).json({ success: true, data: attendances });
@@ -58,7 +59,8 @@ const getAttendanceStats = async (req, res) => {
             startDate: req.query.startDate,
             endDate: req.query.endDate,
             projectId: req.query.projectId,
-            memberId: req.query.memberId
+            memberId: req.query.memberId,
+            role: req.query.role
         });
         res.status(200).json({ success: true, data: stats });
     } catch (error) {

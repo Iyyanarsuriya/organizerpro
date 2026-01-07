@@ -56,7 +56,8 @@ const AttendanceTracker = () => {
         endDate: new Date().toISOString().split('T')[0],
         projectId: '',
         memberId: '',
-        status: 'all'
+        status: 'all',
+        role: ''
     });
 
     const [showPermissionModal, setShowPermissionModal] = useState(false);
@@ -303,7 +304,8 @@ const AttendanceTracker = () => {
             ? `${filters.startDate}_to_${filters.endDate}`
             : currentPeriod;
 
-        exportToCSV(headers, rows, `attendance_report_${periodStr}`);
+        const categoryStr = filters.role ? `_${filters.role}` : '';
+        exportToCSV(headers, rows, `attendance_report_${periodStr}${categoryStr}`);
     };
 
     const handleExportTXT = (data = attendances, reportStats = stats, filters = {}) => {
@@ -328,13 +330,14 @@ const AttendanceTracker = () => {
             return [dateFmt, a.member_name || 'N/A', a.status.toUpperCase(), a.subject];
         });
 
+        const categoryStr = filters.role ? `_${filters.role}` : '';
         exportToTXT({
             title: 'Attendance Report',
             period: periodStr,
             stats: statsArray,
             logHeaders,
             logRows,
-            filename: `attendance_report_${periodStr}`
+            filename: `attendance_report_${periodStr}${categoryStr}`
         });
     };
 
@@ -346,6 +349,7 @@ const AttendanceTracker = () => {
 
         const memberName = filters.memberId ? members.find(m => m.id == filters.memberId)?.name : (filterMember ? members.find(m => m.id == filterMember)?.name : 'Everyone');
         const projectName = filters.projectId ? projects.find(p => p.id == filters.projectId)?.name : (filterProject ? projects.find(p => p.id == filterProject)?.name : 'All Projects');
+        const categoryName = filters.role || (filterRole || 'All Categories');
 
         const periodStr = filters.startDate && filters.endDate
             ? `${filters.startDate} to ${filters.endDate}`
@@ -369,14 +373,15 @@ const AttendanceTracker = () => {
             ];
         });
 
+        const categoryStr = filters.role ? `_${filters.role}` : '';
         exportToPDF({
             title: 'Attendance Report',
             period: periodStr,
-            subHeader: `Member: ${memberName} | Project: ${projectName}`,
+            subHeader: `Member: ${memberName} | Project: ${projectName} | Category: ${categoryName}`,
             stats: statsArray,
             tableHeaders,
             tableRows,
-            filename: `attendance_report_${periodStr}`,
+            filename: `attendance_report_${periodStr}${categoryStr}`,
             themeColor: [37, 99, 235]
         });
     };
@@ -395,14 +400,16 @@ const AttendanceTracker = () => {
                     memberId: customReportForm.memberId,
                     startDate: customReportForm.startDate,
                     endDate: customReportForm.endDate,
-                    status: customReportForm.status === 'all' ? null : customReportForm.status
+                    status: customReportForm.status === 'all' ? null : customReportForm.status,
+                    role: customReportForm.role === '' ? null : customReportForm.role
                 }),
                 getAttendanceStats({
                     projectId: customReportForm.projectId,
                     memberId: customReportForm.memberId,
                     startDate: customReportForm.startDate,
                     endDate: customReportForm.endDate,
-                    status: customReportForm.status === 'all' ? null : customReportForm.status
+                    status: customReportForm.status === 'all' ? null : customReportForm.status,
+                    role: customReportForm.role === '' ? null : customReportForm.role
                 })
             ]);
 
@@ -786,7 +793,8 @@ const AttendanceTracker = () => {
                                                 projectId: filterProject,
                                                 memberId: filterMember,
                                                 startDate: periodType === 'range' ? customRange.start : (currentPeriod || new Date().toISOString().split('T')[0]),
-                                                endDate: periodType === 'range' ? customRange.end : (currentPeriod || new Date().toISOString().split('T')[0])
+                                                endDate: periodType === 'range' ? customRange.end : (currentPeriod || new Date().toISOString().split('T')[0]),
+                                                role: filterRole
                                             });
                                             setShowCustomReportModal(true);
                                         }}
@@ -1286,16 +1294,31 @@ const AttendanceTracker = () => {
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Status Filter</label>
-                                    <select
-                                        value={customReportForm.status}
-                                        onChange={(e) => setCustomReportForm({ ...customReportForm, status: e.target.value })}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[12px] text-[12px] font-bold text-slate-700 outline-none focus:border-blue-600 transition-all cursor-pointer font-['Outfit']"
-                                    >
-                                        <option value="all">All Statuses</option>
-                                        {statusOptions.map(opt => <option key={opt.id} value={opt.id}>{opt.label}</option>)}
-                                    </select>
+                                <div className="grid grid-cols-2 gap-[16px]">
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Category</label>
+                                        <select
+                                            value={customReportForm.role}
+                                            onChange={(e) => setCustomReportForm({ ...customReportForm, role: e.target.value })}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[12px] text-[12px] font-bold text-slate-700 outline-none focus:border-blue-600 transition-all cursor-pointer font-['Outfit']"
+                                        >
+                                            <option value="">All Categories</option>
+                                            {[...new Set([...roles.map(r => r.name), ...uniqueRoles])].sort().map(role => (
+                                                <option key={role} value={role}>{role}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Status Filter</label>
+                                        <select
+                                            value={customReportForm.status}
+                                            onChange={(e) => setCustomReportForm({ ...customReportForm, status: e.target.value })}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[12px] text-[12px] font-bold text-slate-700 outline-none focus:border-blue-600 transition-all cursor-pointer font-['Outfit']"
+                                        >
+                                            <option value="all">All Statuses</option>
+                                            {statusOptions.map(opt => <option key={opt.id} value={opt.id}>{opt.label}</option>)}
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <div className="flex flex-col gap-[12px]">
