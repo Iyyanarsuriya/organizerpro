@@ -499,15 +499,16 @@ const ExpenseTrackerMain = () => {
                     </div>
 
                     {/* Filter Grid */}
-                    <div className="grid grid-cols-2 md:flex md:flex-wrap items-end gap-3 p-4 bg-white rounded-[32px] border border-slate-100 shadow-sm transition-all hover:shadow-md">
-                        <div className="col-span-2 md:flex-1 min-w-[200px]">
+                    <div className="flex flex-wrap items-end gap-3 p-6 bg-white rounded-[32px] border border-slate-100 shadow-sm transition-all hover:shadow-md">
+                        {/* Period Type - Full Width Row */}
+                        <div className="w-full">
                             <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Period Type</label>
                             <div className="flex p-1 bg-slate-50 rounded-xl border border-slate-100">
                                 {['day', 'week', 'month', 'year', 'range'].map((type) => (
                                     <button
                                         key={type}
                                         onClick={() => setPeriodType(type)}
-                                        className={`flex-1 h-8 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${periodType === type ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                        className={`flex-1 h-9 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${periodType === type ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                                     >
                                         {type}
                                     </button>
@@ -515,18 +516,24 @@ const ExpenseTrackerMain = () => {
                             </div>
                         </div>
 
-                        <div className="col-span-1 md:w-32">
+                        {/* Date Selector */}
+                        <div style={{ width: periodType === 'range' ? '100%' : '180px' }} className="transition-all duration-300">
                             <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select {periodType}</label>
                             <div className="h-10 bg-slate-50 border border-slate-100 rounded-xl px-3 flex items-center">
                                 {periodType === 'day' ? <input type="date" value={currentPeriod.length === 10 ? currentPeriod : ''} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-xs font-bold text-slate-700 outline-none bg-transparent" /> :
                                     periodType === 'week' ? <input type="week" value={currentPeriod.includes('W') ? currentPeriod : ''} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-xs font-bold text-slate-700 outline-none bg-transparent" /> :
                                         periodType === 'month' ? <input type="month" value={currentPeriod.length === 7 ? currentPeriod : ''} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-xs font-bold text-slate-700 outline-none bg-transparent" /> :
                                             periodType === 'year' ? <input type="number" min="2000" max="2100" value={currentPeriod.slice(0, 4)} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-xs font-bold text-slate-700 outline-none bg-transparent" /> :
-                                                <div className="flex items-center gap-1 w-full"><input type="date" value={customRange.start} onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })} className="text-[9px] font-bold text-slate-700 w-full bg-transparent" /><span className="text-slate-400">-</span><input type="date" value={customRange.end} onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })} className="text-[9px] font-bold text-slate-700 w-full bg-transparent" /></div>}
+                                                <div className="flex items-center gap-2 w-full">
+                                                    <input type="date" value={customRange.start} onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })} className="text-[11px] font-bold text-slate-700 w-full bg-transparent" />
+                                                    <span className="text-slate-400 text-xs">—</span>
+                                                    <input type="date" value={customRange.end} onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })} className="text-[11px] font-bold text-slate-700 w-full bg-transparent" />
+                                                </div>}
                             </div>
                         </div>
 
-                        <div className="col-span-1 md:w-32">
+                        {/* Project Filter */}
+                        <div style={{ width: '140px' }}>
                             <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Project</label>
                             <select value={filterProject} onChange={(e) => setFilterProject(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
                                 <option value="">All Projects</option>
@@ -534,7 +541,8 @@ const ExpenseTrackerMain = () => {
                             </select>
                         </div>
 
-                        <div className="col-span-1 md:w-32">
+                        {/* Role Filter */}
+                        <div style={{ width: '130px' }}>
                             <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Role</label>
                             <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
                                 <option value="">All Roles</option>
@@ -544,7 +552,8 @@ const ExpenseTrackerMain = () => {
                             </select>
                         </div>
 
-                        <div className="col-span-1 md:w-32">
+                        {/* Type Filter */}
+                        <div style={{ width: '130px' }}>
                             <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Type</label>
                             <select value={filterMemberType} onChange={(e) => setFilterMemberType(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
                                 <option value="all">Everyone</option>
@@ -553,7 +562,8 @@ const ExpenseTrackerMain = () => {
                             </select>
                         </div>
 
-                        <div className="col-span-1 md:w-32">
+                        {/* Member Filter */}
+                        <div style={{ width: '140px' }}>
                             <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Member</label>
                             <select value={filterMember} onChange={(e) => setFilterMember(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
                                 <option value="">Everyone</option>
@@ -561,11 +571,12 @@ const ExpenseTrackerMain = () => {
                             </select>
                         </div>
 
-                        <div className="col-span-2 md:w-auto md:ml-auto flex items-center gap-2">
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-2 ml-auto">
                             <ExportButtons onExportCSV={() => setConfirmModal({ show: true, type: 'CSV', label: 'CSV Report' })} onExportPDF={() => setConfirmModal({ show: true, type: 'PDF', label: 'PDF Report' })} onExportTXT={() => setConfirmModal({ show: true, type: 'TXT', label: 'Plain Text Report' })} />
                             <button onClick={() => setShowProjectManager(true)} className="h-10 bg-blue-600 text-white px-4 rounded-xl shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2" title="New Project">
                                 <FaFolderPlus />
-                                <span className="text-[9px] font-black uppercase tracking-widest hidden sm:inline">Project</span>
+                                <span className="text-[9px] font-black uppercase tracking-widest hidden lg:inline">Project</span>
                             </button>
                             <button onClick={() => setShowDailyWorkLogManager(true)} className="w-10 h-10 bg-slate-800 text-white rounded-xl flex items-center justify-center hover:bg-slate-900 transition-all shadow-sm" title="Daily Work Logs"><FaBoxes /></button>
                         </div>

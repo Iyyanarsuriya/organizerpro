@@ -120,7 +120,8 @@ class Transaction {
         }
 
         if (filters && filters.memberType && filters.memberType !== 'all') {
-            query = query.replace('FROM transactions WHERE', 'FROM transactions t JOIN members m ON t.member_id = m.id WHERE');
+            query = query.replace('FROM transactions', 'FROM transactions t');
+            query = query.replace('WHERE user_id = ?', 'INNER JOIN members m ON t.member_id = m.id WHERE t.user_id = ?');
             query += ' AND m.member_type = ?';
             params.push(filters.memberType);
         }
@@ -147,7 +148,8 @@ class Transaction {
         }
 
         if (filters && filters.memberType && filters.memberType !== 'all') {
-            query = query.replace('FROM transactions WHERE', 'FROM transactions t JOIN members m ON t.member_id = m.id WHERE');
+            query = query.replace('FROM transactions', 'FROM transactions t');
+            query = query.replace('WHERE user_id = ?', 'INNER JOIN members m ON t.member_id = m.id WHERE t.user_id = ?');
             query += ' AND m.member_type = ?';
             params.push(filters.memberType);
         }
@@ -203,7 +205,8 @@ class Transaction {
         }
 
         if (filters && filters.memberType && filters.memberType !== 'all') {
-            query = query.replace('FROM transactions WHERE', 'FROM transactions t JOIN members m ON t.member_id = m.id WHERE');
+            query = query.replace('FROM transactions', 'FROM transactions t');
+            query = query.replace('WHERE user_id = ?', 'INNER JOIN members m ON t.member_id = m.id WHERE t.user_id = ?');
             query += ' AND m.member_type = ?';
             params.push(filters.memberType);
         }
