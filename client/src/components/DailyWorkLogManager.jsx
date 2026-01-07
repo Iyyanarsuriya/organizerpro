@@ -129,10 +129,10 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-3 sm:px-4 py-4 sm:py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="bg-white rounded-[24px] sm:rounded-[28px] w-full max-w-5xl shadow-2xl relative animate-in zoom-in-95 duration-300 max-h-full flex flex-col font-['Outfit'] overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-[12px] pt-[80px] sm:px-4 sm:py-6 sm:pt-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="bg-white rounded-[20px] sm:rounded-[28px] w-full max-w-5xl shadow-2xl relative animate-in zoom-in-95 duration-300 max-h-[calc(100vh-92px)] sm:max-h-full flex flex-col font-['Outfit'] overflow-hidden">
                 {/* Fixed Header */}
-                <div className="flex items-center justify-between px-5 sm:px-6 pt-5 sm:pt-6 pb-3 sm:pb-4 shrink-0 border-b border-slate-100">
+                <div className="flex items-center justify-between px-[16px] sm:px-6 pt-[16px] sm:pt-6 pb-[12px] sm:pb-4 shrink-0 border-b border-slate-100">
                     <div>
                         <h2 className="text-lg sm:text-xl font-black text-slate-900 flex items-center gap-2">
                             <div className="w-1 h-5 bg-indigo-600 rounded-full"></div>
@@ -149,7 +149,7 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                 </div>
 
                 {/* Scrollable Content */}
-                <div className="px-5 sm:px-6 py-4 sm:py-5 overflow-y-auto custom-scrollbar flex-1">
+                <div className="px-[16px] sm:px-6 py-[16px] sm:py-5 overflow-y-auto custom-scrollbar flex-1">
                     {/* View Toggle */}
                     <div className="flex bg-slate-100 p-1 rounded-xl mb-4 w-fit">
                         <button

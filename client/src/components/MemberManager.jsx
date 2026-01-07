@@ -111,10 +111,10 @@ const MemberManager = ({ onClose, onUpdate }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-3 sm:px-4 py-4 sm:py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="bg-white rounded-[24px] sm:rounded-[28px] w-full max-w-[896px] shadow-2xl relative animate-in zoom-in-95 duration-300 max-h-full flex flex-col font-['Outfit'] overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-[12px] pt-[80px] sm:px-4 sm:py-6 sm:pt-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="bg-white rounded-[20px] sm:rounded-[28px] w-full max-w-[896px] shadow-2xl relative animate-in zoom-in-95 duration-300 max-h-[calc(100vh-92px)] sm:max-h-full flex flex-col font-['Outfit'] overflow-hidden">
                 {/* Fixed Header */}
-                <div className="flex items-center justify-between px-5 sm:px-6 pt-5 sm:pt-6 pb-3 sm:pb-4 shrink-0 border-b border-slate-100">
+                <div className="flex items-center justify-between px-[16px] sm:px-6 pt-[16px] sm:pt-6 pb-[12px] sm:pb-4 shrink-0 border-b border-slate-100">
                     <div>
                         <h2 className="text-lg sm:text-xl font-black text-slate-900 flex items-center gap-2">
                             <div className="w-1 h-5 bg-blue-600 rounded-full"></div>
@@ -132,7 +132,7 @@ const MemberManager = ({ onClose, onUpdate }) => {
 
 
                 {/* Scrollable Content */}
-                <div className="px-5 sm:px-6 py-4 sm:py-5 overflow-y-auto custom-scrollbar flex-1">
+                <div className="px-[16px] sm:px-6 py-[16px] sm:py-5 overflow-y-auto custom-scrollbar flex-1">
 
                     {/* Add/Edit Form */}
                     <form onSubmit={handleSubmit} className="mb-5 p-4 bg-slate-50 rounded-2xl border border-slate-100 font-['Outfit']">
@@ -246,7 +246,7 @@ const MemberManager = ({ onClose, onUpdate }) => {
                                     className="w-full bg-white border border-slate-200 rounded-xl px-3 h-9 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
                                 />
                             </div>
-                            <div className="md:col-span-2">
+                            <div>
                                 <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
                                     Status
                                 </label>
