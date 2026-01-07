@@ -437,7 +437,10 @@ const ExpenseTrackerMain = () => {
 
     const SidebarItem = ({ icon: Icon, label }) => (
         <button
-            onClick={() => { if (label === 'Attendance') navigate('/attendance'); else setActiveTab(label); }}
+            onClick={() => {
+                if (label === 'Attendance') navigate('/attendance');
+                else setActiveTab(label);
+            }}
             className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === label ? 'bg-[#2d5bff] text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}
         >
             <Icon className={`text-lg transition-transform group-hover:scale-110 ${activeTab === label ? 'text-white' : 'text-slate-400'}`} />
