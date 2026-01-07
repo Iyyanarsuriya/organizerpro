@@ -9,7 +9,10 @@ import toast from 'react-hot-toast';
 import { FaBell, FaTimes } from 'react-icons/fa';
 import { LayoutDashboard, Settings } from 'lucide-react';
 import { getCategories, createCategory, deleteCategory } from '../../api/categoryApi';
+
 import CategoryManager from '../../components/CategoryManager';
+import ExportButtons from '../../components/ExportButtons';
+import { exportReminderToCSV, exportReminderToTXT, exportReminderToPDF } from '../../utils/exportUtils';
 
 const Reminders = () => {
     const [reminders, setReminders] = useState([]);
@@ -21,7 +24,10 @@ const Reminders = () => {
     const [showNotifications, setShowNotifications] = useState(false);
     const [confirmToggle, setConfirmToggle] = useState(null); // { id, currentStatus }
     const [sortBy, setSortBy] = useState('due_date'); // Default to date wise
+
     const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]); // Default to Today
+    const [periodType, setPeriodType] = useState('today'); // 'all', 'today', 'range'
+    const [customRange, setCustomRange] = useState({ start: '', end: '' });
     const [filterCategory, setFilterCategory] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -415,9 +421,16 @@ const Reminders = () => {
         return reminders
             .filter(r => {
                 let matches = true;
-                if (filterDate) {
+                if (periodType === 'today') {
                     if (!r.due_date) matches = false;
                     else if (!r.due_date.startsWith(filterDate)) matches = false;
+                } else if (periodType === 'range') {
+                    if (!r.due_date) matches = false;
+                    else {
+                        const rDate = r.due_date.split('T')[0];
+                        if (customRange.start && rDate < customRange.start) matches = false;
+                        if (customRange.end && rDate > customRange.end) matches = false;
+                    }
                 }
                 if (filterCategory) {
                     if (r.category !== filterCategory) matches = false;
@@ -443,7 +456,7 @@ const Reminders = () => {
                 if (sortBy === 'status') return (a.is_completed ? 1 : 0) - (b.is_completed ? 1 : 0);
                 return 0;
             });
-    }, [reminders, filterDate, filterCategory, sortBy, searchQuery]);
+    }, [reminders, filterDate, periodType, customRange, filterCategory, sortBy, searchQuery]);
 
     if (loading) {
         return (
@@ -594,7 +607,7 @@ const Reminders = () => {
                                     <span className="text-[9px] sm:text-[10px] md:text-[12px] font-black px-[8px] sm:px-[12px] py-[2px] sm:py-[4px] rounded-full bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-widest shrink-0">
                                         {processedReminders.length} Tasks
                                     </span>
-                                    <div className="flex items-center gap-[4px] sm:gap-[8px]">
+                                    <div className="flex flex-wrap items-center gap-[4px] sm:gap-[8px]">
                                         <button
                                             onClick={() => setShowFilters(!showFilters)}
                                             className={`flex items-center gap-[6px] sm:gap-[8px] px-[10px] sm:px-[12px] py-[4px] sm:py-[6px] rounded-[8px] border transition-all cursor-pointer ${showFilters ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'}`}
@@ -602,29 +615,54 @@ const Reminders = () => {
                                             <svg className="w-[12px] h-[12px] sm:w-[14px] sm:h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                                             </svg>
-                                            <span className="text-[9px] sm:text-[10px] md:text-[12px] font-black uppercase tracking-widest">Filters</span>
+                                            <span className="hidden sm:inline text-[9px] sm:text-[10px] md:text-[12px] font-black uppercase tracking-widest">Filters</span>
                                         </button>
 
                                         {/* 📅 Date Search Filter */}
+                                        {/* 📅 Period Filter */}
                                         <div className="relative shrink-0">
-                                            <div className={`flex items-center gap-[6px] sm:gap-[8px] bg-white border px-[10px] sm:px-[12px] py-[4px] sm:py-[6px] rounded-[8px] transition-all cursor-pointer ${filterDate ? 'border-[#2d5bff] ring-2 ring-[#2d5bff]/10' : 'border-slate-200 hover:border-slate-300'}`}>
-                                                <svg className={`w-[12px] h-[12px] sm:w-[14px] sm:h-[14px] ${filterDate ? 'text-[#2d5bff]' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                                <span className="text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-wide hidden sm:inline">Date:</span>
-                                                <input
-                                                    type="date"
-                                                    value={filterDate}
-                                                    onChange={(e) => setFilterDate(e.target.value)}
-                                                    className="bg-transparent text-[9px] sm:text-[11px] font-bold text-slate-700 outline-none cursor-pointer uppercase tracking-wider max-w-[85px] sm:max-w-none"
-                                                />
-                                                {filterDate && (
-                                                    <button
-                                                        onClick={() => setFilterDate('')}
-                                                        className="text-slate-400 hover:text-[#ff4d4d] transition-colors cursor-pointer"
-                                                    >
-                                                        <FaTimes className="w-2 sm:w-2.5 h-2 sm:h-2.5" />
-                                                    </button>
+                                            <div className="flex items-center gap-2 bg-white border border-slate-200 p-1 rounded-xl shadow-sm">
+                                                <span className="hidden sm:inline text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-wide ml-2">Period:</span>
+                                                <select
+                                                    value={periodType}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        setPeriodType(val);
+                                                        if (val === 'today') setFilterDate(new Date().toISOString().split('T')[0]);
+                                                        else setFilterDate('');
+                                                    }}
+                                                    className="bg-transparent text-[10px] sm:text-xs font-bold text-slate-700 outline-none cursor-pointer uppercase tracking-wider px-2"
+                                                >
+                                                    <option value="today">Today</option>
+                                                    <option value="all">All Time</option>
+                                                    <option value="range">Range</option>
+                                                </select>
+
+                                                {periodType === 'today' && (
+                                                    <input
+                                                        type="date"
+                                                        value={filterDate}
+                                                        onChange={(e) => setFilterDate(e.target.value)}
+                                                        className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[10px] font-bold text-slate-600 outline-none"
+                                                    />
+                                                )}
+
+                                                {periodType === 'range' && (
+                                                    <div className="flex items-center gap-1">
+                                                        <input
+                                                            type="date"
+                                                            value={customRange.start}
+                                                            onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })}
+                                                            className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[10px] font-bold text-slate-600 outline-none w-[90px]"
+                                                        />
+                                                        <span className="text-slate-400 font-bold">-</span>
+                                                        <input
+                                                            type="date"
+                                                            value={customRange.end}
+                                                            onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })}
+                                                            className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[10px] font-bold text-slate-600 outline-none w-[90px]"
+                                                        />
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>
@@ -732,6 +770,13 @@ const Reminders = () => {
                                                 </svg>
                                             </div>
                                         </div>
+                                    </div>
+                                    <div className="mt-4 flex justify-end border-t border-slate-200 pt-3">
+                                        <ExportButtons
+                                            onExportCSV={() => exportReminderToCSV(processedReminders, `reminders_${new Date().toISOString().split('T')[0]}`)}
+                                            onExportPDF={() => exportReminderToPDF({ data: processedReminders, period: filterDate || 'All Time', filename: `reminders_${new Date().toISOString().split('T')[0]}` })}
+                                            onExportTXT={() => exportReminderToTXT({ data: processedReminders, period: filterDate || 'All Time', filename: `reminders_${new Date().toISOString().split('T')[0]}` })}
+                                        />
                                     </div>
                                 </div>
                             )}
@@ -865,7 +910,7 @@ const Reminders = () => {
                             <div className="space-y-[20px]">
                                 <div>
                                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Date Range</label>
-                                    <div className="flex gap-[12px]">
+                                    <div className="flex flex-col sm:flex-row gap-[8px] sm:gap-[12px]">
                                         <div className="flex-1">
                                             <input
                                                 type="date"
@@ -874,7 +919,7 @@ const Reminders = () => {
                                                 className="w-full bg-slate-50 border border-slate-200 rounded-[12px] px-[16px] py-[12px] text-[12px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all font-['Outfit']"
                                             />
                                         </div>
-                                        <div className="flex items-center text-slate-400 font-bold">-</div>
+                                        <div className="hidden sm:flex items-center text-slate-400 font-bold">-</div>
                                         <div className="flex-1">
                                             <input
                                                 type="date"
@@ -932,19 +977,21 @@ const Reminders = () => {
             }
 
             {/* Category Manager Modal */}
-            {showCategoryManager && (
-                <CategoryManager
-                    categories={categories}
-                    onUpdate={() => {
-                        getCategories().then(res => setCategories(res.data));
-                        // No need to refresh reminders, but good practice
-                    }}
-                    onCreate={createCategory}
-                    onDelete={deleteCategory}
-                    onClose={() => setShowCategoryManager(false)}
-                />
-            )}
-        </div>
+            {
+                showCategoryManager && (
+                    <CategoryManager
+                        categories={categories}
+                        onUpdate={() => {
+                            getCategories().then(res => setCategories(res.data));
+                            // No need to refresh reminders, but good practice
+                        }}
+                        onCreate={createCategory}
+                        onDelete={deleteCategory}
+                        onClose={() => setShowCategoryManager(false)}
+                    />
+                )
+            }
+        </div >
     );
 };
 
