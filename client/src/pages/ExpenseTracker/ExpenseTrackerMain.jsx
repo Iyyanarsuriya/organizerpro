@@ -13,7 +13,7 @@ import { getProjects, createProject, deleteProject } from '../../api/projectApi'
 import { getActiveMembers } from '../../api/memberApi';
 import { getMemberRoles, createMemberRole, deleteMemberRole } from '../../api/memberRoleApi'; // IMPORTS
 import { getAttendanceStats } from '../../api/attendanceApi';
-import { exportToCSV, exportToTXT, exportToPDF } from '../../utils/exportUtils';
+import { exportExpenseToCSV, exportExpenseToTXT, exportExpenseToPDF } from '../../utils/exportUtils';
 import { formatAmount } from '../../utils/formatUtils';
 
 import { Settings } from 'lucide-react';
@@ -340,43 +340,36 @@ const ExpenseTrackerMain = () => {
     // Export Functions (Reused)
     const handleExportCSV = (data = transactions, filters = {}) => {
         if (data.length === 0) { toast.error("No data to export"); return; }
-        const headers = ["Date", "Description", "Amount", "Type", "Category", "Project", "Member"];
-        const rows = data.map(t => [
-            new Date(t.date).toLocaleDateString('en-GB'), t.title, t.amount, t.type, t.category, t.project_name || 'N/A', t.member_name || 'N/A'
-        ]);
         const periodStr = filters.startDate && filters.endDate ? `${filters.startDate}_to_${filters.endDate}` : currentPeriod;
-        exportToCSV(headers, rows, `expense_report_${periodStr}`);
+        const memberStr = filters.memberId ? `_${members.find(m => m.id == filters.memberId)?.name}` : (filterMember ? `_${members.find(m => m.id == filterMember)?.name}` : '');
+        const roleStr = filters.role ? `_${filters.role}` : (filterRole ? `_${filterRole}` : '');
+        exportExpenseToCSV(data, `expense_report_${periodStr}${memberStr}${roleStr}`);
     };
 
     const handleExportTXT = (data = transactions, reportStats = stats, filters = {}) => {
         if (data.length === 0) { toast.error("No data to export"); return; }
         const periodStr = filters.startDate && filters.endDate ? `${filters.startDate} to ${filters.endDate}` : currentPeriod;
-
-        // statsArray construction simplified for brevity (same logic as before)
-        const statsArray = [{ label: 'Total Income', value: `Rs. ${formatAmount(reportStats.summary?.total_income)}` }, { label: 'Total Expense', value: `Rs. ${formatAmount(reportStats.summary?.total_expense)}` }];
-
-        const logHeaders = ["Date", "Description", "Amount", "Type"];
-        const logRows = data.map(t => {
-            const d = new Date(t.date);
-            const dateFmt = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-            return [dateFmt, t.title, `Rs. ${t.amount}`, t.type.toUpperCase()];
-        });
-        exportToTXT({ title: 'Financial Report', period: periodStr, stats: statsArray, logHeaders, logRows, filename: `expense_report_${periodStr}` });
+        const memberStr = filters.memberId ? `_${members.find(m => m.id == filters.memberId)?.name}` : (filterMember ? `_${members.find(m => m.id == filterMember)?.name}` : '');
+        const roleStr = filters.role ? `_${filters.role}` : (filterRole ? `_${filterRole}` : '');
+        exportExpenseToTXT({ data, period: periodStr, filename: `expense_report_${periodStr}${memberStr}${roleStr}` });
     };
 
     const handleExportPDF = (data = transactions, reportStats = stats, filters = {}) => {
         if (data.length === 0) { toast.error("No data to export"); return; }
         const memberName = filters.memberId ? members.find(m => m.id == filters.memberId)?.name : (filterMember ? members.find(m => m.id == filterMember)?.name : 'Everyone');
         const projectName = filters.projectId ? projects.find(p => p.id == filters.projectId)?.name : (filterProject ? projects.find(p => p.id == filterProject)?.name : 'All Projects');
+        const roleName = filters.role || (filterRole || 'All Categories');
         const periodStr = filters.startDate && filters.endDate ? `${filters.startDate} to ${filters.endDate}` : currentPeriod;
 
-        const statsArray = [{ label: 'Total Income', value: `Rs. ${formatAmount(reportStats.summary?.total_income)}` }, { label: 'Total Expense', value: `Rs. ${formatAmount(reportStats.summary?.total_expense)}` }];
+        const memberShort = memberName !== 'Everyone' ? `_${memberName}` : '';
+        const roleShort = roleName !== 'All Categories' ? `_${roleName}` : '';
 
-        const tableHeaders = ['Date', 'Description', 'Category', 'Type', 'Member', 'Amount'];
-        const tableRows = data.map(t => [
-            new Date(t.date).toLocaleDateString('en-GB'), t.title, t.category, t.type.toUpperCase(), t.member_name || 'N/A', `Rs. ${formatAmount(t.amount)}`
-        ]);
-        exportToPDF({ title: 'Financial Report', period: periodStr, subHeader: `Member: ${memberName} | Project: ${projectName}`, stats: statsArray, tableHeaders, tableRows, filename: `expense_report_${periodStr}`, themeColor: [45, 91, 255] });
+        exportExpenseToPDF({
+            data,
+            period: periodStr,
+            subHeader: `Member: ${memberName}  |  Project: ${projectName}  |  Category: ${roleName}`,
+            filename: `expense_report_${periodStr}${memberShort}${roleShort}`
+        });
     };
 
     const handleGenerateCustomReport = async (format = 'PDF') => {

@@ -42,6 +42,10 @@ class Attendance {
                 // YYYY-Www (Week)
                 query += " AND DATE_FORMAT(a.date, '%x-W%v') = ?";
                 params.push(filters.period);
+            } else if (filters.period.length === 7) {
+                // YYYY-MM (Month)
+                query += " AND DATE_FORMAT(a.date, '%Y-%m') = ?";
+                params.push(filters.period);
             } else if (filters.period.length === 4) {
                 // YYYY (Year)
                 query += " AND DATE_FORMAT(a.date, '%Y') = ?";

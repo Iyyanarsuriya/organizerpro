@@ -23,7 +23,7 @@ import {
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend
 } from 'recharts';
-import { exportToCSV, exportToTXT, exportToPDF } from '../../utils/exportUtils';
+import { exportAttendanceToCSV, exportAttendanceToTXT, exportAttendanceToPDF } from '../../utils/exportUtils';
 import ExportButtons from '../../components/ExportButtons';
 import ProjectManager from '../../components/ProjectManager';
 import MemberManager from '../../components/MemberManager';
@@ -165,7 +165,7 @@ const AttendanceTracker = () => {
                 getMemberRoles()
             ]);
             setAttendances(attRes.data.data);
-            setStats(attRes.data.data.length > 0 ? statsRes.data.data : []);
+            setStats(statsRes.data.data || []);
             setMemberSummary(summaryRes.data.data);
             setProjects(projRes.data);
             setMembers(membersRes.data.data);
@@ -184,11 +184,11 @@ const AttendanceTracker = () => {
         const dd = String(today.getDate()).padStart(2, '0');
 
         if (periodType === 'year') {
-            if (currentPeriod.length !== 4) setCurrentPeriod(`${yyyy}`);
+            setCurrentPeriod(prev => prev.length === 4 ? prev : `${yyyy}`);
         } else if (periodType === 'month') {
-            if (currentPeriod.length !== 7) setCurrentPeriod(`${yyyy}-${mm}`);
+            setCurrentPeriod(prev => prev.length === 7 ? prev : `${yyyy}-${mm}`);
         } else if (periodType === 'day') {
-            if (currentPeriod.length !== 10) setCurrentPeriod(`${yyyy}-${mm}-${dd}`);
+            setCurrentPeriod(prev => prev.length === 10 ? prev : `${yyyy}-${mm}-${dd}`);
         } else if (periodType === 'range') {
             if (!customRange.start) setCustomRange({ start: `${yyyy}-${mm}-${dd}`, end: `${yyyy}-${mm}-${dd}` });
         }
@@ -285,68 +285,27 @@ const AttendanceTracker = () => {
 
     // Export Functions
     const handleExportCSV = (data = attendances, filters = {}) => {
-        if (data.length === 0) {
-            toast.error("No data to export");
-            return;
-        }
-
-        const headers = ["Date", "Member", "Status", "Subject", "Project", "Note"];
-        const rows = data.map(a => [
-            new Date(a.date).toLocaleDateString('en-GB'),
-            a.member_name || 'N/A',
-            a.status.toUpperCase(),
-            a.subject,
-            a.project_name || 'N/A',
-            a.note || ''
-        ]);
-
-        const periodStr = filters.startDate && filters.endDate
-            ? `${filters.startDate}_to_${filters.endDate}`
-            : currentPeriod;
-
-        const categoryStr = filters.role ? `_${filters.role}` : '';
-        exportToCSV(headers, rows, `attendance_report_${periodStr}${categoryStr}`);
+        if (data.length === 0) { toast.error("No data to export"); return; }
+        const periodStr = filters.startDate && filters.endDate ? `${filters.startDate}_to_${filters.endDate}` : currentPeriod;
+        const memberStr = filters.memberId ? `_${members.find(m => m.id == filters.memberId)?.name}` : (filterMember ? `_${members.find(m => m.id == filterMember)?.name}` : '');
+        const roleStr = filters.role ? `_${filters.role}` : (filterRole ? `_${filterRole}` : '');
+        exportAttendanceToCSV(data, `attendance_report_${periodStr}${memberStr}${roleStr}`);
     };
 
     const handleExportTXT = (data = attendances, reportStats = stats, filters = {}) => {
-        if (data.length === 0) {
-            toast.error("No data to export");
-            return;
-        }
-
+        if (data.length === 0) { toast.error("No data to export"); return; }
         const periodStr = filters.startDate && filters.endDate
             ? `${filters.startDate} to ${filters.endDate}`
             : (periodType === 'range' ? `${customRange.start} to ${customRange.end}` : currentPeriod);
 
-        const statsArray = reportStats.map(s => ({
-            label: s.status.toUpperCase(),
-            value: s.count
-        }));
+        const memberStr = filters.memberId ? `_${members.find(m => m.id == filters.memberId)?.name}` : (filterMember ? `_${members.find(m => m.id == filterMember)?.name}` : '');
+        const roleStr = filters.role ? `_${filters.role}` : (filterRole ? `_${filterRole}` : '');
 
-        const logHeaders = ["Date", "Member", "Status", "Subject"];
-        const logRows = data.map(a => {
-            const d = new Date(a.date);
-            const dateFmt = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-            return [dateFmt, a.member_name || 'N/A', a.status.toUpperCase(), a.subject];
-        });
-
-        const categoryStr = filters.role ? `_${filters.role}` : '';
-        exportToTXT({
-            title: 'Attendance Report',
-            period: periodStr,
-            stats: statsArray,
-            logHeaders,
-            logRows,
-            filename: `attendance_report_${periodStr}${categoryStr}`
-        });
+        exportAttendanceToTXT({ data, period: periodStr, filename: `attendance_report_${periodStr}${memberStr}${roleStr}` });
     };
 
     const handleExportPDF = (data = attendances, reportStats = stats, filters = {}) => {
-        if (data.length === 0) {
-            toast.error("No data to export");
-            return;
-        }
-
+        if (data.length === 0) { toast.error("No data to export"); return; }
         const memberName = filters.memberId ? members.find(m => m.id == filters.memberId)?.name : (filterMember ? members.find(m => m.id == filterMember)?.name : 'Everyone');
         const projectName = filters.projectId ? projects.find(p => p.id == filters.projectId)?.name : (filterProject ? projects.find(p => p.id == filterProject)?.name : 'All Projects');
         const categoryName = filters.role || (filterRole || 'All Categories');
@@ -355,34 +314,14 @@ const AttendanceTracker = () => {
             ? `${filters.startDate} to ${filters.endDate}`
             : (periodType === 'range' ? `${customRange.start} to ${customRange.end}` : currentPeriod);
 
-        const statsArray = reportStats.map(s => ({
-            label: s.status.toUpperCase(),
-            value: s.count
-        }));
+        const memberShort = memberName !== 'Everyone' ? `_${memberName}` : '';
+        const roleShort = categoryName !== 'All Categories' ? `_${categoryName}` : '';
 
-        const tableHeaders = ['Date', 'Member', 'Status', 'Subject', 'Project'];
-        const tableRows = data.map(a => {
-            const d = new Date(a.date);
-            const dateFmt = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-            return [
-                dateFmt,
-                a.member_name || 'N/A',
-                a.status.toUpperCase(),
-                a.subject,
-                a.project_name || 'N/A'
-            ];
-        });
-
-        const categoryStr = filters.role ? `_${filters.role}` : '';
-        exportToPDF({
-            title: 'Attendance Report',
+        exportAttendanceToPDF({
+            data,
             period: periodStr,
-            subHeader: `Member: ${memberName} | Project: ${projectName} | Category: ${categoryName}`,
-            stats: statsArray,
-            tableHeaders,
-            tableRows,
-            filename: `attendance_report_${periodStr}${categoryStr}`,
-            themeColor: [37, 99, 235]
+            subHeader: `Member: ${memberName}  |  Project: ${projectName}  |  Category: ${categoryName}`,
+            filename: `attendance_report_${periodStr}${memberShort}${roleShort}`
         });
     };
 
@@ -429,23 +368,47 @@ const AttendanceTracker = () => {
 
     const filteredAttendances = useMemo(() => {
         return attendances.filter(a => {
+            const d = new Date(a.date);
+            const dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
             const matchesSearch = (a.subject || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (a.member_name || '').toLowerCase().includes(searchQuery.toLowerCase());
+                (a.member_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                dateStr.includes(searchQuery);
             const matchesRole = !filterRole || memberIdToRoleMap[a.member_id] === filterRole;
             return matchesSearch && matchesRole;
         });
     }, [attendances, searchQuery, filterRole, memberIdToRoleMap]);
 
+    const activeTargetDate = useMemo(() => {
+        const today = new Date().toISOString().split('T')[0];
+        if (periodType === 'day') return currentPeriod;
+        if (periodType === 'range') return customRange.end || today;
+        if (periodType === 'month' && currentPeriod.length === 7) {
+            return today.startsWith(currentPeriod) ? today : `${currentPeriod}-01`;
+        }
+        if (periodType === 'year' && currentPeriod.length === 4) {
+            return today.startsWith(currentPeriod) ? today : `${currentPeriod}-01-01`;
+        }
+        return today;
+    }, [periodType, currentPeriod, customRange.end]);
+
     const activeMembersAttendanceRecords = useMemo(() => {
-        if (periodType !== 'day') return {};
+        const targetDate = activeTargetDate;
+        if (!targetDate) return {};
+
         const map = {};
         attendances.forEach(a => {
             if (a.member_id) {
-                map[a.member_id] = a;
+                // Robust date matching: format both to YYYY-MM-DD
+                const d = new Date(a.date);
+                const aDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+                if (aDate === targetDate) {
+                    map[a.member_id] = a;
+                }
             }
         });
         return map;
-    }, [attendances, periodType]);
+    }, [attendances, activeTargetDate]);
 
     const activeMembersAttendanceMat = useMemo(() => {
         const map = {};
@@ -837,7 +800,8 @@ const AttendanceTracker = () => {
                                         .filter(w => {
                                             const matchesRole = !filterRole || memberIdToRoleMap[w.id] === filterRole;
                                             const matchesSearch = !searchQuery || w.name.toLowerCase().includes(searchQuery.toLowerCase());
-                                            return matchesRole && matchesSearch;
+                                            const matchesMember = !filterMember || w.id == filterMember;
+                                            return matchesRole && matchesSearch && matchesMember;
                                         })
                                         .map((w) => {
                                             const rate = w.total > 0 ? ((w.present + w.permission + w.half_day * 0.5) / w.total * 100) : 0;
@@ -906,7 +870,11 @@ const AttendanceTracker = () => {
                                     <div className="flex items-center gap-3">
                                         <FaCalendarAlt className="text-blue-400" />
                                         <span className="text-slate-400 font-bold uppercase tracking-widest text-xs font-['Outfit']">
-                                            {periodType === 'day' ? new Date(currentPeriod).toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }) : 'Please select a specific day to use the sheet'}
+                                            {(() => {
+                                                try {
+                                                    return new Date(activeTargetDate).toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+                                                } catch (e) { return 'Invalid Date'; }
+                                            })()}
                                         </span>
                                     </div>
                                 </div>
@@ -919,7 +887,7 @@ const AttendanceTracker = () => {
                             </div>
                         </div>
 
-                        {periodType === 'day' ? (
+                        {true ? (
                             <div className="p-0">
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left">
