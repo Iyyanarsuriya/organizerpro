@@ -145,28 +145,14 @@ export const generatePDF = ({ title, period, subHeader, stats, tableHeaders, tab
     }
 
     // Alignment logic - Centering everything as requested
-    let columnStyles = {};
-    if (title.toLowerCase().includes('attendance')) {
-        columnStyles = {
-            0: { halign: 'center', valign: 'middle', cellWidth: 22 },
-            1: { halign: 'center', valign: 'middle' },
-            2: { halign: 'center', valign: 'middle', cellWidth: 15 },
-            3: { halign: 'center', valign: 'middle', cellWidth: 25 },
-            4: { halign: 'center', valign: 'middle', cellWidth: 25 },
-            5: { halign: 'center', valign: 'middle' },
-            6: { halign: 'center', valign: 'middle' },
-            7: { halign: 'center', valign: 'middle' }
-        };
-    } else {
-        columnStyles = {
-            0: { halign: 'center', valign: 'middle', cellWidth: 25 },
-            1: { halign: 'center', valign: 'middle' },
-            2: { halign: 'center', valign: 'middle', cellWidth: 30 },
-            3: { halign: 'center', valign: 'middle', cellWidth: 20 },
-            4: { halign: 'center', valign: 'middle' },
-            5: { halign: 'center', valign: 'middle', cellWidth: 30 }
-        };
-    }
+    let columnStyles = {
+        0: { halign: 'center', valign: 'middle', cellWidth: 25 },
+        1: { halign: 'center', valign: 'middle' },
+        2: { halign: 'center', valign: 'middle', cellWidth: 30 },
+        3: { halign: 'center', valign: 'middle', cellWidth: 20 },
+        4: { halign: 'center', valign: 'middle' },
+        5: { halign: 'center', valign: 'middle', cellWidth: 30 }
+    };
 
     autoTable(doc, {
         startY: startY,
