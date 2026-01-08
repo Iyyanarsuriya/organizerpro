@@ -2,10 +2,10 @@ const db = require('../config/db');
 
 class Transaction {
     static async create(data) {
-        const { user_id, title, amount, type, category, date, project_id, member_id } = data;
+        const { user_id, title, amount, type, category, date, project_id, member_id, payment_status } = data;
         const [result] = await db.query(
-            'INSERT INTO transactions (user_id, title, amount, type, category, date, project_id, member_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            [user_id, title, amount, type, category, date, project_id || null, member_id || null]
+            'INSERT INTO transactions (user_id, title, amount, type, category, date, project_id, member_id, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [user_id, title, amount, type, category, date, project_id || null, member_id || null, payment_status || 'completed']
         );
         return { id: result.insertId, ...data };
     }
@@ -65,10 +65,10 @@ class Transaction {
     }
 
     static async update(id, userId, data) {
-        const { title, amount, type, category, date, project_id, member_id } = data;
+        const { title, amount, type, category, date, project_id, member_id, payment_status } = data;
         const [result] = await db.query(
-            'UPDATE transactions SET title = ?, amount = ?, type = ?, category = ?, date = ?, project_id = ?, member_id = ? WHERE id = ? AND user_id = ?',
-            [title, amount, type, category, date, project_id || null, member_id || null, id, userId]
+            'UPDATE transactions SET title = ?, amount = ?, type = ?, category = ?, date = ?, project_id = ?, member_id = ?, payment_status = ? WHERE id = ? AND user_id = ?',
+            [title, amount, type, category, date, project_id || null, member_id || null, payment_status || 'completed', id, userId]
         );
         return result.affectedRows > 0;
     }

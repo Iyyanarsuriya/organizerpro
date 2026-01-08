@@ -71,7 +71,8 @@ const ExpenseTrackerMain = () => {
         category: 'Food',
         date: new Date().toISOString().split('T')[0],
         project_id: '',
-        member_id: ''
+        member_id: '',
+        payment_status: 'completed'
     });
     const [editingId, setEditingId] = useState(null);
 
@@ -633,7 +634,8 @@ const ExpenseTrackerMain = () => {
                     <SalaryCalculator
                         periodType={periodType} filterMember={filterMember} setFilterMember={setFilterMember}
                         filterMemberType={filterMemberType}
-                        members={members} filteredTransactions={filteredTransactions} handleExportPDF={handleExportPDF}
+                        members={members} roles={roles} filteredTransactions={filteredTransactions}
+                        handleExportPDF={handleExportPDF} handleExportCSV={handleExportCSV} handleExportTXT={handleExportTXT}
                         salaryLoading={salaryLoading} attendanceStats={attendanceStats} salaryMode={salaryMode} setSalaryMode={setSalaryMode}
                         dailyWage={dailyWage} setDailyWage={setDailyWage} monthlySalary={monthlySalary} setMonthlySalary={setMonthlySalary}
                         unitsProduced={unitsProduced} setUnitsProduced={setUnitsProduced} ratePerUnit={ratePerUnit} setRatePerUnit={setRatePerUnit}
@@ -709,9 +711,19 @@ const ExpenseTrackerMain = () => {
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Transaction Date</label>
-                                    <input required type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs" />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Transaction Date</label>
+                                        <input required type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Payment Status</label>
+                                        <select value={formData.payment_status || 'completed'} onChange={(e) => setFormData({ ...formData, payment_status: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs cursor-pointer">
+                                            <option value="completed">Completed (Paid)</option>
+                                            <option value="pending">Pending (Unpaid)</option>
+                                            <option value="failed">Failed</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 

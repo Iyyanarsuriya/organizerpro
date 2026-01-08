@@ -1,6 +1,7 @@
-import React from 'react';
-import { FaFileAlt, FaMoneyBillWave, FaUserCheck, FaArrowLeft, FaPlusCircle, FaPlus, FaHistory, FaHandHoldingUsd, FaReceipt } from 'react-icons/fa';
+import React, { useState, useMemo } from 'react';
+import { FaFileAlt, FaMoneyBillWave, FaUserCheck, FaArrowLeft, FaPlusCircle, FaPlus, FaHistory, FaHandHoldingUsd, FaReceipt, FaSearch, FaFilter, FaTag, FaUser } from 'react-icons/fa';
 import { formatAmount } from '../../utils/formatUtils';
+import ExportButtons from '../../components/ExportButtons';
 
 const SalaryCalculator = ({
     periodType,
@@ -8,8 +9,11 @@ const SalaryCalculator = ({
     setFilterMember,
     filterMemberType,
     members,
+    roles, // Received roles
     filteredTransactions,
     handleExportPDF,
+    handleExportCSV,
+    handleExportTXT,
     salaryLoading,
     attendanceStats,
     salaryMode,
@@ -30,8 +34,25 @@ const SalaryCalculator = ({
     setShowAddModal,
     transactions
 }) => {
+    // Local Filter State
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filterRole, setFilterRole] = useState('');
+    const [filterType, setFilterType] = useState('all');
+
+    // Filter Logic
+    const filteredMembers = useMemo(() => {
+        return members.filter(m => {
+            const matchesSearch = m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (m.phone && m.phone.includes(searchQuery));
+            const matchesRole = !filterRole || m.role === filterRole;
+            const matchesType = filterType === 'all' || m.member_type === filterType;
+            return matchesSearch && matchesRole && matchesType;
+        });
+    }, [members, searchQuery, filterRole, filterType]);
+
+
     // Ledger Calculations
-    const ledger = React.useMemo(() => {
+    const ledger = useMemo(() => {
         if (!filterMember) return { earned: 0, paid: 0, advance: 0, balance: 0 };
 
         const memberTrans = transactions.filter(t => t.member_id == filterMember);
@@ -57,7 +78,7 @@ const SalaryCalculator = ({
         };
     }, [transactions, filterMember]);
 
-    const currentAttendanceEarned = React.useMemo(() => {
+    const currentAttendanceEarned = useMemo(() => {
         if (salaryMode === 'daily') {
             return ((attendanceStats?.summary?.present || 0) * dailyWage) + ((attendanceStats?.summary?.half_day || 0) * (dailyWage / 2));
         } else if (salaryMode === 'monthly') {
@@ -71,54 +92,159 @@ const SalaryCalculator = ({
     // Note: Deductions usually include both Salary payments and Advances in this period
     const netPayable = Math.max(0, totalGross - (stats.summary?.total_expense || 0));
 
+    // Export Wrappers
+    const onExport = (type) => {
+        const filters = { memberId: filterMember };
+        if (type === 'PDF') handleExportPDF(filteredTransactions, null, filters);
+        if (type === 'CSV') handleExportCSV(filteredTransactions, filters);
+        if (type === 'TXT') handleExportTXT(filteredTransactions, null, filters);
+    };
+
     return (
         <div className="animate-in slide-in-from-right-10 duration-500 pb-20">
             {/* Header section... */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-                <div className="flex flex-col gap-1">
-                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Salary & Payouts</h2>
-                    {!filterMember && <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Select a member to calculate</p>}
+            <div className="flex flex-col gap-6 mb-8">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="flex flex-col gap-1">
+                        <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Salary & Payouts</h2>
+                        {!filterMember && <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Select a member to calculate</p>}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                        {filterMember && (
+                            <ExportButtons
+                                onExportCSV={() => onExport('CSV')}
+                                onExportPDF={() => onExport('PDF')}
+                                onExportTXT={() => onExport('TXT')}
+                            />
+                        )}
+                        <div className="flex-1 sm:flex-none px-4 py-2 bg-blue-50 text-blue-600 border border-blue-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-center">
+                            {periodType} REF
+                        </div>
+                    </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-                    {/* Member Select Dropdown - Always Visible */}
-                    <div className="relative group min-w-[200px]">
+                {/* Filter Bar */}
+                <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-3">
+                    {/* Search - Blue */}
+                    <div className="relative group">
+                        <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-400 group-hover:text-blue-500 transition-colors" size={12} />
+                        <input
+                            type="text"
+                            placeholder="SEARCH MEMBER..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-blue-50 hover:bg-blue-100 border border-transparent rounded-2xl py-2.5 pl-10 pr-4 text-xs font-black text-blue-600 text-center placeholder:text-blue-300 outline-none focus:ring-2 focus:ring-blue-200 transition-all uppercase tracking-wide"
+                        />
+                    </div>
+
+                    {/* Role Filter - Indigo */}
+                    <div className="relative group">
+                        <FaTag className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400 group-hover:text-indigo-500 transition-colors" size={12} />
+                        <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} className="w-full bg-indigo-50 hover:bg-indigo-100 border border-transparent rounded-2xl py-2.5 pl-10 pr-10 text-xs font-black text-indigo-600 text-center outline-none focus:ring-2 focus:ring-indigo-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
+                            <option value="">All Roles</option>
+                            {[...new Set((roles || []).map(r => r.name).concat(members.map(m => m.role).filter(Boolean)))].sort().map(role => (
+                                <option key={role} value={role}>{role}</option>
+                            ))}
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-indigo-400 text-[10px]">▼</div>
+                    </div>
+
+                    {/* Type Filter - Emerald */}
+                    <div className="relative group">
+                        <FaFilter className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-400 group-hover:text-emerald-500 transition-colors" size={12} />
+                        <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="w-full bg-emerald-50 hover:bg-emerald-100 border border-transparent rounded-2xl py-2.5 pl-10 pr-10 text-xs font-black text-emerald-600 text-center outline-none focus:ring-2 focus:ring-emerald-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
+                            <option value="all">All Types</option>
+                            <option value="worker">Worker</option>
+                            <option value="employee">Employee</option>
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-emerald-400 text-[10px]">▼</div>
+                    </div>
+
+                    {/* Member Select Dropdown - Filtered */}
+                    <div className="relative group">
                         <select
                             value={filterMember}
                             onChange={(e) => setFilterMember(e.target.value)}
-                            className="w-full h-10 pl-4 pr-8 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-blue-500 hover:border-blue-300 transition-all cursor-pointer appearance-none shadow-sm"
+                            className="w-full h-full bg-slate-800 text-white rounded-2xl py-2.5 pl-10 pr-10 text-xs font-black text-center outline-none focus:ring-2 focus:ring-slate-600 hover:bg-slate-700 transition-all cursor-pointer appearance-none uppercase tracking-wide shadow-lg shadow-slate-200"
                         >
                             <option value="">Select Member...</option>
-                            {members
-                                .filter(m => filterMemberType === 'all' || m.member_type === filterMemberType)
-                                .map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                            {filteredMembers.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                         </select>
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                             <FaUserCheck size={12} />
                         </div>
-                    </div>
-
-                    {filterMember && (
-                        <button
-                            onClick={() => handleExportPDF(filteredTransactions)}
-                            className="flex-1 sm:flex-none px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-sm"
-                        >
-                            <FaFileAlt size={12} /> Report
-                        </button>
-                    )}
-                    <div className="flex-1 sm:flex-none px-4 py-2 bg-blue-50 text-blue-600 border border-blue-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-center">
-                        {periodType} REF
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-[10px]">▼</div>
                     </div>
                 </div>
             </div>
 
             {!filterMember ? (
-                <div className="bg-white rounded-[40px] p-12 sm:p-20 text-center border border-slate-100 shadow-sm opacity-60">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-slate-100 shadow-inner">
-                        <FaMoneyBillWave className="text-slate-300 text-2xl sm:text-3xl" />
+                <div className="bg-white rounded-[40px] p-6 sm:p-8 border border-slate-100 shadow-sm">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-1 h-6 bg-slate-900 rounded-full"></div>
+                        <h3 className="text-xl font-black text-slate-900 tracking-tight">Salary Overview</h3>
+                        <span className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-500">{filteredMembers.length} Members</span>
                     </div>
-                    <h3 className="text-lg font-black text-slate-900 mb-2">Member Selection Required</h3>
-                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest max-w-sm mx-auto">Please select a member from the top menu to view their performance metrics and calculate net payable salary</p>
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="border-b border-slate-100">
+                                    <th className="py-4 px-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Member</th>
+                                    <th className="py-4 px-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Earned (Pot)</th>
+                                    <th className="py-4 px-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Paid (Adv+Sal)</th>
+                                    <th className="py-4 px-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Balance</th>
+                                    <th className="py-4 px-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredMembers.length > 0 ? (
+                                    filteredMembers.map(member => {
+                                        const mTrans = transactions.filter(t => t.member_id == member.id);
+                                        const earned = mTrans.filter(t => t.category === 'Salary Pot').reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
+                                        const paid = mTrans.filter(t => ['Salary', 'Advance'].includes(t.category)).reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
+                                        const balance = earned - paid;
+
+                                        return (
+                                            <tr key={member.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
+                                                <td className="py-4 px-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black ${member.member_type === 'employee' ? 'bg-blue-100 text-blue-600' : 'bg-amber-100 text-amber-600'}`}>
+                                                            {member.name.charAt(0)}
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-black text-slate-900 text-xs">{member.name}</p>
+                                                            <p className="text-[9px] font-bold text-slate-400 uppercase">{member.role || 'No Role'}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="py-4 px-4 text-right font-bold text-xs text-slate-600">₹{formatAmount(earned)}</td>
+                                                <td className="py-4 px-4 text-right font-bold text-xs text-slate-600">₹{formatAmount(paid)}</td>
+                                                <td className="py-4 px-4 text-right">
+                                                    <span className={`px-3 py-1 rounded-full text-[10px] font-black ${balance > 0 ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                                                        {balance > 0 ? 'Due' : 'Paid'} ₹{formatAmount(Math.abs(balance))}
+                                                    </span>
+                                                </td>
+                                                <td className="py-4 px-4 text-center">
+                                                    <button
+                                                        onClick={() => setFilterMember(member.id)}
+                                                        className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-600 transition-colors shadow-sm active:scale-95"
+                                                    >
+                                                        Pay / View
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                ) : (
+                                    <tr>
+                                        <td colSpan="5" className="py-8 text-center text-slate-400 text-xs font-bold uppercase tracking-widest">No members found matching filters</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             ) : salaryLoading ? (
                 <div className="h-[400px] flex items-center justify-center">
@@ -338,6 +464,14 @@ const SalaryCalculator = ({
                                                         <span className="text-[7px] font-black uppercase tracking-widest text-slate-400">{t.category}</span>
                                                         <span className="w-1 h-1 rounded-full bg-slate-200"></span>
                                                         <span className="text-[7px] font-bold text-slate-400 uppercase">{new Date(t.date).toLocaleDateString('en-GB')}</span>
+                                                        {t.payment_status && t.payment_status !== 'completed' && (
+                                                            <>
+                                                                <span className="w-1 h-1 rounded-full bg-slate-200"></span>
+                                                                <span className={`text-[7px] font-black uppercase tracking-widest ${t.payment_status === 'pending' ? 'text-amber-500' : 'text-red-500'}`}>
+                                                                    {t.payment_status}
+                                                                </span>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>

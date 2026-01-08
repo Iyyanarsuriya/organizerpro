@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     type ENUM('income', 'expense') NOT NULL,
     category VARCHAR(100) NOT NULL,
     date DATE NOT NULL,
+    payment_status VARCHAR(20) DEFAULT 'completed',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -99,7 +100,8 @@ CREATE TABLE IF NOT EXISTS transactions (
     INDEX idx_member (member_id),
     INDEX idx_project (project_id),
     INDEX idx_type (type),
-    INDEX idx_category (category)
+    INDEX idx_category (category),
+    INDEX idx_payment_status (payment_status)
 );
 
 -- ============================================================================
@@ -304,4 +306,10 @@ CREATE TABLE IF NOT EXISTS vehicle_logs (
 -- Date: 2026-01-08
 -- Changes:
 --   1. Added column: vehicle_name (VARCHAR 100) to vehicle_logs
+-- ============================================================================
+
+-- Migration: add_payment_status.js
+-- Date: 2026-01-08
+-- Changes:
+--   1. Added payment_status column to transactions table (Completed/Pending/Failed)
 -- ============================================================================
