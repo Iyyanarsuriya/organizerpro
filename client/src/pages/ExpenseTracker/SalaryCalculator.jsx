@@ -45,7 +45,8 @@ const SalaryCalculator = ({
             const matchesSearch = m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 (m.phone && m.phone.includes(searchQuery));
             const matchesRole = !filterRole || m.role === filterRole;
-            const matchesType = filterType === 'all' || m.member_type === filterType;
+            const matchesType = filterType === 'all' ||
+                (filterType === 'guest' ? m.isGuest : m.member_type === filterType);
             return matchesSearch && matchesRole && matchesType;
         });
     }, [members, searchQuery, filterRole, filterType]);
@@ -55,7 +56,13 @@ const SalaryCalculator = ({
     const ledger = useMemo(() => {
         if (!filterMember) return { earned: 0, paid: 0, advance: 0, balance: 0 };
 
-        const memberTrans = transactions.filter(t => t.member_id == filterMember);
+        const memberObj = members.find(m => m.id == filterMember);
+        const memberTrans = transactions.filter(t => {
+            if (memberObj?.isGuest) {
+                return t.member_id === null && t.guest_name === memberObj.name;
+            }
+            return t.member_id == filterMember;
+        });
 
         const earned = memberTrans
             .filter(t => t.category === 'Salary Pot')
@@ -76,7 +83,7 @@ const SalaryCalculator = ({
             totalPaid: salaryPayments + advances,
             balance: earned - (salaryPayments + advances)
         };
-    }, [transactions, filterMember]);
+    }, [transactions, filterMember, members]);
 
     const currentAttendanceEarned = useMemo(() => {
         if (salaryMode === 'daily') {
@@ -157,6 +164,7 @@ const SalaryCalculator = ({
                             <option value="all">All Types</option>
                             <option value="worker">Worker</option>
                             <option value="employee">Employee</option>
+                            <option value="guest">Guest</option>
                         </select>
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-emerald-400 text-[10px]">▼</div>
                     </div>
@@ -386,14 +394,16 @@ const SalaryCalculator = ({
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
                                     <button
                                         onClick={() => {
-                                            const isEmployee = members.find(m => m.id == filterMember)?.member_type === 'employee';
+                                            const memberObj = members.find(m => m.id == filterMember);
+                                            const isEmployee = memberObj?.member_type === 'employee';
                                             setFormData({
                                                 ...formData,
                                                 title: isEmployee ? `Salary Accrued: ${formatAmount(currentAttendanceEarned)}` : `Daily Work: ${salaryMode.toUpperCase()} (${formatAmount(currentAttendanceEarned)})`,
                                                 amount: currentAttendanceEarned,
                                                 type: 'expense',
                                                 category: 'Salary Pot',
-                                                member_id: filterMember,
+                                                member_id: memberObj?.isGuest ? '' : filterMember,
+                                                guest_name: memberObj?.isGuest ? memberObj.name : '',
                                                 date: new Date().toISOString().split('T')[0]
                                             });
                                             setShowAddModal(true);
@@ -404,13 +414,15 @@ const SalaryCalculator = ({
                                     </button>
                                     <button
                                         onClick={() => {
+                                            const memberObj = members.find(m => m.id == filterMember);
                                             setFormData({
                                                 ...formData,
-                                                title: `Advance - ${members.find(m => m.id == filterMember)?.name}`,
+                                                title: `Advance - ${memberObj?.name}`,
                                                 amount: '',
                                                 type: 'expense',
                                                 category: 'Advance',
-                                                member_id: filterMember,
+                                                member_id: memberObj?.isGuest ? '' : filterMember,
+                                                guest_name: memberObj?.isGuest ? memberObj.name : '',
                                                 date: new Date().toISOString().split('T')[0]
                                             });
                                             setShowAddModal(true);
@@ -517,13 +529,15 @@ const SalaryCalculator = ({
 
                                 <button
                                     onClick={() => {
+                                        const memberObj = members.find(m => m.id == filterMember);
                                         setFormData({
                                             ...formData,
-                                            title: `Salary Settlement - ${members.find(m => m.id == filterMember)?.name}`,
+                                            title: `Salary Settlement - ${memberObj?.name}`,
                                             amount: netPayable,
                                             type: 'expense',
                                             category: 'Salary',
-                                            member_id: filterMember,
+                                            member_id: memberObj?.isGuest ? '' : filterMember,
+                                            guest_name: memberObj?.isGuest ? memberObj.name : '',
                                             date: new Date().toISOString().split('T')[0]
                                         });
                                         setShowAddModal(true);

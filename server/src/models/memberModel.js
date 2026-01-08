@@ -58,6 +58,30 @@ class Member {
         const [rows] = await db.query(query, params);
         return rows;
     }
+
+    static async getGuests(userId) {
+        const query = `
+            SELECT DISTINCT guest_name, 'guest' as member_type, 'active' as status, 0 as id 
+            FROM transactions 
+            WHERE user_id = ? AND member_id IS NULL AND guest_name IS NOT NULL AND guest_name != ''
+            UNION
+            SELECT DISTINCT guest_name, 'guest' as member_type, 'active' as status, 0 as id 
+            FROM daily_work_logs 
+            WHERE user_id = ? AND member_id IS NULL AND guest_name IS NOT NULL AND guest_name != ''
+            ORDER BY guest_name ASC
+        `;
+        const [rows] = await db.query(query, [userId, userId]);
+        return rows.map((row, index) => ({
+            ...row,
+            id: `guest-${index}`, // Generate temporary unique ID for frontend keys
+            name: row.guest_name,
+            role: 'Guest / Temp',
+            phone: '-',
+            email: '-',
+            wage_type: 'daily',
+            daily_wage: 0
+        }));
+    }
 }
 
 module.exports = Member;

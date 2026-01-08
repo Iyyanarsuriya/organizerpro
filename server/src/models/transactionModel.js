@@ -2,16 +2,21 @@ const db = require('../config/db');
 
 class Transaction {
     static async create(data) {
-        const { user_id, title, amount, type, category, date, project_id, member_id, payment_status } = data;
+        const { user_id, title, amount, type, category, date, project_id, member_id, guest_name, payment_status } = data;
         const [result] = await db.query(
-            'INSERT INTO transactions (user_id, title, amount, type, category, date, project_id, member_id, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [user_id, title, amount, type, category, date, project_id || null, member_id || null, payment_status || 'completed']
+            'INSERT INTO transactions (user_id, title, amount, type, category, date, project_id, member_id, guest_name, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [user_id, title, amount, type, category, date, project_id || null, member_id || null, guest_name || null, payment_status || 'completed']
         );
         return { id: result.insertId, ...data };
     }
 
     static async getAllByUserId(userId, filters = {}) {
-        let query = `SELECT t.*, p.name as project_name, w.name as member_name 
+        let query = `SELECT t.*, p.name as project_name, 
+                    CASE 
+                        WHEN t.member_id IS NOT NULL THEN w.name 
+                        ELSE t.guest_name 
+                    END as member_name,
+                    w.member_type
                     FROM transactions t 
                     LEFT JOIN projects p ON t.project_id = p.id 
                     LEFT JOIN members w ON t.member_id = w.id
@@ -24,13 +29,22 @@ class Transaction {
         }
 
         if (filters.memberId) {
-            query += ' AND t.member_id = ?';
-            params.push(filters.memberId);
+            if (filters.memberId === 'guest') {
+                query += ' AND t.member_id IS NULL AND t.guest_name IS NOT NULL';
+            } else {
+                query += ' AND t.member_id = ?';
+                params.push(filters.memberId);
+            }
         }
 
         if (filters.memberType && filters.memberType !== 'all') {
-            query += ' AND w.member_type = ?';
-            params.push(filters.memberType);
+            query += ' AND (w.member_type = ? OR (t.member_id IS NULL AND ? = "guest"))';
+            params.push(filters.memberType, filters.memberType);
+        }
+
+        if (filters.guestName) {
+            query += ' AND t.guest_name = ?';
+            params.push(filters.guestName);
         }
 
         if (filters.period) {
@@ -65,10 +79,10 @@ class Transaction {
     }
 
     static async update(id, userId, data) {
-        const { title, amount, type, category, date, project_id, member_id, payment_status } = data;
+        const { title, amount, type, category, date, project_id, member_id, guest_name, payment_status } = data;
         const [result] = await db.query(
-            'UPDATE transactions SET title = ?, amount = ?, type = ?, category = ?, date = ?, project_id = ?, member_id = ?, payment_status = ? WHERE id = ? AND user_id = ?',
-            [title, amount, type, category, date, project_id || null, member_id || null, payment_status || 'completed', id, userId]
+            'UPDATE transactions SET title = ?, amount = ?, type = ?, category = ?, date = ?, project_id = ?, member_id = ?, guest_name = ?, payment_status = ? WHERE id = ? AND user_id = ?',
+            [title, amount, type, category, date, project_id || null, member_id || null, guest_name || null, payment_status || 'completed', id, userId]
         );
         return result.affectedRows > 0;
     }

@@ -19,3 +19,7 @@ export const updateMember = async (id, data) => {
 export const deleteMember = async (id) => {
     return await axiosInstance.delete(`/members/${id}`);
 };
+
+export const getGuests = async () => {
+    return await axiosInstance.get('/members/guests/all');
+};

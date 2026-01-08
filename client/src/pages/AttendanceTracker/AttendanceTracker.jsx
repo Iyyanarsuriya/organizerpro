@@ -887,22 +887,22 @@ const AttendanceTracker = () => {
                                                     <p className="text-[8px] font-black text-emerald-500 uppercase">P</p>
                                                     <p className="text-xs font-black text-slate-900">{w.present}</p>
                                                 </div>
-                                                <div className="w-[1px] h-4 bg-slate-200" />
+                                                <div className="w-px h-4 bg-slate-200" />
                                                 <div className="flex-1 text-center">
                                                     <p className="text-[8px] font-black text-red-500 uppercase">A</p>
                                                     <p className="text-xs font-black text-slate-900">{w.absent}</p>
                                                 </div>
-                                                <div className="w-[1px] h-4 bg-slate-200" />
+                                                <div className="w-px h-4 bg-slate-200" />
                                                 <div className="flex-1 text-center">
                                                     <p className="text-[8px] font-black text-amber-500 uppercase">L</p>
                                                     <p className="text-xs font-black text-slate-900">{w.late}</p>
                                                 </div>
-                                                <div className="w-[1px] h-4 bg-slate-200" />
+                                                <div className="w-px h-4 bg-slate-200" />
                                                 <div className="flex-1 text-center">
                                                     <p className="text-[8px] font-black text-blue-500 uppercase">H</p>
                                                     <p className="text-xs font-black text-slate-900">{w.half_day}</p>
                                                 </div>
-                                                <div className="w-[1px] h-4 bg-slate-200" />
+                                                <div className="w-px h-4 bg-slate-200" />
                                                 <div className="flex-1 text-center">
                                                     <p className="text-[8px] font-black text-purple-500 uppercase">Per</p>
                                                     <p className="text-xs font-black text-slate-900">{w.permission || 0}</p>

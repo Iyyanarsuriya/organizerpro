@@ -16,5 +16,6 @@ router.get('/', getMembers);
 router.get('/active', getActiveMembers);
 router.put('/:id', updateMember);
 router.delete('/:id', deleteMember);
+router.get('/guests/all', require('../controllers/memberController').getGuests);
 
 module.exports = router;

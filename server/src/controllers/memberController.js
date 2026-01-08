@@ -55,10 +55,20 @@ const deleteMember = async (req, res) => {
     }
 };
 
+const getGuests = async (req, res) => {
+    try {
+        const guests = await Member.getGuests(req.user.id);
+        res.status(200).json({ success: true, data: guests });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     createMember,
     getMembers,
     getActiveMembers,
     updateMember,
-    deleteMember
+    deleteMember,
+    getGuests
 };

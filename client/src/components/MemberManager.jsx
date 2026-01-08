@@ -1,4 +1,4 @@
-import { getMembers, createMember, updateMember, deleteMember } from '../api/memberApi';
+import { getMembers, createMember, updateMember, deleteMember, getGuests } from '../api/memberApi';
 import { getMemberRoles, createMemberRole, deleteMemberRole } from '../api/memberRoleApi'; // IMPORTS
 import { getTransactions } from '../api/transactionApi';
 import toast from 'react-hot-toast';
@@ -39,8 +39,9 @@ const MemberManager = ({ onClose, onUpdate }) => {
 
     const fetchMembers = async () => {
         try {
-            const [memRes, roleRes] = await Promise.all([getMembers(), getMemberRoles()]);
-            setMembers(memRes.data.data);
+            const [memRes, roleRes, guestRes] = await Promise.all([getMembers(), getMemberRoles(), getGuests()]);
+            const guests = guestRes.data.data.map(g => ({ ...g, isGuest: true }));
+            setMembers([...memRes.data.data, ...guests]);
             setRoles(roleRes.data.data);
             setLoading(false);
         } catch (error) {
@@ -60,7 +61,8 @@ const MemberManager = ({ onClose, onUpdate }) => {
             (m.email && m.email.toLowerCase().includes(searchQuery.toLowerCase()));
 
         const matchesRole = !filterRole || m.role === filterRole;
-        const matchesType = filterType === 'all' || m.member_type === filterType;
+        const matchesType = filterType === 'all' ||
+            (filterType === 'guest' ? m.isGuest : m.member_type === filterType);
         const matchesStatus = filterStatus === 'all' || m.status === filterStatus;
 
         return matchesSearch && matchesRole && matchesType && matchesStatus;
@@ -169,7 +171,8 @@ const MemberManager = ({ onClose, onUpdate }) => {
         setViewingPayments(member);
         setPaymentsLoading(true);
         try {
-            const res = await getTransactions({ memberId: member.id });
+            const params = member.isGuest ? { guestName: member.name } : { memberId: member.id };
+            const res = await getTransactions(params);
             setPayments(res.data);
         } catch (error) {
             toast.error("Failed to fetch history");
@@ -353,6 +356,7 @@ const MemberManager = ({ onClose, onUpdate }) => {
                                 <option value="all">All Types</option>
                                 <option value="worker">Worker</option>
                                 <option value="employee">Employee</option>
+                                <option value="guest">Guest</option>
                             </select>
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-emerald-400 text-[10px]">▼</div>
                         </div>
@@ -451,18 +455,22 @@ const MemberManager = ({ onClose, onUpdate }) => {
                                             >
                                                 <FaUniversity />
                                             </button>
-                                            <button
-                                                onClick={() => handleEdit(member)}
-                                                className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-                                            >
-                                                <FaEdit />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDeleteClick(member.id)}
-                                                className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                                            >
-                                                <FaTrash />
-                                            </button>
+                                            {!member.isGuest && (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleEdit(member)}
+                                                        className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                                                    >
+                                                        <FaEdit />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteClick(member.id)}
+                                                        className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                                                    >
+                                                        <FaTrash />
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

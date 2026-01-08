@@ -11,7 +11,7 @@ import {
 } from 'react-icons/fa';
 import { getExpenseCategories, createExpenseCategory, deleteExpenseCategory } from '../../api/expenseCategoryApi';
 import { getProjects, createProject, deleteProject } from '../../api/projectApi';
-import { getMembers, getActiveMembers } from '../../api/memberApi';
+import { getMembers, getActiveMembers, getGuests } from '../../api/memberApi';
 import { getMemberRoles } from '../../api/memberRoleApi';
 import { getAttendanceStats } from '../../api/attendanceApi';
 import { exportExpenseToCSV, exportExpenseToTXT, exportExpenseToPDF } from '../../utils/exportUtils/index.js';
@@ -131,13 +131,14 @@ const ExpenseTrackerMain = () => {
 
             console.log('Fetching with params:', params); // Debug log
 
-            const [transRes, statsRes, catRes, projRes, membersRes, roleRes] = await Promise.all([
+            const [transRes, statsRes, catRes, projRes, membersRes, roleRes, guestRes] = await Promise.all([
                 getTransactions(params),
                 getTransactionStats(params),
                 getExpenseCategories(),
                 getProjects(),
                 getMembers(), // Fetch all members to ensure they are available for modals/forms
-                getMemberRoles()
+                getMemberRoles(),
+                getGuests()
             ]);
             setTransactions(transRes.data);
 
@@ -154,7 +155,8 @@ const ExpenseTrackerMain = () => {
             setCategories(catRes.data);
             setProjects(projRes.data);
             const rawMembers = membersRes.data.data;
-            setMembers(rawMembers);
+            const guests = guestRes.data.data.map(g => ({ ...g, isGuest: true }));
+            setMembers([...rawMembers, ...guests]);
             setRoles(roleRes.data.data);
 
             if (filterMember) {
@@ -570,6 +572,7 @@ const ExpenseTrackerMain = () => {
                                 <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Member</label>
                                 <select value={filterMember} onChange={(e) => setFilterMember(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
                                     <option value="">Everyone</option>
+                                    <option value="guest">Guests (Non-Members)</option>
                                     {members.filter(m => (!filterRole || m.role === filterRole) && (filterMemberType === 'all' || m.member_type === filterMemberType)).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                                 </select>
                             </div>
@@ -703,11 +706,27 @@ const ExpenseTrackerMain = () => {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Member</label>
-                                        <select value={formData.member_id} onChange={(e) => setFormData({ ...formData, member_id: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs cursor-pointer">
-                                            <option value="">No Member</option>
-                                            {members.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                                        </select>
+                                        <div className="flex justify-between items-center mb-2">
+                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Member / Guest</label>
+                                            <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                                                <button type="button" onClick={() => setFormData(prev => ({ ...prev, member_id: '', guest_name: '' }))} className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest transition-all ${!formData.guest_name ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}>Member</button>
+                                                <button type="button" onClick={() => setFormData(prev => ({ ...prev, member_id: '', guest_name: 'Guest' }))} className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest transition-all ${formData.guest_name ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}>Guest</button>
+                                            </div>
+                                        </div>
+                                        {formData.guest_name !== undefined && formData.guest_name !== null && typeof formData.guest_name === 'string' && formData.guest_name.length >= 0 && (formData.member_id === '' || formData.member_id === null) && formData.guest_name !== '' ? (
+                                            <input
+                                                type="text"
+                                                value={formData.guest_name === 'Guest' ? '' : formData.guest_name}
+                                                onChange={(e) => setFormData({ ...formData, guest_name: e.target.value, member_id: '' })}
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs"
+                                                placeholder="Enter Guest Name..."
+                                            />
+                                        ) : (
+                                            <select value={formData.member_id} onChange={(e) => setFormData({ ...formData, member_id: e.target.value, guest_name: '' })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs cursor-pointer">
+                                                <option value="">No Member</option>
+                                                {members.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                                            </select>
+                                        )}
                                     </div>
                                 </div>
 

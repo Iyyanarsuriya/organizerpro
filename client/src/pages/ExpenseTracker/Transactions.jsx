@@ -93,6 +93,7 @@ const Transactions = ({
                             <FaUser className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-400 group-hover:text-emerald-500 transition-colors" size={12} />
                             <select value={filterMember} onChange={(e) => setFilterMember(e.target.value)} className="w-full bg-emerald-50 hover:bg-emerald-100 border border-transparent rounded-2xl py-3 pl-10 pr-10 text-xs font-black text-emerald-600 text-center outline-none focus:ring-2 focus:ring-emerald-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
                                 <option value="">All Members</option>
+                                <option value="guest">Guests / Non-Members</option>
                                 {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                             </select>
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-emerald-400 text-[10px]">▼</div>
@@ -143,8 +144,8 @@ const Transactions = ({
                                         </div>
                                     )}
                                     {t.member_name && (
-                                        <div className="px-1 bg-orange-50 text-[6px] font-black text-orange-500 rounded-full flex items-center uppercase tracking-tighter">
-                                            {t.member_name}
+                                        <div className={`px-1 text-[6px] font-black rounded-full flex items-center uppercase tracking-tighter ${!t.member_id ? 'bg-amber-50 text-amber-600' : 'bg-orange-50 text-orange-500'}`}>
+                                            {!t.member_id && 'GUEST: '}{t.member_name}
                                         </div>
                                     )}
                                     <div className="px-1 bg-slate-50 text-[6px] font-black text-slate-300 rounded-full flex items-center uppercase tracking-tighter">
