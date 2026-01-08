@@ -5,6 +5,8 @@ import { getWorkTypes, createWorkType, deleteWorkType } from '../api/workTypeApi
 import toast from 'react-hot-toast';
 import { FaTimes, FaPlus, FaEdit, FaTrash, FaCalendarAlt, FaMoneyBillWave, FaBoxes, FaStickyNote, FaUser, FaTags, FaSearch, FaFilter } from 'react-icons/fa';
 import ConfirmModal from './modals/ConfirmModal';
+import ExportButtons from './ExportButtons';
+import { exportWorkLogToCSV, exportWorkLogToTXT, exportWorkLogToPDF } from '../utils/exportUtils';
 
 const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().split('T')[0] }) => {
     const [workLogs, setWorkLogs] = useState([]);
@@ -19,6 +21,7 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
     // Search and Filter States
     const [searchTerm, setSearchTerm] = useState('');
     const [logFilterType, setLogFilterType] = useState('all'); // 'all', 'member', 'guest'
+    const [dateFilter, setDateFilter] = useState({ start: selectedDate, end: selectedDate });
 
     const filteredLogs = workLogs.filter(log => {
         const matchesSearch =
@@ -50,8 +53,8 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
         try {
             const [logsRes, membersRes, typesRes] = await Promise.all([
                 getWorkLogs({
-                    startDate: formData.date,
-                    endDate: formData.date
+                    startDate: dateFilter.start,
+                    endDate: dateFilter.end
                 }),
                 getActiveMembers(),
                 getWorkTypes()
@@ -84,7 +87,7 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
         if (viewMode === 'monthly') {
             fetchMonthlyTotals();
         }
-    }, [formData.date, viewMode]);
+    }, [dateFilter, viewMode]);
 
     // Handle Adding New Work Type
     const handleAddType = async (e) => {
@@ -390,14 +393,34 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
 
                         {/* Search and Filters */}
                         <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                            <div className="flex gap-3 w-full sm:w-auto">
+                                <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 w-full sm:w-auto">
+                                    <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">From</span>
+                                    <input
+                                        type="date"
+                                        value={dateFilter.start}
+                                        onChange={(e) => setDateFilter({ ...dateFilter, start: e.target.value })}
+                                        className="bg-transparent text-xs font-bold text-slate-700 outline-none w-full sm:w-[110px]"
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 w-full sm:w-auto">
+                                    <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">To</span>
+                                    <input
+                                        type="date"
+                                        value={dateFilter.end}
+                                        onChange={(e) => setDateFilter({ ...dateFilter, end: e.target.value })}
+                                        className="bg-transparent text-xs font-bold text-slate-700 outline-none w-full sm:w-[110px]"
+                                    />
+                                </div>
+                            </div>
                             <div className="flex-1 relative">
                                 <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                                 <input
                                     type="text"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    placeholder="Search by member or guest name..."
-                                    className="w-full bg-white border border-slate-200 rounded-xl pl-12 pr-4 h-12 text-sm font-bold text-slate-700 outline-none focus:border-indigo-500 transition-all shadow-sm"
+                                    placeholder="Search by name..."
+                                    className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-12 pr-4 h-10 text-xs font-bold text-slate-700 outline-none focus:border-indigo-500 transition-all"
                                 />
                             </div>
                             <div className="flex bg-slate-100 p-1 rounded-xl w-fit border border-slate-200">
@@ -405,18 +428,23 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                                     <button
                                         key={type}
                                         onClick={() => setLogFilterType(type)}
-                                        className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${logFilterType === type ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${logFilterType === type ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
-                                        {type === 'all' ? 'All' : type + 's'}
+                                        {type === 'all' ? 'All' : type}
                                     </button>
                                 ))}
                             </div>
+                            <ExportButtons
+                                onExportCSV={() => exportWorkLogToCSV(filteredLogs, 'Work_Log_Report')}
+                                onExportPDF={() => exportWorkLogToPDF({ data: filteredLogs, period: `${dateFilter.start} to ${dateFilter.end}`, filename: 'Work_Log_Report' })}
+                                onExportTXT={() => exportWorkLogToTXT({ data: filteredLogs, period: `${dateFilter.start} to ${dateFilter.end}`, filename: 'Work_Log_Report' })}
+                            />
                         </div>
 
-                        {/* Today's Logs */}
+                        {/* Logs List */}
                         <div className="space-y-4 font-['Outfit']">
                             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-1">
-                                Logs for {new Date(formData.date).toLocaleDateString('en-GB')} ({filteredLogs.length})
+                                {dateFilter.start === dateFilter.end && dateFilter.start ? `Logs for ${new Date(dateFilter.start).toLocaleDateString('en-GB')}` : 'Logs'} ({filteredLogs.length})
                             </h3>
                             {loading ? (
                                 <div className="text-center py-12">
