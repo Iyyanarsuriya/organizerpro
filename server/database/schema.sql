@@ -91,6 +91,9 @@ CREATE TABLE IF NOT EXISTS transactions (
     category VARCHAR(100) NOT NULL,
     date DATE NOT NULL,
     payment_status VARCHAR(20) DEFAULT 'completed',
+    guest_name VARCHAR(100) DEFAULT NULL,
+    quantity DECIMAL(10, 2) DEFAULT 1.00,
+    unit_price DECIMAL(10, 2) DEFAULT 0.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -312,4 +315,16 @@ CREATE TABLE IF NOT EXISTS vehicle_logs (
 -- Date: 2026-01-08
 -- Changes:
 --   1. Added payment_status column to transactions table (Completed/Pending/Failed)
+-- ============================================================================
+
+-- Migration: add_guest_to_transactions.js
+-- Date: 2026-01-08
+-- Changes:
+--   1. Added guest_name column to transactions table for non-member tracking
+-- ============================================================================
+
+-- Migration: add_quantity_to_transactions.js
+-- Date: 2026-01-08
+-- Changes:
+--   1. Added quantity and unit_price columns to transactions table for product tracking
 -- ============================================================================

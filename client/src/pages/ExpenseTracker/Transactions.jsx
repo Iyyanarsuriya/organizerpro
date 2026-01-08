@@ -129,7 +129,7 @@ const Transactions = ({
                 {filteredTransactions.map(t => (
                     <div key={t.id} className="bg-white p-4 sm:p-6 rounded-[32px] shadow-sm border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:shadow-md transition-all">
                         <div className="flex items-center gap-4">
-                            <div className={`w - 12 h - 12 sm: w - 14 sm: h - 14 rounded - 2xl flex items - center justify - center text - xl shadow - sm shrink - 0 transition - transform group - hover: scale - 105 ${t.type === 'income' ? 'bg-blue-50 text-blue-500' : 'bg-red-50 text-red-500'} `}>
+                            <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-xl shadow-sm shrink-0 transition-transform group-hover:scale-105 ${t.type === 'income' ? 'bg-blue-50 text-blue-500' : 'bg-red-50 text-red-500'}`}>
                                 {t.type === 'income' ? '↓' : '↑'}
                             </div>
                             <div>
@@ -155,9 +155,16 @@ const Transactions = ({
                             </div>
                         </div>
                         <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-6 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-50">
-                            <p className={`text - lg sm: text - xl font - black tracking - tight ${t.type === 'income' ? 'text-blue-600' : 'text-red-600'} `}>
-                                {t.type === 'income' ? '+' : '-'}₹{formatAmount(t.amount)}
-                            </p>
+                            <div className="text-right">
+                                <p className={`text-lg sm:text-xl font-black tracking-tight ${t.type === 'income' ? 'text-blue-600' : 'text-red-600'}`}>
+                                    {t.type === 'income' ? '+' : '-'}₹{formatAmount(t.amount)}
+                                </p>
+                                {(t.quantity > 1 || (t.unit_price > 0 && t.unit_price != t.amount)) && (
+                                    <p className="text-[10px] font-bold text-slate-400 mt-0.5">
+                                        {formatAmount(t.quantity)} x ₹{formatAmount(t.unit_price)}
+                                    </p>
+                                )}
+                            </div>
                             <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button onClick={() => handleEdit(t)} className="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all cursor-pointer">
                                     <FaEdit size={14} />

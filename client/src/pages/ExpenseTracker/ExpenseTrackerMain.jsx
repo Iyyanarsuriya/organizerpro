@@ -67,6 +67,8 @@ const ExpenseTrackerMain = () => {
     const [formData, setFormData] = useState({
         title: '',
         amount: '',
+        quantity: 1,
+        unit_price: 0,
         type: 'expense',
         category: 'Food',
         date: new Date().toISOString().split('T')[0],
@@ -270,6 +272,8 @@ const ExpenseTrackerMain = () => {
             setFormData({
                 title: '',
                 amount: '',
+                quantity: 1,
+                unit_price: 0,
                 type: 'expense',
                 category: 'Food',
                 date: new Date().toISOString().split('T')[0],
@@ -286,6 +290,8 @@ const ExpenseTrackerMain = () => {
         setFormData({
             title: transaction.title,
             amount: transaction.amount,
+            quantity: transaction.quantity || 1,
+            unit_price: transaction.unit_price || 0,
             type: transaction.type,
             category: transaction.category,
             date: new Date(transaction.date).toISOString().split('T')[0],
@@ -300,6 +306,8 @@ const ExpenseTrackerMain = () => {
         setFormData({
             title: '',
             amount: '',
+            quantity: 1,
+            unit_price: 0,
             type: 'expense',
             category: 'Food',
             date: new Date().toISOString().split('T')[0],
@@ -752,43 +760,58 @@ const ExpenseTrackerMain = () => {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Amount (₹)</label>
-                                        <input required type="number" step="0.01" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-black text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs" placeholder="0.00" />
+                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">
+                                            {formData.type === 'income' ? 'Qty Sold' : 'Qty / Count'}
+                                        </label>
+                                        <input required type="number" step="0.01" value={formData.quantity} onChange={(e) => {
+                                            const qty = parseFloat(e.target.value) || 0;
+                                            setFormData({ ...formData, quantity: qty, amount: (qty * formData.unit_price).toFixed(2) });
+                                        }} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-black text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs" placeholder="1" />
                                     </div>
                                     <div>
-                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Category</label>
-                                        <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs cursor-pointer">
-                                            {[...new Set([...(formData.type === 'expense' ? expenseCategories : incomeCategories), ...categories.map(c => c.name)])].map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                                        </select>
+                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">
+                                            {formData.type === 'income' ? 'Rate / Price' : 'Unit Cost'}
+                                        </label>
+                                        <input required type="number" step="0.01" value={formData.unit_price} onChange={(e) => {
+                                            const rate = parseFloat(e.target.value) || 0;
+                                            setFormData({ ...formData, unit_price: rate, amount: (formData.quantity * rate).toFixed(2) });
+                                        }} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-black text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs" placeholder="0.00" />
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Project</label>
-                                        <select value={formData.project_id} onChange={(e) => setFormData({ ...formData, project_id: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs cursor-pointer">
+                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Total Amount (₹)</label>
+                                        <input required type="number" step="0.01" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className="w-full bg-blue-50 border border-blue-200 rounded-2xl px-5 py-3 text-sm font-black text-blue-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs" placeholder="0.00" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Category</label>
+                                        <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs cursor-pointer">
+                                            {[...new Set([...(formData.type === 'expense' ? expenseCategories : incomeCategories), ...categories.map(c => c.name)])].map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <div>
+                                        <label className="block text-[7px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1.5 ml-1">Project (Optional)</label>
+                                        <select value={formData.project_id} onChange={(e) => setFormData({ ...formData, project_id: e.target.value })} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-[10px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all shadow-xs cursor-pointer">
                                             <option value="">No Project</option>
                                             {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                         </select>
                                     </div>
                                     <div>
-                                        <div className="flex justify-between items-center mb-2">
-                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Member / Guest</label>
-                                            <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
-                                                <button type="button" onClick={() => setFormData(prev => ({ ...prev, member_id: '', guest_name: '' }))} className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest transition-all ${!formData.guest_name ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}>Member</button>
-                                                <button type="button" onClick={() => setFormData(prev => ({ ...prev, member_id: '', guest_name: 'Guest' }))} className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest transition-all ${formData.guest_name ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}>Guest</button>
+                                        <div className="flex justify-between items-center mb-1.5 px-1">
+                                            <label className="block text-[7px] font-black text-slate-400 uppercase tracking-[0.2em]">Member / Guest</label>
+                                            <div className="flex bg-slate-200 p-0.5 rounded-md">
+                                                <button type="button" onClick={() => setFormData(prev => ({ ...prev, member_id: '', guest_name: '' }))} className={`px-1 rounded text-[6px] font-black transition-all ${!formData.guest_name ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'}`}>M</button>
+                                                <button type="button" onClick={() => setFormData(prev => ({ ...prev, member_id: '', guest_name: 'Guest' }))} className={`px-1 rounded text-[6px] font-black transition-all ${formData.guest_name ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'}`}>G</button>
                                             </div>
                                         </div>
                                         {formData.guest_name !== undefined && formData.guest_name !== null && typeof formData.guest_name === 'string' && formData.guest_name.length >= 0 && (formData.member_id === '' || formData.member_id === null) && formData.guest_name !== '' ? (
-                                            <input
-                                                type="text"
-                                                value={formData.guest_name === 'Guest' ? '' : formData.guest_name}
-                                                onChange={(e) => setFormData({ ...formData, guest_name: e.target.value, member_id: '' })}
-                                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs"
-                                                placeholder="Enter Guest Name..."
-                                            />
+                                            <input type="text" value={formData.guest_name === 'Guest' ? '' : formData.guest_name} onChange={(e) => setFormData({ ...formData, guest_name: e.target.value, member_id: '' })} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-[10px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all shadow-xs" placeholder="Guest Name..." />
                                         ) : (
-                                            <select value={formData.member_id} onChange={(e) => setFormData({ ...formData, member_id: e.target.value, guest_name: '' })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs cursor-pointer">
+                                            <select value={formData.member_id} onChange={(e) => setFormData({ ...formData, member_id: e.target.value, guest_name: '' })} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-[10px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all shadow-xs cursor-pointer">
                                                 <option value="">No Member</option>
                                                 {members.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
                                             </select>
@@ -798,15 +821,14 @@ const ExpenseTrackerMain = () => {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Transaction Date</label>
-                                        <input required type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs" />
+                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Date</label>
+                                        <input required type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs" />
                                     </div>
                                     <div>
-                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Payment Status</label>
-                                        <select value={formData.payment_status || 'completed'} onChange={(e) => setFormData({ ...formData, payment_status: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs cursor-pointer">
-                                            <option value="completed">Completed (Paid)</option>
-                                            <option value="pending">Pending (Unpaid)</option>
-                                            <option value="failed">Failed</option>
+                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Status</label>
+                                        <select value={formData.payment_status || 'completed'} onChange={(e) => setFormData({ ...formData, payment_status: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs cursor-pointer">
+                                            <option value="completed">Paid</option>
+                                            <option value="pending">Pending</option>
                                         </select>
                                     </div>
                                 </div>

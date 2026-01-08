@@ -2,10 +2,10 @@ const db = require('../config/db');
 
 class Transaction {
     static async create(data) {
-        const { user_id, title, amount, type, category, date, project_id, member_id, guest_name, payment_status } = data;
+        const { user_id, title, amount, type, category, date, project_id, member_id, guest_name, payment_status, quantity, unit_price } = data;
         const [result] = await db.query(
-            'INSERT INTO transactions (user_id, title, amount, type, category, date, project_id, member_id, guest_name, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [user_id, title, amount, type, category, date, project_id || null, member_id || null, guest_name || null, payment_status || 'completed']
+            'INSERT INTO transactions (user_id, title, amount, type, category, date, project_id, member_id, guest_name, payment_status, quantity, unit_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [user_id, title, amount, type, category, date, project_id || null, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0]
         );
         return { id: result.insertId, ...data };
     }
@@ -79,10 +79,10 @@ class Transaction {
     }
 
     static async update(id, userId, data) {
-        const { title, amount, type, category, date, project_id, member_id, guest_name, payment_status } = data;
+        const { title, amount, type, category, date, project_id, member_id, guest_name, payment_status, quantity, unit_price } = data;
         const [result] = await db.query(
-            'UPDATE transactions SET title = ?, amount = ?, type = ?, category = ?, date = ?, project_id = ?, member_id = ?, guest_name = ?, payment_status = ? WHERE id = ? AND user_id = ?',
-            [title, amount, type, category, date, project_id || null, member_id || null, guest_name || null, payment_status || 'completed', id, userId]
+            'UPDATE transactions SET title = ?, amount = ?, type = ?, category = ?, date = ?, project_id = ?, member_id = ?, guest_name = ?, payment_status = ?, quantity = ?, unit_price = ? WHERE id = ? AND user_id = ?',
+            [title, amount, type, category, date, project_id || null, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0, id, userId]
         );
         return result.affectedRows > 0;
     }

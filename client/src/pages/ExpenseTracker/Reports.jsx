@@ -133,6 +133,18 @@ const Reports = ({
                                         <span className="text-[6px] font-black text-rose-600 uppercase tracking-tighter">PERIOD SPENDING</span>
                                     </div>
                                 </div>
+                                <div className="p-6 bg-indigo-50/50 rounded-3xl border border-indigo-100 flex flex-col justify-between min-h-[140px]">
+                                    <div>
+                                        <p className="text-[8px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-1">Total Units Tracked</p>
+                                        <h4 className="text-3xl font-black tracking-tighter text-indigo-600">
+                                            {formatAmount(filteredTransactions.reduce((acc, t) => acc + parseFloat(t.quantity || 1), 0))}
+                                        </h4>
+                                    </div>
+                                    <div className="h-[8px] flex items-center gap-1">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
+                                        <span className="text-[6px] font-black text-indigo-600 uppercase tracking-tighter">UNITS (SALES + PURCHASES)</span>
+                                    </div>
+                                </div>
                             </>
                         )}
                     </div>
@@ -165,8 +177,8 @@ const Reports = ({
                                                         <p className="text-[13px] font-black text-slate-800 leading-tight mb-1">{t.title}</p>
                                                         <div className="h-[8px] flex gap-1">
                                                             <div className={`px-1.5 rounded-full flex items-center text-[6px] font-black uppercase tracking-tighter ${t.category === 'Salary Pot' ? 'bg-amber-100 text-amber-600' :
-                                                                    t.category === 'Advance' ? 'bg-indigo-100 text-indigo-600' :
-                                                                        'bg-blue-100 text-blue-600'
+                                                                t.category === 'Advance' ? 'bg-indigo-100 text-indigo-600' :
+                                                                    'bg-blue-100 text-blue-600'
                                                                 }`}>
                                                                 {t.category}
                                                             </div>
