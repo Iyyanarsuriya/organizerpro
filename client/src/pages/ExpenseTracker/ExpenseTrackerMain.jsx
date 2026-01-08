@@ -478,111 +478,112 @@ const ExpenseTrackerMain = () => {
 
             {/* Main Content */}
             <main className="flex-1 p-[16px] lg:p-[48px] h-screen overflow-y-auto custom-scrollbar">
-                {/* Header */}
-                <div className="flex flex-col gap-6 mb-8 lg:mb-12">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={() => setShowCategoryManager(true)}
-                                className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-white hover:bg-slate-900 transition-all shadow-lg shadow-slate-900/20 group/cat-btn"
-                                title="Settings"
-                            >
-                                <Settings className="w-5 h-5 group-hover/cat-btn:rotate-90 transition-transform" />
-                            </button>
-                            <div>
-                                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">Expense Tracker</h1>
-                                <div className="h-[8px] mt-0.5 flex gap-1">
-                                    <div className="px-1 bg-emerald-50 text-[6px] font-black text-emerald-600 rounded-full flex items-center uppercase tracking-tighter">FINANCE HUB</div>
-                                    <div className="px-1 bg-blue-50 text-[6px] font-black text-blue-500 rounded-full flex items-center uppercase tracking-tighter">REAL-TIME STATS</div>
+                {activeTab === 'Dashboard' && (
+                    <div className="flex flex-col gap-6 mb-8 lg:mb-12">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => setShowCategoryManager(true)}
+                                    className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-white hover:bg-slate-900 transition-all shadow-lg shadow-slate-900/20 group/cat-btn"
+                                    title="Settings"
+                                >
+                                    <Settings className="w-5 h-5 group-hover/cat-btn:rotate-90 transition-transform" />
+                                </button>
+                                <div>
+                                    <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">Expense Tracker</h1>
+                                    <div className="h-[8px] mt-0.5 flex gap-1">
+                                        <div className="px-1 bg-emerald-50 text-[6px] font-black text-emerald-600 rounded-full flex items-center uppercase tracking-tighter">FINANCE HUB</div>
+                                        <div className="px-1 bg-blue-50 text-[6px] font-black text-blue-500 rounded-full flex items-center uppercase tracking-tighter">REAL-TIME STATS</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Filter Grid */}
-                    <div className="flex flex-wrap items-end gap-3 p-6 bg-white rounded-[32px] border border-slate-100 shadow-sm transition-all hover:shadow-md">
-                        {/* Period Type - Full Width Row */}
-                        <div className="w-full">
-                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Period Type</label>
-                            <div className="flex p-1 bg-slate-50 rounded-xl border border-slate-100">
-                                {['day', 'week', 'month', 'year', 'range'].map((type) => (
-                                    <button
-                                        key={type}
-                                        onClick={() => setPeriodType(type)}
-                                        className={`flex-1 h-9 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${periodType === type ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                                    >
-                                        {type}
-                                    </button>
-                                ))}
+                        {/* Filter Grid */}
+                        <div className="flex flex-wrap items-end gap-3 p-6 bg-white rounded-[32px] border border-slate-100 shadow-sm transition-all hover:shadow-md">
+                            {/* Period Type - Full Width Row */}
+                            <div className="w-full">
+                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Period Type</label>
+                                <div className="flex p-1 bg-slate-50 rounded-xl border border-slate-100">
+                                    {['day', 'week', 'month', 'year', 'range'].map((type) => (
+                                        <button
+                                            key={type}
+                                            onClick={() => setPeriodType(type)}
+                                            className={`flex-1 h-9 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${periodType === type ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                        >
+                                            {type}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Date Selector */}
+                            <div style={{ width: periodType === 'range' ? '100%' : '180px' }} className="transition-all duration-300">
+                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select {periodType}</label>
+                                <div className="h-10 bg-slate-50 border border-slate-100 rounded-xl px-3 flex items-center">
+                                    {periodType === 'day' ? <input type="date" value={currentPeriod.length === 10 ? currentPeriod : ''} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-xs font-bold text-slate-700 outline-none bg-transparent" /> :
+                                        periodType === 'week' ? <input type="week" value={currentPeriod.includes('W') ? currentPeriod : ''} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-xs font-bold text-slate-700 outline-none bg-transparent" /> :
+                                            periodType === 'month' ? <input type="month" value={currentPeriod.length === 7 ? currentPeriod : ''} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-xs font-bold text-slate-700 outline-none bg-transparent" /> :
+                                                periodType === 'year' ? <input type="number" min="2000" max="2100" value={currentPeriod.slice(0, 4)} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-xs font-bold text-slate-700 outline-none bg-transparent" /> :
+                                                    <div className="flex items-center gap-2 w-full">
+                                                        <input type="date" value={customRange.start} onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })} className="text-[11px] font-bold text-slate-700 w-full bg-transparent" />
+                                                        <span className="text-slate-400 text-xs">—</span>
+                                                        <input type="date" value={customRange.end} onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })} className="text-[11px] font-bold text-slate-700 w-full bg-transparent" />
+                                                    </div>}
+                                </div>
+                            </div>
+
+                            {/* Project Filter */}
+                            <div style={{ width: '140px' }}>
+                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Project</label>
+                                <select value={filterProject} onChange={(e) => setFilterProject(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
+                                    <option value="">All Projects</option>
+                                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                </select>
+                            </div>
+
+                            {/* Role Filter */}
+                            <div style={{ width: '130px' }}>
+                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Role</label>
+                                <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
+                                    <option value="">All Roles</option>
+                                    {[...new Set([...roles.map(r => r.name), ...members.map(m => m.role).filter(Boolean)])].sort().map(role => (
+                                        <option key={role} value={role}>{role}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Type Filter */}
+                            <div style={{ width: '130px' }}>
+                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Type</label>
+                                <select value={filterMemberType} onChange={(e) => setFilterMemberType(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
+                                    <option value="all">Everyone</option>
+                                    <option value="worker">Workers</option>
+                                    <option value="employee">Employees</option>
+                                </select>
+                            </div>
+
+                            {/* Member Filter */}
+                            <div style={{ width: '140px' }}>
+                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Member</label>
+                                <select value={filterMember} onChange={(e) => setFilterMember(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
+                                    <option value="">Everyone</option>
+                                    {members.filter(m => (!filterRole || m.role === filterRole) && (filterMemberType === 'all' || m.member_type === filterMemberType)).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                </select>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-2 ml-auto">
+                                <ExportButtons onExportCSV={() => setConfirmModal({ show: true, type: 'CSV', label: 'CSV Report' })} onExportPDF={() => setConfirmModal({ show: true, type: 'PDF', label: 'PDF Report' })} onExportTXT={() => setConfirmModal({ show: true, type: 'TXT', label: 'Plain Text Report' })} />
+                                <button onClick={() => setShowProjectManager(true)} className="h-10 bg-blue-600 text-white px-4 rounded-xl shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2" title="New Project">
+                                    <FaFolderPlus />
+                                    <span className="text-[9px] font-black uppercase tracking-widest hidden lg:inline">Project</span>
+                                </button>
+                                <button onClick={() => setActiveTab('Work Log')} className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-sm lg:hidden ${activeTab === 'Work Log' ? 'bg-[#2d5bff] text-white' : 'bg-slate-800 text-white hover:bg-slate-900'}`} title="Daily Work Logs"><FaBoxes /></button>
                             </div>
                         </div>
-
-                        {/* Date Selector */}
-                        <div style={{ width: periodType === 'range' ? '100%' : '180px' }} className="transition-all duration-300">
-                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select {periodType}</label>
-                            <div className="h-10 bg-slate-50 border border-slate-100 rounded-xl px-3 flex items-center">
-                                {periodType === 'day' ? <input type="date" value={currentPeriod.length === 10 ? currentPeriod : ''} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-xs font-bold text-slate-700 outline-none bg-transparent" /> :
-                                    periodType === 'week' ? <input type="week" value={currentPeriod.includes('W') ? currentPeriod : ''} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-xs font-bold text-slate-700 outline-none bg-transparent" /> :
-                                        periodType === 'month' ? <input type="month" value={currentPeriod.length === 7 ? currentPeriod : ''} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-xs font-bold text-slate-700 outline-none bg-transparent" /> :
-                                            periodType === 'year' ? <input type="number" min="2000" max="2100" value={currentPeriod.slice(0, 4)} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-xs font-bold text-slate-700 outline-none bg-transparent" /> :
-                                                <div className="flex items-center gap-2 w-full">
-                                                    <input type="date" value={customRange.start} onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })} className="text-[11px] font-bold text-slate-700 w-full bg-transparent" />
-                                                    <span className="text-slate-400 text-xs">—</span>
-                                                    <input type="date" value={customRange.end} onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })} className="text-[11px] font-bold text-slate-700 w-full bg-transparent" />
-                                                </div>}
-                            </div>
-                        </div>
-
-                        {/* Project Filter */}
-                        <div style={{ width: '140px' }}>
-                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Project</label>
-                            <select value={filterProject} onChange={(e) => setFilterProject(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
-                                <option value="">All Projects</option>
-                                {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                            </select>
-                        </div>
-
-                        {/* Role Filter */}
-                        <div style={{ width: '130px' }}>
-                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Role</label>
-                            <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
-                                <option value="">All Roles</option>
-                                {[...new Set([...roles.map(r => r.name), ...members.map(m => m.role).filter(Boolean)])].sort().map(role => (
-                                    <option key={role} value={role}>{role}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Type Filter */}
-                        <div style={{ width: '130px' }}>
-                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Type</label>
-                            <select value={filterMemberType} onChange={(e) => setFilterMemberType(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
-                                <option value="all">Everyone</option>
-                                <option value="worker">Workers</option>
-                                <option value="employee">Employees</option>
-                            </select>
-                        </div>
-
-                        {/* Member Filter */}
-                        <div style={{ width: '140px' }}>
-                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Member</label>
-                            <select value={filterMember} onChange={(e) => setFilterMember(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
-                                <option value="">Everyone</option>
-                                {members.filter(m => (!filterRole || m.role === filterRole) && (filterMemberType === 'all' || m.member_type === filterMemberType)).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                            </select>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex items-center gap-2 ml-auto">
-                            <ExportButtons onExportCSV={() => setConfirmModal({ show: true, type: 'CSV', label: 'CSV Report' })} onExportPDF={() => setConfirmModal({ show: true, type: 'PDF', label: 'PDF Report' })} onExportTXT={() => setConfirmModal({ show: true, type: 'TXT', label: 'Plain Text Report' })} />
-                            <button onClick={() => setShowProjectManager(true)} className="h-10 bg-blue-600 text-white px-4 rounded-xl shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2" title="New Project">
-                                <FaFolderPlus />
-                                <span className="text-[9px] font-black uppercase tracking-widest hidden lg:inline">Project</span>
-                            </button>
-                            <button onClick={() => setActiveTab('Work Log')} className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-sm lg:hidden ${activeTab === 'Work Log' ? 'bg-[#2d5bff] text-white' : 'bg-slate-800 text-white hover:bg-slate-900'}`} title="Daily Work Logs"><FaBoxes /></button>
-                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Mobile Tabs */}
                 <div className="lg:hidden flex overflow-x-auto gap-3 mb-8 pb-2 custom-scrollbar">
