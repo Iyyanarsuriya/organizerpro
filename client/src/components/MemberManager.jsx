@@ -4,7 +4,7 @@ import { getTransactions } from '../api/transactionApi';
 import toast from 'react-hot-toast';
 import { FaTimes, FaPlus, FaEdit, FaTrash, FaUser, FaUsers, FaBriefcase, FaPhone, FaEnvelope, FaHistory, FaMoneyBillWave, FaUniversity, FaTag } from 'react-icons/fa';
 import ConfirmModal from './modals/ConfirmModal';
-import RoleManager from './RoleManager'; // IMPORTS
+import RoleManager from './RoleManager'; // IMPORT
 import { useState, useEffect } from 'react';
 
 const MemberManager = ({ onClose, onUpdate }) => {
