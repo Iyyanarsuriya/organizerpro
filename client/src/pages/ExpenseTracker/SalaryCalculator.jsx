@@ -75,40 +75,50 @@ const SalaryCalculator = ({
         <div className="animate-in slide-in-from-right-10 duration-500 pb-20">
             {/* Header section... */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-                <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Salary & Payouts</h2>
-                <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-                    {filterMember && (
-                        <button
-                            onClick={() => handleExportPDF(filteredTransactions)}
-                            className="flex-1 sm:flex-none px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-sm"
-                        >
-                            <FaFileAlt size={12} /> Download Report
-                        </button>
-                    )}
-                    <div className="flex-1 sm:flex-none px-4 py-2 bg-blue-50 text-blue-600 border border-blue-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-center">
-                        {periodType} ATTENDANCE REF
-                    </div>
+                <div className="flex flex-col gap-1">
+                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Salary & Payouts</h2>
+                    {!filterMember && <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Select a member to calculate</p>}
                 </div>
-            </div>
 
-            {!filterMember ? (
-                <div className="bg-white rounded-[40px] p-12 sm:p-20 text-center border border-slate-100 shadow-sm">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-slate-100 shadow-inner">
-                        <FaMoneyBillWave className="text-slate-300 text-2xl sm:text-3xl" />
-                    </div>
-                    <h3 className="text-lg font-black text-slate-900 mb-2">Member Selection Required</h3>
-                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-10 max-w-sm mx-auto">Select a member to view their performance metrics and calculate net payable salary</p>
-                    <div className="relative inline-block w-full max-w-xs">
+                <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                    {/* Member Select Dropdown - Always Visible */}
+                    <div className="relative group min-w-[200px]">
                         <select
+                            value={filterMember}
                             onChange={(e) => setFilterMember(e.target.value)}
-                            className="w-full px-8 h-12 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-[11px] uppercase tracking-widest outline-none cursor-pointer hover:border-slate-300 transition-all appearance-none text-center"
+                            className="w-full h-10 pl-4 pr-8 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-blue-500 hover:border-blue-300 transition-all cursor-pointer appearance-none shadow-sm"
                         >
                             <option value="">Select Member...</option>
                             {members
                                 .filter(m => filterMemberType === 'all' || m.member_type === filterMemberType)
                                 .map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                         </select>
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                            <FaUserCheck size={12} />
+                        </div>
                     </div>
+
+                    {filterMember && (
+                        <button
+                            onClick={() => handleExportPDF(filteredTransactions)}
+                            className="flex-1 sm:flex-none px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-sm"
+                        >
+                            <FaFileAlt size={12} /> Report
+                        </button>
+                    )}
+                    <div className="flex-1 sm:flex-none px-4 py-2 bg-blue-50 text-blue-600 border border-blue-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-center">
+                        {periodType} REF
+                    </div>
+                </div>
+            </div>
+
+            {!filterMember ? (
+                <div className="bg-white rounded-[40px] p-12 sm:p-20 text-center border border-slate-100 shadow-sm opacity-60">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-slate-100 shadow-inner">
+                        <FaMoneyBillWave className="text-slate-300 text-2xl sm:text-3xl" />
+                    </div>
+                    <h3 className="text-lg font-black text-slate-900 mb-2">Member Selection Required</h3>
+                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest max-w-sm mx-auto">Please select a member from the top menu to view their performance metrics and calculate net payable salary</p>
                 </div>
             ) : salaryLoading ? (
                 <div className="h-[400px] flex items-center justify-center">
@@ -139,12 +149,7 @@ const SalaryCalculator = ({
                                     </div>
                                 </div>
                                 <div className="flex gap-2 w-full sm:w-auto">
-                                    <button
-                                        onClick={() => setFilterMember('')}
-                                        className="flex-1 sm:flex-none px-4 py-2 bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-slate-200 flex items-center gap-2 justify-center"
-                                    >
-                                        <FaArrowLeft size={10} /> Change
-                                    </button>
+                                    {/* Removed Change button as selection is now at top */}
                                 </div>
                             </div>
 
