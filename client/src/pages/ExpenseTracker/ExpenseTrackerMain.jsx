@@ -786,9 +786,19 @@ const ExpenseTrackerMain = () => {
                                     </div>
                                     <div>
                                         <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Category</label>
-                                        <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs cursor-pointer">
-                                            {[...new Set([...(formData.type === 'expense' ? expenseCategories : incomeCategories), ...categories.map(c => c.name)])].map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                                        </select>
+                                        <div className="flex gap-2">
+                                            <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs cursor-pointer">
+                                                {categories.filter(c => c.type === formData.type).map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                                            </select>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowCategoryManager(true)}
+                                                className="w-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center hover:bg-purple-100 transition-all border border-purple-100 shrink-0"
+                                                title="Add New Category"
+                                            >
+                                                <FaPlus />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 
