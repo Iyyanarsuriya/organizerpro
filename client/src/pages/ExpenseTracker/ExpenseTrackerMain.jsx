@@ -555,13 +555,7 @@ const ExpenseTrackerMain = () => {
                     <div className="flex flex-col gap-6 mb-8 lg:mb-12">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <button
-                                    onClick={() => setShowCategoryManager(true)}
-                                    className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-white hover:bg-slate-900 transition-all shadow-lg shadow-slate-900/20 group/cat-btn"
-                                    title="Settings"
-                                >
-                                    <Settings className="w-5 h-5 group-hover/cat-btn:rotate-90 transition-transform" />
-                                </button>
+
                                 <div>
                                     <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">Expense Tracker</h1>
                                     <div className="h-[8px] mt-0.5 flex gap-1">
