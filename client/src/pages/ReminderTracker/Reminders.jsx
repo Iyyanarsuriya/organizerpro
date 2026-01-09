@@ -29,6 +29,7 @@ const Reminders = () => {
     const [periodType, setPeriodType] = useState('today'); // 'all', 'today', 'range'
     const [customRange, setCustomRange] = useState({ start: '', end: '' });
     const [filterCategory, setFilterCategory] = useState('');
+    const [filterPriority, setFilterPriority] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [isSelectionMode, setIsSelectionMode] = useState(false);
     const [selectedIds, setSelectedIds] = useState([]);
@@ -435,6 +436,9 @@ const Reminders = () => {
                 if (filterCategory) {
                     if (r.category !== filterCategory) matches = false;
                 }
+                if (filterPriority) {
+                    if (r.priority !== filterPriority) matches = false;
+                }
                 if (searchQuery) {
                     const query = searchQuery.toLowerCase();
                     if (!r.title.toLowerCase().includes(query) &&
@@ -456,7 +460,7 @@ const Reminders = () => {
                 if (sortBy === 'status') return (a.is_completed ? 1 : 0) - (b.is_completed ? 1 : 0);
                 return 0;
             });
-    }, [reminders, filterDate, periodType, customRange, filterCategory, sortBy, searchQuery]);
+    }, [reminders, filterDate, periodType, customRange, filterCategory, filterPriority, sortBy, searchQuery]);
 
     if (loading) {
         return (
@@ -748,6 +752,36 @@ const Reminders = () => {
                                             </div>
 
                                         </div>
+                                        {/* 🎯 Priority Filter */}
+                                        <div className="relative group/prio flex items-center gap-[8px]">
+                                            <div className={`flex items-center gap-[8px] bg-white border px-[12px] py-[8px] rounded-[12px] transition-all cursor-pointer ${filterPriority ? 'border-[#2d5bff] ring-2 ring-[#2d5bff]/10' : 'border-slate-200 hover:border-slate-300'}`}>
+                                                <div className={`w-[8px] h-[8px] rounded-full ${filterPriority === 'high' ? 'bg-red-500' : filterPriority === 'medium' ? 'bg-orange-500' : filterPriority === 'low' ? 'bg-green-500' : 'bg-slate-300'}`}></div>
+                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-wide">Priority:</span>
+                                                <select
+                                                    value={filterPriority}
+                                                    onChange={(e) => setFilterPriority(e.target.value)}
+                                                    className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer appearance-none min-w-[60px] uppercase"
+                                                >
+                                                    <option value="">All</option>
+                                                    <option value="low">Low</option>
+                                                    <option value="medium">Medium</option>
+                                                    <option value="high">High</option>
+                                                </select>
+                                                {filterPriority ? (
+                                                    <button
+                                                        onClick={() => setFilterPriority('')}
+                                                        className="text-slate-400 hover:text-[#ff4d4d] transition-colors cursor-pointer"
+                                                    >
+                                                        <FaTimes className="w-2.5 h-2.5" />
+                                                    </button>
+                                                ) : (
+                                                    <svg className="w-3 h-3 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                                                    </svg>
+                                                )}
+                                            </div>
+                                        </div>
+
                                         {/* 🧪 Sort Control */}
                                         <div className="relative group/sort">
                                             <div className="flex items-center gap-[8px] bg-white border border-slate-200 px-[12px] py-[8px] rounded-[12px] shadow-sm hover:border-[#2d5bff]/30 transition-all cursor-pointer relative">
