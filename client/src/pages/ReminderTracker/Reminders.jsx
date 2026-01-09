@@ -673,6 +673,15 @@ const Reminders = () => {
                                         >
                                             {isSelectionMode ? 'Cancel' : 'Select'}
                                         </button>
+
+                                        <div className="h-[24px] w-px bg-slate-200 mx-[4px]"></div>
+
+                                        <ExportButtons
+                                            onExportCSV={() => exportReminderToCSV(processedReminders, `reminders_${new Date().toISOString().split('T')[0]}`)}
+                                            onExportPDF={() => exportReminderToPDF({ data: processedReminders, period: filterDate || 'All Time', filename: `reminders_${new Date().toISOString().split('T')[0]}` })}
+                                            onExportTXT={() => exportReminderToTXT({ data: processedReminders, period: filterDate || 'All Time', filename: `reminders_${new Date().toISOString().split('T')[0]}` })}
+                                            className="scale-90 sm:scale-100"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -762,13 +771,6 @@ const Reminders = () => {
                                                 </svg>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div className="mt-4 flex justify-end border-t border-slate-200 pt-3">
-                                        <ExportButtons
-                                            onExportCSV={() => exportReminderToCSV(processedReminders, `reminders_${new Date().toISOString().split('T')[0]}`)}
-                                            onExportPDF={() => exportReminderToPDF({ data: processedReminders, period: filterDate || 'All Time', filename: `reminders_${new Date().toISOString().split('T')[0]}` })}
-                                            onExportTXT={() => exportReminderToTXT({ data: processedReminders, period: filterDate || 'All Time', filename: `reminders_${new Date().toISOString().split('T')[0]}` })}
-                                        />
                                     </div>
                                 </div>
                             )}
