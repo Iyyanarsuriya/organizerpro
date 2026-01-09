@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Plus } from 'lucide-react';
 
-function ReminderForm({ onAdd, categories = [] }) {
+function ReminderForm({ onAdd, categories = [], onManageCategories }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -109,20 +109,32 @@ function ReminderForm({ onAdd, categories = [] }) {
           <label className="block text-[8px] sm:text-[9px] md:text-[10px] font-bold text-slate-400 mb-[4px] sm:mb-[6px] md:mb-[7px] uppercase tracking-widest">
             Category
           </label>
-          <div className="relative">
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-[8px] sm:rounded-[10px] md:rounded-[11px] px-[12px] sm:px-[14px] md:px-[15px] h-[32px] sm:h-[36px] md:h-[38px] text-slate-800 input-focus text-[11px] sm:text-[12px] md:text-[13px] font-medium appearance-none cursor-pointer outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
-            >
-              {categories.map((cat) => (
-                <option key={cat.id || cat.name} value={cat.name}>
-                  {cat.name}
-                </option>
-              ))}
-              {categories.length === 0 && <option value="General">General</option>}
-            </select>
-            <ChevronDown className="absolute right-[12px] top-1/2 -translate-y-1/2 w-[14px] h-[14px] sm:w-[15px] sm:h-[15px] md:w-[16px] md:h-[16px] text-slate-400 pointer-events-none" />
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-[8px] sm:rounded-[10px] md:rounded-[11px] px-[12px] sm:px-[14px] md:px-[15px] h-[32px] sm:h-[36px] md:h-[38px] text-slate-800 input-focus text-[11px] sm:text-[12px] md:text-[13px] font-medium appearance-none cursor-pointer outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+              >
+                {categories.map((cat) => (
+                  <option key={cat.id || cat.name} value={cat.name}>
+                    {cat.name}
+                  </option>
+                ))}
+                {categories.length === 0 && <option value="General">General</option>}
+              </select>
+              <ChevronDown className="absolute right-[12px] top-1/2 -translate-y-1/2 w-[14px] h-[14px] sm:w-[15px] sm:h-[15px] md:w-[16px] md:h-[16px] text-slate-400 pointer-events-none" />
+            </div>
+            {onManageCategories && (
+              <button
+                type="button"
+                onClick={onManageCategories}
+                className="h-[32px] sm:h-[36px] md:h-[38px] w-[32px] sm:w-[36px] md:w-[38px] bg-purple-50 text-purple-600 rounded-[8px] sm:rounded-[10px] md:rounded-[11px] flex items-center justify-center hover:bg-purple-100 transition-all border border-purple-100 shrink-0 shadow-sm"
+                title="Manage Categories"
+              >
+                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+            )}
           </div>
         </div>
 

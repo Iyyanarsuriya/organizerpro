@@ -591,7 +591,7 @@ const Reminders = () => {
                                 <div className="w-[4px] h-[16px] bg-blue-500 rounded-full"></div>
                                 New task
                             </h2>
-                            <ReminderForm onAdd={handleAdd} categories={categories} />
+                            <ReminderForm onAdd={handleAdd} categories={categories} onManageCategories={() => setShowCategoryManager(true)} />
                         </div>
                     </div>
 
@@ -666,14 +666,6 @@ const Reminders = () => {
                                                 )}
                                             </div>
                                         </div>
-
-                                        <button
-                                            onClick={() => setShowCategoryManager(true)}
-                                            className="p-[5px] sm:p-[6px] bg-white border border-slate-200 rounded-[8px] text-slate-400 hover:text-[#2d5bff] hover:border-[#2d5bff] transition-all cursor-pointer shadow-sm group/cat-btn shrink-0"
-                                            title="Manage Categories"
-                                        >
-                                            <Settings className="w-[12px] h-[12px] sm:w-[14px] sm:h-[14px] group-hover/cat-btn:rotate-90 transition-transform" />
-                                        </button>
 
                                         <button
                                             onClick={() => setIsSelectionMode(!isSelectionMode)}
