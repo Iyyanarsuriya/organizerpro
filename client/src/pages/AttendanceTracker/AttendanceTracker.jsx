@@ -23,7 +23,7 @@ import {
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend
 } from 'recharts';
-import { exportAttendanceToCSV, exportAttendanceToTXT, exportAttendanceToPDF } from '../../utils/exportUtils/index.js';
+import { exportAttendanceToCSV, exportAttendanceToTXT, exportAttendanceToPDF, processAttendanceExportData } from '../../utils/exportUtils/index.js';
 import ExportButtons from '../../components/ExportButtons';
 import ProjectManager from '../../components/ProjectManager';
 import MemberManager from '../../components/MemberManager';
@@ -284,16 +284,32 @@ const AttendanceTracker = () => {
     };
 
     // Export Functions
-    const handleExportCSV = (data = attendances, filters = {}) => {
+    const handleExportCSV = (dataOrEvent = attendances, filters = {}) => {
+        const data = processAttendanceExportData(
+            Array.isArray(dataOrEvent) ? dataOrEvent : attendances,
+            members,
+            { periodType, currentPeriod, filterRole, filterMember, searchQuery }
+        );
+
         if (data.length === 0) { toast.error("No data to export"); return; }
+
         const periodStr = filters.startDate && filters.endDate ? `${filters.startDate}_to_${filters.endDate}` : currentPeriod;
         const memberStr = filters.memberId ? `_${members.find(m => m.id == filters.memberId)?.name}` : (filterMember ? `_${members.find(m => m.id == filterMember)?.name}` : '');
         const roleStr = filters.role ? `_${filters.role}` : (filterRole ? `_${filterRole}` : '');
+
         exportAttendanceToCSV(data, `attendance_report_${periodStr}${memberStr}${roleStr}`);
+        toast.success("CSV Exported");
     };
 
-    const handleExportTXT = (data = attendances, reportStats = stats, filters = {}) => {
+    const handleExportTXT = (dataOrEvent = attendances, reportStats = stats, filters = {}) => {
+        const data = processAttendanceExportData(
+            Array.isArray(dataOrEvent) ? dataOrEvent : attendances,
+            members,
+            { periodType, currentPeriod, filterRole, filterMember, searchQuery }
+        );
+
         if (data.length === 0) { toast.error("No data to export"); return; }
+
         const periodStr = filters.startDate && filters.endDate
             ? `${filters.startDate} to ${filters.endDate}`
             : (periodType === 'range' ? `${customRange.start} to ${customRange.end}` : currentPeriod);
@@ -302,10 +318,18 @@ const AttendanceTracker = () => {
         const roleStr = filters.role ? `_${filters.role}` : (filterRole ? `_${filterRole}` : '');
 
         exportAttendanceToTXT({ data, period: periodStr, filename: `attendance_report_${periodStr}${memberStr}${roleStr}` });
+        toast.success("TXT Exported");
     };
 
-    const handleExportPDF = (data = attendances, reportStats = stats, filters = {}) => {
+    const handleExportPDF = (dataOrEvent = attendances, reportStats = stats, filters = {}) => {
+        const data = processAttendanceExportData(
+            Array.isArray(dataOrEvent) ? dataOrEvent : attendances,
+            members,
+            { periodType, currentPeriod, filterRole, filterMember, searchQuery }
+        );
+
         if (data.length === 0) { toast.error("No data to export"); return; }
+
         const memberName = filters.memberId ? members.find(m => m.id == filters.memberId)?.name : (filterMember ? members.find(m => m.id == filterMember)?.name : 'Everyone');
         const projectName = filters.projectId ? projects.find(p => p.id == filters.projectId)?.name : (filterProject ? projects.find(p => p.id == filterProject)?.name : 'All Projects');
         const categoryName = filters.role || (filterRole || 'All Categories');
@@ -1260,7 +1284,17 @@ const AttendanceTracker = () => {
                         onRefresh={() => getMemberRoles().then(res => setRoles(res.data.data))}
                     />
                 )
-            }        </div >
+            }
+            <ConfirmModal
+                isOpen={confirmModal.show}
+                onCancel={() => setConfirmModal({ show: false, type: null, label: '', id: null })}
+                onConfirm={handleModalConfirm}
+                title={confirmModal.type === 'DELETE' ? 'Delete Record' : `Export ${confirmModal.label}`}
+                message={confirmModal.type === 'DELETE' ? 'Are you sure you want to delete this attendance record?' : `Do you want to download the ${confirmModal.label}?`}
+                confirmText={confirmModal.type === 'DELETE' ? "Delete" : "Download"}
+                type={confirmModal.type === 'DELETE' ? 'danger' : 'success'}
+            />
+        </div>
     );
 };
 

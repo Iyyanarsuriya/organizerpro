@@ -121,6 +121,50 @@ const getRowPermHrs = (a) => {
     return a.permission_duration;
 };
 
+export const processAttendanceExportData = (attendances, members, { periodType, currentPeriod, filterRole, filterMember, searchQuery }) => {
+    let data = Array.isArray(attendances) ? attendances : [];
+
+    // If Day View, ensure strict member list (filling absents)
+    if (periodType === 'day' && members && members.length > 0) {
+        let targetMembers = members;
+        if (filterMember) targetMembers = targetMembers.filter(m => m.id == filterMember);
+        if (filterRole) targetMembers = targetMembers.filter(m => m.role === filterRole);
+        if (searchQuery) targetMembers = targetMembers.filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+        data = targetMembers.map(m => {
+            const rec = attendances.find(a => a.member_id == m.id);
+            return rec || {
+                id: `temp_${m.id}`,
+                member_id: m.id,
+                member_name: m.name,
+                date: currentPeriod,
+                status: 'absent',
+                subject: '-',
+                project_name: '-',
+                note: '',
+                role: m.role
+            };
+        });
+    } else {
+        // Respect filters for other views
+        if (filterRole && members) {
+            // Create a quick lookup for member roles if members list provided
+            const memberRoleMap = {};
+            members.forEach(m => memberRoleMap[m.id] = m.role);
+            data = data.filter(a => memberRoleMap[a.member_id] === filterRole);
+        }
+
+        // Search query filtering for non-day views
+        if (searchQuery) {
+            data = data.filter(a =>
+                (a.member_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (a.subject || '').toLowerCase().includes(searchQuery.toLowerCase())
+            );
+        }
+    }
+    return data;
+};
+
 export const exportAttendanceToCSV = (data, filename) => {
     const { memberStatsRows } = calculateAttendanceSummary(data);
 
@@ -179,7 +223,7 @@ export const exportAttendanceToTXT = ({ data, period, filename }) => {
 
 export const exportAttendanceToPDF = ({ data, period, subHeader, filename }) => {
     const { globalStats, memberStatsRows } = calculateAttendanceSummary(data);
-
+    console.log("inside");
     const doc = new jsPDF('landscape');
     const pageWidth = doc.internal.pageSize.getWidth();
 
