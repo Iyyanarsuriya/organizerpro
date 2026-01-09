@@ -100,7 +100,8 @@ const ExpenseTrackerMain = () => {
         projectId: '',
         memberId: '',
         type: 'all',
-        category: 'all'
+        category: 'all',
+        vehicle: '' // Added
     });
     const [confirmModal, setConfirmModal] = useState({ show: false, type: null, label: '' });
 
@@ -560,12 +561,18 @@ const ExpenseTrackerMain = () => {
 
             // Process Vehicle Logs for Report
             let combinedTransactions = [...transRes.data];
-            if (vehicleRes && Array.isArray(vehicleRes) && !customReportForm.memberId && (!customReportForm.projectId)) {
-                // Only include vehicle logs if no specific member/project is selected (as vehicles are global/fleet)
-                // OR if you want to include them always, remove the checks. Assuming Global:
+            if (customReportForm.vehicle) { combinedTransactions = []; }
+
+            if (vehicleRes && Array.isArray(vehicleRes)) {
                 const vLogs = vehicleRes.filter(log => {
                     const d = (log.out_time || log.created_at).split('T')[0];
-                    return d >= customReportForm.startDate && d <= customReportForm.endDate.split('T')[0];
+                    if (d < customReportForm.startDate || d > customReportForm.endDate.split('T')[0]) return false;
+
+                    if (customReportForm.vehicle && log.vehicle_name !== customReportForm.vehicle) return false;
+
+                    if (!customReportForm.vehicle && (customReportForm.memberId || customReportForm.projectId)) return false;
+
+                    return true;
                 }).flatMap(log => {
                     const items = [];
                     // Check type filter
@@ -1084,6 +1091,9 @@ const ExpenseTrackerMain = () => {
                             <div className="grid grid-cols-2 gap-[16px]">
                                 <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Type</label><select value={customReportForm.type} onChange={(e) => setCustomReportForm({ ...customReportForm, type: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[12px] text-[12px] font-bold text-slate-700 outline-none focus:border-indigo-500 transition-all cursor-pointer"><option value="all">All Transactions</option><option value="income">Income Only</option><option value="expense">Expenses Only</option></select></div>
                                 <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Category</label><select value={customReportForm.category} onChange={(e) => setCustomReportForm({ ...customReportForm, category: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[12px] text-[12px] font-bold text-slate-700 outline-none focus:border-indigo-500 transition-all cursor-pointer"><option value="all">All Categories</option>{[...new Set(categories.map(c => c.name))].map(cat => (<option key={cat} value={cat}>{cat}</option>))}</select></div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-[16px]">
+                                <div><label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Vehicle (Fleet)</label><select value={customReportForm.vehicle} onChange={(e) => setCustomReportForm({ ...customReportForm, vehicle: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[20px] py-[12px] text-[12px] font-bold text-slate-700 outline-none focus:border-indigo-500 transition-all cursor-pointer">{vehicleNames.map(v => <option key={v} value={v}>{v}</option>)}<option value="">All Vehicles</option></select></div>
                             </div>
                             <div className="flex flex-col gap-[12px]">
                                 <button onClick={() => handleGenerateCustomReport('PDF')} disabled={!!customReportLoading} className="w-full bg-[#2d5bff] hover:bg-blue-600 text-white font-black py-[18px] rounded-[20px] transition-all active:scale-95 shadow-xl flex items-center justify-center gap-[12px] text-[14px] disabled:opacity-50 disabled:cursor-not-allowed">{customReportLoading === 'PDF' ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <FaFileAlt />} {customReportLoading === 'PDF' ? 'Generating...' : 'Download PDF Report'}</button>
