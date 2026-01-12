@@ -222,7 +222,7 @@ const Reminders = () => {
                                         delete activeToastsRef.current[reminder.id];
                                         try {
                                             await updateReminder(reminder.id, { is_completed: true });
-                                            setReminders(prev => prev.map(r => r.id === reminder.id ? { ...r, is_completed: true } : r));
+                                            setReminders(prev => prev.map(r => r.id === reminder.id ? { ...r, is_completed: true, completed_at: new Date().toISOString() } : r));
                                             toast.success("Task completed!", { icon: '✅' });
                                         } catch {
                                             toast.error("Failed to complete task");
@@ -371,7 +371,7 @@ const Reminders = () => {
             try {
                 await updateReminder(id, { is_completed: false });
                 setReminders(prev => prev.map(r =>
-                    r.id === id ? { ...r, is_completed: false } : r
+                    r.id === id ? { ...r, is_completed: false, completed_at: null } : r
                 ));
                 window.dispatchEvent(new Event('refresh-reminders'));
                 toast.success("Task marked as incomplete");
@@ -392,7 +392,7 @@ const Reminders = () => {
         try {
             await updateReminder(id, { is_completed: true });
             setReminders(prev => prev.map(r =>
-                r.id === id ? { ...r, is_completed: true } : r
+                r.id === id ? { ...r, is_completed: true, completed_at: new Date().toISOString() } : r
             ));
             window.dispatchEvent(new Event('refresh-reminders'));
             toast.success("Task completed! 🥳");
@@ -570,7 +570,7 @@ const Reminders = () => {
                             onClick={async () => {
                                 try {
                                     await Promise.all(selectedIds.map(id => updateReminder(id, { is_completed: true })));
-                                    setReminders(prev => prev.map(r => selectedIds.includes(r.id) ? { ...r, is_completed: true } : r));
+                                    setReminders(prev => prev.map(r => selectedIds.includes(r.id) ? { ...r, is_completed: true, completed_at: new Date().toISOString() } : r));
                                     window.dispatchEvent(new Event('refresh-reminders'));
                                     toast.success(`${selectedIds.length} tasks completed`);
                                     setSelectedIds([]);

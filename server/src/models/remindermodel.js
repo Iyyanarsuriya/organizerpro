@@ -15,7 +15,7 @@ exports.create = async (reminderData) => {
         'INSERT INTO reminders (user_id, title, description, due_date, priority, category, recurrence_type, recurrence_interval, google_event_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [user_id, title, description, finalDate, priority || 'medium', category || 'General', recurrence_type || 'none', recurrence_interval || 1, google_event_id || null]
     );
-    return { id: result.insertId, ...reminderData, is_completed: false };
+    return { id: result.insertId, ...reminderData, is_completed: false, created_at: new Date() };
 };
 
 exports.updateGoogleEventId = async (id, googleEventId) => {
