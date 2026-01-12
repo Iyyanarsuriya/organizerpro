@@ -1,37 +1,48 @@
--- Updated Database Schema (After Worker → Member Migration)
--- Generated: 2026-01-06
--- Database: Reminder App with Attendance & Expense Tracking
-
 -- ============================================================================
 -- USERS TABLE
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(255) NOT NULL UNIQUE,
+    username VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
+    mobile_number VARCHAR(20),
     password VARCHAR(255) NOT NULL,
     profile_image VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    google_refresh_token TEXT,
+    reset_token VARCHAR(255),
+    reset_token_expiry DATETIME,
+    reset_otp VARCHAR(6),
+    reset_otp_expiry DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ============================================================================
--- MEMBERS TABLE (Previously: workers)
+-- MEMBERS TABLE
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS members (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
+    user_id INT,
     name VARCHAR(255) NOT NULL,
-    role VARCHAR(255),
+    role VARCHAR(100),
     phone VARCHAR(20),
     email VARCHAR(255),
+    status ENUM('active', 'inactive') DEFAULT 'active',
     wage_type ENUM('daily', 'monthly', 'piece_rate') DEFAULT 'daily',
     daily_wage DECIMAL(10, 2) DEFAULT 0.00,
-    status ENUM('active', 'inactive') DEFAULT 'active',
+    member_type ENUM('employee', 'worker') DEFAULT 'worker',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_user_status (user_id, status)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- ============================================================================
+-- MEMBER ROLES TABLE
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS member_roles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- ============================================================================
@@ -42,11 +53,8 @@ CREATE TABLE IF NOT EXISTS projects (
     user_id INT NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    status ENUM('active', 'completed', 'archived') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_user_status (user_id, status)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- ============================================================================
@@ -55,27 +63,22 @@ CREATE TABLE IF NOT EXISTS projects (
 CREATE TABLE IF NOT EXISTS attendance (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    member_id INT DEFAULT NULL,
-    project_id INT DEFAULT NULL,
-    subject VARCHAR(255) NOT NULL,
+    member_id INT,
+    project_id INT,
+    subject VARCHAR(255),
     status ENUM('present', 'absent', 'late', 'half-day', 'permission') NOT NULL,
     date DATE NOT NULL,
     note TEXT,
-    permission_duration VARCHAR(100) DEFAULT NULL,
-    permission_start_time VARCHAR(20) DEFAULT NULL,
-    permission_end_time VARCHAR(20) DEFAULT NULL,
-    permission_reason TEXT DEFAULT NULL,
+    permission_duration VARCHAR(100),
+    permission_start_time VARCHAR(20),
+    permission_end_time VARCHAR(20),
+    permission_reason TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE SET NULL,
-    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL,
-    INDEX idx_user_date (user_id, date),
-    INDEX idx_member (member_id),
-    INDEX idx_project (project_id),
-    INDEX idx_status (status)
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
 );
-
 
 -- ============================================================================
 -- TRANSACTIONS TABLE
@@ -83,28 +86,22 @@ CREATE TABLE IF NOT EXISTS attendance (
 CREATE TABLE IF NOT EXISTS transactions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    member_id INT DEFAULT NULL,
-    project_id INT DEFAULT NULL,
+    member_id INT,
+    project_id INT,
     title VARCHAR(255) NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
     type ENUM('income', 'expense') NOT NULL,
-    category VARCHAR(100) NOT NULL,
-    date DATE NOT NULL,
+    category VARCHAR(50),
+    date DATETIME NOT NULL,
     payment_status VARCHAR(20) DEFAULT 'completed',
-    guest_name VARCHAR(100) DEFAULT NULL,
+    guest_name VARCHAR(255),
     quantity DECIMAL(10, 2) DEFAULT 1.00,
     unit_price DECIMAL(10, 2) DEFAULT 0.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE SET NULL,
-    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL,
-    INDEX idx_user_date (user_id, date),
-    INDEX idx_member (member_id),
-    INDEX idx_project (project_id),
-    INDEX idx_type (type),
-    INDEX idx_category (category),
-    INDEX idx_payment_status (payment_status)
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
 );
 
 -- ============================================================================
@@ -117,13 +114,12 @@ CREATE TABLE IF NOT EXISTS reminders (
     description TEXT,
     due_date DATETIME NOT NULL,
     priority ENUM('low', 'medium', 'high') DEFAULT 'medium',
-    completed BOOLEAN DEFAULT FALSE,
+    category VARCHAR(50) DEFAULT 'General',
+    is_completed BOOLEAN DEFAULT FALSE,
     completed_at DATETIME DEFAULT NULL,
+    google_event_id VARCHAR(255) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_user_due (user_id, due_date),
-    INDEX idx_completed (completed)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- ============================================================================
@@ -132,11 +128,10 @@ CREATE TABLE IF NOT EXISTS reminders (
 CREATE TABLE IF NOT EXISTS categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    name VARCHAR(100) NOT NULL,
-    type ENUM('reminder', 'transaction') NOT NULL,
+    name VARCHAR(50) NOT NULL,
+    color VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_user_category (user_id, name, type)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- ============================================================================
@@ -145,11 +140,10 @@ CREATE TABLE IF NOT EXISTS categories (
 CREATE TABLE IF NOT EXISTS expense_categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    name VARCHAR(100) NOT NULL,
+    name VARCHAR(255) NOT NULL,
     type ENUM('income', 'expense') NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_user_expense_category (user_id, name, type)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- ============================================================================
@@ -162,8 +156,7 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
     p256dh TEXT NOT NULL,
     auth TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_user (user_id)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- ============================================================================
@@ -172,21 +165,19 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 CREATE TABLE IF NOT EXISTS daily_work_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    member_id INT DEFAULT NULL,
-    guest_name VARCHAR(255) DEFAULT NULL,
+    member_id INT,
+    guest_name VARCHAR(255),
     date DATE NOT NULL,
+    work_type VARCHAR(100) DEFAULT 'production',
     units_produced DECIMAL(10, 2) DEFAULT 0.00,
     rate_per_unit DECIMAL(10, 2) DEFAULT 0.00,
     total_amount DECIMAL(10, 2) GENERATED ALWAYS AS (units_produced * rate_per_unit) STORED,
-    work_type VARCHAR(100) DEFAULT 'production',
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_member_date (member_id, date),
-    INDEX idx_user_date (user_id, date),
-    INDEX idx_member (member_id)
+    FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE SET NULL,
+    UNIQUE KEY unique_member_date (member_id, date)
 );
 
 -- ============================================================================
@@ -197,85 +188,8 @@ CREATE TABLE IF NOT EXISTS work_types (
     user_id INT NOT NULL,
     name VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_user_work_type (user_id, name)
-);
-
--- ============================================================================
--- MIGRATION HISTORY
--- ============================================================================
--- Migration: generalize_to_members.sql
--- Date: 2026-01-05
--- Changes:
---   1. Renamed table: workers → members
---   2. Renamed column: attendance.worker_id → attendance.member_id
---   3. Renamed column: transactions.worker_id → transactions.member_id
---   4. Updated all foreign key constraints to reference members table
--- ============================================================================
-
--- Migration: add_salary_fields_to_members.sql
--- Date: 2026-01-06
--- Changes:
---   1. Added column: members.wage_type ENUM('daily', 'monthly', 'piece_rate')
---   2. Added column: members.daily_wage DECIMAL(10, 2)
---   3. Allows tracking of different salary/wage types for members
--- ============================================================================
-
--- Migration: add_daily_work_logs.sql
--- Date: 2026-01-06
--- Changes:
---   1. Created table: daily_work_logs
---   2. Tracks daily production/work for piece-rate and daily workers
---   3. Auto-calculates total_amount (units × rate)
---   4. Supports monthly salary calculations
--- ============================================================================
-
--- ============================================================================
--- MEMBER ROLES TABLE
--- ============================================================================
-CREATE TABLE IF NOT EXISTS member_roles (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY unique_role_per_user (user_id, name),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
-
--- Migration: add_member_roles.sql
--- Date: 2026-01-07
--- Changes:
---   1. Created table: member_roles
---   2. Stores distinct categories/roles for members
---   3. Allows user-defined roles instead of just free text
--- ============================================================================
-
--- Migration: add_permission_tracking.sql
--- Date: 2026-01-07
--- Changes:
---   1. Updated attendance.status to include 'permission'
---   2. Added column: attendance.permission_duration (Readable string)
---   3. Added column: attendance.permission_start_time (24h format)
---   4. Added column: attendance.permission_end_time (24h format)
---   5. Added column: attendance.permission_reason (Reason for leaving)
---   6. Enhances tracking of partial-day permissions with work notes
--- ============================================================================
-
--- Migration: add_guest_name_migration.js
--- Date: 2026-01-08
--- Changes:
---   1. Added column: daily_work_logs.guest_name
---   2. Modified column: daily_work_logs.member_id (Made Nullable)
---   3. Allows logging work for guests (non-members)
--- ============================================================================
-
--- Migration: create_work_types_table.js
--- Date: 2026-01-08
--- Changes:
---   1. Created table: work_types
---   2. Stores user-defined work types (e.g., Piece Rate, Hourly)
--- ============================================================================
-
 
 -- ============================================================================
 -- VEHICLE LOGS TABLE
@@ -295,37 +209,5 @@ CREATE TABLE IF NOT EXISTS vehicle_logs (
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_vehicle_user (user_id, vehicle_number),
-    INDEX idx_dates (in_time, out_time)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
-
--- Migration: initVehicleDB.js (Consolidated)
--- Date: 2026-01-08
--- Changes:
---   1. Created table: vehicle_logs
---   2. Tracks vehicle fleet movement, mileage, and financials
-
--- Migration: addVehicleNameCol.js
--- Date: 2026-01-08
--- Changes:
---   1. Added column: vehicle_name (VARCHAR 100) to vehicle_logs
--- ============================================================================
-
--- Migration: add_payment_status.js
--- Date: 2026-01-08
--- Changes:
---   1. Added payment_status column to transactions table (Completed/Pending/Failed)
--- ============================================================================
-
--- Migration: add_guest_to_transactions.js
--- Date: 2026-01-08
--- Changes:
---   1. Added guest_name column to transactions table for non-member tracking
--- ============================================================================
-
--- Migration: add_quantity_to_transactions.js
--- Date: 2026-01-08
--- Changes:
---   1. Added quantity and unit_price columns to transactions table for product tracking
--- ============================================================================
