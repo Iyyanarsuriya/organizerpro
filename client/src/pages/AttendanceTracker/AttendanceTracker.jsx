@@ -616,20 +616,29 @@ const AttendanceTracker = () => {
                             </div>
 
                             {/* Global Search & Mark Button */}
-                            <div className="w-full flex items-center gap-2">
-                                <div className="flex-1 relative">
+                            <div className="w-full sm:w-auto flex items-center gap-2">
+                                {/* Project Manager Button - NEW */}
+                                <button
+                                    onClick={() => setShowProjectManager(true)}
+                                    className="h-[38px] w-[38px] bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20 transition-all active:scale-95 shrink-0"
+                                    title="Manage Projects"
+                                >
+                                    <FaFolderPlus className="text-xs" />
+                                </button>
+
+                                <div className="flex-1 relative min-w-[120px]">
                                     <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]" />
                                     <input
                                         type="text"
-                                        placeholder="Search logs..."
+                                        placeholder="Search..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full h-[38px] pl-9 pr-4 bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all shadow-sm"
+                                        className="w-full h-[38px] pl-8 pr-3 bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all shadow-sm"
                                     />
                                 </div>
                                 <button
                                     onClick={() => setShowAddModal(true)}
-                                    className="h-[38px] bg-blue-600 hover:bg-blue-700 text-white px-5 rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 transition-all active:scale-95 flex items-center gap-2"
+                                    className="h-[38px] bg-blue-600 hover:bg-blue-700 text-white px-5 rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap"
                                 >
                                     <FaPlus className="text-[10px]" /> Mark
                                 </button>

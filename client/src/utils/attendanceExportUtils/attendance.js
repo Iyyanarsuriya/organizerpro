@@ -140,7 +140,7 @@ export const processAttendanceExportData = (attendances, members, { periodType, 
                 date: currentPeriod,
                 status: 'absent',
                 subject: '-',
-                project_name: '-',
+                project_name: 'General',
                 note: '',
                 role: m.role
             };
@@ -183,7 +183,7 @@ export const exportAttendanceToCSV = (data, filename) => {
             a.status === 'permission' ? (a.permission_duration || 'N/A') : '-',
             getRowPermHrs(a),
             a.subject,
-            a.project_name || 'N/A',
+            a.project_name || 'General',
             a.note || ''
         ])
     ];
@@ -200,14 +200,15 @@ export const exportAttendanceToTXT = ({ data, period, filename }) => {
         titleSuffix += row.map((v, i) => String(v).padEnd(8, ' ')).join(' | ') + "\n";
     });
 
-    const logHeaders = ["Date", "Member", "P/A", "Status", "Perm. Hrs", "Subject"];
+    const logHeaders = ["Date", "Member", "P/A", "Status", "Perm. Hrs", "Subject", "Project"];
     const logRows = data.map(a => [
         new Date(a.date).toLocaleDateString('en-GB'),
         a.member_name || 'N/A',
         getPAStatus(a.status),
         a.status.toUpperCase(),
         getRowPermHrs(a),
-        a.subject
+        a.subject,
+        a.project_name || 'General'
     ]);
 
     generateTXT({
@@ -269,7 +270,7 @@ export const exportAttendanceToPDF = ({ data, period, subHeader, filename }) => 
         a.status.toUpperCase(),
         getRowPermHrs(a),
         a.subject,
-        a.project_name || 'N/A',
+        a.project_name || 'General',
         a.note || ''
     ]);
 
