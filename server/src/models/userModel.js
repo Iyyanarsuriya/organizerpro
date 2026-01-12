@@ -6,17 +6,28 @@ exports.findByEmail = async (email) => {
 };
 
 exports.findById = async (id) => {
-    const [rows] = await db.query('SELECT id, username, email, mobile_number, profile_image, google_refresh_token FROM users WHERE id = ?', [id]);
+    const [rows] = await db.query('SELECT id, username, email, mobile_number, profile_image, google_refresh_token, role, owner_id FROM users WHERE id = ?', [id]);
     return rows[0];
 };
 
 exports.create = async (userData) => {
-    const { username, email, password, mobile_number } = userData;
+    const { username, email, password, mobile_number, role, owner_id } = userData;
     const [result] = await db.query(
-        'INSERT INTO users (username, email, password, mobile_number) VALUES (?, ?, ?, ?)',
-        [username, email, password, mobile_number || null]
+        'INSERT INTO users (username, email, password, mobile_number, role, owner_id) VALUES (?, ?, ?, ?, ?, ?)',
+        [username, email, password, mobile_number || null, role || 'admin', owner_id || null]
     );
     return result.insertId;
+};
+
+exports.findByOwnerId = async (ownerId) => {
+    const [rows] = await db.query('SELECT id, username, email, role, created_at FROM users WHERE owner_id = ? ORDER BY created_at DESC', [ownerId]);
+    return rows;
+};
+
+exports.delete = async (id, ownerId) => {
+    // Only allow deleting users that belong to this owner
+    const [result] = await db.query('DELETE FROM users WHERE id = ? AND owner_id = ?', [id, ownerId]);
+    return result.affectedRows > 0;
 };
 
 exports.update = async (id, userData) => {

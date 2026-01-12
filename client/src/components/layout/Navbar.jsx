@@ -1,6 +1,6 @@
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useState } from 'react';
-import { LayoutDashboard, Bell, X, ChevronRight, Sun, Clock, Home } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { LayoutDashboard, Bell, X, ChevronRight, Home, LogOut, Users, User as UserIcon } from 'lucide-react';
 import { API_URL } from '../../api/axiosInstance';
 
 const Navbar = ({
@@ -9,13 +9,32 @@ const Navbar = ({
     todayReminders,
     onLoginClick,
     onSignupClick,
-    onProfileClick
+    onProfileClick,
+    onLogout
 }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+    const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+    const closeTimeout = useRef(null);
+    const dropdownRef = useRef(null);
     const [imageError, setImageError] = useState(false);
     const isLandingPage = location.pathname === '/';
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowProfileDropdown(false);
+            }
+        };
+
+        if (showProfileDropdown) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showProfileDropdown]);
 
     return (
         <header className={`fixed top-0 left-0 right-0 z-100 backdrop-blur-xl border-b transition-all duration-300 ${isLandingPage ? 'bg-white/80 border-slate-200' : 'bg-black border-white/10'}`}>
@@ -59,23 +78,76 @@ const Navbar = ({
                             )}
 
                             {/* Profile Icon (Before Bell) */}
-                            <button
-                                onClick={onProfileClick}
-                                className="w-[34px] h-[34px] sm:w-[40px] sm:h-[40px] rounded-full bg-linear-to-br from-[#2d5bff] to-[#6366f1] border-2 border-white/10 overflow-hidden hover:border-white transition-all active:scale-90 cursor-pointer shadow-lg shadow-blue-500/20 flex items-center justify-center group shrink-0"
+                            {/* Profile Dropdown */}
+                            <div
+                                className="relative"
+                                ref={dropdownRef}
+                                onMouseEnter={() => {
+                                    if (closeTimeout.current) clearTimeout(closeTimeout.current);
+                                    setShowProfileDropdown(true);
+                                }}
+                                onMouseLeave={() => {
+                                    closeTimeout.current = setTimeout(() => {
+                                        setShowProfileDropdown(false);
+                                    }, 1000);
+                                }}
                             >
-                                {/* {(user?.profile_image && !imageError) ? (
-                                    <img
-                                        src={user.profile_image.startsWith('http') ? user.profile_image : `${API_URL}${user.profile_image}`}
-                                        alt="Profile"
-                                        className="w-full h-full object-cover"
-                                        onError={() => setImageError(true)}
-                                    />
-                                ) : ( */}
-                                <span className="text-white font-black text-[14px] sm:text-[15px] tracking-tight">
-                                    {user?.username ? user.username.charAt(0).toUpperCase() : '?'}
-                                </span>
-                                {/* )} */}
-                            </button>
+                                <button
+                                    onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                                    className="w-[34px] h-[34px] sm:w-[40px] sm:h-[40px] rounded-full bg-linear-to-br from-[#2d5bff] to-[#6366f1] border-2 border-white/10 overflow-hidden hover:border-white transition-all active:scale-90 cursor-pointer shadow-lg shadow-blue-500/20 flex items-center justify-center group shrink-0"
+                                >
+                                    <span className="text-white font-black text-[14px] sm:text-[15px] tracking-tight">
+                                        {user?.username ? user.username.charAt(0).toUpperCase() : '?'}
+                                    </span>
+                                </button>
+
+                                {showProfileDropdown && (
+                                    <div className="absolute right-0 top-full mt-2 w-60 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-50">
+                                        <div className="p-4 border-b border-slate-50 bg-slate-50/50">
+                                            <p className="text-sm font-bold text-slate-800 truncate">{user?.username}</p>
+                                            <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+                                        </div>
+                                        <div className="p-2">
+                                            <button
+                                                onClick={() => {
+                                                    onProfileClick();
+                                                    setShowProfileDropdown(false);
+                                                }}
+                                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-colors"
+                                            >
+                                                <UserIcon className="w-4 h-4" />
+                                                My Profile
+                                            </button>
+
+                                            {user?.role === 'admin' && (
+                                                <button
+                                                    onClick={() => {
+                                                        navigate('/team');
+                                                        setShowProfileDropdown(false);
+                                                    }}
+                                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-colors"
+                                                >
+                                                    <Users className="w-4 h-4" />
+                                                    Team Management
+                                                </button>
+                                            )}
+
+                                            <div className="h-px bg-slate-100 my-1"></div>
+
+                                            <button
+                                                onClick={() => {
+                                                    onLogout();
+                                                    setShowProfileDropdown(false);
+                                                }}
+                                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-colors"
+                                            >
+                                                <LogOut className="w-4 h-4" />
+                                                Log Out
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
 
                             {/* Notification Bell */}
                             <div className="relative">

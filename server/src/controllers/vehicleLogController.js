@@ -2,7 +2,7 @@ const VehicleLog = require('../models/vehicleLogModel');
 
 exports.getVehicleLogs = async (req, res) => {
     try {
-        const logs = await VehicleLog.getAll(req.user.id);
+        const logs = await VehicleLog.getAll(req.user.data_owner_id);
         res.json(logs);
     } catch (error) {
         console.error("Error fetching vehicle logs:", error);
@@ -12,7 +12,7 @@ exports.getVehicleLogs = async (req, res) => {
 
 exports.createVehicleLog = async (req, res) => {
     try {
-        const data = { ...req.body, user_id: req.user.id };
+        const data = { ...req.body, user_id: req.user.data_owner_id };
         const newLog = await VehicleLog.create(data);
         res.status(201).json(newLog);
     } catch (error) {

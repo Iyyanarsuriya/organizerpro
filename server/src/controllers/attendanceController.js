@@ -2,7 +2,7 @@ const Attendance = require('../models/attendanceModel');
 
 const createAttendance = async (req, res) => {
     try {
-        const attendance = await Attendance.create({ ...req.body, user_id: req.user.id });
+        const attendance = await Attendance.create({ ...req.body, user_id: req.user.data_owner_id });
         res.status(201).json({ success: true, data: attendance });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -19,7 +19,7 @@ const getAttendances = async (req, res) => {
             endDate: req.query.endDate,
             role: req.query.role
         };
-        const attendances = await Attendance.getAllByUserId(req.user.id, filters);
+        const attendances = await Attendance.getAllByUserId(req.user.data_owner_id, filters);
         res.status(200).json({ success: true, data: attendances });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -28,7 +28,7 @@ const getAttendances = async (req, res) => {
 
 const updateAttendance = async (req, res) => {
     try {
-        const updated = await Attendance.update(req.params.id, req.user.id, req.body);
+        const updated = await Attendance.update(req.params.id, req.user.data_owner_id, req.body);
         if (updated) {
             res.status(200).json({ success: true, message: "Attendance updated" });
         } else {
@@ -41,7 +41,7 @@ const updateAttendance = async (req, res) => {
 
 const deleteAttendance = async (req, res) => {
     try {
-        const deleted = await Attendance.delete(req.params.id, req.user.id);
+        const deleted = await Attendance.delete(req.params.id, req.user.data_owner_id);
         if (deleted) {
             res.status(200).json({ success: true, message: "Attendance deleted" });
         } else {
@@ -54,7 +54,7 @@ const deleteAttendance = async (req, res) => {
 
 const getAttendanceStats = async (req, res) => {
     try {
-        const stats = await Attendance.getStats(req.user.id, {
+        const stats = await Attendance.getStats(req.user.data_owner_id, {
             period: req.query.period,
             startDate: req.query.startDate,
             endDate: req.query.endDate,
@@ -76,7 +76,7 @@ const getMemberSummary = async (req, res) => {
             endDate: req.query.endDate,
             projectId: req.query.projectId
         };
-        const summary = await Attendance.getMemberSummary(req.user.id, filters);
+        const summary = await Attendance.getMemberSummary(req.user.data_owner_id, filters);
         res.status(200).json({ success: true, data: summary });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -87,7 +87,7 @@ const quickMarkAttendance = async (req, res) => {
     try {
         const attendance = await Attendance.quickMark({
             ...req.body,
-            user_id: req.user.id
+            user_id: req.user.data_owner_id
         });
         res.status(attendance.updated ? 200 : 201).json({ success: true, data: attendance });
     } catch (error) {

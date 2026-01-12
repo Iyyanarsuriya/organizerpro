@@ -16,6 +16,7 @@ const Profile = lazy(() => import('./pages/ReminderTracker/ReminderDashboard'));
 const FinanceProfile = lazy(() => import('./pages/ExpenseTracker/FinanceProfile'));
 const ExpenseTracker = lazy(() => import('./pages/ExpenseTracker/ExpenseTrackerMain'));
 const AttendanceTracker = lazy(() => import('./pages/AttendanceTracker/AttendanceTracker'));
+const TeamManagement = lazy(() => import('./pages/Team/TeamManagement'));
 const ForgotPassword = lazy(() => import('./pages/Authentication/ForgotPassword'));
 
 // Protected Route Component
@@ -183,6 +184,7 @@ const AppContent = () => {
         onLoginClick={() => setShowLoginModal(true)}
         onSignupClick={() => setShowSignupModal(true)}
         onProfileClick={() => setShowProfileModal(true)}
+        onLogout={handleLogout}
       />
 
       <GlobalModals
@@ -219,6 +221,7 @@ const AppContent = () => {
             <Route path="/finance" element={<ProtectedRoute><FinanceProfile /></ProtectedRoute>} />
             <Route path="/expenses" element={<ProtectedRoute><ExpenseTracker /></ProtectedRoute>} />
             <Route path="/attendance" element={<ProtectedRoute><AttendanceTracker /></ProtectedRoute>} />
+            <Route path="/team" element={<ProtectedRoute><TeamManagement /></ProtectedRoute>} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
@@ -236,4 +239,5 @@ function App() {
   );
 }
 
+// End of App
 export default App;

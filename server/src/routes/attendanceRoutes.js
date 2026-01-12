@@ -9,7 +9,7 @@ const {
     getMemberSummary,
     quickMarkAttendance
 } = require('../controllers/attendanceController');
-const authenticateToken = require('../middlewares/authMiddleware');
+const { authenticateToken, requireOwner } = require('../middlewares/authMiddleware');
 
 router.use(authenticateToken);
 
@@ -19,6 +19,6 @@ router.get('/', getAttendances);
 router.get('/stats', getAttendanceStats);
 router.get('/summary', getMemberSummary);
 router.put('/:id', updateAttendance);
-router.delete('/:id', deleteAttendance);
+router.delete('/:id', requireOwner, deleteAttendance);
 
 module.exports = router;

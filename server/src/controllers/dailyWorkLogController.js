@@ -5,7 +5,7 @@ const createWorkLog = async (req, res) => {
         if (!req.body.member_id && !req.body.guest_name) {
             return res.status(400).json({ success: false, message: 'Member or Guest Name is required' });
         }
-        const workLog = await DailyWorkLog.create({ ...req.body, user_id: req.user.id });
+        const workLog = await DailyWorkLog.create({ ...req.body, user_id: req.user.data_owner_id });
         res.status(201).json({ success: true, data: workLog });
     } catch (error) {
         if (error.code === 'ER_DUP_ENTRY') {
@@ -20,7 +20,7 @@ const getWorkLogs = async (req, res) => {
     try {
         const { startDate, endDate, memberId } = req.query;
         const workLogs = await DailyWorkLog.getByUserIdAndDateRange(
-            req.user.id,
+            req.user.data_owner_id,
             startDate,
             endDate,
             memberId
@@ -35,7 +35,7 @@ const getMonthlyTotal = async (req, res) => {
     try {
         const { year, month, memberId } = req.query;
         const totals = await DailyWorkLog.getMonthlyTotal(
-            req.user.id,
+            req.user.data_owner_id,
             year,
             month,
             memberId
@@ -48,7 +48,7 @@ const getMonthlyTotal = async (req, res) => {
 
 const updateWorkLog = async (req, res) => {
     try {
-        const updated = await DailyWorkLog.update(req.params.id, req.user.id, req.body);
+        const updated = await DailyWorkLog.update(req.params.id, req.user.data_owner_id, req.body);
         if (updated) {
             res.status(200).json({ success: true, message: 'Work log updated' });
         } else {
@@ -61,7 +61,7 @@ const updateWorkLog = async (req, res) => {
 
 const deleteWorkLog = async (req, res) => {
     try {
-        const deleted = await DailyWorkLog.delete(req.params.id, req.user.id);
+        const deleted = await DailyWorkLog.delete(req.params.id, req.user.data_owner_id);
         if (deleted) {
             res.status(200).json({ success: true, message: 'Work log deleted' });
         } else {

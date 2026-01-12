@@ -4,7 +4,7 @@ const googleService = require('../services/googleCalendarService');
 
 exports.getReminders = async (req, res) => {
     try {
-        const rows = await Reminder.getAllByUserId(req.user.id);
+        const rows = await Reminder.getAllByUserId(req.user.data_owner_id);
         res.json(rows);
     } catch (error) {
         console.error(error);
@@ -16,7 +16,7 @@ exports.createReminder = async (req, res) => {
     const { title, description, due_date, priority, category } = req.body;
     try {
         const newReminder = await Reminder.create({
-            user_id: req.user.id,
+            user_id: req.user.data_owner_id,
             title,
             description,
             due_date,
@@ -24,8 +24,8 @@ exports.createReminder = async (req, res) => {
             category
         });
 
-        // Sync with Google Calendar if connected
-        const user = await User.findById(req.user.id);
+        // Sync with Google Calendar if connected (Using Data Owner's Token)
+        const user = await User.findById(req.user.data_owner_id);
         if (user && user.google_refresh_token && due_date) {
             try {
                 const event = await googleService.createEvent(user.google_refresh_token, newReminder);
@@ -49,15 +49,15 @@ exports.deleteReminder = async (req, res) => {
     const { id } = req.params;
     try {
         // Fetch reminder to check for google_event_id before deleting
-        const reminders = await Reminder.getAllByUserId(req.user.id);
+        const reminders = await Reminder.getAllByUserId(req.user.data_owner_id);
         const reminderToDelete = reminders.find(r => r.id == id);
 
-        const success = await Reminder.delete(id, req.user.id);
+        const success = await Reminder.delete(id, req.user.data_owner_id);
         if (!success) return res.status(404).json({ error: 'Reminder not found' });
 
-        // Delete from Google Calendar if exists
+        // Delete from Google Calendar if exists (Using Data Owner's Token)
         if (reminderToDelete && reminderToDelete.google_event_id) {
-            const user = await User.findById(req.user.id);
+            const user = await User.findById(req.user.data_owner_id);
             if (user && user.google_refresh_token) {
                 await googleService.deleteEvent(user.google_refresh_token, reminderToDelete.google_event_id);
             }
@@ -74,7 +74,7 @@ exports.updateReminder = async (req, res) => {
     const { id } = req.params;
     const { is_completed } = req.body;
     try {
-        const success = await Reminder.updateStatus(id, req.user.id, is_completed);
+        const success = await Reminder.updateStatus(id, req.user.data_owner_id, is_completed);
         if (!success) return res.status(404).json({ error: 'Reminder not found' });
         res.json({ message: 'Reminder updated' });
     } catch (error) {
@@ -89,7 +89,9 @@ exports.triggerMissedTaskEmail = async (req, res) => {
     const { date, endDate, customMessage, status } = req.body;
     try {
         // Trigger the check specifically for this user and date
-        const result = await runMissedTaskCheck(req.user.id, date, endDate, customMessage, status);
+        // Note: For email triggers, should it go to the Employee or the CEO?
+        // Usually CEO (Owner) configures the email.
+        const result = await runMissedTaskCheck(req.user.data_owner_id, date, endDate, customMessage, status);
         res.json({ message: `Task report check ran for ${date || 'today'}`, ...result });
     } catch (error) {
         console.error('Manual trigger error:', error);

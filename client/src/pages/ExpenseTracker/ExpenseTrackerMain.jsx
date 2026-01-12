@@ -6,7 +6,7 @@ import { getTransactions, createTransaction, updateTransaction, deleteTransactio
 import toast from 'react-hot-toast';
 import {
     FaWallet, FaPlus, FaTrash, FaChartBar, FaExchangeAlt, FaFileAlt, FaEdit, FaTimes,
-    FaPlusCircle, FaFolderPlus, FaUserEdit, FaBoxes, FaTruck,
+    FaPlusCircle, FaFolderPlus, FaBoxes, FaTruck,
     FaCheck, FaQuestionCircle, FaCalculator, FaTag, FaUsers, FaFilePdf, FaFileCsv
 } from 'react-icons/fa';
 import { getExpenseCategories, createExpenseCategory, deleteExpenseCategory } from '../../api/expenseCategoryApi';
@@ -706,6 +706,7 @@ const ExpenseTrackerMain = () => {
                     <SidebarItem icon={FaCalculator} label="Salary" />
                     <SidebarItem icon={FaBoxes} label="Work Log" />
                     <SidebarItem icon={FaTruck} label="Vehicle Log" />
+
                 </nav>
             </aside>
 

@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const projectController = require('../controllers/projectController');
-const authenticateToken = require('../middlewares/authMiddleware');
+const { authenticateToken, requireOwner } = require('../middlewares/authMiddleware');
 
 router.use(authenticateToken);
 
 router.get('/', projectController.getProjects);
 router.post('/', projectController.createProject);
-router.delete('/:id', projectController.deleteProject);
+router.delete('/:id', requireOwner, projectController.deleteProject);
 
 module.exports = router;

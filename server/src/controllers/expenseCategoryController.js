@@ -2,7 +2,7 @@ const ExpenseCategory = require('../models/expenseCategoryModel');
 
 exports.getExpenseCategories = async (req, res) => {
     try {
-        const categories = await ExpenseCategory.getAllByUserId(req.user.id);
+        const categories = await ExpenseCategory.getAllByUserId(req.user.data_owner_id);
         res.json(categories);
     } catch (error) {
         console.error("Error fetching expense categories:", error);
@@ -16,7 +16,7 @@ exports.createExpenseCategory = async (req, res) => {
         if (!name) return res.status(400).json({ error: 'Name is required' });
 
         const newCategory = await ExpenseCategory.create({
-            user_id: req.user.id,
+            user_id: req.user.data_owner_id,
             name,
             type
         });
@@ -33,7 +33,7 @@ exports.createExpenseCategory = async (req, res) => {
 exports.deleteExpenseCategory = async (req, res) => {
     try {
         const { id } = req.params;
-        const success = await ExpenseCategory.delete(id, req.user.id);
+        const success = await ExpenseCategory.delete(id, req.user.data_owner_id);
         if (!success) return res.status(404).json({ error: 'Category not found' });
         res.json({ message: 'Category deleted' });
     } catch (error) {
