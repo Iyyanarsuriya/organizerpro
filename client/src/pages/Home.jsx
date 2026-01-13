@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 
-const Home = () => {
+const Home = ({ onProfileClick }) => {
     // Get user from localStorage for a quick greet
     const user = JSON.parse(localStorage.getItem('user') || '{}');
 
@@ -194,7 +194,7 @@ const Home = () => {
                             <div className="space-y-4">
                                 <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Account</h4>
                                 <ul className="space-y-2">
-                                    <li><Link to="/profile" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">My Profile</Link></li>
+                                    <li><button onClick={onProfileClick} className="text-sm font-bold text-slate-400 hover:text-white transition-colors cursor-pointer text-left">My Profile</button></li>
                                     <li><button className="text-sm font-bold text-slate-400 hover:text-white transition-colors">Settings</button></li>
                                 </ul>
                             </div>

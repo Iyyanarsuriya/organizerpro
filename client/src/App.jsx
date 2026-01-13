@@ -217,7 +217,7 @@ const AppContent = () => {
           </div>
         }>
           <Routes>
-            <Route path="/" element={token ? <Home /> : <LandingPage onSignupClick={() => setShowSignupModal(true)} />} />
+            <Route path="/" element={token ? <Home onProfileClick={() => setShowProfileModal(true)} /> : <LandingPage onSignupClick={() => setShowSignupModal(true)} />} />
             <Route path="/reminders" element={<ProtectedRoute><Reminders /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/finance" element={<ProtectedRoute><FinanceProfile /></ProtectedRoute>} />
