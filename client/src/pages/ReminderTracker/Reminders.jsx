@@ -13,6 +13,7 @@ import { getCategories, createCategory, deleteCategory } from '../../api/categor
 import CategoryManager from '../../components/CategoryManager';
 import ExportButtons from '../../components/ExportButtons';
 import { exportReminderToCSV, exportReminderToTXT, exportReminderToPDF } from '../../utils/exportUtils/index.js';
+import Notes from '../Notes/Notes'; // Helper Import
 
 const Reminders = () => {
     const [reminders, setReminders] = useState([]);
@@ -37,6 +38,7 @@ const Reminders = () => {
     const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
     const [categories, setCategories] = useState([]);
     const [showCategoryManager, setShowCategoryManager] = useState(false);
+    const [activeTab, setActiveTab] = useState('tasks'); // 'tasks' | 'notes'
 
     // Email Modal State
     const [showMailModal, setShowMailModal] = useState(false);
@@ -493,9 +495,20 @@ const Reminders = () => {
 
                 <div className="flex justify-between items-center mb-[16px] sm:mb-[24px] shrink-0 bg-linear-to-r from-[#2d5bff] via-[#4a69ff] to-[#6366f1] p-[10px] sm:p-[16px] rounded-[12px] sm:rounded-[16px] border border-blue-400/30 shadow-xl shadow-blue-500/20 relative z-20">
                     <div className="flex items-center gap-[12px] sm:gap-[16px]">
-                        <h1 className="text-[18px] sm:text-[24px] md:text-[30px] font-black text-white drop-shadow-lg tracking-tight">
-                            Dashboard
-                        </h1>
+                        <div className="flex bg-blue-700/30 rounded-xl p-1 border border-blue-400/30 backdrop-blur-sm">
+                            <button
+                                onClick={() => setActiveTab('tasks')}
+                                className={`px-4 py-2 rounded-lg text-[10px] sm:text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'tasks' ? 'bg-white text-[#2d5bff] shadow-lg' : 'text-blue-100 hover:bg-white/10'}`}
+                            >
+                                Tasks
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('notes')}
+                                className={`px-4 py-2 rounded-lg text-[10px] sm:text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'notes' ? 'bg-white text-[#2d5bff] shadow-lg' : 'text-blue-100 hover:bg-white/10'}`}
+                            >
+                                Notes
+                            </button>
+                        </div>
                     </div>
 
 
@@ -567,476 +580,488 @@ const Reminders = () => {
                     </div>
                 </div>
 
-                {/* BULK ACTION BAR */}
-                {selectedIds.length > 0 && (
-                    <div className="fixed bottom-[24px] left-1/2 -translate-x-1/2 bg-slate-900/90 backdrop-blur-md text-white px-[16px] py-[12px] rounded-[16px] shadow-2xl flex items-center gap-[16px] z-50 animate-in slide-in-from-bottom-10 fade-in duration-300 border border-slate-700">
-                        <span className="text-[12px] font-bold text-slate-300">
-                            {selectedIds.length} selected
-                        </span>
-                        <div className="h-[16px] w-px bg-slate-700"></div>
-                        <button
-                            onClick={async () => {
-                                try {
-                                    await Promise.all(selectedIds.map(id => updateReminder(id, { is_completed: true })));
-                                    setReminders(prev => prev.map(r => selectedIds.includes(r.id) ? { ...r, is_completed: true, completed_at: new Date().toISOString() } : r));
-                                    window.dispatchEvent(new Event('refresh-reminders'));
-                                    toast.success(`${selectedIds.length} tasks completed`);
-                                    setSelectedIds([]);
-                                    setIsSelectionMode(false);
-                                } catch (e) { toast.error("Batch update failed"); }
-                            }}
-                            className="text-[12px] font-black text-white hover:text-blue-400 transition-colors uppercase tracking-wider cursor-pointer"
-                        >
-                            Complete All
-                        </button>
-                        <button
-                            onClick={() => setConfirmBulkDelete(true)}
-                            className="text-[12px] font-black text-[#ff4d4d] hover:text-[#ff3333] transition-colors uppercase tracking-wider cursor-pointer"
-                        >
-                            Delete All
-                        </button>
-                        <div className="h-[16px] w-px bg-slate-700"></div>
-                        <button onClick={() => { setSelectedIds([]); setIsSelectionMode(false); }} className="p-[4px] hover:bg-white/10 rounded-full transition-colors cursor-pointer">
-                            <FaTimes className="w-[12px] h-[12px]" />
-                        </button>
-                    </div>
+                {/* TASKS VIEW */}
+                {activeTab === 'tasks' && (
+                    <>
+                        {/* BULK ACTION BAR */}
+                        {selectedIds.length > 0 && (
+                            <div className="fixed bottom-[24px] left-1/2 -translate-x-1/2 bg-slate-900/90 backdrop-blur-md text-white px-[16px] py-[12px] rounded-[16px] shadow-2xl flex items-center gap-[16px] z-50 animate-in slide-in-from-bottom-10 fade-in duration-300 border border-slate-700">
+                                <span className="text-[12px] font-bold text-slate-300">
+                                    {selectedIds.length} selected
+                                </span>
+                                <div className="h-[16px] w-px bg-slate-700"></div>
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            await Promise.all(selectedIds.map(id => updateReminder(id, { is_completed: true })));
+                                            setReminders(prev => prev.map(r => selectedIds.includes(r.id) ? { ...r, is_completed: true, completed_at: new Date().toISOString() } : r));
+                                            window.dispatchEvent(new Event('refresh-reminders'));
+                                            toast.success(`${selectedIds.length} tasks completed`);
+                                            setSelectedIds([]);
+                                            setIsSelectionMode(false);
+                                        } catch (e) { toast.error("Batch update failed"); }
+                                    }}
+                                    className="text-[12px] font-black text-white hover:text-blue-400 transition-colors uppercase tracking-wider cursor-pointer"
+                                >
+                                    Complete All
+                                </button>
+                                <button
+                                    onClick={() => setConfirmBulkDelete(true)}
+                                    className="text-[12px] font-black text-[#ff4d4d] hover:text-[#ff3333] transition-colors uppercase tracking-wider cursor-pointer"
+                                >
+                                    Delete All
+                                </button>
+                                <div className="h-[16px] w-px bg-slate-700"></div>
+                                <button onClick={() => { setSelectedIds([]); setIsSelectionMode(false); }} className="p-[4px] hover:bg-white/10 rounded-full transition-colors cursor-pointer">
+                                    <FaTimes className="w-[12px] h-[12px]" />
+                                </button>
+                            </div>
+                        )}
+
+                        {/* MAIN CONTENT GRID */}
+                        <div className="flex flex-col lg:flex-row gap-[16px] sm:gap-[24px] md:gap-[32px] h-full min-h-0 items-start overflow-y-auto lg:overflow-visible custom-scrollbar pb-[40px] lg:pb-0">
+
+                            {/* LEFT SIDE: ADD REMINDER */}
+                            <div className="w-full lg:w-[400px] xl:w-[448px] shrink-0">
+                                <div className="glass rounded-[16px] sm:rounded-[24px] md:rounded-[32px] p-[16px] sm:p-[20px] md:p-[24px] shadow-2xl h-auto transition-all">
+                                    <h2 className="text-[14px] sm:text-[16px] md:text-[18px] font-black mb-[16px] sm:mb-[24px] text-slate-800 uppercase tracking-widest flex items-center gap-[8px]">
+                                        <div className="w-[4px] h-[16px] bg-blue-500 rounded-full"></div>
+                                        New task
+                                    </h2>
+                                    <ReminderForm onAdd={handleAdd} categories={categories} onManageCategories={() => setShowCategoryManager(true)} />
+                                </div>
+                            </div>
+
+                            {/* RIGHT SIDE: LIST - SCROLLABLE SECTION */}
+                            <div className="flex-1 min-h-0 w-full mb-[40px] lg:mb-0">
+                                <div className="glass rounded-[16px] sm:rounded-[24px] md:rounded-[32px] p-[16px] sm:p-[20px] md:p-[24px] shadow-2xl flex flex-col h-auto sm:min-h-[516px]">
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-[12px] sm:gap-[16px] mb-[16px] sm:mb-[24px] shrink-0">
+                                        <div className="flex flex-wrap items-center gap-[8px] sm:gap-[16px]">
+                                            <h2 className="text-[14px] sm:text-[16px] md:text-[18px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-[8px]">
+                                                <div className="w-[4px] h-[16px] bg-[#2d5bff] rounded-full"></div>
+                                                Your Timeline
+                                            </h2>
+                                            <span className="text-[9px] sm:text-[10px] md:text-[12px] font-black px-[8px] sm:px-[12px] py-[2px] sm:py-[4px] rounded-full bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-widest shrink-0">
+                                                {processedReminders.length} Tasks
+                                            </span>
+                                            <div className="flex flex-wrap items-center gap-[4px] sm:gap-[8px]">
+                                                <button
+                                                    onClick={() => setShowFilters(!showFilters)}
+                                                    className={`flex items-center gap-[6px] sm:gap-[8px] px-[10px] sm:px-[12px] py-[4px] sm:py-[6px] rounded-[8px] border transition-all cursor-pointer ${showFilters ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'}`}
+                                                >
+                                                    <svg className="w-[12px] h-[12px] sm:w-[14px] sm:h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                                    </svg>
+                                                    <span className="hidden sm:inline text-[9px] sm:text-[10px] md:text-[12px] font-black uppercase tracking-widest">Filters</span>
+                                                </button>
+
+                                                {/* 📅 Date Search Filter */}
+                                                {/* 📅 Period Filter */}
+                                                <div className="relative shrink-0">
+                                                    <div className="flex items-center gap-2 bg-white border border-slate-200 p-1 rounded-xl shadow-sm">
+                                                        <span className="hidden sm:inline text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-wide ml-2">Period:</span>
+                                                        <select
+                                                            value={periodType}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                setPeriodType(val);
+                                                                if (val === 'today') setFilterDate(new Date().toISOString().split('T')[0]);
+                                                                else setFilterDate('');
+                                                            }}
+                                                            className="bg-transparent text-[10px] sm:text-xs font-bold text-slate-700 outline-none cursor-pointer uppercase tracking-wider px-2"
+                                                        >
+                                                            <option value="today">Today</option>
+                                                            <option value="all">All Time</option>
+                                                            <option value="range">Range</option>
+                                                        </select>
+
+                                                        {periodType === 'today' && (
+                                                            <input
+                                                                type="date"
+                                                                value={filterDate}
+                                                                onChange={(e) => setFilterDate(e.target.value)}
+                                                                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[10px] font-bold text-slate-600 outline-none"
+                                                            />
+                                                        )}
+
+                                                        {periodType === 'range' && (
+                                                            <div className="flex items-center gap-1">
+                                                                <input
+                                                                    type="date"
+                                                                    value={customRange.start}
+                                                                    onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })}
+                                                                    className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[10px] font-bold text-slate-600 outline-none w-[90px]"
+                                                                />
+                                                                <span className="text-slate-400 font-bold">-</span>
+                                                                <input
+                                                                    type="date"
+                                                                    value={customRange.end}
+                                                                    onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })}
+                                                                    className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[10px] font-bold text-slate-600 outline-none w-[90px]"
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <button
+                                                    onClick={() => setIsSelectionMode(!isSelectionMode)}
+                                                    className={`text-[9px] sm:text-[10px] md:text-[12px] font-black uppercase tracking-widest px-[10px] sm:px-[12px] py-[4px] sm:py-[6px] rounded-[8px] border transition-all cursor-pointer ${isSelectionMode ? 'bg-[#2d5bff] text-white border-[#2d5bff] shadow-lg shadow-blue-500/30' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'}`}
+                                                >
+                                                    {isSelectionMode ? 'Cancel' : 'Select'}
+                                                </button>
+
+                                                <div className="h-[24px] w-px bg-slate-200 mx-[4px]"></div>
+
+                                                <ExportButtons
+                                                    onExportCSV={() => exportReminderToCSV({ data: processedReminders, period: exportPeriod, filename: `reminders_${new Date().toISOString().split('T')[0]}` })}
+                                                    onExportPDF={() => exportReminderToPDF({ data: processedReminders, period: exportPeriod, filename: `reminders_${new Date().toISOString().split('T')[0]}` })}
+                                                    onExportTXT={() => exportReminderToTXT({ data: processedReminders, period: exportPeriod, filename: `reminders_${new Date().toISOString().split('T')[0]}` })}
+                                                    className="scale-90 sm:scale-100"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* COLLAPSIBLE FILTERS */}
+                                    {showFilters && (
+                                        <div className="animate-in slide-in-from-top-2 fade-in duration-200 mb-[24px]">
+                                            <div className="flex flex-wrap items-center gap-[8px] sm:gap-[12px] p-[12px] sm:p-[16px] bg-slate-50 rounded-[12px] border border-slate-200/60">
+
+                                                {/* 🔍 Search Input */}
+                                                <div className="relative shrink-0 group/search flex-1 min-w-[140px]">
+                                                    <div className={`flex items-center gap-[8px] bg-white border px-[12px] py-[8px] rounded-[12px] transition-all ${searchQuery ? 'border-[#2d5bff] ring-2 ring-[#2d5bff]/10' : 'border-slate-200 group-hover/search:border-slate-300'}`}>
+                                                        <svg className={`w-[14px] h-[14px] ${searchQuery ? 'text-[#2d5bff]' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                        </svg>
+                                                        <input
+                                                            type="text"
+                                                            value={searchQuery}
+                                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                                            placeholder="Search tasks..."
+                                                            className="bg-transparent text-[11px] font-bold text-slate-700 outline-none w-full placeholder:text-slate-400 placeholder:font-medium"
+                                                        />
+                                                        {searchQuery && (
+                                                            <button
+                                                                onClick={() => setSearchQuery('')}
+                                                                className="text-slate-400 hover:text-[#ff4d4d] transition-colors cursor-pointer"
+                                                            >
+                                                                <FaTimes className="w-2.5 h-2.5" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+
+
+                                                {/* 🏷️ Category Filter */}
+                                                <div className="relative group/cat flex items-center gap-[8px]">
+                                                    <div className={`flex items-center gap-[8px] bg-white border px-[12px] py-[8px] rounded-[12px] transition-all cursor-pointer ${filterCategory ? 'border-[#2d5bff] ring-2 ring-[#2d5bff]/10' : 'border-slate-200 hover:border-slate-300'}`}>
+                                                        <div className={`w-[8px] h-[8px] rounded-full ${filterCategory ? 'bg-[#2d5bff]' : 'bg-slate-300'}`}></div>
+                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-wide">Category:</span>
+                                                        <select
+                                                            value={filterCategory}
+                                                            onChange={(e) => setFilterCategory(e.target.value)}
+                                                            className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer appearance-none min-w-[60px]"
+                                                        >
+                                                            <option value="">All</option>
+                                                            {categories.map(cat => (
+                                                                <option key={cat.id} value={cat.name}>{cat.name}</option>
+                                                            ))}
+                                                            {categories.length === 0 && <option value="General">General</option>}
+                                                        </select>
+                                                        {filterCategory ? (
+                                                            <button
+                                                                onClick={() => setFilterCategory('')}
+                                                                className="text-slate-400 hover:text-[#ff4d4d] transition-colors cursor-pointer"
+                                                            >
+                                                                <FaTimes className="w-2.5 h-2.5" />
+                                                            </button>
+                                                        ) : (
+                                                            <svg className="w-3 h-3 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                                                            </svg>
+                                                        )}
+                                                    </div>
+
+                                                </div>
+                                                {/* 🎯 Priority Filter */}
+                                                <div className="relative group/prio flex items-center gap-[8px]">
+                                                    <div className={`flex items-center gap-[8px] bg-white border px-[12px] py-[8px] rounded-[12px] transition-all cursor-pointer ${filterPriority ? 'border-[#2d5bff] ring-2 ring-[#2d5bff]/10' : 'border-slate-200 hover:border-slate-300'}`}>
+                                                        <div className={`w-[8px] h-[8px] rounded-full ${filterPriority === 'high' ? 'bg-red-500' : filterPriority === 'medium' ? 'bg-orange-500' : filterPriority === 'low' ? 'bg-green-500' : 'bg-slate-300'}`}></div>
+                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-wide">Priority:</span>
+                                                        <select
+                                                            value={filterPriority}
+                                                            onChange={(e) => setFilterPriority(e.target.value)}
+                                                            className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer appearance-none min-w-[60px] uppercase"
+                                                        >
+                                                            <option value="">All</option>
+                                                            <option value="low">Low</option>
+                                                            <option value="medium">Medium</option>
+                                                            <option value="high">High</option>
+                                                        </select>
+                                                        {filterPriority ? (
+                                                            <button
+                                                                onClick={() => setFilterPriority('')}
+                                                                className="text-slate-400 hover:text-[#ff4d4d] transition-colors cursor-pointer"
+                                                            >
+                                                                <FaTimes className="w-2.5 h-2.5" />
+                                                            </button>
+                                                        ) : (
+                                                            <svg className="w-3 h-3 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                                                            </svg>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* 🧪 Sort Control */}
+                                                <div className="relative group/sort">
+                                                    <div className="flex items-center gap-[8px] bg-white border border-slate-200 px-[12px] py-[8px] rounded-[12px] shadow-sm hover:border-[#2d5bff]/30 transition-all cursor-pointer relative">
+                                                        <svg className="w-[14px] h-[14px] text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                                                        </svg>
+                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-wide">Sort:</span>
+                                                        <select
+                                                            value={sortBy}
+                                                            onChange={(e) => setSortBy(e.target.value)}
+                                                            className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer appearance-none pr-[20px] min-w-[80px]"
+                                                        >
+                                                            <option value="due_date">Due Date</option>
+                                                            <option value="newest">Newest</option>
+                                                            <option value="oldest">Oldest</option>
+                                                            <option value="priority">Priority</option>
+                                                            <option value="status">Status</option>
+                                                        </select>
+                                                        <svg className="w-[10px] h-[10px] text-slate-400 absolute right-[8px] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
+                                                        </svg>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                                        <ReminderList
+                                            reminders={processedReminders}
+                                            onToggle={handleToggle}
+                                            onDelete={handleDelete}
+                                            isSelectionMode={isSelectionMode}
+                                            selectedIds={selectedIds}
+                                            onSelect={(id) => {
+                                                setSelectedIds(prev => prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]);
+                                            }}
+                                        />
+                                        {processedReminders.length === 0 && (
+                                            <div className="h-full flex flex-col items-center justify-center p-12 text-center opacity-60">
+                                                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
+                                                    <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                    </svg>
+                                                </div>
+                                                <p className="text-slate-600 font-black text-sm uppercase tracking-widest">No matching tasks</p>
+                                                <p className="text-slate-400 text-[11px] mt-1 font-medium">Try selecting another date or clearing the filter</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </>
                 )}
 
-                {/* MAIN CONTENT GRID */}
-                <div className="flex flex-col lg:flex-row gap-[16px] sm:gap-[24px] md:gap-[32px] h-full min-h-0 items-start overflow-y-auto lg:overflow-visible custom-scrollbar pb-[40px] lg:pb-0">
-
-                    {/* LEFT SIDE: ADD REMINDER */}
-                    <div className="w-full lg:w-[400px] xl:w-[448px] shrink-0">
-                        <div className="glass rounded-[16px] sm:rounded-[24px] md:rounded-[32px] p-[16px] sm:p-[20px] md:p-[24px] shadow-2xl h-auto transition-all">
-                            <h2 className="text-[14px] sm:text-[16px] md:text-[18px] font-black mb-[16px] sm:mb-[24px] text-slate-800 uppercase tracking-widest flex items-center gap-[8px]">
-                                <div className="w-[4px] h-[16px] bg-blue-500 rounded-full"></div>
-                                New task
-                            </h2>
-                            <ReminderForm onAdd={handleAdd} categories={categories} onManageCategories={() => setShowCategoryManager(true)} />
-                        </div>
+                {/* NOTES VIEW */}
+                {activeTab === 'notes' && (
+                    <div className="flex-1 h-full overflow-hidden">
+                        <Notes isEmbedded={true} />
                     </div>
-
-                    {/* RIGHT SIDE: LIST - SCROLLABLE SECTION */}
-                    <div className="flex-1 min-h-0 w-full mb-[40px] lg:mb-0">
-                        <div className="glass rounded-[16px] sm:rounded-[24px] md:rounded-[32px] p-[16px] sm:p-[20px] md:p-[24px] shadow-2xl flex flex-col h-auto sm:min-h-[516px]">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-[12px] sm:gap-[16px] mb-[16px] sm:mb-[24px] shrink-0">
-                                <div className="flex flex-wrap items-center gap-[8px] sm:gap-[16px]">
-                                    <h2 className="text-[14px] sm:text-[16px] md:text-[18px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-[8px]">
-                                        <div className="w-[4px] h-[16px] bg-[#2d5bff] rounded-full"></div>
-                                        Your Timeline
-                                    </h2>
-                                    <span className="text-[9px] sm:text-[10px] md:text-[12px] font-black px-[8px] sm:px-[12px] py-[2px] sm:py-[4px] rounded-full bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-widest shrink-0">
-                                        {processedReminders.length} Tasks
-                                    </span>
-                                    <div className="flex flex-wrap items-center gap-[4px] sm:gap-[8px]">
-                                        <button
-                                            onClick={() => setShowFilters(!showFilters)}
-                                            className={`flex items-center gap-[6px] sm:gap-[8px] px-[10px] sm:px-[12px] py-[4px] sm:py-[6px] rounded-[8px] border transition-all cursor-pointer ${showFilters ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'}`}
-                                        >
-                                            <svg className="w-[12px] h-[12px] sm:w-[14px] sm:h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                )}
+                {/* Completion Confirmation Modal */}
+                {
+                    confirmToggle && (
+                        <div className="fixed inset-0 z-120 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+                            <div className="bg-white rounded-[32px] p-[24px] sm:p-[32px] w-full max-w-[400px] shadow-2xl animate-in zoom-in-95 duration-200 border border-white">
+                                <div className="flex flex-col items-center text-center">
+                                    <div className="w-[64px] h-[64px] bg-blue-50 rounded-full flex items-center justify-center mb-[24px] border border-blue-100 shadow-lg shadow-blue-500/10">
+                                        <div className="w-[32px] h-[32px] bg-[#2d5bff] rounded-full flex items-center justify-center animate-pulse">
+                                            <svg className="w-[20px] h-[20px] text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" />
                                             </svg>
-                                            <span className="hidden sm:inline text-[9px] sm:text-[10px] md:text-[12px] font-black uppercase tracking-widest">Filters</span>
-                                        </button>
-
-                                        {/* 📅 Date Search Filter */}
-                                        {/* 📅 Period Filter */}
-                                        <div className="relative shrink-0">
-                                            <div className="flex items-center gap-2 bg-white border border-slate-200 p-1 rounded-xl shadow-sm">
-                                                <span className="hidden sm:inline text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-wide ml-2">Period:</span>
-                                                <select
-                                                    value={periodType}
-                                                    onChange={(e) => {
-                                                        const val = e.target.value;
-                                                        setPeriodType(val);
-                                                        if (val === 'today') setFilterDate(new Date().toISOString().split('T')[0]);
-                                                        else setFilterDate('');
-                                                    }}
-                                                    className="bg-transparent text-[10px] sm:text-xs font-bold text-slate-700 outline-none cursor-pointer uppercase tracking-wider px-2"
-                                                >
-                                                    <option value="today">Today</option>
-                                                    <option value="all">All Time</option>
-                                                    <option value="range">Range</option>
-                                                </select>
-
-                                                {periodType === 'today' && (
-                                                    <input
-                                                        type="date"
-                                                        value={filterDate}
-                                                        onChange={(e) => setFilterDate(e.target.value)}
-                                                        className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[10px] font-bold text-slate-600 outline-none"
-                                                    />
-                                                )}
-
-                                                {periodType === 'range' && (
-                                                    <div className="flex items-center gap-1">
-                                                        <input
-                                                            type="date"
-                                                            value={customRange.start}
-                                                            onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })}
-                                                            className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[10px] font-bold text-slate-600 outline-none w-[90px]"
-                                                        />
-                                                        <span className="text-slate-400 font-bold">-</span>
-                                                        <input
-                                                            type="date"
-                                                            value={customRange.end}
-                                                            onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })}
-                                                            className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[10px] font-bold text-slate-600 outline-none w-[90px]"
-                                                        />
-                                                    </div>
-                                                )}
-                                            </div>
                                         </div>
-
+                                    </div>
+                                    <h3 className="text-[20px] font-black text-slate-800 mb-[8px] uppercase tracking-tighter">Mark as Complete?</h3>
+                                    <p className="text-slate-500 text-[14px] font-medium mb-[32px]">
+                                        High five! 👋 Shall we mark this task as finished and save your progress?
+                                    </p>
+                                    <div className="flex w-full gap-[12px]">
                                         <button
-                                            onClick={() => setIsSelectionMode(!isSelectionMode)}
-                                            className={`text-[9px] sm:text-[10px] md:text-[12px] font-black uppercase tracking-widest px-[10px] sm:px-[12px] py-[4px] sm:py-[6px] rounded-[8px] border transition-all cursor-pointer ${isSelectionMode ? 'bg-[#2d5bff] text-white border-[#2d5bff] shadow-lg shadow-blue-500/30' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'}`}
+                                            onClick={() => setConfirmToggle(null)}
+                                            className="flex-1 py-[12px] px-[24px] rounded-[12px] font-black text-[11px] tracking-widest uppercase border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
                                         >
-                                            {isSelectionMode ? 'Cancel' : 'Select'}
+                                            Not yet
                                         </button>
-
-                                        <div className="h-[24px] w-px bg-slate-200 mx-[4px]"></div>
-
-                                        <ExportButtons
-                                            onExportCSV={() => exportReminderToCSV({ data: processedReminders, period: exportPeriod, filename: `reminders_${new Date().toISOString().split('T')[0]}` })}
-                                            onExportPDF={() => exportReminderToPDF({ data: processedReminders, period: exportPeriod, filename: `reminders_${new Date().toISOString().split('T')[0]}` })}
-                                            onExportTXT={() => exportReminderToTXT({ data: processedReminders, period: exportPeriod, filename: `reminders_${new Date().toISOString().split('T')[0]}` })}
-                                            className="scale-90 sm:scale-100"
-                                        />
+                                        <button
+                                            onClick={confirmCompletion}
+                                            className="flex-1 py-[12px] px-[24px] rounded-[12px] font-black text-[11px] tracking-widest uppercase bg-[#2d5bff] text-white shadow-lg shadow-blue-500/20 hover:bg-blue-600 hover:shadow-xl transition-all active:scale-95 cursor-pointer"
+                                        >
+                                            Yes, Done!
+                                        </button>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    )
+                }
+                {/* Bulk Delete Confirmation Modal */}
+                {
+                    confirmBulkDelete && (
+                        <div className="fixed inset-0 z-120 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+                            <div className="bg-white rounded-[32px] p-[24px] sm:p-[32px] w-full max-w-[400px] shadow-2xl animate-in zoom-in-95 duration-200 border border-white">
+                                <div className="flex flex-col items-center text-center">
+                                    <div className="w-[64px] h-[64px] bg-red-50 rounded-full flex items-center justify-center mb-[24px] border border-red-100 shadow-lg shadow-red-500/10">
+                                        <div className="w-[32px] h-[32px] bg-[#ff4d4d] rounded-full flex items-center justify-center animate-pulse">
+                                            <svg className="w-[20px] h-[20px] text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <h3 className="text-[20px] font-black text-slate-800 mb-[8px] uppercase tracking-tighter">Delete {selectedIds.length} Tasks?</h3>
+                                    <p className="text-slate-500 text-[14px] font-medium mb-[32px]">
+                                        Are you sure you want to delete these tasks? This action cannot be undone! 🗑️
+                                    </p>
+                                    <div className="flex w-full gap-[12px]">
+                                        <button
+                                            onClick={() => setConfirmBulkDelete(false)}
+                                            className="flex-1 py-[12px] px-[24px] rounded-[12px] font-black text-[11px] tracking-widest uppercase border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={async () => {
+                                                try {
+                                                    await Promise.all(selectedIds.map(id => deleteReminder(id)));
+                                                    setReminders(prev => prev.filter(r => !selectedIds.includes(r.id)));
+                                                    window.dispatchEvent(new Event('refresh-reminders'));
+                                                    toast.success("Tasks deleted");
+                                                    setSelectedIds([]);
+                                                    setIsSelectionMode(false);
+                                                } catch (e) { toast.error("Delete failed"); }
+                                                finally { setConfirmBulkDelete(false); }
+                                            }}
+                                            className="flex-1 py-[12px] px-[24px] rounded-[12px] font-black text-[11px] tracking-widest uppercase bg-[#ff4d4d] text-white shadow-lg shadow-red-500/20 hover:bg-red-600 hover:shadow-xl transition-all active:scale-95 cursor-pointer"
+                                        >
+                                            Yes, Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }
+                {/* Email Report Modal */}
+                {
+                    showMailModal && (
+                        <div className="fixed inset-0 z-120 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+                            <div className="bg-white rounded-[32px] p-[24px] sm:p-[32px] w-full max-w-[450px] shadow-2xl animate-in zoom-in-95 duration-200 border border-white">
+                                <div className="flex justify-between items-center mb-[24px]">
+                                    <h3 className="text-[20px] font-black text-slate-800 uppercase tracking-tighter flex items-center gap-[12px]">
+                                        <div className="w-[4px] h-[24px] bg-[#2d5bff] rounded-full"></div>
+                                        Send Email Report
+                                    </h3>
+                                    <button onClick={() => setShowMailModal(false)} className="text-slate-400 hover:text-slate-800 transition-colors">
+                                        <FaTimes className="w-5 h-5" />
+                                    </button>
+                                </div>
 
-                            {/* COLLAPSIBLE FILTERS */}
-                            {showFilters && (
-                                <div className="animate-in slide-in-from-top-2 fade-in duration-200 mb-[24px]">
-                                    <div className="flex flex-wrap items-center gap-[8px] sm:gap-[12px] p-[12px] sm:p-[16px] bg-slate-50 rounded-[12px] border border-slate-200/60">
-
-                                        {/* 🔍 Search Input */}
-                                        <div className="relative shrink-0 group/search flex-1 min-w-[140px]">
-                                            <div className={`flex items-center gap-[8px] bg-white border px-[12px] py-[8px] rounded-[12px] transition-all ${searchQuery ? 'border-[#2d5bff] ring-2 ring-[#2d5bff]/10' : 'border-slate-200 group-hover/search:border-slate-300'}`}>
-                                                <svg className={`w-[14px] h-[14px] ${searchQuery ? 'text-[#2d5bff]' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                                </svg>
+                                <div className="space-y-[20px]">
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Date Range</label>
+                                        <div className="flex flex-col sm:flex-row gap-[8px] sm:gap-[12px]">
+                                            <div className="flex-1">
                                                 <input
-                                                    type="text"
-                                                    value={searchQuery}
-                                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                                    placeholder="Search tasks..."
-                                                    className="bg-transparent text-[11px] font-bold text-slate-700 outline-none w-full placeholder:text-slate-400 placeholder:font-medium"
+                                                    type="date"
+                                                    value={mailConfig.startDate}
+                                                    onChange={(e) => setMailConfig({ ...mailConfig, startDate: e.target.value })}
+                                                    className="w-full bg-slate-50 border border-slate-200 rounded-[12px] px-[16px] py-[12px] text-[12px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all font-['Outfit']"
                                                 />
-                                                {searchQuery && (
-                                                    <button
-                                                        onClick={() => setSearchQuery('')}
-                                                        className="text-slate-400 hover:text-[#ff4d4d] transition-colors cursor-pointer"
-                                                    >
-                                                        <FaTimes className="w-2.5 h-2.5" />
-                                                    </button>
-                                                )}
+                                            </div>
+                                            <div className="hidden sm:flex items-center text-slate-400 font-bold">-</div>
+                                            <div className="flex-1">
+                                                <input
+                                                    type="date"
+                                                    value={mailConfig.endDate}
+                                                    onChange={(e) => setMailConfig({ ...mailConfig, endDate: e.target.value })}
+                                                    className="w-full bg-slate-50 border border-slate-200 rounded-[12px] px-[16px] py-[12px] text-[12px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all font-['Outfit']"
+                                                    placeholder="End Date"
+                                                />
                                             </div>
                                         </div>
-
-
-
-                                        {/* 🏷️ Category Filter */}
-                                        <div className="relative group/cat flex items-center gap-[8px]">
-                                            <div className={`flex items-center gap-[8px] bg-white border px-[12px] py-[8px] rounded-[12px] transition-all cursor-pointer ${filterCategory ? 'border-[#2d5bff] ring-2 ring-[#2d5bff]/10' : 'border-slate-200 hover:border-slate-300'}`}>
-                                                <div className={`w-[8px] h-[8px] rounded-full ${filterCategory ? 'bg-[#2d5bff]' : 'bg-slate-300'}`}></div>
-                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-wide">Category:</span>
-                                                <select
-                                                    value={filterCategory}
-                                                    onChange={(e) => setFilterCategory(e.target.value)}
-                                                    className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer appearance-none min-w-[60px]"
-                                                >
-                                                    <option value="">All</option>
-                                                    {categories.map(cat => (
-                                                        <option key={cat.id} value={cat.name}>{cat.name}</option>
-                                                    ))}
-                                                    {categories.length === 0 && <option value="General">General</option>}
-                                                </select>
-                                                {filterCategory ? (
-                                                    <button
-                                                        onClick={() => setFilterCategory('')}
-                                                        className="text-slate-400 hover:text-[#ff4d4d] transition-colors cursor-pointer"
-                                                    >
-                                                        <FaTimes className="w-2.5 h-2.5" />
-                                                    </button>
-                                                ) : (
-                                                    <svg className="w-3 h-3 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
-                                                    </svg>
-                                                )}
-                                            </div>
-
-                                        </div>
-                                        {/* 🎯 Priority Filter */}
-                                        <div className="relative group/prio flex items-center gap-[8px]">
-                                            <div className={`flex items-center gap-[8px] bg-white border px-[12px] py-[8px] rounded-[12px] transition-all cursor-pointer ${filterPriority ? 'border-[#2d5bff] ring-2 ring-[#2d5bff]/10' : 'border-slate-200 hover:border-slate-300'}`}>
-                                                <div className={`w-[8px] h-[8px] rounded-full ${filterPriority === 'high' ? 'bg-red-500' : filterPriority === 'medium' ? 'bg-orange-500' : filterPriority === 'low' ? 'bg-green-500' : 'bg-slate-300'}`}></div>
-                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-wide">Priority:</span>
-                                                <select
-                                                    value={filterPriority}
-                                                    onChange={(e) => setFilterPriority(e.target.value)}
-                                                    className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer appearance-none min-w-[60px] uppercase"
-                                                >
-                                                    <option value="">All</option>
-                                                    <option value="low">Low</option>
-                                                    <option value="medium">Medium</option>
-                                                    <option value="high">High</option>
-                                                </select>
-                                                {filterPriority ? (
-                                                    <button
-                                                        onClick={() => setFilterPriority('')}
-                                                        className="text-slate-400 hover:text-[#ff4d4d] transition-colors cursor-pointer"
-                                                    >
-                                                        <FaTimes className="w-2.5 h-2.5" />
-                                                    </button>
-                                                ) : (
-                                                    <svg className="w-3 h-3 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
-                                                    </svg>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* 🧪 Sort Control */}
-                                        <div className="relative group/sort">
-                                            <div className="flex items-center gap-[8px] bg-white border border-slate-200 px-[12px] py-[8px] rounded-[12px] shadow-sm hover:border-[#2d5bff]/30 transition-all cursor-pointer relative">
-                                                <svg className="w-[14px] h-[14px] text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
-                                                </svg>
-                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-wide">Sort:</span>
-                                                <select
-                                                    value={sortBy}
-                                                    onChange={(e) => setSortBy(e.target.value)}
-                                                    className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer appearance-none pr-[20px] min-w-[80px]"
-                                                >
-                                                    <option value="due_date">Due Date</option>
-                                                    <option value="newest">Newest</option>
-                                                    <option value="oldest">Oldest</option>
-                                                    <option value="priority">Priority</option>
-                                                    <option value="status">Status</option>
-                                                </select>
-                                                <svg className="w-[10px] h-[10px] text-slate-400 absolute right-[8px] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
-                                                </svg>
-                                            </div>
-                                        </div>
+                                        <p className="text-[10px] text-slate-400 mt-[6px] ml-[4px]">Leave end date empty for single day.</p>
                                     </div>
-                                </div>
-                            )}
 
-                            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                                <ReminderList
-                                    reminders={processedReminders}
-                                    onToggle={handleToggle}
-                                    onDelete={handleDelete}
-                                    isSelectionMode={isSelectionMode}
-                                    selectedIds={selectedIds}
-                                    onSelect={(id) => {
-                                        setSelectedIds(prev => prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]);
-                                    }}
-                                />
-                                {processedReminders.length === 0 && (
-                                    <div className="h-full flex flex-col items-center justify-center p-12 text-center opacity-60">
-                                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
-                                            <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Filter Status</label>
+                                        <div className="relative">
+                                            <select
+                                                value={mailConfig.status}
+                                                onChange={(e) => setMailConfig({ ...mailConfig, status: e.target.value })}
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-[12px] px-[16px] py-[12px] text-[12px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all font-['Outfit'] appearance-none cursor-pointer"
+                                            >
+                                                <option value="pending">Pending Only</option>
+                                                <option value="completed">Completed Only</option>
+                                                <option value="all">All Tasks</option>
+                                            </select>
+                                            <svg className="w-[12px] h-[12px] text-slate-400 absolute right-[16px] top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
                                             </svg>
                                         </div>
-                                        <p className="text-slate-600 font-black text-sm uppercase tracking-widest">No matching tasks</p>
-                                        <p className="text-slate-400 text-[11px] mt-1 font-medium">Try selecting another date or clearing the filter</p>
                                     </div>
-                                )}
+
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Custom Message / Note</label>
+                                        <textarea
+                                            value={mailConfig.customMessage}
+                                            onChange={(e) => setMailConfig({ ...mailConfig, customMessage: e.target.value })}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[16px] py-[12px] text-[12px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all font-['Outfit'] h-[100px] resize-none"
+                                            placeholder="Add a personal note or instructions..."
+                                        ></textarea>
+                                    </div>
+
+                                    <button
+                                        onClick={handleSendMail}
+                                        className="w-full py-[16px] rounded-[16px] font-black text-[14px] bg-[#2d5bff] text-white shadow-lg shadow-blue-500/20 hover:bg-blue-600 hover:shadow-xl transition-all active:scale-95 uppercase tracking-widest flex items-center justify-center gap-[12px]"
+                                    >
+                                        <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                        Send Email
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )
+                }
 
-                </div>
-
+                {/* Category Manager Modal */}
+                {
+                    showCategoryManager && (
+                        <CategoryManager
+                            categories={categories}
+                            onUpdate={() => {
+                                getCategories().then(res => setCategories(res.data));
+                                // No need to refresh reminders, but good practice
+                            }}
+                            onCreate={createCategory}
+                            onDelete={deleteCategory}
+                            onClose={() => setShowCategoryManager(false)}
+                        />
+                    )
+                }
             </div>
-            {/* Completion Confirmation Modal */}
-            {
-                confirmToggle && (
-                    <div className="fixed inset-0 z-120 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
-                        <div className="bg-white rounded-[32px] p-[24px] sm:p-[32px] w-full max-w-[400px] shadow-2xl animate-in zoom-in-95 duration-200 border border-white">
-                            <div className="flex flex-col items-center text-center">
-                                <div className="w-[64px] h-[64px] bg-blue-50 rounded-full flex items-center justify-center mb-[24px] border border-blue-100 shadow-lg shadow-blue-500/10">
-                                    <div className="w-[32px] h-[32px] bg-[#2d5bff] rounded-full flex items-center justify-center animate-pulse">
-                                        <svg className="w-[20px] h-[20px] text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                    </div>
-                                </div>
-                                <h3 className="text-[20px] font-black text-slate-800 mb-[8px] uppercase tracking-tighter">Mark as Complete?</h3>
-                                <p className="text-slate-500 text-[14px] font-medium mb-[32px]">
-                                    High five! 👋 Shall we mark this task as finished and save your progress?
-                                </p>
-                                <div className="flex w-full gap-[12px]">
-                                    <button
-                                        onClick={() => setConfirmToggle(null)}
-                                        className="flex-1 py-[12px] px-[24px] rounded-[12px] font-black text-[11px] tracking-widest uppercase border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
-                                    >
-                                        Not yet
-                                    </button>
-                                    <button
-                                        onClick={confirmCompletion}
-                                        className="flex-1 py-[12px] px-[24px] rounded-[12px] font-black text-[11px] tracking-widest uppercase bg-[#2d5bff] text-white shadow-lg shadow-blue-500/20 hover:bg-blue-600 hover:shadow-xl transition-all active:scale-95 cursor-pointer"
-                                    >
-                                        Yes, Done!
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
-            {/* Bulk Delete Confirmation Modal */}
-            {
-                confirmBulkDelete && (
-                    <div className="fixed inset-0 z-120 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
-                        <div className="bg-white rounded-[32px] p-[24px] sm:p-[32px] w-full max-w-[400px] shadow-2xl animate-in zoom-in-95 duration-200 border border-white">
-                            <div className="flex flex-col items-center text-center">
-                                <div className="w-[64px] h-[64px] bg-red-50 rounded-full flex items-center justify-center mb-[24px] border border-red-100 shadow-lg shadow-red-500/10">
-                                    <div className="w-[32px] h-[32px] bg-[#ff4d4d] rounded-full flex items-center justify-center animate-pulse">
-                                        <svg className="w-[20px] h-[20px] text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                    </div>
-                                </div>
-                                <h3 className="text-[20px] font-black text-slate-800 mb-[8px] uppercase tracking-tighter">Delete {selectedIds.length} Tasks?</h3>
-                                <p className="text-slate-500 text-[14px] font-medium mb-[32px]">
-                                    Are you sure you want to delete these tasks? This action cannot be undone! 🗑️
-                                </p>
-                                <div className="flex w-full gap-[12px]">
-                                    <button
-                                        onClick={() => setConfirmBulkDelete(false)}
-                                        className="flex-1 py-[12px] px-[24px] rounded-[12px] font-black text-[11px] tracking-widest uppercase border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={async () => {
-                                            try {
-                                                await Promise.all(selectedIds.map(id => deleteReminder(id)));
-                                                setReminders(prev => prev.filter(r => !selectedIds.includes(r.id)));
-                                                window.dispatchEvent(new Event('refresh-reminders'));
-                                                toast.success("Tasks deleted");
-                                                setSelectedIds([]);
-                                                setIsSelectionMode(false);
-                                            } catch (e) { toast.error("Delete failed"); }
-                                            finally { setConfirmBulkDelete(false); }
-                                        }}
-                                        className="flex-1 py-[12px] px-[24px] rounded-[12px] font-black text-[11px] tracking-widest uppercase bg-[#ff4d4d] text-white shadow-lg shadow-red-500/20 hover:bg-red-600 hover:shadow-xl transition-all active:scale-95 cursor-pointer"
-                                    >
-                                        Yes, Delete
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
-            {/* Email Report Modal */}
-            {
-                showMailModal && (
-                    <div className="fixed inset-0 z-120 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
-                        <div className="bg-white rounded-[32px] p-[24px] sm:p-[32px] w-full max-w-[450px] shadow-2xl animate-in zoom-in-95 duration-200 border border-white">
-                            <div className="flex justify-between items-center mb-[24px]">
-                                <h3 className="text-[20px] font-black text-slate-800 uppercase tracking-tighter flex items-center gap-[12px]">
-                                    <div className="w-[4px] h-[24px] bg-[#2d5bff] rounded-full"></div>
-                                    Send Email Report
-                                </h3>
-                                <button onClick={() => setShowMailModal(false)} className="text-slate-400 hover:text-slate-800 transition-colors">
-                                    <FaTimes className="w-5 h-5" />
-                                </button>
-                            </div>
-
-                            <div className="space-y-[20px]">
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Date Range</label>
-                                    <div className="flex flex-col sm:flex-row gap-[8px] sm:gap-[12px]">
-                                        <div className="flex-1">
-                                            <input
-                                                type="date"
-                                                value={mailConfig.startDate}
-                                                onChange={(e) => setMailConfig({ ...mailConfig, startDate: e.target.value })}
-                                                className="w-full bg-slate-50 border border-slate-200 rounded-[12px] px-[16px] py-[12px] text-[12px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all font-['Outfit']"
-                                            />
-                                        </div>
-                                        <div className="hidden sm:flex items-center text-slate-400 font-bold">-</div>
-                                        <div className="flex-1">
-                                            <input
-                                                type="date"
-                                                value={mailConfig.endDate}
-                                                onChange={(e) => setMailConfig({ ...mailConfig, endDate: e.target.value })}
-                                                className="w-full bg-slate-50 border border-slate-200 rounded-[12px] px-[16px] py-[12px] text-[12px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all font-['Outfit']"
-                                                placeholder="End Date"
-                                            />
-                                        </div>
-                                    </div>
-                                    <p className="text-[10px] text-slate-400 mt-[6px] ml-[4px]">Leave end date empty for single day.</p>
-                                </div>
-
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Filter Status</label>
-                                    <div className="relative">
-                                        <select
-                                            value={mailConfig.status}
-                                            onChange={(e) => setMailConfig({ ...mailConfig, status: e.target.value })}
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-[12px] px-[16px] py-[12px] text-[12px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all font-['Outfit'] appearance-none cursor-pointer"
-                                        >
-                                            <option value="pending">Pending Only</option>
-                                            <option value="completed">Completed Only</option>
-                                            <option value="all">All Tasks</option>
-                                        </select>
-                                        <svg className="w-[12px] h-[12px] text-slate-400 absolute right-[16px] top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Custom Message / Note</label>
-                                    <textarea
-                                        value={mailConfig.customMessage}
-                                        onChange={(e) => setMailConfig({ ...mailConfig, customMessage: e.target.value })}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[16px] py-[12px] text-[12px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all font-['Outfit'] h-[100px] resize-none"
-                                        placeholder="Add a personal note or instructions..."
-                                    ></textarea>
-                                </div>
-
-                                <button
-                                    onClick={handleSendMail}
-                                    className="w-full py-[16px] rounded-[16px] font-black text-[14px] bg-[#2d5bff] text-white shadow-lg shadow-blue-500/20 hover:bg-blue-600 hover:shadow-xl transition-all active:scale-95 uppercase tracking-widest flex items-center justify-center gap-[12px]"
-                                >
-                                    <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                    </svg>
-                                    Send Email
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
-
-            {/* Category Manager Modal */}
-            {
-                showCategoryManager && (
-                    <CategoryManager
-                        categories={categories}
-                        onUpdate={() => {
-                            getCategories().then(res => setCategories(res.data));
-                            // No need to refresh reminders, but good practice
-                        }}
-                        onCreate={createCategory}
-                        onDelete={deleteCategory}
-                        onClose={() => setShowCategoryManager(false)}
-                    />
-                )
-            }
-        </div >
+        </div>
     );
 };
 

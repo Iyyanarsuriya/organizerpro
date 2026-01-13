@@ -169,8 +169,7 @@ export const processAttendanceExportData = (attendances, members, { periodType, 
         member_role: member ? (member.role || 'Member') : (record.role || '-'),
         member_type: member ? (member.member_type || 'worker') : '-',
         wage_type: member ? (member.wage_type || 'daily') : '-',
-        daily_wage: member ? (member.daily_wage || 0) : 0,
-        unit_name: member ? (member.unit_name || '') : ''
+        daily_wage: member ? (member.daily_wage || 0) : 0
     });
 
     if (periodType === 'day' && members && members.length > 0) {
@@ -225,7 +224,7 @@ export const exportAttendanceToCSV = (data, filename) => {
         ...data.map(a => {
             const wageDisplay = a.wage_type === 'monthly'
                 ? `Monthly: Rs. ${parseFloat(a.daily_wage)}`
-                : (a.wage_type === 'piece_rate' ? `Piece: Rs. ${parseFloat(a.daily_wage)}/${a.unit_name || 'unit'}` : `Daily: Rs. ${parseFloat(a.daily_wage)}`);
+                : `Daily: Rs. ${parseFloat(a.daily_wage)}`;
 
             return [
                 new Date(a.date).toLocaleDateString('en-GB'),

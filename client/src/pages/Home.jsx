@@ -94,10 +94,10 @@ const Home = () => {
                         </div>
                     </div>
                 </div>
-            </section>
+            </section >
 
             {/* Quick Actions / Integration Row */}
-            <section className="py-24 bg-white">
+            < section className="py-24 bg-white" >
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="text-center mb-16">
                         <h2 className="text-3xl font-black text-[#1a1c21] mb-2 tracking-tight">Your Productivity Hub</h2>
@@ -159,12 +159,13 @@ const Home = () => {
                                 Mark Attendance <ArrowRight className="w-3 h-3" />
                             </span>
                         </Link>
+
                     </div>
                 </div>
             </section>
 
             {/* Premium Footer */}
-            <section className="py-32 bg-[#1a1c21] text-white">
+            < section className="py-32 bg-[#1a1c21] text-white" >
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="grid lg:grid-cols-2 gap-20 items-center mb-32">
                         <div>
@@ -212,8 +213,8 @@ const Home = () => {
                         </p>
                     </div>
                 </div>
-            </section>
-        </div>
+            </section >
+        </div >
     );
 };
 

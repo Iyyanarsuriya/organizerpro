@@ -17,6 +17,7 @@ const FinanceProfile = lazy(() => import('./pages/ExpenseTracker/FinanceProfile'
 const ExpenseTracker = lazy(() => import('./pages/ExpenseTracker/ExpenseTrackerMain'));
 const AttendanceTracker = lazy(() => import('./pages/AttendanceTracker/AttendanceTracker'));
 const TeamManagement = lazy(() => import('./pages/Team/TeamManagement'));
+const Notes = lazy(() => import('./pages/Notes/Notes'));
 const ForgotPassword = lazy(() => import('./pages/Authentication/ForgotPassword'));
 
 // Protected Route Component
@@ -223,6 +224,7 @@ const AppContent = () => {
             <Route path="/expenses" element={<ProtectedRoute><ExpenseTracker /></ProtectedRoute>} />
             <Route path="/attendance" element={<ProtectedRoute><AttendanceTracker /></ProtectedRoute>} />
             <Route path="/team" element={<ProtectedRoute><TeamManagement /></ProtectedRoute>} />
+            <Route path="/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
