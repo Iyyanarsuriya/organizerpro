@@ -159,7 +159,20 @@ const getRowPermHrs = (a, type = 'permission') => {
 export const processAttendanceExportData = (attendances, members, { periodType, currentPeriod, filterRole, filterMember, searchQuery }) => {
     let data = Array.isArray(attendances) ? attendances : [];
 
-    // If Day View, ensure strict member list (filling absents)
+    // Create a map for quick member lookup
+    const memberMap = {};
+    if (members) members.forEach(m => memberMap[m.id] = m);
+
+    // Helper to enrich record with member details
+    const enrich = (record, member) => ({
+        ...record,
+        member_role: member ? (member.role || 'Member') : (record.role || '-'),
+        member_type: member ? (member.member_type || 'worker') : '-',
+        wage_type: member ? (member.wage_type || 'daily') : '-',
+        daily_wage: member ? (member.daily_wage || 0) : 0,
+        unit_name: member ? (member.unit_name || '') : ''
+    });
+
     if (periodType === 'day' && members && members.length > 0) {
         let targetMembers = members;
         if (filterMember) targetMembers = targetMembers.filter(m => m.id == filterMember);
@@ -168,7 +181,7 @@ export const processAttendanceExportData = (attendances, members, { periodType, 
 
         data = targetMembers.map(m => {
             const rec = attendances.find(a => a.member_id == m.id);
-            return rec || {
+            const base = rec || {
                 id: `temp_${m.id}`,
                 member_id: m.id,
                 member_name: m.name,
@@ -177,15 +190,13 @@ export const processAttendanceExportData = (attendances, members, { periodType, 
                 subject: '-',
                 project_name: 'General',
                 note: '',
-                role: m.role
             };
+            return enrich(base, m);
         });
     } else {
-        // Respect filters for other views
-        if (filterRole && members) {
-            const memberRoleMap = {};
-            members.forEach(m => memberRoleMap[m.id] = m.role);
-            data = data.filter(a => memberRoleMap[a.member_id] === filterRole);
+        // Apply filters first
+        if (filterRole) {
+            data = data.filter(a => (memberMap[a.member_id] && memberMap[a.member_id].role === filterRole));
         }
 
         if (searchQuery) {
@@ -194,6 +205,9 @@ export const processAttendanceExportData = (attendances, members, { periodType, 
                 (a.subject || '').toLowerCase().includes(searchQuery.toLowerCase())
             );
         }
+
+        // Enrich data
+        data = data.map(a => enrich(a, memberMap[a.member_id]));
     }
     return data;
 };
@@ -202,27 +216,35 @@ export const exportAttendanceToCSV = (data, filename) => {
     const { memberStatsRows } = calculateAttendanceSummary(data);
 
     const summaryHeaders = ["Member Summary", "Present Total", "Absent", "Half Day", "Permissions", "Total Perm. Hrs", "Overtime", "Total OT Hrs", "Total Records"];
-    const detailHeaders = ["Date", "Member", "Attd. (P/A/H/O)", "Status", "Perm. Duration", "Perm. Hrs", "Perm. Reason", "OT Duration", "OT Hrs", "OT Reason", "Subject", "Project", "Note"];
+    const detailHeaders = ["Date", "Member", "Role", "Wage Info", "Status Code", "Status", "Perm. Duration", "Perm. Hrs", "Perm. Reason", "OT Duration", "OT Hrs", "OT Reason", "Subject", "Project", "Note"];
 
     const rows = [
         ...memberStatsRows,
         [],
         detailHeaders,
-        ...data.map(a => [
-            new Date(a.date).toLocaleDateString('en-GB'),
-            a.member_name || 'N/A',
-            getPAStatus(a.status),
-            a.status.toUpperCase(),
-            a.status === 'permission' ? (a.permission_duration || 'N/A') : '-',
-            getRowPermHrs(a, 'permission'),
-            a.permission_reason || '-',
-            a.overtime_duration ? a.overtime_duration : '-',
-            getRowPermHrs(a, 'overtime'),
-            a.overtime_reason || '-',
-            a.subject,
-            a.project_name || 'General',
-            a.note || ''
-        ])
+        ...data.map(a => {
+            const wageDisplay = a.wage_type === 'monthly'
+                ? `Monthly: Rs. ${a.daily_wage}`
+                : (a.wage_type === 'piece_rate' ? `Piece: Rs. ${a.daily_wage}/${a.unit_name || 'unit'}` : `Daily: Rs. ${a.daily_wage}`);
+
+            return [
+                new Date(a.date).toLocaleDateString('en-GB'),
+                a.member_name || 'N/A',
+                a.member_role,
+                wageDisplay,
+                getPAStatus(a.status),
+                a.status.toUpperCase(),
+                a.status === 'permission' ? (a.permission_duration || 'N/A') : '-',
+                getRowPermHrs(a, 'permission'),
+                a.permission_reason || '-',
+                a.overtime_duration ? a.overtime_duration : '-',
+                getRowPermHrs(a, 'overtime'),
+                a.overtime_reason || '-',
+                a.subject,
+                a.project_name || 'General',
+                a.note || ''
+            ];
+        })
     ];
 
     generateCSV(summaryHeaders, rows, filename);
@@ -237,10 +259,11 @@ export const exportAttendanceToTXT = ({ data, period, filename }) => {
         titleSuffix += row.map((v, i) => String(v).padEnd(8, ' ')).join(' | ') + "\n";
     });
 
-    const logHeaders = ["Date", "Member", "P/A/H/O", "Status", "Perm. Hrs", "Perm. Reason", "OT Hrs", "OT Reason", "Subject", "Project"];
+    const logHeaders = ["Date", "Member", "Role", "Status Code", "Status", "Perm. Hrs", "Perm. Reason", "OT Hrs", "OT Reason", "Subject", "Project"];
     const logRows = data.map(a => [
         new Date(a.date).toLocaleDateString('en-GB'),
         a.member_name || 'N/A',
+        a.member_role || '-',
         getPAStatus(a.status),
         a.status.toUpperCase(),
         getRowPermHrs(a, 'permission'),
@@ -302,11 +325,11 @@ export const exportAttendanceToPDF = ({ data, period, subHeader, filename }) => 
     doc.setFontSize(11);
     doc.text('DETAILED ATTENDANCE LOGS', 15, doc.lastAutoTable.finalY + 15);
 
-    const tableHeaders = ['Date', 'Member', 'P/A/H/O', 'Status', 'Perm. Hrs', 'Perm. Reason', 'OT Hrs', 'OT Reason', 'Subject', 'Project', 'Note'];
+    const tableHeaders = ['Date', 'Member', 'Role', 'Status', 'Perm. Hrs', 'Perm. Reason', 'OT Hrs', 'OT Reason', 'Subject', 'Project', 'Note'];
     const tableRows = data.map(a => [
         new Date(a.date).toLocaleDateString('en-GB'),
         a.member_name || 'N/A',
-        getPAStatus(a.status),
+        a.member_role || '-',
         a.status.toUpperCase(),
         getRowPermHrs(a, 'permission'),
         a.permission_reason || '-',

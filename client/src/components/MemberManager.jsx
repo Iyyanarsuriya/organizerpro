@@ -19,8 +19,8 @@ const MemberManager = ({ onClose, onUpdate }) => {
         role: '',
         phone: '',
         email: '',
-        member_type: 'worker',
-        wage_type: 'daily',
+        member_type: 'employee',
+        wage_type: 'monthly',
         daily_wage: '',
         status: 'active'
     });
@@ -163,7 +163,7 @@ const MemberManager = ({ onClose, onUpdate }) => {
     };
 
     const resetForm = () => {
-        setFormData({ name: '', role: '', phone: '', email: '', member_type: 'worker', wage_type: 'daily', daily_wage: '', status: 'active' });
+        setFormData({ name: '', role: '', phone: '', email: '', member_type: 'employee', wage_type: 'monthly', daily_wage: '', status: 'active' });
         setEditingId(null);
     };
 
@@ -278,8 +278,8 @@ const MemberManager = ({ onClose, onUpdate }) => {
                                 }}
                                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
                             >
-                                <option value="worker">Worker (Daily/Piece)</option>
                                 <option value="employee">Employee (Monthly)</option>
+                                <option value="worker">Worker (Daily)</option>
                             </select>
                         </div>
 
@@ -406,11 +406,11 @@ const MemberManager = ({ onClose, onUpdate }) => {
                                         <div className="flex-1">
                                             <div className="flex items-center gap-3 mb-2">
                                                 <h4 className="text-[18px] font-black text-slate-900">{member.name}</h4>
-                                                <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${member.member_type === 'employee'
-                                                    ? 'bg-blue-50 text-blue-600'
+                                                <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${member.wage_type === 'monthly'
+                                                    ? 'bg-purple-50 text-purple-600'
                                                     : 'bg-amber-50 text-amber-600'
                                                     }`}>
-                                                    {member.member_type || 'worker'}
+                                                    {member.member_type || 'worker'} <span className="opacity-50">|</span> {member.wage_type === 'monthly' ? 'Monthly' : 'Daily'}
                                                 </span>
                                                 <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${member.status === 'active'
                                                     ? 'bg-emerald-50 text-emerald-600'
@@ -441,7 +441,7 @@ const MemberManager = ({ onClose, onUpdate }) => {
                                                 <div className="flex items-center gap-2">
                                                     <FaMoneyBillWave className="text-slate-400 text-[12px]" />
                                                     <span className="font-medium">
-                                                        {member.wage_type === 'piece_rate' ? 'Piece Rate' : member.wage_type === 'monthly' ? 'Monthly' : 'Daily'}:
+                                                        {member.wage_type === 'monthly' ? 'Monthly' : 'Daily'}:
                                                         ₹{member.daily_wage || 0}
                                                     </span>
                                                 </div>
