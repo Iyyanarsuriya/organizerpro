@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getNotes, createNote, updateNote, deleteNote } from '../../api/noteApi';
-import { FaPlus, FaTrash, FaPen, FaThumbtack, FaArrowLeft, FaSearch } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaPen, FaThumbtack, FaArrowLeft, FaSearch, FaTimes } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import ExportButtons from '../../components/ExportButtons';
@@ -12,6 +12,11 @@ const Notes = ({ isEmbedded = false }) => {
     const [showModal, setShowModal] = useState(false);
     const [editingNote, setEditingNote] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+
+    // Date Filtering State
+    const [periodType, setPeriodType] = useState('day'); // 'day', 'month', 'year', 'range'
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
     // Form State
     const [title, setTitle] = useState('');
@@ -94,13 +99,40 @@ const Notes = ({ isEmbedded = false }) => {
     };
 
     const filteredNotes = notes
-        .filter(n => n.title.toLowerCase().includes(searchQuery.toLowerCase()) || n.content.toLowerCase().includes(searchQuery.toLowerCase()))
+        .filter(n => {
+            const matchesSearch = n.title.toLowerCase().includes(searchQuery.toLowerCase()) || n.content.toLowerCase().includes(searchQuery.toLowerCase());
+
+            if (!matchesSearch) return false;
+
+            const noteDate = new Date(n.created_at);
+            const dateStr = noteDate.toISOString().split('T')[0];
+
+            if (periodType === 'day') {
+                return dateStr === selectedDate;
+            } else if (periodType === 'month') {
+                return dateStr.slice(0, 7) === selectedDate.slice(0, 7);
+            } else if (periodType === 'year') {
+                return dateStr.slice(0, 4) === selectedDate.slice(0, 4);
+            } else if (periodType === 'range') {
+                if (!dateRange.start || !dateRange.end) return true;
+                return dateStr >= dateRange.start && dateStr <= dateRange.end;
+            }
+            return true;
+        })
         .sort((a, b) => {
             if (a.is_pinned === b.is_pinned) {
                 return new Date(b.updated_at) - new Date(a.updated_at);
             }
             return a.is_pinned ? -1 : 1;
         });
+
+    const getExportPeriodString = () => {
+        if (periodType === 'day') return `Date: ${selectedDate}`;
+        if (periodType === 'month') return `Month: ${selectedDate.slice(0, 7)}`;
+        if (periodType === 'year') return `Year: ${selectedDate.slice(0, 4)}`;
+        if (periodType === 'range') return `Range: ${dateRange.start} to ${dateRange.end}`;
+        return 'All Time';
+    };
 
     const handleExportCSV = () => {
         const headers = ['Title', 'Content', 'Created At', 'Updated At'];
@@ -124,7 +156,7 @@ const Notes = ({ isEmbedded = false }) => {
 
         generatePDF({
             title: 'My Notes',
-            period: 'All Time',
+            period: getExportPeriodString(),
             stats: [
                 { label: 'Total Notes', value: filteredNotes.length },
                 { label: 'Pinned', value: filteredNotes.filter(n => n.is_pinned).length }
@@ -152,7 +184,7 @@ const Notes = ({ isEmbedded = false }) => {
 
         generateTXT({
             title: 'Notes Report',
-            period: 'All Time',
+            period: getExportPeriodString(),
             stats: [
                 { label: 'Total Notes', value: filteredNotes.length }
             ],
@@ -217,6 +249,49 @@ const Notes = ({ isEmbedded = false }) => {
                                 className="w-full bg-transparent border-none px-4 py-3 outline-none text-sm font-bold text-slate-700 placeholder:text-slate-400 placeholder:font-medium"
                             />
                         </div>
+                    </div>
+
+                    {/* Date Filters */}
+                    <div className="flex flex-wrap items-center justify-center gap-4 mt-6">
+                        <div className="bg-slate-100 p-1 rounded-xl flex items-center">
+                            {['day', 'month', 'year', 'range'].map((type) => (
+                                <button
+                                    key={type}
+                                    onClick={() => setPeriodType(type)}
+                                    className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all ${periodType === type ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    {type}
+                                </button>
+                            ))}
+                        </div>
+
+                        {periodType !== 'range' ? (
+                            <input
+                                type={periodType === 'year' ? 'number' : periodType === 'month' ? 'month' : 'date'}
+                                value={selectedDate}
+                                onChange={(e) => setSelectedDate(e.target.value)}
+                                className="bg-white border border-slate-200 text-slate-700 font-bold h-[36px] sm:h-[40px] px-3 sm:px-4 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 text-xs sm:text-sm w-full sm:w-auto"
+                                placeholder={periodType === 'year' ? 'YYYY' : ''}
+                                min={periodType === 'year' ? '2000' : undefined}
+                                max={periodType === 'year' ? '2100' : undefined}
+                            />
+                        ) : (
+                            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 h-[36px] sm:h-[40px] w-full sm:w-auto overflow-x-auto">
+                                <input
+                                    type="date"
+                                    value={dateRange.start}
+                                    onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+                                    className="outline-none text-slate-700 font-bold text-xs sm:text-sm bg-transparent min-w-[80px]"
+                                />
+                                <span className="text-slate-400">-</span>
+                                <input
+                                    type="date"
+                                    value={dateRange.end}
+                                    onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+                                    className="outline-none text-slate-700 font-bold text-xs sm:text-sm bg-transparent min-w-[80px]"
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -294,28 +369,26 @@ const Notes = ({ isEmbedded = false }) => {
             {/* Mobile Floating Action Button (FAB) */}
             <button
                 onClick={handleCreate}
-                className="fixed sm:hidden bottom-6 right-6 w-14 h-14 bg-slate-900 text-white rounded-full shadow-2xl flex items-center justify-center z-40 active:scale-90 transition-transform"
+                className="fixed sm:hidden bottom-6 right-6 w-[50px] h-[50px] bg-slate-900 text-white rounded-full shadow-2xl flex items-center justify-center z-40 active:scale-90 transition-transform"
             >
-                <FaPlus size={24} />
+                <FaPlus size={20} />
             </button>
 
             {/* Modern Modal */}
             {showModal && (
-                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
                     <div onClick={() => setShowModal(false)} className="absolute inset-0"></div>
                     <form
                         onSubmit={handleSave}
-                        className="bg-white w-full sm:max-w-lg rounded-t-[32px] sm:rounded-[32px] p-6 sm:p-8 shadow-2xl shadow-slate-900/50 animate-in slide-in-from-bottom-10 zoom-in-95 duration-300 relative max-h-[90vh] flex flex-col"
+                        className="bg-white w-[350px] sm:w-[512px] h-[500px] sm:h-auto sm:max-h-[90vh] rounded-[32px] p-[24px] sm:p-[32px] shadow-2xl shadow-slate-900/50 animate-in slide-in-from-bottom-10 zoom-in-95 duration-300 relative flex flex-col"
                     >
-                        {/* Drag Handle for Mobile */}
-                        <div className="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden"></div>
 
                         <div className="flex justify-between items-start mb-6 shrink-0">
                             <div>
-                                <h2 className="text-[20px] sm:text-2xl font-black text-slate-800 tracking-tight">
+                                <h2 className="text-[24px] sm:text-[32px] font-black text-slate-800 tracking-tight leading-none">
                                     {editingNote ? 'Edit Note' : 'New Idea'}
                                 </h2>
-                                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
+                                <p className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-widest mt-2">
                                     {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
                                 </p>
                             </div>
@@ -331,9 +404,9 @@ const Notes = ({ isEmbedded = false }) => {
                                 <button
                                     type="button"
                                     onClick={() => setShowModal(false)}
-                                    className="p-3 bg-slate-50 rounded-2xl text-slate-500 hover:bg-slate-100 hover:text-rose-500 transition-colors"
+                                    className="p-3 bg-slate-50 rounded-full text-slate-500 hover:bg-rose-50 hover:text-rose-500 transition-colors"
                                 >
-                                    Esc
+                                    <FaTimes />
                                 </button>
                             </div>
                         </div>
@@ -345,14 +418,14 @@ const Notes = ({ isEmbedded = false }) => {
                                 placeholder="Give it a title..."
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                className="w-full text-[18px] sm:text-2xl font-black text-slate-800 placeholder:text-slate-300 outline-none mb-4 bg-transparent border-none p-0"
+                                className="w-full text-[18px] sm:text-[24px] font-black text-slate-800 placeholder:text-slate-300 outline-none mb-4 bg-transparent border-none p-0"
                             />
 
                             <textarea
                                 placeholder="Start typing your thoughts..."
                                 value={content}
                                 onChange={(e) => setContent(e.target.value)}
-                                className="w-full min-h-[200px] resize-none text-[14px] sm:text-lg text-slate-600 font-medium placeholder:text-slate-300 outline-none bg-transparent mb-6 custom-scrollbar leading-relaxed"
+                                className="w-full min-h-[140px] sm:min-h-[200px] resize-none text-[14px] sm:text-[16px] text-slate-600 font-medium placeholder:text-slate-300 outline-none bg-transparent mb-6 custom-scrollbar leading-relaxed"
                             ></textarea>
                         </div>
 
@@ -363,7 +436,7 @@ const Notes = ({ isEmbedded = false }) => {
                                         key={c.id}
                                         type="button"
                                         onClick={() => setColor(c.id)}
-                                        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border-[3px] transition-all shrink-0 ${c.bg} ${color === c.id ? 'border-slate-900 scale-110 shadow-md' : 'border-transparent hover:scale-110 hover:shadow-sm'}`}
+                                        className={`w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] rounded-full border-[3px] transition-all shrink-0 ${c.bg} ${color === c.id ? 'border-slate-900 scale-110 shadow-md' : 'border-transparent hover:scale-110 hover:shadow-sm'}`}
                                     ></button>
                                 ))}
                             </div>
@@ -373,12 +446,12 @@ const Notes = ({ isEmbedded = false }) => {
                                     <button
                                         type="button"
                                         onClick={() => handleDelete(editingNote.id)}
-                                        className="px-6 py-4 bg-rose-50 text-rose-500 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-rose-100 transition-colors"
+                                        className="h-[52px] sm:h-[56px] px-6 bg-rose-50 text-rose-500 rounded-2xl font-bold text-[10px] sm:text-xs uppercase tracking-widest hover:bg-rose-100 transition-colors flex items-center justify-center"
                                     >
                                         <FaTrash size={16} />
                                     </button>
                                 )}
-                                <button type="submit" className="flex-1 bg-slate-900 text-white rounded-2xl py-4 font-black text-sm uppercase tracking-widest hover:bg-slate-800 hover:shadow-xl hover:shadow-slate-900/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                                <button type="submit" className="flex-1 h-[52px] sm:h-[56px] bg-slate-900 text-white rounded-2xl font-black text-[12px] sm:text-sm uppercase tracking-widest hover:bg-slate-800 hover:shadow-xl hover:shadow-slate-900/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
                                     <FaPlus className={editingNote ? 'hidden' : ''} />
                                     {editingNote ? 'Save Changes' : 'Create Note'}
                                 </button>
