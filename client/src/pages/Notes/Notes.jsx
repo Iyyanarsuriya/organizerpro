@@ -3,6 +3,8 @@ import { getNotes, createNote, updateNote, deleteNote } from '../../api/noteApi'
 import { FaPlus, FaTrash, FaPen, FaThumbtack, FaArrowLeft, FaSearch } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import ExportButtons from '../../components/ExportButtons';
+import { generateCSV, generatePDF, generateTXT } from '../../utils/exportUtils/base';
 
 const Notes = ({ isEmbedded = false }) => {
     const navigate = useNavigate();
@@ -100,6 +102,66 @@ const Notes = ({ isEmbedded = false }) => {
             return a.is_pinned ? -1 : 1;
         });
 
+    const handleExportCSV = () => {
+        const headers = ['Title', 'Content', 'Created At', 'Updated At'];
+        const rows = filteredNotes.map(n => [
+            n.title,
+            n.content,
+            new Date(n.created_at).toLocaleString(),
+            new Date(n.updated_at).toLocaleString()
+        ]);
+        generateCSV(headers, rows, 'Notes_Export');
+    };
+
+    const handleExportPDF = () => {
+        const headers = ['Title', 'Content', 'Created At', 'Updated At'];
+        const rows = filteredNotes.map(n => [
+            n.title,
+            n.content,
+            new Date(n.created_at).toLocaleDateString(),
+            new Date(n.updated_at).toLocaleDateString()
+        ]);
+
+        generatePDF({
+            title: 'My Notes',
+            period: 'All Time',
+            stats: [
+                { label: 'Total Notes', value: filteredNotes.length },
+                { label: 'Pinned', value: filteredNotes.filter(n => n.is_pinned).length }
+            ],
+            tableHeaders: headers,
+            tableRows: rows,
+            filename: 'Notes_Export',
+            columnStyles: {
+                0: { halign: 'left', valign: 'middle', cellWidth: 50 }, // Title
+                1: { halign: 'left', valign: 'middle' }, // Content - Auto
+                2: { halign: 'center', valign: 'middle', cellWidth: 40 }, // Created At
+                3: { halign: 'center', valign: 'middle', cellWidth: 40 }  // Updated At
+            }
+        });
+    };
+
+    const handleExportTXT = () => {
+        const headers = ['Title', 'Content', 'Created At', 'Updated At'];
+        const rows = filteredNotes.map(n => [
+            n.title,
+            n.content.replace(/\n/g, ' '),
+            new Date(n.created_at).toLocaleDateString(),
+            new Date(n.updated_at).toLocaleDateString()
+        ]);
+
+        generateTXT({
+            title: 'Notes Report',
+            period: 'All Time',
+            stats: [
+                { label: 'Total Notes', value: filteredNotes.length }
+            ],
+            logHeaders: headers,
+            logRows: rows,
+            filename: 'Notes_Export'
+        });
+    };
+
     return (
         <div className={`font-['Outfit'] flex flex-col ${isEmbedded ? 'h-full bg-transparent' : 'min-h-screen bg-slate-50'}`}>
 
@@ -126,6 +188,13 @@ const Notes = ({ isEmbedded = false }) => {
                     <h2 className="text-[18px] sm:text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
                         <span className="text-2xl">📝</span> My Notes
                     </h2>
+                    <div className="flex gap-2">
+                        <ExportButtons
+                            onExportCSV={handleExportCSV}
+                            onExportPDF={handleExportPDF}
+                            onExportTXT={handleExportTXT}
+                        />
+                    </div>
                 </div>
             )}
 
