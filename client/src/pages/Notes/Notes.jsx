@@ -18,6 +18,10 @@ const Notes = ({ isEmbedded = false }) => {
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
+    // Delete Confirmation State
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [noteToDelete, setNoteToDelete] = useState(null);
+
     // Form State
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
@@ -87,12 +91,21 @@ const Notes = ({ isEmbedded = false }) => {
         }
     };
 
-    const handleDelete = async (id) => {
-        if (!window.confirm("Delete this note?")) return;
+    const handleDelete = (id) => {
+        setNoteToDelete(id);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!noteToDelete) return;
         try {
-            await deleteNote(id);
+            await deleteNote(noteToDelete);
             toast.success("Note deleted");
             fetchNotes();
+            setShowDeleteModal(false);
+            setNoteToDelete(null);
+            // If deleting from the edit modal, close it too
+            if (showModal) setShowModal(false);
         } catch (error) {
             toast.error("Failed to delete note");
         }
@@ -276,7 +289,7 @@ const Notes = ({ isEmbedded = false }) => {
                                 max={periodType === 'year' ? '2100' : undefined}
                             />
                         ) : (
-                            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 h-[36px] sm:h-[40px] w-full sm:w-auto overflow-x-auto">
+                            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 h-[36px] sm:h-[40px] w-full sm:w-auto overflow-x-auto no-scrollbar">
                                 <input
                                     type="date"
                                     value={dateRange.start}
@@ -458,6 +471,36 @@ const Notes = ({ isEmbedded = false }) => {
                             </div>
                         </div>
                     </form>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+                    <div onClick={() => setShowDeleteModal(false)} className="absolute inset-0"></div>
+                    <div className="bg-white w-[300px] sm:w-[400px] rounded-[24px] p-6 sm:p-8 shadow-2xl relative flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
+                        <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-500 flex items-center justify-center mb-4">
+                            <FaTrash size={20} />
+                        </div>
+                        <h3 className="text-xl font-black text-slate-800 mb-2">Delete Note?</h3>
+                        <p className="text-sm text-slate-500 font-medium mb-6">
+                            Are you sure you want to delete this note? This action cannot be undone.
+                        </p>
+                        <div className="flex gap-3 w-full">
+                            <button
+                                onClick={() => setShowDeleteModal(false)}
+                                className="flex-1 py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-sm hover:bg-slate-200 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="flex-1 py-3 rounded-xl bg-rose-500 text-white font-bold text-sm hover:bg-rose-600 shadow-lg shadow-rose-500/30 transition-all"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
