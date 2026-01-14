@@ -12,7 +12,7 @@ const TeamManagement = () => {
     const location = useLocation();
 
     const token = localStorage.getItem('token');
-    const API_URL = 'http://localhost:5000/api/team'; // Adjust if environment variable needed
+    const API_URL = 'http://localhost:6000/api/team'; // Adjust if environment variable needed
 
     const fetchTeam = async () => {
         try {

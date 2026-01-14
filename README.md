@@ -144,15 +144,15 @@ ReminderApp/
    
    GOOGLE_CLIENT_ID=your_client_id
    GOOGLE_CLIENT_SECRET=your_client_secret
-   GOOGLE_REDIRECT_URI=http://localhost:5000/api/auth/google/callback
+   GOOGLE_REDIRECT_URI=http://localhost:6000/api/auth/google/callback
    
    FRONTEND_URL=http://localhost:5173
-   PORT=5000
+   PORT=6000
    ```
 
    Create `client/.env`:
    ```env
-   VITE_API_BASE_URL=http://localhost:5000
+   VITE_API_BASE_URL=http://localhost:6000
    ```
 
 4. **Setup database**
@@ -178,7 +178,7 @@ ReminderApp/
 
 6. **Access the application**
    - Frontend: http://localhost:5173
-   - Backend: http://localhost:5000
+   - Backend: http://localhost:6000
 
 ---
 
