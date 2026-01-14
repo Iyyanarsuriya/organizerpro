@@ -17,7 +17,7 @@ const CategoryManager = ({ categories, onUpdate, onClose, onCreate, onDelete }) 
             await onCreate({ name: newCategory.trim() });
             toast.success("Category added!");
             setNewCategory('');
-            onUpdate(); // Trigger refresh in parent
+            onUpdate(); // Trigger refresh in parent ..
         } catch (error) {
             toast.error(error.response?.data?.error || "Failed to add category");
         } finally {
