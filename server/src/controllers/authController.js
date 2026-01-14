@@ -2,7 +2,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const dotenv = require('dotenv');
-const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 
 dotenv.config();
@@ -133,25 +132,23 @@ exports.login = async (req, res) => {
     let { email, password } = req.body;
     email = email?.trim().toLowerCase();
     password = password?.trim();
-    console.log('Login attempt for email:', email);
+
     try {
         const user = await User.findByEmail(email);
-        console.log('User found:', user ? 'Yes' : 'No');
 
         if (!user) {
-            return res.status(400).json({ error: 'Invalid email or password' });
+            return res.status(400).json({ error: 'User not found' });
         }
 
         const validPassword = await bcrypt.compare(password, user.password);
-        console.log('Password valid:', validPassword);
 
         if (!validPassword) {
-            return res.status(400).json({ error: 'Invalid email or password' });
+            return res.status(400).json({ error: 'Incorrect password' });
         }
 
         const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
 
-        res.json({ token, user: { id: user.id, username: user.username, email: user.email, profile_image: user.profile_image } });
+        res.json({ token, user: { id: user.id, username: user.username, email: user.email, profile_image: user.profile_image, role: user.role, owner_id: user.owner_id } });
     } catch (error) {
         console.error('Login error details:', error);
         res.status(500).json({ error: 'Internal Server Error', details: error.message });
