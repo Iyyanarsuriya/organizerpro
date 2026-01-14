@@ -36,8 +36,7 @@ const AttendanceTracker = () => {
     const [attendances, setAttendances] = useState([]);
     const [stats, setStats] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [showAddModal, setShowAddModal] = useState(false);
-    const [editingId, setEditingId] = useState(null);
+
     const [projects, setProjects] = useState([]);
     const [members, setMembers] = useState([]);
     const [showProjectManager, setShowProjectManager] = useState(false);
@@ -112,14 +111,7 @@ const AttendanceTracker = () => {
 
     const [confirmModal, setConfirmModal] = useState({ show: false, type: null, label: '', id: null });
     const [filterRole, setFilterRole] = useState('');
-    const [formData, setFormData] = useState({
-        subject: '',
-        status: 'present',
-        date: new Date().toISOString().split('T')[0],
-        note: '',
-        project_id: '',
-        member_id: ''
-    });
+
 
     // Helper for mapping member IDs to their roles
     const memberIdToRoleMap = useMemo(() => {
@@ -220,24 +212,7 @@ const AttendanceTracker = () => {
         fetchData();
     }, [currentPeriod, filterProject, filterMember, periodType, customRange.start, customRange.end]);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            if (editingId) {
-                await updateAttendance(editingId, formData);
-                toast.success("Attendance updated!");
-            } else {
-                await createAttendance(formData);
-                toast.success("Attendance marked!");
-            }
-            setShowAddModal(false);
-            setEditingId(null);
-            resetForm();
-            fetchData();
-        } catch (error) {
-            toast.error(editingId ? "Failed to update" : "Failed to mark attendance");
-        }
-    };
+
 
     const handleQuickMark = async (memberId, status = null, permission_duration = null, note = null, permission_start_time = null, permission_end_time = null, permission_reason = null, overtimeData = null) => {
         try {
@@ -267,30 +242,7 @@ const AttendanceTracker = () => {
         }
     };
 
-    const resetForm = () => {
-        setFormData({
-            subject: '',
-            status: 'present',
-            date: new Date().toISOString().split('T')[0],
-            note: '',
-            project_id: filterProject || '',
-            member_id: ''
-        });
-        setEditingId(null);
-    };
 
-    const handleEdit = (item) => {
-        setFormData({
-            subject: item.subject,
-            status: item.status,
-            date: new Date(item.date).toISOString().split('T')[0],
-            note: item.note || '',
-            project_id: item.project_id || '',
-            member_id: item.member_id || ''
-        });
-        setEditingId(item.id);
-        setShowAddModal(true);
-    };
 
     const handleDelete = (id) => {
         setConfirmModal({ show: true, type: 'DELETE', label: 'Delete Record', id });
@@ -791,8 +743,6 @@ const AttendanceTracker = () => {
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center gap-1">
-                                                                <button onClick={() => handleEdit(item)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all active:scale-90"><FaEdit className="text-xs" /></button>
-                                                                <button onClick={() => handleDelete(item.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all active:scale-90"><FaTrash className="text-xs" /></button>
                                                             </div>
                                                         </div>
                                                         {item.note && <div className="mt-2 text-[10px] text-slate-500 italic border-l-2 border-slate-100 pl-2 line-clamp-1">"{item.note}"</div>}
@@ -1310,82 +1260,7 @@ const AttendanceTracker = () => {
                 )}
             </main>
 
-            {
-                showAddModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center px-3 sm:px-4 py-4 sm:py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-                        <div className="bg-white rounded-[24px] sm:rounded-[28px] w-full max-w-lg shadow-2xl relative animate-in zoom-in-95 duration-300 max-h-full flex flex-col">
-                            {/* Fixed Header */}
-                            <div className="flex items-center justify-between px-5 sm:px-6 pt-5 sm:pt-6 pb-3 sm:pb-4 shrink-0 border-b border-slate-100">
-                                <div>
-                                    <h2 className="text-lg sm:text-xl font-black text-slate-900 flex items-center gap-2 font-['Outfit']">
-                                        <div className="w-1 h-5 bg-blue-600 rounded-full"></div>
-                                        {editingId ? 'Edit Record' : 'Mark Attendance'}
-                                    </h2>
-                                    <p className="text-slate-500 text-[10px] sm:text-xs mt-1 ml-3">Track attendance for the day</p>
-                                </div>
-                                <button onClick={() => { setShowAddModal(false); resetForm(); }} className="text-slate-400 hover:text-slate-800 transition-colors p-1.5 hover:bg-slate-100 rounded-lg"><FaTimes className="text-lg" /></button>
-                            </div>
 
-                            {/* Scrollable Content */}
-                            <div className="overflow-y-auto custom-scrollbar px-5 sm:px-6 py-4 sm:py-5">
-
-                                <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-                                    <div className="grid grid-cols-5 gap-2">
-                                        {statusOptions.map(opt => (
-                                            <button key={opt.id} type="button" onClick={() => setFormData({ ...formData, status: opt.id })} className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all ${formData.status === opt.id ? 'border-blue-500 bg-blue-50 scale-105' : 'border-slate-100 bg-slate-50/50 hover:bg-slate-50'}`}>
-                                                <opt.icon className={`text-sm ${formData.status === opt.id ? 'text-blue-500' : 'text-slate-400'}`} />
-                                                <span className={`text-[7px] font-black uppercase tracking-wider ${formData.status === opt.id ? 'text-blue-700' : 'text-slate-500'}`}>{opt.label.split(' ')[0]}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        <div>
-                                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Subject / Label</label>
-                                            <input required type="text" value={formData.subject} onChange={(e) => setFormData({ ...formData, subject: e.target.value })} placeholder="E.g. Office, College, Gym..." className="w-full bg-white border border-slate-200 rounded-xl px-3 h-9 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all font-['Outfit']" />
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div>
-                                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Date</label>
-                                                <div className="relative">
-                                                    <FaCalendarAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]" />
-                                                    <input required type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="w-full bg-white border border-slate-200 rounded-xl pl-8 pr-3 h-9 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all font-['Outfit'] cursor-pointer" />
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Project</label>
-                                                <select value={formData.project_id} onChange={(e) => setFormData({ ...formData, project_id: e.target.value })} className="w-full bg-white border border-slate-200 rounded-xl px-3 h-9 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all cursor-pointer font-['Outfit']">
-                                                    <option value="">No Project</option>
-                                                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Member</label>
-                                            <select value={formData.member_id} onChange={(e) => setFormData({ ...formData, member_id: e.target.value })} className="w-full bg-white border border-slate-200 rounded-xl px-3 h-9 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all cursor-pointer font-['Outfit']">
-                                                <option value="">No Member</option>
-                                                {members.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                                            </select>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Note (Optional)</label>
-                                            <textarea value={formData.note} onChange={(e) => setFormData({ ...formData, note: e.target.value })} placeholder="Add more details..." rows="2" className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all resize-none font-['Outfit']"></textarea>
-                                        </div>
-                                    </div>
-
-                                    <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white h-10 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg transition-all hover:scale-[1.02] active:scale-95 font-['Outfit']">
-                                        {editingId ? 'Update Record' : 'Mark Attendance'}
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
 
             {showProjectManager && (
                 <ProjectManager
