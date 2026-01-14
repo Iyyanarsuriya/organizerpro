@@ -10,6 +10,11 @@ class Attendance {
         return { id: result.insertId, ...data };
     }
 
+    static async findById(id) {
+        const [rows] = await db.query('SELECT * FROM attendance WHERE id = ?', [id]);
+        return rows[0];
+    }
+
     static async getAllByUserId(userId, filters = {}) {
         let query = `SELECT a.*, p.name as project_name, w.name as member_name 
                      FROM attendance a 

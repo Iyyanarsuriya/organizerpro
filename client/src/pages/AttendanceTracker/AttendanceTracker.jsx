@@ -32,6 +32,7 @@ import { getMemberRoles, createMemberRole, deleteMemberRole } from '../../api/me
 
 const AttendanceTracker = () => {
     const navigate = useNavigate();
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
     const [attendances, setAttendances] = useState([]);
     const [stats, setStats] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -442,6 +443,13 @@ const AttendanceTracker = () => {
         }
         return today;
     }, [periodType, currentPeriod, customRange.end]);
+
+    const canEdit = useMemo(() => {
+        const today = new Date().toISOString().split('T')[0];
+        const isPastDate = activeTargetDate < today;
+        const isChild = currentUser.owner_id != null;
+        return !isChild || !isPastDate;
+    }, [activeTargetDate, currentUser]);
 
     const activeMembersAttendanceRecords = useMemo(() => {
         const targetDate = activeTargetDate;
@@ -1051,26 +1059,26 @@ const AttendanceTracker = () => {
                                                         <td className="px-8 py-6 text-center">
                                                             <div className="flex items-center justify-center gap-1">
                                                                 <button
-                                                                    disabled={currentStatus === 'present' || currentStatus === 'permission'}
+                                                                    disabled={!canEdit || currentStatus === 'present' || currentStatus === 'permission'}
                                                                     onClick={() => handleQuickMark(w.id, 'present')}
-                                                                    className={`px-3 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${(currentStatus === 'present' || currentStatus === 'permission') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 scale-105' : 'bg-slate-100/50 text-slate-400 border border-slate-100 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 cursor-pointer'}`}
+                                                                    className={`px-3 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${(!canEdit && (currentStatus !== 'present' && currentStatus !== 'permission')) ? 'opacity-50 cursor-not-allowed bg-slate-50' : (currentStatus === 'present' || currentStatus === 'permission') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 scale-105' : 'bg-slate-100/50 text-slate-400 border border-slate-100 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 cursor-pointer'}`}
                                                                 >
                                                                     Pre
                                                                 </button>
                                                                 <button
-                                                                    disabled={currentStatus === 'absent'}
+                                                                    disabled={!canEdit || currentStatus === 'absent'}
                                                                     onClick={() => handleQuickMark(w.id, 'absent')}
-                                                                    className={`px-3 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${currentStatus === 'absent' ? 'bg-red-500 text-white shadow-lg shadow-red-500/30 scale-105' : 'bg-slate-100/50 text-slate-400 border border-slate-100 hover:bg-red-500 hover:text-white hover:border-red-500 cursor-pointer'}`}
+                                                                    className={`px-3 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${(!canEdit && currentStatus !== 'absent') ? 'opacity-50 cursor-not-allowed bg-slate-50' : currentStatus === 'absent' ? 'bg-red-500 text-white shadow-lg shadow-red-500/30 scale-105' : 'bg-slate-100/50 text-slate-400 border border-slate-100 hover:bg-red-500 hover:text-white hover:border-red-500 cursor-pointer'}`}
                                                                 >
                                                                     Abs
                                                                 </button>
                                                                 <button
-                                                                    disabled={currentStatus === 'half-day'}
+                                                                    disabled={!canEdit || currentStatus === 'half-day'}
                                                                     onClick={() => {
                                                                         setHalfDayModalData({ member_id: w.id, member_name: w.name, period: 'AM' });
                                                                         setShowHalfDayModal(true);
                                                                     }}
-                                                                    className={`px-3 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${currentStatus === 'half-day' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30 scale-105' : 'bg-slate-100/50 text-slate-400 border border-slate-100 hover:bg-blue-500 hover:text-white hover:border-blue-500 cursor-pointer'}`}
+                                                                    className={`px-3 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${(!canEdit && currentStatus !== 'half-day') ? 'opacity-50 cursor-not-allowed bg-slate-50' : currentStatus === 'half-day' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30 scale-105' : 'bg-slate-100/50 text-slate-400 border border-slate-100 hover:bg-blue-500 hover:text-white hover:border-blue-500 cursor-pointer'}`}
                                                                 >
                                                                     Half
                                                                 </button>
@@ -1080,7 +1088,7 @@ const AttendanceTracker = () => {
                                                             <div className={`flex flex-col items-center gap-2 transition-all duration-300 ${isPresentOrPerm ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
                                                                 <div className="flex items-center gap-2">
                                                                     <button
-                                                                        disabled={!isPresentOrPerm}
+                                                                        disabled={!canEdit || !isPresentOrPerm}
                                                                         onClick={() => {
                                                                             const currentReason = attendance?.permission_reason || '';
                                                                             const [startStr, endStr] = (attendance?.permission_duration || '09:00 AM - 10:00 AM').split(' - ');
@@ -1104,7 +1112,7 @@ const AttendanceTracker = () => {
                                                                         <FaClock className="text-[10px]" /> Perm.
                                                                     </button>
                                                                     <button
-                                                                        disabled={!isPresentOrPerm}
+                                                                        disabled={!canEdit || !isPresentOrPerm}
                                                                         onClick={() => {
                                                                             setOvertimeModalData({
                                                                                 member_id: w.id, member_name: w.name, status: 'overtime',
@@ -1139,8 +1147,8 @@ const AttendanceTracker = () => {
                                                         </td>
                                                         <td className="px-8 py-6">
                                                             <div
-                                                                onClick={() => { if (!isPresentOrPerm) return; setWorkDoneModalData({ member_id: w.id, member_name: w.name, status: currentStatus || 'present', note: attendance?.note || '', attendance_id: attendance?.id }); setShowWorkDoneModal(true); }}
-                                                                className={`cursor-pointer transition-all duration-300 ${isPresentOrPerm ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}
+                                                                onClick={() => { if (!isPresentOrPerm || !canEdit) return; setWorkDoneModalData({ member_id: w.id, member_name: w.name, status: currentStatus || 'present', note: attendance?.note || '', attendance_id: attendance?.id }); setShowWorkDoneModal(true); }}
+                                                                className={`cursor-pointer transition-all duration-300 ${isPresentOrPerm ? (canEdit ? 'opacity-100' : 'opacity-70 cursor-not-allowed') : 'opacity-30 pointer-events-none'}`}
                                                             >
                                                                 <div className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-[10px] font-bold text-slate-500 flex items-center hover:border-blue-300">
                                                                     <span className="truncate">{attendance?.note || "Work notes..."}</span>
@@ -1199,24 +1207,27 @@ const AttendanceTracker = () => {
 
                                                 <div className="grid grid-cols-3 gap-1 mb-3">
                                                     <button
+                                                        disabled={!canEdit}
                                                         onClick={(e) => { e.stopPropagation(); handleQuickMark(w.id, 'present'); }}
-                                                        className={`h-[42px] rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${currentStatus === 'present' || currentStatus === 'permission' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}
+                                                        className={`h-[42px] rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${!canEdit ? 'opacity-50 cursor-not-allowed bg-slate-50 border border-slate-100' : (currentStatus === 'present' || currentStatus === 'permission') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}
                                                     >
                                                         <FaCheckCircle className="text-xs" /> Pre
                                                     </button>
                                                     <button
+                                                        disabled={!canEdit}
                                                         onClick={(e) => { e.stopPropagation(); handleQuickMark(w.id, 'absent'); }}
-                                                        className={`h-[42px] rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${currentStatus === 'absent' ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}
+                                                        className={`h-[42px] rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${!canEdit ? 'opacity-50 cursor-not-allowed bg-slate-50 border border-slate-100' : currentStatus === 'absent' ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}
                                                     >
                                                         <FaTimesCircle className="text-xs" /> Abs
                                                     </button>
                                                     <button
+                                                        disabled={!canEdit}
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             setHalfDayModalData({ member_id: w.id, member_name: w.name, period: 'AM' });
                                                             setShowHalfDayModal(true);
                                                         }}
-                                                        className={`h-[42px] rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${currentStatus === 'half-day' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}
+                                                        className={`h-[42px] rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${!canEdit ? 'opacity-50 cursor-not-allowed bg-slate-50 border border-slate-100' : currentStatus === 'half-day' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}
                                                     >
                                                         <FaBusinessTime className="text-xs" /> Half
                                                     </button>
@@ -1225,7 +1236,7 @@ const AttendanceTracker = () => {
                                                 <div className="flex flex-col gap-1">
                                                     <div className="grid grid-cols-2 gap-1">
                                                         <button
-                                                            disabled={!isPresentOrPerm}
+                                                            disabled={!canEdit || !isPresentOrPerm}
                                                             onClick={() => {
                                                                 const [startStr, endStr] = (attendance?.permission_duration || '09:00 AM - 10:00 AM').split(' - ');
                                                                 const parseTime = (str) => {
@@ -1249,7 +1260,7 @@ const AttendanceTracker = () => {
                                                             {currentStatus === 'permission' && <div className="text-[8px] opacity-90 font-medium leading-none">{attendance?.permission_duration}</div>}
                                                         </button>
                                                         <button
-                                                            disabled={!isPresentOrPerm}
+                                                            disabled={!canEdit || !isPresentOrPerm}
                                                             onClick={() => {
                                                                 setOvertimeModalData({
                                                                     member_id: w.id, member_name: w.name, status: 'overtime',
@@ -1283,8 +1294,8 @@ const AttendanceTracker = () => {
                                                         </div>
                                                     )}
                                                     <div
-                                                        onClick={() => { if (!isPresentOrPerm) return; setWorkDoneModalData({ member_id: w.id, member_name: w.name, status: currentStatus || 'present', note: attendance?.note || '', attendance_id: attendance?.id }); setShowWorkDoneModal(true); }}
-                                                        className={`py-3 h-auto rounded-xl px-4 flex items-center gap-3 transition-all ${isPresentOrPerm ? 'bg-blue-50 text-blue-600 border border-blue-100' : 'bg-slate-50 text-slate-300 border border-slate-50 cursor-not-allowed'}`}
+                                                        onClick={() => { if (!isPresentOrPerm || !canEdit) return; setWorkDoneModalData({ member_id: w.id, member_name: w.name, status: currentStatus || 'present', note: attendance?.note || '', attendance_id: attendance?.id }); setShowWorkDoneModal(true); }}
+                                                        className={`py-3 h-auto rounded-xl px-4 flex items-center gap-3 transition-all ${isPresentOrPerm ? (canEdit ? 'bg-blue-50 text-blue-600 border border-blue-100' : 'bg-slate-50 text-slate-300 border border-slate-100 cursor-not-allowed opacity-50') : 'bg-slate-50 text-slate-300 border border-slate-50 cursor-not-allowed'}`}
                                                     >
                                                         <FaEdit className="text-[10px]" />
                                                         <span className="text-[10px] font-black uppercase truncate">{attendance?.note || "Add work details..."}</span>
