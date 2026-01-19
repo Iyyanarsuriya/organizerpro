@@ -11,17 +11,22 @@ exports.findById = async (id) => {
 };
 
 exports.create = async (userData) => {
-    const { username, email, password, mobile_number, role, owner_id } = userData;
+    const { username, email, password, mobile_number, role, owner_id, local_id } = userData;
     const [result] = await db.query(
-        'INSERT INTO users (username, email, password, mobile_number, role, owner_id) VALUES (?, ?, ?, ?, ?, ?)',
-        [username, email, password, mobile_number || null, role || 'admin', owner_id || null]
+        'INSERT INTO users (username, email, password, mobile_number, role, owner_id, local_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [username, email, password, mobile_number || null, role || 'admin', owner_id || null, local_id || null]
     );
     return result.insertId;
 };
 
 exports.findByOwnerId = async (ownerId) => {
-    const [rows] = await db.query('SELECT id, username, email, role, created_at FROM users WHERE owner_id = ? ORDER BY created_at DESC', [ownerId]);
+    const [rows] = await db.query('SELECT id, local_id, username, email, mobile_number, role, created_at FROM users WHERE owner_id = ? ORDER BY created_at DESC', [ownerId]);
     return rows;
+};
+
+exports.getNextLocalId = async (ownerId) => {
+    const [rows] = await db.query('SELECT MAX(local_id) as maxId FROM users WHERE owner_id = ?', [ownerId]);
+    return (rows[0].maxId || 0) + 1;
 };
 
 exports.delete = async (id, ownerId) => {

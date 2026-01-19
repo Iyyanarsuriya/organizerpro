@@ -216,6 +216,7 @@ CREATE TABLE `users` (
   `reset_otp_expiry` datetime DEFAULT NULL,
   `role` enum('admin','user') DEFAULT 'user',
   `owner_id` int DEFAULT NULL,
+  `local_id` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`),

@@ -38,12 +38,15 @@ exports.createSubUser = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        const localId = await User.getNextLocalId(req.user.id);
+
         const userId = await User.create({
             username,
             email,
             password: hashedPassword,
             role: role || 'user', // Default to user (child)
-            owner_id: req.user.id // This links them to the current logged-in owner
+            owner_id: req.user.id, // This links them to the current logged-in owner
+            local_id: localId
         });
 
         res.status(201).json({ message: 'Team member added successfully', userId });
