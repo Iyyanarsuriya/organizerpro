@@ -621,42 +621,77 @@ const ExpenseTrackerMain = () => {
                     return items;
                 });
                 combinedTransactions = [...combinedTransactions, ...vLogs];
-
-                // Recalculate stats potentially? 
-                // The 'statsRes' comes from backend for transactions. 
-                // If we want the report header stats to be correct, we should update statsRes.
-                // But handleExport* functions re-calculate summary from 'data' (the first arg) usually.
-                // Let's check handleExportPDF...
-                // exportExpenseToPDF calculates summary from the passed 'data'.
-                // So passing combinedTransactions is enough!
             }
 
-            // ...
+            // --- CALCULATE SALARY LOGIC ---
+            let calculatedSalary = 0;
+            let summary = null;
+
+            if (isRealMember) {
+                const attRes = results[3];
+                const statsArray = attRes?.data?.data || [];
+
+                // Logic matching SalaryCalculator.jsx
+                // Present count includes: present, late, permission
+                const presentCount = statsArray.filter(s => ['present', 'late', 'permission'].includes(s.status)).reduce((acc, curr) => acc + curr.count, 0);
+                const halfDayCount = statsArray.find(s => s.status === 'half-day')?.count || 0;
+
+                summary = {
+                    present: presentCount, // Aggregated for salary calcs
+                    absent: statsArray.find(s => s.status === 'absent')?.count || 0,
+                    late: statsArray.find(s => s.status === 'late')?.count || 0,
+                    half_day: halfDayCount,
+                    permission: statsArray.find(s => s.status === 'permission')?.count || 0
+                };
+
+                const memberObj = members.find(m => m.id == filterMemberId);
+                if (memberObj) {
+                    const mode = memberObj.wage_type === 'piece_rate' ? 'production' : (memberObj.wage_type || 'daily');
+                    const amount = parseFloat(memberObj.daily_wage) || 0;
+
+                    if (mode === 'daily') {
+                        calculatedSalary = (presentCount * amount) + (halfDayCount * (amount / 2));
+                    } else if (mode === 'monthly') {
+                        let daysInMonth = 30;
+                        if (customReportForm.startDate) {
+                            const [y, m] = customReportForm.startDate.split('-');
+                            daysInMonth = new Date(y, m, 0).getDate();
+                        }
+                        calculatedSalary = (presentCount + (halfDayCount * 0.5)) * (amount / daysInMonth);
+                    }
+                }
+
+                // Add projected salary to transaction list for CSV/TXT if it's not effectively in there
+                // (Simple approach: Just add it as a 'Projected' entry)
+                if (calculatedSalary > 0) {
+                    combinedTransactions.push({
+                        id: 'calculated-salary',
+                        date: customReportForm.endDate,
+                        title: `Projected Salary (${customReportForm.startDate} to ${customReportForm.endDate})`,
+                        amount: calculatedSalary,
+                        type: 'expense',
+                        category: 'Salary Pot', // Matches Export Logic
+                        project_name: '-',
+                        member_name: memberObj?.name || '-',
+                        payment_status: 'projected'
+                    });
+                }
+            }
+            // ------------------------------
 
             if (format === 'PDF') {
                 // Generate Payslip if it's a specific member or a specific guest
                 if (isRealMember || (isGuestSelection && customReportForm.memberId !== 'guest')) {
                     const memberObj = members.find(m => m.id == customReportForm.memberId);
-                    let summary = null;
-
-                    if (isRealMember) {
-                        const attRes = results[3];
-                        const statsArray = attRes?.data?.data || [];
-                        summary = {
-                            present: statsArray.find(s => s.status === 'present')?.count || 0,
-                            absent: statsArray.find(s => s.status === 'absent')?.count || 0,
-                            late: statsArray.find(s => s.status === 'late')?.count || 0,
-                            half_day: statsArray.find(s => s.status === 'half-day')?.count || 0,
-                            permission: statsArray.find(s => s.status === 'permission')?.count || 0
-                        };
-                    }
 
                     exportMemberPayslipToPDF({
                         member: memberObj || { name: guestName, id: 'GUEST', member_type: 'guest' },
                         transactions: transRes.data,
                         attendanceStats: summary ? { summary } : null,
                         period: `${customReportForm.startDate} to ${customReportForm.endDate}`,
-                        filename: `payslip_${guestName || memberObj?.name}_${customReportForm.startDate}`
+                        filename: `payslip_${guestName || memberObj?.name}_${customReportForm.startDate}`,
+                        calculatedSalary: calculatedSalary,
+                        bonus: 0 // Bonus not captured in custom report form
                     });
                 } else {
                     handleExportPDF(combinedTransactions, statsRes.data, customReportForm);

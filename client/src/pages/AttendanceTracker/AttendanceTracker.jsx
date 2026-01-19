@@ -786,22 +786,7 @@ const AttendanceTracker = () => {
                                             </p>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => {
-                                            setCustomReportForm({
-                                                ...customReportForm,
-                                                projectId: filterProject,
-                                                memberId: filterMember,
-                                                startDate: periodType === 'range' ? customRange.start : (currentPeriod || new Date().toISOString().split('T')[0]),
-                                                endDate: periodType === 'range' ? customRange.end : (currentPeriod || new Date().toISOString().split('T')[0]),
-                                                role: filterRole
-                                            });
-                                            setShowCustomReportModal(true);
-                                        }}
-                                        className="h-[44px] px-5 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 flex items-center gap-2 active:scale-95"
-                                    >
-                                        <FaFileAlt /> Report
-                                    </button>
+
                                 </div>
                             </div>
                         </div>
