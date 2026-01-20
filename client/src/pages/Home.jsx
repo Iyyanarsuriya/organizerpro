@@ -37,19 +37,59 @@ const Home = ({ onProfileClick }) => {
                                 READY TO CONQUER YOUR DAY?
                             </p>
 
-                            <div className="flex flex-wrap gap-4 mb-12">
-                                <Link to="/reminders" className="inline-flex items-center gap-3 bg-[#2d5bff] hover:bg-blue-600 text-white font-black px-8 py-4 rounded-2xl shadow-xl shadow-blue-500/10 transition-all active:scale-95 group">
-                                    <Bell className="w-5 h-5" />
-                                    Launch Reminders
-                                </Link>
-                                <Link to="/expenses" className="inline-flex items-center gap-3 bg-[#00d1a0] hover:bg-[#00b890] text-white font-black px-8 py-4 rounded-2xl shadow-xl shadow-emerald-500/10 transition-all active:scale-95 group">
-                                    <Wallet className="w-5 h-5" />
-                                    Track Spending
-                                </Link>
-                                <Link to="/attendance" className="inline-flex items-center gap-3 bg-orange-500 hover:bg-orange-600 text-white font-black px-8 py-4 rounded-2xl shadow-xl shadow-orange-500/10 transition-all active:scale-95 group">
-                                    <UserCheck className="w-5 h-5" />
-                                    Check In
-                                </Link>
+                            <div className="flex flex-col gap-6 mb-12">
+                                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Select your workspace:</p>
+                                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <Link
+                                        to="/reminders"
+                                        className="p-4 rounded-2xl border border-slate-200 hover:border-[#2d5bff] hover:bg-blue-50 transition-all group text-left"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                            <svg className="w-4 h-4 text-[#2d5bff]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                                        </div>
+                                        <div className="font-bold text-slate-700 text-sm">Personal Use</div>
+                                    </Link>
+
+                                    <Link
+                                        to="/attendance"
+                                        className="p-4 rounded-2xl border border-slate-200 hover:border-orange-500 hover:bg-orange-50 transition-all group text-left"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                            <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /></svg>
+                                        </div>
+                                        <div className="font-bold text-slate-700 text-sm">School/College</div>
+                                    </Link>
+
+                                    <Link
+                                        to="/reminders"
+                                        className="p-4 rounded-2xl border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all group text-left"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                            <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                        </div>
+                                        <div className="font-bold text-slate-700 text-sm">IT Sector</div>
+                                    </Link>
+
+                                    <Link
+                                        to="/team"
+                                        className="p-4 rounded-2xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50 transition-all group text-left"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                            <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+                                        </div>
+                                        <div className="font-bold text-slate-700 text-sm">Manufacturing</div>
+                                    </Link>
+
+                                    <Link
+                                        to="/expenses"
+                                        className="p-4 rounded-2xl border border-slate-200 hover:border-rose-500 hover:bg-rose-50 transition-all group text-left col-span-2 lg:col-span-1"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                            <svg className="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                                        </div>
+                                        <div className="font-bold text-slate-700 text-sm">Hotel/Food</div>
+                                    </Link>
+                                </div>
                             </div>
 
                             {/* Quick Stats Banner */}
