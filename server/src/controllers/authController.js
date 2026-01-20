@@ -125,7 +125,7 @@ exports.signup = async (req, res) => {
         if (error.code === 'ER_DUP_ENTRY') {
             return res.status(400).json({ error: 'Username or email already exists' });
         }
-        res.status(500).json({ error: 'Internal Server Error1234432' });
+        res.status(500).json({ error: 'Internal Server Error1234432', details: error.message, sqlMessage: error.sqlMessage });
     }
 };
 

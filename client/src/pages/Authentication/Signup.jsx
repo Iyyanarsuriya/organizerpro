@@ -43,14 +43,24 @@ const Signup = ({ onClose, onSwitch }) => {
 
     try {
       setLoading(true);
-      const sector = localStorage.getItem('sector') || 'personal';
-      await signup({ username, email, password, mobile_number, sector });
+      await signup({ username, email, password, mobile_number });
       toast.dismiss();
       toast.success("Account created successfully!");
       if (onSwitch) {
         onSwitch(); // Go to login after signup
       } else {
-        navigate('/login');
+        // Redirection based on sector
+        if (sector === 'hotel_restaurant') {
+          navigate("/expenses");
+        } else if (sector === 'education') {
+          navigate("/attendance");
+        } else if (sector === 'it') {
+          navigate("/reminders");
+        } else if (sector === 'production') {
+          navigate("/team");
+        } else {
+          navigate("/");
+        }
       }
     } catch (error) {
       toast.dismiss();

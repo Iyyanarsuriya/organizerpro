@@ -12,7 +12,7 @@ const categoryRoutes = require("./routes/categoryRoutes");
 const expenseCategoryRoutes = require("./routes/expenseCategoryRoutes");
 
 const app = express();
-const PORT = process.env.PORT || 6000;
+const PORT = process.env.PORT || 5001;
 const db = require("./config/db");
 const { initCronJobs } = require("./jobs/cronService");
 // Start Cron Jobs

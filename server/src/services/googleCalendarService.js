@@ -1,7 +1,7 @@
 const { google } = require('googleapis');
 require('dotenv').config();
 
-const redirectUri = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:6000/api/auth/google/callback';
+const redirectUri = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:5001/api/auth/google/callback';
 
 // Helper to create a NEW client instance to avoid race conditions
 const createOAuthClient = () => {

@@ -13,7 +13,7 @@ const TeamManagement = () => {
     const location = useLocation();
 
     const token = localStorage.getItem('token');
-    const API_URL = 'http://localhost:6000/api/team'; // Adjust if environment variable needed
+    const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api/team`;
 
     const fetchTeam = async () => {
         try {
