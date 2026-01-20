@@ -7,7 +7,7 @@ import { FaUserPlus, FaTrash, FaUserShield, FaUserTie, FaTimes, FaEnvelope, FaPh
 const TeamManagement = () => {
     const [team, setTeam] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [formData, setFormData] = useState({ username: '', email: '', password: '', role: 'user' });
+    const [formData, setFormData] = useState({ username: '', email: '', password: '', role: 'staff' });
     const [showModal, setShowModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const location = useLocation();
@@ -44,7 +44,7 @@ const TeamManagement = () => {
             await axios.post(API_URL, formData, { headers: { Authorization: `Bearer ${token}` } });
             toast.success("Team member added successfully!");
             setShowModal(false);
-            setFormData({ username: '', email: '', password: '', role: 'user' });
+            setFormData({ username: '', email: '', password: '', role: 'staff' });
             fetchTeam();
         } catch (error) {
             toast.error(error.response?.data?.error || "Failed to add team member");
@@ -120,7 +120,11 @@ const TeamManagement = () => {
 
                                                 {/* Middle Row: Details */}
                                                 <div className="flex items-center gap-[12px] flex-wrap">
-                                                    <span className={`inline-flex items-center px-[10px] py-[4px] rounded-full text-[10px] font-black uppercase tracking-widest ${user.role === 'admin' ? 'bg-purple-50 text-purple-600' : 'bg-slate-100 text-slate-600'}`}>
+                                                    <span className={`inline-flex items-center px-[10px] py-[4px] rounded-full text-[10px] font-black uppercase tracking-widest ${user.role === 'admin' || user.role === 'owner' ? 'bg-purple-50 text-purple-600' :
+                                                        user.role === 'manager' ? 'bg-blue-50 text-blue-600' :
+                                                            user.role === 'staff' ? 'bg-green-50 text-green-600' :
+                                                                'bg-slate-100 text-slate-600'
+                                                        }`}>
                                                         {user.role}
                                                     </span>
                                                     <span className="text-[11px] text-slate-400 font-bold flex items-center gap-[4px]">
@@ -167,7 +171,11 @@ const TeamManagement = () => {
                                                         </div>
                                                     </td>
                                                     <td className="px-[32px] py-[20px]">
-                                                        <span className={`inline-flex items-center px-[12px] py-[4px] rounded-full text-[10px] font-black uppercase tracking-widest ${user.role === 'admin' ? 'bg-purple-50 text-purple-600' : 'bg-slate-100 text-slate-600'}`}>
+                                                        <span className={`inline-flex items-center px-[12px] py-[4px] rounded-full text-[10px] font-black uppercase tracking-widest ${user.role === 'admin' || user.role === 'owner' ? 'bg-purple-50 text-purple-600' :
+                                                            user.role === 'manager' ? 'bg-blue-50 text-blue-600' :
+                                                                user.role === 'staff' ? 'bg-green-50 text-green-600' :
+                                                                    'bg-slate-100 text-slate-600'
+                                                            }`}>
                                                             {user.role}
                                                         </span>
                                                     </td>
@@ -222,7 +230,11 @@ const TeamManagement = () => {
                             </div>
                             <h2 className="text-[24px] font-black text-slate-800">{selectedUser.username}</h2>
                             <div className="flex items-center gap-[8px] mt-[8px]">
-                                <span className={`px-[12px] py-[4px] rounded-full text-[10px] font-black uppercase tracking-widest ${selectedUser.role === 'admin' ? 'bg-purple-50 text-purple-600' : 'bg-slate-100 text-slate-600'}`}>
+                                <span className={`px-[12px] py-[4px] rounded-full text-[10px] font-black uppercase tracking-widest ${selectedUser.role === 'admin' || selectedUser.role === 'owner' ? 'bg-purple-50 text-purple-600' :
+                                    selectedUser.role === 'manager' ? 'bg-blue-50 text-blue-600' :
+                                        selectedUser.role === 'staff' ? 'bg-green-50 text-green-600' :
+                                            'bg-slate-100 text-slate-600'
+                                    }`}>
                                     {selectedUser.role}
                                 </span>
                                 <span className="text-slate-400 text-[14px]">•</span>
@@ -324,7 +336,8 @@ const TeamManagement = () => {
                                         onChange={e => setFormData({ ...formData, role: e.target.value })}
                                         className="w-full h-12 px-4 rounded-xl bg-slate-50 border border-slate-200 focus:border-[#2d5bff] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-bold text-slate-700"
                                     >
-                                        <option value="user">User</option>
+                                        <option value="staff">Staff</option>
+                                        <option value="manager">Manager</option>
                                         <option value="admin">Admin</option>
                                     </select>
                                 </div>

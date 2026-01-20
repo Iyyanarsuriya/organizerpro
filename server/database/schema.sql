@@ -214,7 +214,7 @@ CREATE TABLE `users` (
   `google_refresh_token` text,
   `reset_otp` varchar(6) DEFAULT NULL,
   `reset_otp_expiry` datetime DEFAULT NULL,
-  `role` enum('admin','user') DEFAULT 'user',
+  `role` enum('admin','user','owner','manager','staff') DEFAULT 'user',
   `owner_id` int DEFAULT NULL,
   `local_id` int DEFAULT NULL,
   PRIMARY KEY (`id`),
