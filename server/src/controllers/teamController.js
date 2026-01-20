@@ -9,8 +9,8 @@ exports.getSubUsers = async (req, res) => {
 
         // Strategy: Only 'owner' role can list users? or anyone in the team?
         // Let's assume only the Owner (the one who pays/registered) can manage the team.
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ error: 'Only the Workspace Admin can manage team members.' });
+        if (req.user.role !== 'admin' && req.user.role !== 'owner') {
+            return res.status(403).json({ error: 'Only the Workspace Owner can manage team members.' });
         }
 
         const subUsers = await User.findByOwnerId(req.user.id);
@@ -23,8 +23,8 @@ exports.getSubUsers = async (req, res) => {
 
 exports.createSubUser = async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ error: 'Only the Workspace Admin can add team members.' });
+        if (req.user.role !== 'admin' && req.user.role !== 'owner') {
+            return res.status(403).json({ error: 'Only the Workspace Owner can add team members.' });
         }
 
         let { username, email, password, role } = req.body;
@@ -61,8 +61,8 @@ exports.createSubUser = async (req, res) => {
 
 exports.deleteSubUser = async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ error: 'Only the Workspace Admin can remove team members.' });
+        if (req.user.role !== 'admin' && req.user.role !== 'owner') {
+            return res.status(403).json({ error: 'Only the Workspace Owner can remove team members.' });
         }
 
         const { id } = req.params;
