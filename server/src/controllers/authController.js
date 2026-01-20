@@ -106,7 +106,7 @@ exports.resetPasswordWithOTP = async (req, res) => {
 };
 
 exports.signup = async (req, res) => {
-    let { username, email, password, mobile_number } = req.body;
+    let { username, email, password, mobile_number, sector } = req.body;
     username = username?.trim();
     email = email?.trim().toLowerCase();
     password = password?.trim();
@@ -116,7 +116,8 @@ exports.signup = async (req, res) => {
             username,
             email,
             password: hashedPassword,
-            mobile_number
+            mobile_number,
+            sector
         });
         res.status(201).json({ message: 'User created successfully', userId });
     } catch (error) {

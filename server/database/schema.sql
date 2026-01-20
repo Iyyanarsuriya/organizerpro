@@ -217,6 +217,7 @@ CREATE TABLE `users` (
   `role` enum('admin','user') DEFAULT 'user',
   `owner_id` int DEFAULT NULL,
   `local_id` int DEFAULT NULL,
+  `sector` varchar(50) DEFAULT 'personal',
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`),

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { signup } from '../../api/authApi';
 import toast from 'react-hot-toast';
 
@@ -43,7 +43,8 @@ const Signup = ({ onClose, onSwitch }) => {
 
     try {
       setLoading(true);
-      await signup({ username, email, password, mobile_number });
+      const sector = localStorage.getItem('sector') || 'personal';
+      await signup({ username, email, password, mobile_number, sector });
       toast.dismiss();
       toast.success("Account created successfully!");
       if (onSwitch) {

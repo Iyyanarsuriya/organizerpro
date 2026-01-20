@@ -1,24 +1,20 @@
 import { Link } from 'react-router-dom';
-import { API_URL } from '../api/axiosInstance';
 import {
     Bell,
-    PieChart,
     ArrowRight,
     Cloud,
     RefreshCcw,
     TrendingUp,
-    LayoutDashboard,
     Wallet,
     BarChart3,
-    CheckCircle2,
     Facebook,
     Twitter,
     Linkedin,
     Instagram,
-    Sun,
-    Clock,
-    Github,
-    UserCheck
+    UserCheck,
+    User,
+    BookOpen,
+    GraduationCap
 } from 'lucide-react';
 
 const LandingPage = ({ token, user, onProfileClick, onSignupClick }) => {
@@ -59,12 +55,66 @@ const LandingPage = ({ token, user, onProfileClick, onSignupClick }) => {
                                     </Link>
                                 </div>
                             ) : (
-                                <button
-                                    onClick={onSignupClick}
-                                    className="inline-flex items-center bg-[#00d1a0] hover:bg-[#00b890] text-white text-[16px] sm:text-[18px] font-black px-[32px] sm:px-[40px] py-[14px] sm:py-[16px] rounded-[50px] shadow-2xl shadow-emerald-500/20 transition-all active:scale-95 mb-[60px] cursor-pointer hover:shadow-emerald-500/40"
-                                >
-                                    Get Started For Free
-                                </button>
+                                <div className="mb-[60px]">
+                                    <p className="text-[14px] font-bold text-slate-500 mb-6 uppercase tracking-wider">Choose your industry to get started:</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <button
+                                            onClick={() => {
+                                                localStorage.setItem('sector', 'personal');
+                                                onSignupClick();
+                                            }}
+                                            className="bg-white border-2 border-slate-100 hover:border-purple-500 p-5 rounded-2xl group transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/10 text-left h-full flex flex-col w-full"
+                                        >
+                                            <div className="w-12 h-12 rounded-xl bg-purple-50 group-hover:bg-purple-500 transition-colors flex items-center justify-center mb-4">
+                                                <User className="w-6 h-6 text-purple-500 group-hover:text-white transition-colors" />
+                                            </div>
+                                            <h3 className="font-black text-slate-800 text-base group-hover:text-purple-600 transition-colors break-words">Personal Use</h3>
+                                            <p className="text-xs font-bold text-slate-400 mt-auto uppercase tracking-wide">Daily Life & Hobbies</p>
+                                        </button>
+
+                                        <button
+                                            onClick={() => {
+                                                localStorage.setItem('sector', 'education');
+                                                onSignupClick();
+                                            }}
+                                            className="bg-white border-2 border-slate-100 hover:border-orange-500 p-5 rounded-2xl group transition-all duration-300 hover:shadow-xl hover:shadow-orange-500/10 text-left h-full flex flex-col w-full"
+                                        >
+                                            <div className="w-12 h-12 rounded-xl bg-orange-50 group-hover:bg-orange-500 transition-colors flex items-center justify-center mb-4">
+                                                <GraduationCap className="w-6 h-6 text-orange-500 group-hover:text-white transition-colors" />
+                                            </div>
+                                            <h3 className="font-black text-slate-800 text-base group-hover:text-orange-600 transition-colors break-words">School & College</h3>
+                                            <p className="text-xs font-bold text-slate-400 mt-auto uppercase tracking-wide">Academics & Campus</p>
+                                        </button>
+
+                                        <button
+                                            onClick={() => {
+                                                localStorage.setItem('sector', 'it');
+                                                onSignupClick();
+                                            }}
+                                            className="bg-white border-2 border-slate-100 hover:border-emerald-500 p-5 rounded-2xl group transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/10 text-left h-full flex flex-col w-full"
+                                        >
+                                            <div className="w-12 h-12 rounded-xl bg-emerald-50 group-hover:bg-emerald-500 transition-colors flex items-center justify-center mb-4">
+                                                <Cloud className="w-6 h-6 text-emerald-500 group-hover:text-white transition-colors" />
+                                            </div>
+                                            <h3 className="font-black text-slate-800 text-base group-hover:text-emerald-600 transition-colors break-words">IT Sector</h3>
+                                            <p className="text-xs font-bold text-slate-400 mt-auto uppercase tracking-wide">Tech & Corporate</p>
+                                        </button>
+
+                                        <button
+                                            onClick={() => {
+                                                localStorage.setItem('sector', 'production');
+                                                onSignupClick();
+                                            }}
+                                            className="bg-white border-2 border-slate-100 hover:border-blue-500 p-5 rounded-2xl group transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10 text-left h-full flex flex-col w-full"
+                                        >
+                                            <div className="w-12 h-12 rounded-xl bg-blue-50 group-hover:bg-blue-500 transition-colors flex items-center justify-center mb-4">
+                                                <RefreshCcw className="w-6 h-6 text-blue-500 group-hover:text-white transition-colors" />
+                                            </div>
+                                            <h3 className="font-black text-slate-800 text-base group-hover:text-blue-600 transition-colors break-words">Manufacturing</h3>
+                                            <p className="text-xs font-bold text-slate-400 mt-auto uppercase tracking-wide">Production & Labor</p>
+                                        </button>
+                                    </div>
+                                </div>
                             )}
 
                             {/* Center Feature Cards */}
@@ -133,11 +183,11 @@ const LandingPage = ({ token, user, onProfileClick, onSignupClick }) => {
                             </div>
                         </div>
                     </div>
-                </div>
-            </section>
+                </div >
+            </section >
 
             {/* Features Icon Row */}
-            <section className="py-24 bg-white">
+            < section className="py-24 bg-white" >
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
                         <div className="flex flex-col items-center text-center group">
@@ -177,10 +227,10 @@ const LandingPage = ({ token, user, onProfileClick, onSignupClick }) => {
                         </div>
                     </div>
                 </div>
-            </section>
+            </section >
 
             {/* Dark Section - How it Works */}
-            <section className="py-32 bg-[#1a1c21] text-white relative">
+            < section className="py-32 bg-[#1a1c21] text-white relative" >
                 <div className="max-w-7xl mx-auto px-6 relative z-10">
                     <h2 className="text-4xl font-black mb-16 tracking-tight">How It Works</h2>
 
@@ -258,8 +308,8 @@ const LandingPage = ({ token, user, onProfileClick, onSignupClick }) => {
                     </div>
                 </div>
 
-            </section>
-        </div>
+            </section >
+        </div >
     );
 };
 

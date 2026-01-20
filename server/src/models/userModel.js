@@ -11,10 +11,10 @@ exports.findById = async (id) => {
 };
 
 exports.create = async (userData) => {
-    const { username, email, password, mobile_number, role, owner_id, local_id } = userData;
+    const { username, email, password, mobile_number, role, owner_id, local_id, sector } = userData;
     const [result] = await db.query(
-        'INSERT INTO users (username, email, password, mobile_number, role, owner_id, local_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [username, email, password, mobile_number || null, role || 'admin', owner_id || null, local_id || null]
+        'INSERT INTO users (username, email, password, mobile_number, role, owner_id, local_id, sector) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [username, email, password, mobile_number || null, role || 'admin', owner_id || null, local_id || null, sector || 'personal']
     );
     return result.insertId;
 };
