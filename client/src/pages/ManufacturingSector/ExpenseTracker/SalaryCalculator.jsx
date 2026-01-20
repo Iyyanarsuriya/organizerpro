@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { FaFileAlt, FaMoneyBillWave, FaUserCheck, FaArrowLeft, FaPlusCircle, FaPlus, FaHistory, FaHandHoldingUsd, FaReceipt, FaSearch, FaFilter, FaTag, FaUser } from 'react-icons/fa';
-import { formatAmount } from '../../utils/formatUtils';
-import ExportButtons from '../../components/ExportButtons';
+import { formatAmount } from '../../../utils/formatUtils';
+import ExportButtons from '../../../components/ExportButtons';
 
 const SalaryCalculator = ({
     periodType,

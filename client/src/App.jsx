@@ -10,13 +10,14 @@ import GlobalModals from './components/modals/GlobalModals';
 
 // Pages (Lazy Loaded)
 const LandingPage = lazy(() => import('./pages/LandingPage'));
-const Home = lazy(() => import('./pages/Home'));
-const Reminders = lazy(() => import('./pages/ReminderTracker/Reminders'));
-const Profile = lazy(() => import('./pages/ReminderTracker/ReminderDashboard'));
-const FinanceProfile = lazy(() => import('./pages/ExpenseTracker/FinanceProfile'));
-const ExpenseTracker = lazy(() => import('./pages/ExpenseTracker/ExpenseTrackerMain'));
-const AttendanceTracker = lazy(() => import('./pages/AttendanceTracker/AttendanceTracker'));
-const TeamManagement = lazy(() => import('./pages/Team/TeamManagement'));
+const Home = lazy(() => import('./pages/PersonalSector/PersonalHome'));
+const Reminders = lazy(() => import('./pages/ManufacturingSector/ReminderTracker/Reminders'));
+const Profile = lazy(() => import('./pages/ManufacturingSector/ReminderTracker/ReminderDashboard'));
+const FinanceProfile = lazy(() => import('./pages/ManufacturingSector/ExpenseTracker/FinanceProfile'));
+const ExpenseTracker = lazy(() => import('./pages/ManufacturingSector/ExpenseTracker/ExpenseTrackerMain'));
+const AttendanceTracker = lazy(() => import('./pages/ManufacturingSector/AttendanceTracker/AttendanceTracker'));
+const TeamManagement = lazy(() => import('./pages/ManufacturingSector/Team/TeamManagement'));
+const ManufacturingHome = lazy(() => import('./pages/ManufacturingSector/ManufacturingHome'));
 const Notes = lazy(() => import('./pages/Notes/Notes'));
 const ForgotPassword = lazy(() => import('./pages/Authentication/ForgotPassword'));
 
@@ -221,6 +222,11 @@ const AppContent = () => {
             <Route path="/reminders" element={<ProtectedRoute><Reminders /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/finance" element={<ProtectedRoute><FinanceProfile /></ProtectedRoute>} />
+            <Route path="/manufacturing" element={<ProtectedRoute><ManufacturingHome /></ProtectedRoute>} />
+            <Route path="/manufacturing/reminders" element={<ProtectedRoute><Reminders /></ProtectedRoute>} />
+            <Route path="/manufacturing/expenses" element={<ProtectedRoute><ExpenseTracker /></ProtectedRoute>} />
+            <Route path="/manufacturing/attendance" element={<ProtectedRoute><AttendanceTracker /></ProtectedRoute>} />
+            <Route path="/manufacturing/team" element={<ProtectedRoute><TeamManagement /></ProtectedRoute>} />
             <Route path="/expenses" element={<ProtectedRoute><ExpenseTracker /></ProtectedRoute>} />
             <Route path="/attendance" element={<ProtectedRoute><AttendanceTracker /></ProtectedRoute>} />
             <Route path="/team" element={<ProtectedRoute><TeamManagement /></ProtectedRoute>} />

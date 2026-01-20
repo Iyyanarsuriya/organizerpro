@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { FaUserPlus, FaTrash, FaUserShield, FaUserTie, FaTimes, FaEnvelope, FaPhone, FaCalendar } from 'react-icons/fa';
+import { FaUserPlus, FaTrash, FaUserShield, FaUserTie, FaTimes, FaEnvelope, FaPhone, FaCalendar, FaChevronLeft } from 'react-icons/fa';
 
 const TeamManagement = () => {
     const [team, setTeam] = useState([]);
@@ -68,9 +68,17 @@ const TeamManagement = () => {
 
             <div className="max-w-7xl mx-auto px-[16px] sm:px-[24px] lg:px-[32px] py-[40px]">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-[32px] gap-[16px]">
-                    <div>
-                        <h1 className="text-[28px] sm:text-[32px] font-black text-slate-800 tracking-tight leading-tight">Team Management</h1>
-                        <p className="text-slate-500 mt-[4px] text-[14px]">Manage access for your organization</p>
+                    <div className="flex items-center gap-4">
+                        <Link
+                            to="/manufacturing"
+                            className="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-500 hover:text-[#2d5bff] hover:border-[#2d5bff] transition-all shadow-sm hover:shadow-md active:scale-95 shrink-0"
+                        >
+                            <FaChevronLeft className="w-4 h-4" />
+                        </Link>
+                        <div>
+                            <h1 className="text-[28px] sm:text-[32px] font-black text-slate-800 tracking-tight leading-tight">Team Management</h1>
+                            <p className="text-slate-500 mt-[4px] text-[14px]">Manage access for your organization</p>
+                        </div>
                     </div>
                     <button
                         onClick={() => setShowModal(true)}
@@ -367,3 +375,4 @@ const TeamManagement = () => {
 };
 
 export default TeamManagement;
+

@@ -15,7 +15,7 @@ import ExportButtons from '../../components/ExportButtons';
 import { exportReminderToCSV, exportReminderToTXT, exportReminderToPDF } from '../../utils/exportUtils/index.js';
 import Notes from '../Notes/Notes'; // Helper Import
 
-const Reminders = () => {
+const PersonalReminders = () => {
     const [reminders, setReminders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(() => {
@@ -108,7 +108,7 @@ const Reminders = () => {
     }, [lastNotifiedTimes]);
 
     // Keep a ref of reminders for the background interval to avoid restarting it
-    const remindersRef = useRef(reminders);
+    const PersonalRemindersRef = useRef(reminders);
     useEffect(() => {
         remindersRef.current = reminders;
 
@@ -1065,4 +1065,4 @@ const Reminders = () => {
     );
 };
 
-export default Reminders;
+export default PersonalReminders;

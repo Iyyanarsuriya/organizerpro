@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 
-const Home = ({ onProfileClick }) => {
+const EducationHome = ({ onProfileClick }) => {
     // Get user from localStorage for a quick greet
     const user = JSON.parse(localStorage.getItem('user') || '{}');
 
@@ -258,4 +258,4 @@ const Home = ({ onProfileClick }) => {
     );
 };
 
-export default Home;
+export default EducationHome;

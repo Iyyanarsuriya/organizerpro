@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getTransactions, getTransactionStats } from '../../api/transactionApi';
-import { updateProfile, getMe } from '../../api/authApi';
-import { API_URL } from '../../api/axiosInstance';
+import { getTransactions, getTransactionStats } from '../../../api/transactionApi';
+import { updateProfile, getMe } from '../../../api/authApi';
+import { API_URL } from '../../../api/axiosInstance';
 import toast from 'react-hot-toast';
-import { formatAmount } from '../../utils/formatUtils';
+import { formatAmount } from '../../../utils/formatUtils';
 import {
     FaWallet, FaArrowLeft, FaUserEdit, FaCamera,
     FaChartPie, FaCreditCard, FaLock, FaBell, FaHistory
@@ -233,3 +233,4 @@ const InputGroup = ({ label, value, onChange, placeholder }) => (
 );
 
 export default FinanceProfile;
+

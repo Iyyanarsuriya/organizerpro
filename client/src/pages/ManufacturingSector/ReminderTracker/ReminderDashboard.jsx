@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getReminders } from '../../api/homeApi';
-import { disconnectGoogle, getGoogleAuthUrl, getMe } from '../../api/authApi';
-import { API_URL } from '../../api/axiosInstance';
+import { getReminders } from '../../../api/homeApi';
+import { disconnectGoogle, getGoogleAuthUrl, getMe } from '../../../api/authApi';
+import { API_URL } from '../../../api/axiosInstance';
 import toast from 'react-hot-toast';
 import { FaGoogle } from 'react-icons/fa';
 import { Settings, LogOut, Calendar, LayoutDashboard, ArrowLeft } from 'lucide-react';
-import ConfirmModal from '../../components/modals/ConfirmModal';
+import ConfirmModal from '../../../components/modals/ConfirmModal';
 
 const ReminderDashboard = () => {
     const [user, setUser] = useState(() => {
@@ -228,7 +228,7 @@ const ReminderDashboard = () => {
 
                 {/* Task Details Modal */}
                 {showModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
                         {/* Backdrop */}
                         <div
                             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -332,3 +332,4 @@ const ReminderDashboard = () => {
 };
 
 export default ReminderDashboard;
+

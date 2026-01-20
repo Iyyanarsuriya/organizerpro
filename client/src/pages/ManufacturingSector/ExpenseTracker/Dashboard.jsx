@@ -4,7 +4,7 @@ import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
     BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
-import { formatAmount } from '../../utils/formatUtils';
+import { formatAmount } from '../../../utils/formatUtils';
 
 const StatCard = ({ title, value, color, subtitle, onClick }) => (
     <div

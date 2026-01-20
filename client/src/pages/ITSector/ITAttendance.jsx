@@ -30,7 +30,7 @@ import MemberManager from '../../components/MemberManager';
 import RoleManager from '../../components/RoleManager';
 import { getMemberRoles, createMemberRole, deleteMemberRole } from '../../api/memberRoleApi';
 
-const AttendanceTracker = () => {
+const ITAttendance = () => {
     const navigate = useNavigate();
     const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
     const [attendances, setAttendances] = useState([]);
@@ -1488,4 +1488,4 @@ const AttendanceTracker = () => {
     );
 };
 
-export default AttendanceTracker;
+export default ITAttendance;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { FaFileAlt, FaReceipt, FaHandHoldingUsd, FaMoneyBillWave } from 'react-icons/fa';
-import { formatAmount } from '../../utils/formatUtils';
+import { formatAmount } from '../../../utils/formatUtils';
 
 const Reports = ({
     transactions,

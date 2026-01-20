@@ -33,7 +33,7 @@ import Transactions from './Transactions';
 import Reports from './Reports';
 import SalaryCalculator from './SalaryCalculator';
 
-const ExpenseTrackerMain = () => {
+const HotelExpenses = () => {
     const navigate = useNavigate();
     const [transactions, setTransactions] = useState([]);
     const [vehicleLogs, setVehicleLogs] = useState([]);
@@ -1178,4 +1178,4 @@ const ExpenseTrackerMain = () => {
     );
 };
 
-export default ExpenseTrackerMain;
+export default HotelExpenses;
