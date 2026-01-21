@@ -4,9 +4,9 @@ import { getMe } from '../../api/authApi';
 import { API_URL } from '../../api/axiosInstance';
 import ReminderForm from '../../components/ReminderForm';
 import ReminderList from '../../components/ReminderList';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { FaBell, FaTimes } from 'react-icons/fa';
+import { FaBell, FaTimes, FaArrowLeft } from 'react-icons/fa';
 import { LayoutDashboard } from 'lucide-react';
 import { getCategories, createCategory, deleteCategory } from '../../api/categoryApi';
 
@@ -16,6 +16,7 @@ import { exportReminderToCSV, exportReminderToTXT, exportReminderToPDF } from '.
 import Notes from '../Notes/Notes'; // Helper Import
 
 const PersonalReminders = () => {
+    const navigate = useNavigate();
     const [reminders, setReminders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(() => {
@@ -108,7 +109,7 @@ const PersonalReminders = () => {
     }, [lastNotifiedTimes]);
 
     // Keep a ref of reminders for the background interval to avoid restarting it
-    const PersonalRemindersRef = useRef(reminders);
+    const remindersRef = useRef(reminders);
     useEffect(() => {
         remindersRef.current = reminders;
 
@@ -495,6 +496,12 @@ const PersonalReminders = () => {
 
                 <div className="flex justify-between items-center mb-[16px] sm:mb-[24px] shrink-0 bg-linear-to-r from-[#2d5bff] via-[#4a69ff] to-[#6366f1] p-[10px] sm:p-[16px] rounded-[12px] sm:rounded-[16px] border border-blue-400/30 shadow-xl shadow-blue-500/20 relative z-20">
                     <div className="flex items-center gap-[12px] sm:gap-[16px]">
+                        <button
+                            onClick={() => navigate('/personal')}
+                            className="w-8 h-8 sm:w-10 sm:h-10 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center text-white transition-all active:scale-95 backdrop-blur-sm cursor-pointer border border-white/10"
+                        >
+                            <FaArrowLeft className="w-3 h-3 sm:w-4 sm:h-4" />
+                        </button>
                         <div className="flex bg-blue-700/30 rounded-xl p-1 border border-blue-400/30 backdrop-blur-sm">
                             <button
                                 onClick={() => setActiveTab('tasks')}
@@ -571,7 +578,7 @@ const PersonalReminders = () => {
 
                         {/* 📊 Dashboard Shortcut Button */}
                         <Link
-                            to="/profile"
+                            to="/personal"
                             title="Go to Dashboard"
                             className="bg-white/10 hover:bg-white/20 text-white p-[8px] rounded-[8px] transition-all active:scale-95 flex items-center justify-center shrink-0"
                         >

@@ -11,6 +11,10 @@ import GlobalModals from './components/modals/GlobalModals';
 // Pages (Lazy Loaded)
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const Home = lazy(() => import('./pages/PersonalSector/PersonalHome'));
+const PersonalSectorHome = lazy(() => import('./pages/PersonalSector/PersonalDashboard')); // New Personal Dashboard
+const PersonalReminders = lazy(() => import('./pages/PersonalSector/PersonalReminders')); // Specific Personal Reminders
+const PersonalExpenseTracker = lazy(() => import('./pages/PersonalSector/PersonalExpenseTracker')); // New Personal Expenses
+
 const Reminders = lazy(() => import('./pages/ManufacturingSector/ReminderTracker/Reminders'));
 const Profile = lazy(() => import('./pages/ManufacturingSector/ReminderTracker/ReminderDashboard'));
 const FinanceProfile = lazy(() => import('./pages/ManufacturingSector/ExpenseTracker/FinanceProfile'));
@@ -219,6 +223,12 @@ const AppContent = () => {
         }>
           <Routes>
             <Route path="/" element={token ? <Home onProfileClick={() => setShowProfileModal(true)} /> : <LandingPage onSignupClick={() => setShowSignupModal(true)} />} />
+
+            {/* Personal Sector Routes */}
+            <Route path="/personal" element={<ProtectedRoute><PersonalSectorHome /></ProtectedRoute>} />
+            <Route path="/personal/reminders" element={<ProtectedRoute><PersonalReminders /></ProtectedRoute>} />
+            <Route path="/personal/expenses" element={<ProtectedRoute><PersonalExpenseTracker /></ProtectedRoute>} />
+
             <Route path="/reminders" element={<ProtectedRoute><Reminders /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/finance" element={<ProtectedRoute><FinanceProfile /></ProtectedRoute>} />

@@ -8,3 +8,4 @@ export * from '../expenseExportUtils/expense.js';
 export * from '../reminderExportUtils/reminder.js';
 export * from '../expenseExportUtils/vehicle.js';
 export * from '../expenseExportUtils/workLog.js';
+export * from '../expenseExportUtils/personalExpense.js';

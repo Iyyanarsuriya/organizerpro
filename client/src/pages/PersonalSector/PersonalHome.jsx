@@ -41,7 +41,7 @@ const PersonalHome = ({ onProfileClick }) => {
                                 <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Select your workspace:</p>
                                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                                     <Link
-                                        to="/reminders"
+                                        to="/personal"
                                         className="p-4 rounded-2xl border border-slate-200 hover:border-[#2d5bff] hover:bg-blue-50 transition-all group text-left"
                                     >
                                         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
