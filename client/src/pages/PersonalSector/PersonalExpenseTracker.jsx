@@ -137,7 +137,7 @@ const PersonalExpenseTracker = () => {
 
             const tDate = new Date(t.date);
             const now = new Date();
-            const tDateStr = t.date.split('T')[0];
+            const tDateStr = tDate.toLocaleDateString('en-CA');
 
             if (filterTime === 'day') {
                 return customRange.start ? tDateStr === customRange.start : true;
@@ -170,23 +170,67 @@ const PersonalExpenseTracker = () => {
     }, [filteredTransactions]);
 
     const trendData = useMemo(() => {
-        const last7Days = [...Array(7)].map((_, i) => {
-            const d = new Date();
-            d.setDate(d.getDate() - i);
-            return d.toISOString().split('T')[0];
-        }).reverse();
+        if (filterTime === 'year') {
+            // Monthly breakdown for the year
+            const months = [...Array(12)].map((_, i) => {
+                const d = new Date();
+                d.setMonth(i);
+                return d.toLocaleString('en-GB', { month: 'short' });
+            });
 
-        return last7Days.map(date => {
-            const dayTrans = filteredTransactions.filter(t => t.date.startsWith(date));
-            const income = dayTrans.filter(t => t.type === 'income').reduce((acc, t) => acc + parseFloat(t.amount), 0);
-            const expense = dayTrans.filter(t => t.type === 'expense').reduce((acc, t) => acc + parseFloat(t.amount), 0);
-            return {
+            return months.map((monthName, index) => {
+                // Filter transactions for this specific month of the selected/current year (assuming filteredTransactions is already filtered by year if filterTime='year')
+                // Actually filteredTransactions is already filtered by the selected period.
+                // But we need to group them.
+                const monthTrans = filteredTransactions.filter(t => new Date(t.date).getMonth() === index);
+                const income = monthTrans.filter(t => t.type === 'income').reduce((acc, t) => acc + parseFloat(t.amount), 0);
+                const expense = monthTrans.filter(t => t.type === 'expense').reduce((acc, t) => acc + parseFloat(t.amount), 0);
+                return { name: monthName, income, expense };
+            });
+
+        } else if (filterTime === 'month' || (filterTime === 'range' && new Date(customRange.end) - new Date(customRange.start) < 2678400000)) { // < 31 days approx
+            // Daily breakdown for the month
+            // We need to generate all days in the month/range to show gaps too, or just map existing?
+            // Safer to just map existing grouped by date if we want to be simple, but the chart looks better with a continuous axis.
+            // Let's generate days based on the first and last transaction or the filter.
+
+            // Simplified: Just Group filteredTransactions by date.
+            const groups = {};
+            filteredTransactions.forEach(t => {
+                const dateKey = t.date.split('T')[0];
+                if (!groups[dateKey]) groups[dateKey] = { income: 0, expense: 0 };
+                if (t.type === 'income') groups[dateKey].income += parseFloat(t.amount);
+                else if (t.type === 'expense') groups[dateKey].expense += parseFloat(t.amount);
+            });
+
+            // If we want to fill gaps, we'd need a start/end date.
+            // For now let's just show days with activity sorted.
+            return Object.keys(groups).sort().map(date => ({
                 name: new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
-                income,
-                expense
-            };
-        });
-    }, [filteredTransactions]);
+                income: groups[date].income,
+                expense: groups[date].expense
+            }));
+        } else if (filterTime === 'day') {
+            // Just one bar? Or maybe breakdown by category?
+            // Since it's an "Activity Trend", simple Income vs Expense total for the day is fine.
+            const income = filteredTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + parseFloat(t.amount), 0);
+            const expense = filteredTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + parseFloat(t.amount), 0);
+            return [{ name: 'Today', income, expense }];
+        } else {
+            // Default or fallback (Range > 31 days -> Monthly? or just list all?)
+            // Let's default to monthly grouping for large ranges
+            const groups = {};
+            filteredTransactions.forEach(t => {
+                const d = new Date(t.date);
+                const key = `${d.getFullYear()}-${d.getMonth()}`; // Unique month key
+                const name = d.toLocaleString('en-GB', { month: 'short', year: '2-digit' });
+                if (!groups[key]) groups[key] = { name, income: 0, expense: 0 };
+                if (t.type === 'income') groups[key].income += parseFloat(t.amount);
+                else if (t.type === 'expense') groups[key].expense += parseFloat(t.amount);
+            });
+            return Object.values(groups);
+        }
+    }, [filteredTransactions, filterTime, customRange]);
 
     const COLORS = ['#2d5bff', '#10b981', '#f43f5e', '#8b5cf6', '#f59e0b', '#06b6d4'];
 
@@ -409,7 +453,7 @@ const PersonalExpenseTracker = () => {
                                     <p className="text-[10px] font-black text-blue-100 uppercase tracking-widest mb-[2px] md:mb-[4px]">Available Balance</p>
                                     <p className="text-[24px] md:text-[30px] font-black text-white tracking-tight">₹{formatAmount(stats.balance)}</p>
                                     <p className="text-[10px] mt-[8px] font-medium text-blue-100/80">
-                                        {stats.balance >= 0 ? 'You are saving well! 🚀' : 'Expenses exceeding income ⚠️'}
+                                        {stats.balance >= 0 ? 'You are saving well!' : 'Expenses exceeding income ⚠️'}
                                     </p>
                                 </div>
                             </div>
@@ -450,7 +494,7 @@ const PersonalExpenseTracker = () => {
 
                             {/* Weekly Trend */}
                             <div className="bg-white p-[24px] rounded-[24px] border border-slate-100 shadow-xl shadow-slate-200/50">
-                                <h3 className="text-[18px] font-black text-slate-800 mb-[24px] flex items-center gap-[8px]"><TrendingUp className="w-[20px] h-[20px] text-emerald-500" /> Activity Trend (Last 7 Days)</h3>
+                                <h3 className="text-[18px] font-black text-slate-800 mb-[24px] flex items-center gap-[8px]"><TrendingUp className="w-[20px] h-[20px] text-emerald-500" /> Activity Trend ({filterTime === 'range' ? 'Range' : filterTime})</h3>
                                 <div className="h-[256px]">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={trendData}>

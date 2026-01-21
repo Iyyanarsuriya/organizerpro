@@ -46,5 +46,5 @@ app.use("/api/team", require("./routes/Manufacturing/teamRoutes"));
 app.use("/api/notes", require("./routes/Personal/noteRoutes"));
 
 app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(` Server running on port ${PORT}`);
 });
