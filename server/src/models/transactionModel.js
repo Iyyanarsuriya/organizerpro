@@ -10,15 +10,21 @@ const create = async (data) => {
     const { user_id, title, amount, type, category, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, sector } = data;
     const table = getTableName(sector);
 
+    // Force date to noon to avoid timezone boundary shifts
+    let finalDate = date;
+    if (typeof finalDate === 'string' && finalDate.length === 10) {
+        finalDate = finalDate + ' 12:00:00';
+    }
+
     let query, params;
 
     if (table === 'manufacturing_transactions') {
         query = `INSERT INTO ${table} (user_id, title, amount, type, category, date, project_id, member_id, guest_name, payment_status, quantity, unit_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-        params = [user_id, title, amount, type, category, date, project_id || null, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0];
+        params = [user_id, title, amount, type, category, finalDate, project_id || null, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0];
     } else {
         // Personal
         query = `INSERT INTO ${table} (user_id, title, amount, type, category, date) VALUES (?, ?, ?, ?, ?, ?)`;
-        params = [user_id, title, amount, type, category, date];
+        params = [user_id, title, amount, type, category, finalDate];
     }
 
     const [result] = await db.query(query, params);
@@ -107,13 +113,19 @@ const update = async (id, userId, data) => {
     const { title, amount, type, category, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, sector } = data;
     const table = getTableName(sector);
 
+    // Force date to noon to avoid timezone boundary shifts
+    let finalDate = date;
+    if (typeof finalDate === 'string' && finalDate.length === 10) {
+        finalDate = finalDate + ' 12:00:00';
+    }
+
     let query, params;
     if (table === 'manufacturing_transactions') {
         query = `UPDATE ${table} SET title = ?, amount = ?, type = ?, category = ?, date = ?, project_id = ?, member_id = ?, guest_name = ?, payment_status = ?, quantity = ?, unit_price = ? WHERE id = ? AND user_id = ?`;
-        params = [title, amount, type, category, date, project_id || null, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0, id, userId];
+        params = [title, amount, type, category, finalDate, project_id || null, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0, id, userId];
     } else {
         query = `UPDATE ${table} SET title = ?, amount = ?, type = ?, category = ?, date = ? WHERE id = ? AND user_id = ?`;
-        params = [title, amount, type, category, date, id, userId];
+        params = [title, amount, type, category, finalDate, id, userId];
     }
 
     const [result] = await db.query(query, params);

@@ -123,7 +123,7 @@ const PersonalExpenseTracker = () => {
             amount: t.amount,
             type: t.type,
             category: t.category,
-            date: t.date.split('T')[0],
+            date: new Date(t.date).toLocaleDateString('en-CA'),
             description: t.description || ''
         });
         setEditingId(t.id);
