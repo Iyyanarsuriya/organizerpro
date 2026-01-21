@@ -26,11 +26,6 @@ const CategoryManager = ({ categories, onUpdate, onClose, onCreate, onDelete }) 
     };
 
     const handleDeleteClick = (id, name) => {
-        // Warning: This 'General' check might be specific to Reminders.
-        if (name === 'General') {
-            toast.error("Cannot delete 'General' category");
-            return;
-        }
         setConfirmModal({ show: true, id, name });
     };
 
@@ -87,14 +82,12 @@ const CategoryManager = ({ categories, onUpdate, onClose, onCreate, onDelete }) 
                                 <span className="text-[14px] font-black text-slate-700 px-[12px] py-[4px] bg-white rounded-full border border-slate-200">
                                     {cat.name}
                                 </span>
-                                {cat.name !== 'General' && (
-                                    <button
-                                        onClick={() => handleDeleteClick(cat.id, cat.name)}
-                                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                )}
+                                <button
+                                    onClick={() => handleDeleteClick(cat.id, cat.name)}
+                                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
                             </div>
                         ))}
                         {categories.length === 0 && (

@@ -39,8 +39,8 @@ const authenticateToken = (req, res, next) => {
 };
 
 const requireOwner = (req, res, next) => {
-    if (req.user.role !== 'admin') {
-        return res.status(403).json({ error: 'Access denied. Only Admins can perform this action.' });
+    if (req.user.role !== 'admin' && req.user.role !== 'owner') {
+        return res.status(403).json({ error: 'Access denied. Only Owners/Admins can perform this action.' });
     }
     next();
 };

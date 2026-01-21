@@ -26,6 +26,7 @@ const PersonalExpenseTracker = () => {
     const [loading, setLoading] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showCategoryManager, setShowCategoryManager] = useState(false);
+    const [pendingExport, setPendingExport] = useState(null); // { type: 'CSV' | 'PDF' | 'TXT', action: () => void }
 
     // Form State
     const [formData, setFormData] = useState({
@@ -335,8 +336,7 @@ const PersonalExpenseTracker = () => {
                                         className="appearance-none w-full bg-slate-50 md:bg-white border border-slate-200 text-slate-600 text-[12px] font-bold rounded-[12px] md:rounded-[16px] px-[12px] md:px-[16px] py-[10px] md:py-[12px] pl-[36px] md:pl-[40px] pr-[32px] focus:outline-none focus:border-[#2d5bff] focus:ring-4 focus:ring-blue-500/10 cursor-pointer transition-all hover:border-slate-300 hover:shadow-sm"
                                     >
                                         <option value="all">All Categories</option>
-                                        <option value="General">General</option>
-                                        {categories.filter(c => c.name !== 'General').map(c => (
+                                        {categories.map(c => (
                                             <option key={c.id} value={c.name}>{c.name}</option>
                                         ))}
                                     </select>
@@ -347,9 +347,9 @@ const PersonalExpenseTracker = () => {
                             {/* Export Actions (Hidden on Mobile) */}
                             <div className="hidden sm:block ml-auto">
                                 <ExportButtons
-                                    onExportCSV={() => exportPersonalExpenseToCSV(filteredTransactions, `personal_expenses_${new Date().toISOString().split('T')[0]}`)}
-                                    onExportPDF={() => exportPersonalExpenseToPDF({ data: filteredTransactions, period: filterTime === 'range' ? `${customRange.start || 'Start'} to ${customRange.end || 'End'}` : (filterTime === 'all' ? 'All Time' : filterTime), filename: `personal_expenses_${new Date().toISOString().split('T')[0]}` })}
-                                    onExportTXT={() => exportPersonalExpenseToTXT({ data: filteredTransactions, period: filterTime === 'range' ? `${customRange.start || 'Start'} to ${customRange.end || 'End'}` : (filterTime === 'all' ? 'All Time' : filterTime), filename: `personal_expenses_${new Date().toISOString().split('T')[0]}` })}
+                                    onExportCSV={() => setPendingExport({ type: 'CSV', action: () => exportPersonalExpenseToCSV(filteredTransactions, `personal_expenses_${new Date().toISOString().split('T')[0]}`) })}
+                                    onExportPDF={() => setPendingExport({ type: 'PDF', action: () => exportPersonalExpenseToPDF({ data: filteredTransactions, period: filterTime === 'range' ? `${customRange.start || 'Start'} to ${customRange.end || 'End'}` : (filterTime === 'all' ? 'All Time' : filterTime), filename: `personal_expenses_${new Date().toISOString().split('T')[0]}` }) })}
+                                    onExportTXT={() => setPendingExport({ type: 'TXT', action: () => exportPersonalExpenseToTXT({ data: filteredTransactions, period: filterTime === 'range' ? `${customRange.start || 'Start'} to ${customRange.end || 'End'}` : (filterTime === 'all' ? 'All Time' : filterTime), filename: `personal_expenses_${new Date().toISOString().split('T')[0]}` }) })}
                                 />
                             </div>
                         </div>
@@ -598,8 +598,7 @@ const PersonalExpenseTracker = () => {
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[6px] md:mb-[8px] block">Category</label>
                                     <div className="relative">
                                         <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} className="w-full bg-slate-50 border-none rounded-[12px] md:rounded-[16px] px-[16px] md:px-[20px] py-[12px] md:py-[16px] text-[13px] md:text-[14px] font-bold text-slate-800 appearance-none focus:ring-2 focus:ring-[#2d5bff] transition-all cursor-pointer">
-                                            <option value="General">General</option>
-                                            {categories.filter(c => c.name !== 'General').map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                                            {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                                         </select>
                                         <Tag className="w-[16px] h-[16px] text-slate-400 absolute right-[16px] top-1/2 -translate-y-1/2 pointer-events-none" />
                                     </div>
@@ -610,6 +609,36 @@ const PersonalExpenseTracker = () => {
                                     <button type="submit" className="flex-1 py-[12px] md:py-[16px] rounded-[12px] md:rounded-[16px] bg-[#2d5bff] text-white font-bold text-[11px] md:text-[12px] uppercase tracking-widest shadow-lg shadow-blue-500/30 hover:bg-blue-600 hover:shadow-xl hover:translate-y-[-2px] transition-all cursor-pointer">Save Transaction</button>
                                 </div>
                             </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* Export Confirmation Modal */}
+                {pendingExport && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+                        <div className="bg-white rounded-[24px] w-full max-w-sm p-[24px] shadow-2xl animate-in zoom-in-95 duration-200 scale-100 border border-slate-100 relative">
+                            <div className="mb-[20px]">
+                                <h2 className="text-[20px] font-black text-slate-800 tracking-tight">Confirm Export</h2>
+                                <p className="text-[14px] text-slate-500 mt-[8px]">Are you sure you want to export the current view as <strong>{pendingExport.type}</strong>?</p>
+                            </div>
+
+                            <div className="flex gap-[12px] pt-[12px]">
+                                <button
+                                    onClick={() => setPendingExport(null)}
+                                    className="flex-1 py-[12px] rounded-[16px] border border-slate-200 text-slate-500 font-bold text-[12px] uppercase tracking-widest hover:bg-slate-50 cursor-pointer transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        pendingExport.action();
+                                        setPendingExport(null);
+                                    }}
+                                    className="flex-1 py-[12px] rounded-[16px] bg-[#2d5bff] text-white font-bold text-[12px] uppercase tracking-widest shadow-lg shadow-blue-500/30 hover:bg-blue-600 hover:shadow-xl hover:translate-y-[-2px] transition-all cursor-pointer"
+                                >
+                                    Export
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
