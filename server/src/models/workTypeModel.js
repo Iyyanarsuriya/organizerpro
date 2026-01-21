@@ -1,29 +1,33 @@
 const db = require('../config/db');
 
-class WorkType {
-    static async create(userId, name) {
-        const [result] = await db.query(
-            'INSERT INTO work_types (user_id, name) VALUES (?, ?)',
-            [userId, name]
-        );
-        return { id: result.insertId, name, user_id: userId };
-    }
+const TABLE_NAME = 'manufacturing_work_types';
 
-    static async getAll(userId) {
-        const [rows] = await db.query(
-            'SELECT * FROM work_types WHERE user_id = ? ORDER BY name ASC',
-            [userId]
-        );
-        return rows;
-    }
+const create = async (userId, name) => {
+    const [result] = await db.query(
+        `INSERT INTO ${TABLE_NAME} (user_id, name) VALUES (?, ?)`,
+        [userId, name]
+    );
+    return { id: result.insertId, name, user_id: userId };
+};
 
-    static async delete(id, userId) {
-        const [result] = await db.query(
-            'DELETE FROM work_types WHERE id = ? AND user_id = ?',
-            [id, userId]
-        );
-        return result.affectedRows > 0;
-    }
-}
+const getAll = async (userId) => {
+    const [rows] = await db.query(
+        `SELECT * FROM ${TABLE_NAME} WHERE user_id = ? ORDER BY name ASC`,
+        [userId]
+    );
+    return rows;
+};
 
-module.exports = WorkType;
+const deleteResult = async (id, userId) => {
+    const [result] = await db.query(
+        `DELETE FROM ${TABLE_NAME} WHERE id = ? AND user_id = ?`,
+        [id, userId]
+    );
+    return result.affectedRows > 0;
+};
+
+module.exports = {
+    create,
+    getAll,
+    delete: deleteResult
+};

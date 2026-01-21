@@ -83,5 +83,18 @@ export const exportPersonalExpenseToPDF = ({ data, period, subHeader, filename }
         `Rs. ${formatAmount(t.amount)}`
     ]);
 
-    generatePDF({ title: 'Personal Financial Report', period, subHeader, stats, tableHeaders, tableRows, filename, themeColor: [45, 91, 255] });
+    generatePDF({
+        title: 'Personal Financial Report',
+        period,
+        subHeader,
+        stats,
+        tableHeaders,
+        tableRows,
+        filename,
+        themeColor: [45, 91, 255],
+        columnStyles: {
+            1: { halign: 'left', valign: 'middle' },
+            3: { halign: 'center', valign: 'middle', cellWidth: 35 }
+        }
+    });
 };

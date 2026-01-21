@@ -2,16 +2,16 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { getReminders, createReminder, updateReminder, deleteReminder, triggerMissedAlert } from '../../api/homeApi';
 import { getMe } from '../../api/authApi';
 import { API_URL } from '../../api/axiosInstance';
-import ReminderForm from '../../components/ReminderForm';
-import ReminderList from '../../components/ReminderList';
+import ReminderForm from '../../components/Common/ReminderForm';
+import ReminderList from '../../components/Common/ReminderList';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { FaBell, FaTimes, FaArrowLeft } from 'react-icons/fa';
 import { LayoutDashboard } from 'lucide-react';
 import { getCategories, createCategory, deleteCategory } from '../../api/categoryApi';
 
-import CategoryManager from '../../components/CategoryManager';
-import ExportButtons from '../../components/ExportButtons';
+import CategoryManager from '../../components/Common/CategoryManager';
+import ExportButtons from '../../components/Common/ExportButtons';
 import { exportReminderToCSV, exportReminderToTXT, exportReminderToPDF } from '../../utils/exportUtils/index.js';
 import Notes from '../Notes/Notes'; // Helper Import
 

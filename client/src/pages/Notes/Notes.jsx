@@ -3,7 +3,7 @@ import { getNotes, createNote, updateNote, deleteNote } from '../../api/noteApi'
 import { FaPlus, FaTrash, FaPen, FaThumbtack, FaArrowLeft, FaSearch, FaTimes } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import ExportButtons from '../../components/ExportButtons';
+import ExportButtons from '../../components/Common/ExportButtons';
 import { generateCSV, generatePDF, generateTXT } from '../../utils/exportUtils/base';
 
 const Notes = ({ isEmbedded = false }) => {

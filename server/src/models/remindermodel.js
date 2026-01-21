@@ -1,44 +1,70 @@
 const db = require('../config/db');
 
-exports.getAllByUserId = async (userId) => {
-    const [rows] = await db.query('SELECT * FROM reminders WHERE user_id = ? ORDER BY created_at DESC', [userId]);
+const getTableName = (sector) => {
+    return sector === 'manufacturing' ? 'manufacturing_reminders' : 'personal_reminders';
+};
+
+const getAllByUserId = async (userId, sector) => {
+    const table = getTableName(sector);
+    const [rows] = await db.query(`SELECT * FROM ${table} WHERE user_id = ? ORDER BY created_at DESC`, [userId]);
     return rows;
 };
 
-exports.getById = async (id, userId) => {
-    const [rows] = await db.query('SELECT * FROM reminders WHERE id = ? AND user_id = ?', [id, userId]);
+const getById = async (id, userId, sector) => {
+    const table = getTableName(sector);
+    const [rows] = await db.query(`SELECT * FROM ${table} WHERE id = ? AND user_id = ?`, [id, userId]);
     return rows[0];
 };
 
-exports.create = async (reminderData) => {
-    const { user_id, title, description, due_date, priority, category, google_event_id } = reminderData;
+const create = async (reminderData) => {
+    const { user_id, title, description, due_date, priority, category, google_event_id, sector } = reminderData;
+    const table = getTableName(sector);
 
     const dateObj = due_date ? new Date(due_date) : null;
     const finalDate = (dateObj && !isNaN(dateObj.getTime())) ? dateObj : null;
 
-    const [result] = await db.query(
-        'INSERT INTO reminders (user_id, title, description, due_date, priority, category, google_event_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [user_id, title, description, finalDate, priority || 'medium', category || 'General', google_event_id || null]
-    );
+    let query, params;
+
+    if (table === 'manufacturing_reminders') {
+        query = `INSERT INTO ${table} (user_id, title, description, due_date, priority, status) VALUES (?, ?, ?, ?, ?, ?)`;
+        params = [user_id, title, description, finalDate, priority || 'medium', 'pending'];
+    } else {
+        query = `INSERT INTO ${table} (user_id, title, description, due_date, priority, category, google_event_id) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+        params = [user_id, title, description, finalDate, priority || 'medium', category || 'General', google_event_id || null];
+    }
+
+    const [result] = await db.query(query, params);
     return { id: result.insertId, ...reminderData, is_completed: false, created_at: new Date() };
 };
 
-exports.updateGoogleEventId = async (id, googleEventId) => {
+const updateGoogleEventId = async (id, googleEventId, sector) => {
+    const table = getTableName(sector);
+    if (table === 'manufacturing_reminders') return false; // Not supported
     const [result] = await db.query(
-        'UPDATE reminders SET google_event_id = ? WHERE id = ?',
+        `UPDATE ${table} SET google_event_id = ? WHERE id = ?`,
         [googleEventId, id]
     );
     return result.affectedRows > 0;
 };
 
-exports.updateStatus = async (id, userId, is_completed) => {
-    let query = 'UPDATE reminders SET is_completed = ?';
+const updateStatus = async (id, userId, is_completed, sector) => {
+    const table = getTableName(sector);
+    let query = `UPDATE ${table} SET is_completed = ?`;
     const params = [is_completed];
 
-    if (is_completed) {
-        query += ', completed_at = NOW()';
+    if (table === 'personal_reminders') {
+        if (is_completed) {
+            query += ', completed_at = NOW()';
+        } else {
+            query += ', completed_at = NULL';
+        }
     } else {
-        query += ', completed_at = NULL';
+        // Manufacturing
+        if (is_completed) {
+            query += ', status = "completed"';
+        } else {
+            query += ', status = "pending"';
+        }
     }
 
     query += ' WHERE id = ? AND user_id = ?';
@@ -48,22 +74,22 @@ exports.updateStatus = async (id, userId, is_completed) => {
     return result.affectedRows > 0;
 };
 
-exports.delete = async (id, userId) => {
+const deleteReminder = async (id, userId, sector) => {
+    const table = getTableName(sector);
     const [result] = await db.query(
-        'DELETE FROM reminders WHERE id = ? AND user_id = ?',
+        `DELETE FROM ${table} WHERE id = ? AND user_id = ?`,
         [id, userId]
     );
     return result.affectedRows > 0;
 };
 
-
-
-exports.getOverdueRemindersForToday = async (userId = null, startDate = null, endDate = null, status = 'pending') => {
+const getOverdueRemindersForToday = async (userId = null, startDate = null, endDate = null, status = 'pending', sector = 'personal') => {
+    const table = getTableName(sector);
     // Get reminders that are due on a specific date (or today) OR a range
     // We join with users to get the email address to send notifications to
     let query = `
         SELECT r.id, r.user_id, r.title, r.description, r.due_date, r.priority, u.email, u.username 
-        FROM reminders r
+        FROM ${table} r
         JOIN users u ON r.user_id = u.id
         WHERE 1=1
     `;
@@ -73,7 +99,6 @@ exports.getOverdueRemindersForToday = async (userId = null, startDate = null, en
     } else if (status === 'completed') {
         query += " AND r.is_completed = 1";
     }
-    // If status is 'all', we don't add any filter
 
     const params = [];
 
@@ -92,4 +117,14 @@ exports.getOverdueRemindersForToday = async (userId = null, startDate = null, en
 
     const [rows] = await db.query(query, params);
     return rows;
+};
+
+module.exports = {
+    getAllByUserId,
+    getById,
+    create,
+    updateGoogleEventId,
+    updateStatus,
+    delete: deleteReminder,
+    getOverdueRemindersForToday
 };

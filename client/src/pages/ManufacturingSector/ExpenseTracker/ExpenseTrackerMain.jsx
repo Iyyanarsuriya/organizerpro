@@ -20,12 +20,12 @@ import { formatAmount } from '../../../utils/formatUtils';
 
 
 
-import CategoryManager from '../../../components/CategoryManager';
-import ProjectManager from '../../../components/ProjectManager';
-import MemberManager from '../../../components/MemberManager';
-import DailyWorkLogManager from '../../../components/DailyWorkLogManager';
-import VehicleTrackerManager from '../../../components/VehicleTrackerManager';
-import ExportButtons from '../../../components/ExportButtons';
+import CategoryManager from '../../../components/Common/CategoryManager';
+import ProjectManager from '../../../components/Manufacturing/ProjectManager';
+import MemberManager from '../../../components/Manufacturing/MemberManager';
+import DailyWorkLogManager from '../../../components/Manufacturing/DailyWorkLogManager';
+import VehicleTrackerManager from '../../../components/Common/VehicleTrackerManager';
+import ExportButtons from '../../../components/Common/ExportButtons';
 
 // Sub-components
 import Dashboard from './Dashboard';
@@ -130,7 +130,8 @@ const ExpenseTrackerMain = () => {
                 memberType: filterMemberType, // NEW
                 period: isRange ? null : currentPeriod,
                 startDate: rangeStart,
-                endDate: rangeEnd
+                endDate: rangeEnd,
+                sector: 'manufacturing' // Add sector
             };
 
             console.log('Fetching with params:', params); // Debug log
@@ -138,7 +139,7 @@ const ExpenseTrackerMain = () => {
             const [transRes, statsRes, catRes, projRes, membersRes, roleRes, guestRes, vehicleRes] = await Promise.all([
                 getTransactions(params),
                 getTransactionStats(params),
-                getExpenseCategories(),
+                getExpenseCategories({ sector: 'manufacturing' }),
                 getProjects(),
                 getMembers(),
                 getMemberRoles(),
@@ -287,11 +288,15 @@ const ExpenseTrackerMain = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            const payload = {
+                ...formData,
+                sector: 'manufacturing'
+            };
             if (editingId) {
-                await updateTransaction(editingId, formData);
+                await updateTransaction(editingId, payload);
                 toast.success("Transaction updated!");
             } else {
-                await createTransaction(formData);
+                await createTransaction(payload);
                 toast.success("Transaction added!");
             }
             setShowAddModal(false);
@@ -347,7 +352,7 @@ const ExpenseTrackerMain = () => {
 
     const handleDelete = async (id) => {
         try {
-            await deleteTransaction(id);
+            await deleteTransaction(id, 'manufacturing');
             toast.success("Transaction deleted");
             setDeleteModalOuter({ show: false, id: null });
             fetchData();
@@ -1113,7 +1118,7 @@ const ExpenseTrackerMain = () => {
                 </div>
             )}
 
-            {showCategoryManager && <CategoryManager categories={categories} onUpdate={() => getExpenseCategories().then(res => setCategories(res.data))} onCreate={createExpenseCategory} onDelete={deleteExpenseCategory} onClose={() => setShowCategoryManager(false)} />}
+            {showCategoryManager && <CategoryManager categories={categories} onUpdate={() => getExpenseCategories({ sector: 'manufacturing' }).then(res => setCategories(res.data))} onCreate={(data) => createExpenseCategory({ ...data, sector: 'manufacturing' })} onDelete={(id) => deleteExpenseCategory(id, 'manufacturing')} onClose={() => setShowCategoryManager(false)} />}
             {showProjectManager && <ProjectManager projects={projects} onCreate={createProject} onDelete={deleteProject} onRefresh={fetchData} onClose={() => setShowProjectManager(false)} />}
 
             {showCustomReportModal && (

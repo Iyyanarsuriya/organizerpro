@@ -1,29 +1,33 @@
 const db = require('../config/db');
 
-class MemberRole {
-    static async create(userId, name) {
-        const [result] = await db.query(
-            'INSERT INTO member_roles (user_id, name) VALUES (?, ?)',
-            [userId, name]
-        );
-        return { id: result.insertId, user_id: userId, name };
-    }
+const TABLE_NAME = 'manufacturing_member_roles';
 
-    static async getAllByUserId(userId) {
-        const [rows] = await db.query(
-            'SELECT * FROM member_roles WHERE user_id = ? ORDER BY name ASC',
-            [userId]
-        );
-        return rows;
-    }
+const create = async (userId, name) => {
+    const [result] = await db.query(
+        `INSERT INTO ${TABLE_NAME} (user_id, name) VALUES (?, ?)`,
+        [userId, name]
+    );
+    return { id: result.insertId, user_id: userId, name };
+};
 
-    static async delete(id, userId) {
-        const [result] = await db.query(
-            'DELETE FROM member_roles WHERE id = ? AND user_id = ?',
-            [id, userId]
-        );
-        return result.affectedRows > 0;
-    }
-}
+const getAllByUserId = async (userId) => {
+    const [rows] = await db.query(
+        `SELECT * FROM ${TABLE_NAME} WHERE user_id = ? ORDER BY name ASC`,
+        [userId]
+    );
+    return rows;
+};
 
-module.exports = MemberRole;
+const deleteResult = async (id, userId) => {
+    const [result] = await db.query(
+        `DELETE FROM ${TABLE_NAME} WHERE id = ? AND user_id = ?`,
+        [id, userId]
+    );
+    return result.affectedRows > 0;
+};
+
+module.exports = {
+    create,
+    getAllByUserId,
+    delete: deleteResult
+};

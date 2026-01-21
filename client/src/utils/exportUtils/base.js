@@ -84,7 +84,7 @@ export const generateTXT = ({ title, period, stats, additionalContent, logHeader
     URL.revokeObjectURL(url);
 };
 
-export const generatePDF = ({ title, period, subHeader, stats, tableHeaders, tableRows, filename, themeColor = [45, 91, 255] }) => {
+export const generatePDF = ({ title, period, subHeader, stats, tableHeaders, tableRows, filename, themeColor = [45, 91, 255], columnStyles = {} }) => {
     const doc = new jsPDF('landscape'); // Landscape for better column visibility
     const pageWidth = doc.internal.pageSize.getWidth();
 
@@ -148,8 +148,8 @@ export const generatePDF = ({ title, period, subHeader, stats, tableHeaders, tab
         startY = startY + boxHeight + 10;
     }
 
-    // Alignment logic - Centering everything as requested
-    let columnStyles = {
+    // Default Alignment logic
+    let defaultColumnStyles = {
         0: { halign: 'center', valign: 'middle', cellWidth: 25 },
         1: { halign: 'center', valign: 'middle' },
         2: { halign: 'center', valign: 'middle', cellWidth: 30 },
@@ -157,6 +157,8 @@ export const generatePDF = ({ title, period, subHeader, stats, tableHeaders, tab
         4: { halign: 'center', valign: 'middle' },
         5: { halign: 'center', valign: 'middle', cellWidth: 30 }
     };
+
+    const finalColumnStyles = { ...defaultColumnStyles, ...columnStyles };
 
     autoTable(doc, {
         startY: startY,
@@ -177,7 +179,7 @@ export const generatePDF = ({ title, period, subHeader, stats, tableHeaders, tab
             valign: 'middle',
             cellPadding: 4
         },
-        columnStyles: columnStyles,
+        columnStyles: finalColumnStyles,
         styles: { overflow: 'linebreak' },
         margin: { left: 15, right: 15 },
         didDrawPage: (data) => {

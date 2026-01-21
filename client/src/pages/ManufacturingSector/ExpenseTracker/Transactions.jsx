@@ -1,7 +1,7 @@
 import React from 'react';
 import { FaPlus, FaEdit, FaTrash, FaUserCheck, FaExchangeAlt, FaSearch, FaFilter, FaCalendarAlt, FaUser, FaProjectDiagram, FaTruck } from 'react-icons/fa'; // Added icons
 import { formatDateTime, formatAmount } from '../../../utils/formatUtils';
-import ExportButtons from '../../../components/ExportButtons'; // Imported
+import ExportButtons from '../../../components/Common/ExportButtons'; // Imported
 
 const Transactions = ({
     filteredTransactions,

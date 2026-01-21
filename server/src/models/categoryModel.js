@@ -1,28 +1,30 @@
 const db = require('../config/db');
 
-exports.getAllByUserId = async (userId) => {
-    const [rows] = await db.query('SELECT * FROM categories WHERE user_id = ? ORDER BY name ASC', [userId]);
+const TABLE_NAME = 'personal_categories'; // Mapped to new V2 table
+
+const getAllByUserId = async (userId) => {
+    const [rows] = await db.query(`SELECT * FROM ${TABLE_NAME} WHERE user_id = ? ORDER BY name ASC`, [userId]);
     return rows;
 };
 
-exports.create = async (categoryData) => {
+const create = async (categoryData) => {
     const { user_id, name, color } = categoryData;
     const [result] = await db.query(
-        'INSERT INTO categories (user_id, name, color) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE name=name',
+        `INSERT INTO ${TABLE_NAME} (user_id, name, color) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE name=name`,
         [user_id, name, color || '#2d5bff']
     );
     return { id: result.insertId || null, ...categoryData };
 };
 
-exports.delete = async (id, userId) => {
+const deleteResult = async (id, userId) => {
     const [result] = await db.query(
-        'DELETE FROM categories WHERE id = ? AND user_id = ?',
+        `DELETE FROM ${TABLE_NAME} WHERE id = ? AND user_id = ?`,
         [id, userId]
     );
     return result.affectedRows > 0;
 };
 
-exports.seedDefaultCategories = async (userId) => {
+const seedDefaultCategories = async (userId) => {
     const defaults = [
         { name: 'General', color: '#64748b' },
         { name: 'Work', color: '#2d5bff' },
@@ -33,6 +35,13 @@ exports.seedDefaultCategories = async (userId) => {
     ];
 
     for (const cat of defaults) {
-        await this.create({ user_id: userId, name: cat.name, color: cat.color });
+        await create({ user_id: userId, name: cat.name, color: cat.color });
     }
+};
+
+module.exports = {
+    getAllByUserId,
+    create,
+    delete: deleteResult,
+    seedDefaultCategories
 };

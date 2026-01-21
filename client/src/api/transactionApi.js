@@ -12,8 +12,8 @@ export const updateTransaction = async (id, data) => {
     return await axiosInstance.put(`/transactions/${id}`, data);
 };
 
-export const deleteTransaction = async (id) => {
-    return await axiosInstance.delete(`/transactions/${id}`);
+export const deleteTransaction = async (id, sector) => {
+    return await axiosInstance.delete(`/transactions/${id}`, { params: { sector } });
 };
 
 export const getTransactionStats = async (params = {}) => {

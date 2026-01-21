@@ -20,18 +20,18 @@ import { formatAmount } from '../../utils/formatUtils';
 
 
 
-import CategoryManager from '../../components/CategoryManager';
-import ProjectManager from '../../components/ProjectManager';
-import MemberManager from '../../components/MemberManager';
-import DailyWorkLogManager from '../../components/DailyWorkLogManager';
-import VehicleTrackerManager from '../../components/VehicleTrackerManager';
-import ExportButtons from '../../components/ExportButtons';
+import CategoryManager from '../../components/Common/CategoryManager';
+import ProjectManager from '../../components/Manufacturing/ProjectManager';
+import MemberManager from '../../components/Manufacturing/MemberManager';
+import DailyWorkLogManager from '../../components/Manufacturing/DailyWorkLogManager';
+import VehicleTrackerManager from '../../components/Common/VehicleTrackerManager';
+import ExportButtons from '../../components/Common/ExportButtons';
 
 // Sub-components
-import Dashboard from './Dashboard';
-import Transactions from './Transactions';
-import Reports from './Reports';
-import SalaryCalculator from './SalaryCalculator';
+import Dashboard from '../ManufacturingSector/ExpenseTracker/Dashboard';
+import Transactions from '../ManufacturingSector/ExpenseTracker/Transactions';
+import Reports from '../ManufacturingSector/ExpenseTracker/Reports';
+import SalaryCalculator from '../ManufacturingSector/ExpenseTracker/SalaryCalculator';
 
 const HotelExpenses = () => {
     const navigate = useNavigate();

@@ -6,9 +6,17 @@ import toast from 'react-hot-toast';
 import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from '../../api/transactionApi';
 import { formatAmount } from '../../utils/formatUtils';
 import { getExpenseCategories, createExpenseCategory, deleteExpenseCategory } from '../../api/expenseCategoryApi';
-import CategoryManager from '../../components/CategoryManager';
-import ExportButtons from '../../components/ExportButtons';
+import CategoryManager from '../../components/Common/CategoryManager';
+import ExportButtons from '../../components/Common/ExportButtons';
 import { exportPersonalExpenseToCSV, exportPersonalExpenseToTXT, exportPersonalExpenseToPDF } from '../../utils/exportUtils';
+
+const getTodayString = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
 
 const PersonalExpenseTracker = () => {
     const navigate = useNavigate();
@@ -25,23 +33,23 @@ const PersonalExpenseTracker = () => {
         amount: '',
         type: 'expense', // 'expense' | 'income'
         category: 'General',
-        date: new Date().toISOString().split('T')[0],
+        date: getTodayString(),
         description: ''
     });
     const [editingId, setEditingId] = useState(null);
 
     // Filters
     const [filterType, setFilterType] = useState('all'); // 'all', 'expense', 'income'
-    const [filterTime, setFilterTime] = useState('month'); // 'all', 'month', 'year', 'range'
-    const [customRange, setCustomRange] = useState({ start: new Date().toISOString().split('T')[0], end: '' });
+    const [filterTime, setFilterTime] = useState('day'); // 'all', 'month', 'year', 'range'
+    const [customRange, setCustomRange] = useState({ start: getTodayString(), end: '' });
     const [filterCategory, setFilterCategory] = useState('all');
 
     const fetchData = async () => {
         try {
             setLoading(true);
             const [transRes, catRes] = await Promise.all([
-                getTransactions({}), // Fetches all transactions for the user
-                getExpenseCategories()
+                getTransactions({ sector: 'personal' }), // Fetches only personal transactions
+                getExpenseCategories({ sector: 'personal' })
             ]);
 
             // Filter out complex manufacturing transactions (optional: could rely on category or project_id being null)
@@ -66,7 +74,8 @@ const PersonalExpenseTracker = () => {
             const payload = {
                 ...formData,
                 project_id: null, // Explicitly null for personal
-                member_id: null
+                member_id: null,
+                sector: 'personal' // Ensure sector is set
             };
 
             if (editingId) {
@@ -88,7 +97,7 @@ const PersonalExpenseTracker = () => {
     const handleDelete = async (id) => {
         if (!window.confirm("Are you sure you want to delete this?")) return;
         try {
-            await deleteTransaction(id);
+            await deleteTransaction(id, 'personal');
             toast.success("Deleted successfully");
             fetchData();
         } catch (error) {
@@ -102,7 +111,7 @@ const PersonalExpenseTracker = () => {
             amount: '',
             type: 'expense',
             category: 'General',
-            date: new Date().toISOString().split('T')[0],
+            date: getTodayString(),
             description: ''
         });
     };
@@ -187,7 +196,7 @@ const PersonalExpenseTracker = () => {
     );
 
     return (
-        <div className="min-h-[100vh] bg-[#f8fafc] font-['Outfit',sans-serif] text-slate-800 pb-[48px]">
+        <div className="min-h-screen bg-[#f8fafc] font-['Outfit',sans-serif] text-slate-800 pb-[48px]">
             {/* Background Decor */}
             <div className="fixed top-0 left-0 right-0 h-[256px] bg-linear-to-b from-blue-50/80 to-transparent pointer-events-none z-0"></div>
 
@@ -250,89 +259,93 @@ const PersonalExpenseTracker = () => {
                 {/* Filters & Actions */}
                 {/* Filters & Actions */}
                 <div className="bg-white rounded-[24px] border border-slate-200/60 p-[12px] md:p-[16px] shadow-sm mb-[24px]">
-                    <div className="flex flex-col xl:flex-row items-center gap-[12px]">
+                    <div className="flex flex-col gap-[16px]">
 
-                        {/* Time Period Pills */}
-                        <div className="bg-slate-100/80 p-[4px] md:p-[6px] rounded-[12px] md:rounded-[16px] flex items-center gap-[4px] w-full xl:w-auto overflow-x-auto custom-scrollbar">
-                            {['day', 'month', 'year', 'range'].map(time => (
-                                <button
-                                    key={time}
-                                    onClick={() => {
-                                        setFilterTime(time);
-                                        if (time === 'day' && !customRange.start) {
-                                            setCustomRange(prev => ({ ...prev, start: new Date().toISOString().split('T')[0] }));
-                                        }
-                                    }}
-                                    className={`flex-1 xl:flex-none px-[12px] md:px-[16px] py-[8px] md:py-[12px] rounded-[10px] md:rounded-[12px] text-[10px] md:text-[11px] font-black uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap ${filterTime === time ? 'bg-white text-[#2d5bff] shadow-sm ring-[1px] ring-black/5' : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'}`}
-                                >
-                                    {time}
-                                </button>
-                            ))}
+                        {/* Left Group: Time Controls */}
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-[12px] w-full lg:w-auto">
+                            {/* Time Period Pills */}
+                            <div className="bg-slate-100/80 p-[4px] md:p-[6px] rounded-[12px] md:rounded-[16px] flex items-center gap-[4px] w-full sm:w-auto overflow-x-auto custom-scrollbar">
+                                {['day', 'month', 'year', 'range'].map(time => (
+                                    <button
+                                        key={time}
+                                        onClick={() => {
+                                            setFilterTime(time);
+                                            if (time === 'day' && !customRange.start) {
+                                                setCustomRange(prev => ({ ...prev, start: getTodayString() }));
+                                            }
+                                        }}
+                                        className={`flex-1 sm:flex-none px-[12px] md:px-[16px] py-[8px] md:py-[12px] rounded-[10px] md:rounded-[12px] text-[10px] md:text-[11px] font-black uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap ${filterTime === time ? 'bg-white text-[#2d5bff] shadow-sm ring-[1px] ring-black/5' : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'}`}
+                                    >
+                                        {time}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Date Inputs - Animate In */}
+                            {(filterTime === 'day' || filterTime === 'range') && (
+                                <div className="flex flex-row items-center gap-[8px] w-full sm:w-auto animate-in fade-in slide-in-from-left-[16px] duration-300">
+                                    <div className="relative flex-1 sm:flex-none group min-w-0">
+                                        <input
+                                            type="date"
+                                            value={customRange.start}
+                                            onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })}
+                                            className="w-full sm:w-auto bg-slate-50 border border-slate-200 text-slate-600 text-[10px] sm:text-[12px] font-bold rounded-[8px] md:rounded-[16px] px-[8px] md:px-[16px] py-[8px] md:py-[12px] pl-[32px] md:pl-[40px] focus:outline-none focus:border-[#2d5bff] focus:ring-4 focus:ring-blue-500/10 cursor-pointer transition-all hover:bg-white hover:border-slate-300 hover:shadow-sm"
+                                        />
+                                        <Calendar className="w-[12px] h-[12px] md:w-[16px] md:h-[16px] text-slate-400 absolute left-[10px] md:left-[16px] top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-[#2d5bff] transition-colors" />
+                                    </div>
+                                    {filterTime === 'range' && (
+                                        <>
+                                            <span className="text-slate-400 font-bold shrink-0">-</span>
+                                            <div className="relative flex-1 sm:flex-none group min-w-0">
+                                                <input
+                                                    type="date"
+                                                    value={customRange.end}
+                                                    onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })}
+                                                    className="w-full sm:w-auto bg-slate-50 border border-slate-200 text-slate-600 text-[10px] sm:text-[12px] font-bold rounded-[8px] md:rounded-[16px] px-[8px] md:px-[16px] py-[8px] md:py-[12px] pl-[32px] md:pl-[40px] focus:outline-none focus:border-[#2d5bff] focus:ring-4 focus:ring-blue-500/10 cursor-pointer transition-all hover:bg-white hover:border-slate-300 hover:shadow-sm"
+                                                />
+                                                <Calendar className="w-[12px] h-[12px] md:w-[16px] md:h-[16px] text-slate-400 absolute left-[10px] md:left-[16px] top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-[#2d5bff] transition-colors" />
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
-                        {/* Date Inputs - Animate In */}
-                        {(filterTime === 'day' || filterTime === 'range') && (
-                            <div className="flex flex-col sm:flex-row items-center gap-[8px] w-full xl:w-auto animate-in fade-in slide-in-from-left-[16px] duration-300">
-                                <div className="relative flex-1 w-full xl:flex-none group">
-                                    <input
-                                        type="date"
-                                        value={customRange.start}
-                                        onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })}
-                                        className="w-full xl:w-auto bg-slate-50 border border-slate-200 text-slate-600 text-[12px] font-bold rounded-[12px] md:rounded-[16px] px-[12px] md:px-[16px] py-[10px] md:py-[12px] pl-[36px] md:pl-[40px] focus:outline-none focus:border-[#2d5bff] focus:ring-[4px] focus:ring-blue-500/10 cursor-pointer transition-all hover:bg-white hover:border-slate-300 hover:shadow-sm"
-                                    />
-                                    <Calendar className="w-[14px] h-[14px] md:w-[16px] md:h-[16px] text-slate-400 absolute left-[12px] md:left-[16px] top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-[#2d5bff] transition-colors" />
+                        {/* Right Group: Filters & Exports */}
+                        <div className="flex flex-col sm:flex-row items-center gap-[12px] w-full shrink-0">
+                            {/* Filters Dropdowns */}
+                            <div className="grid grid-cols-2 sm:flex sm:items-center gap-[8px] w-full sm:w-auto shrink-0">
+                                <div className="relative group shrink-0">
+                                    <select
+                                        value={filterType}
+                                        onChange={(e) => setFilterType(e.target.value)}
+                                        className="appearance-none w-full bg-slate-50 md:bg-white border border-slate-200 text-slate-600 text-[12px] font-bold rounded-[12px] md:rounded-[16px] px-[12px] md:px-[16px] py-[10px] md:py-[12px] pl-[36px] md:pl-[40px] pr-[32px] focus:outline-none focus:border-[#2d5bff] focus:ring-4 focus:ring-blue-500/10 cursor-pointer transition-all hover:border-slate-300 hover:shadow-sm"
+                                    >
+                                        <option value="all">All Types</option>
+                                        <option value="income">Income</option>
+                                        <option value="expense">Expense</option>
+                                    </select>
+                                    <Filter className="w-[14px] h-[14px] md:w-[16px] md:h-[16px] text-slate-400 absolute left-[12px] md:left-[16px] top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-[#2d5bff] transition-colors" />
                                 </div>
-                                {filterTime === 'range' && (
-                                    <>
-                                        <span className="text-slate-300 font-bold hidden sm:inline">&rarr;</span>
-                                        <div className="relative flex-1 w-full xl:flex-none group">
-                                            <input
-                                                type="date"
-                                                value={customRange.end}
-                                                onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })}
-                                                className="w-full xl:w-auto bg-slate-50 border border-slate-200 text-slate-600 text-[12px] font-bold rounded-[12px] md:rounded-[16px] px-[12px] md:px-[16px] py-[10px] md:py-[12px] pl-[36px] md:pl-[40px] focus:outline-none focus:border-[#2d5bff] focus:ring-[4px] focus:ring-blue-500/10 cursor-pointer transition-all hover:bg-white hover:border-slate-300 hover:shadow-sm"
-                                            />
-                                            <Calendar className="w-[14px] h-[14px] md:w-[16px] md:h-[16px] text-slate-400 absolute left-[12px] md:left-[16px] top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-[#2d5bff] transition-colors" />
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        )}
 
-                        <div className="hidden xl:block w-[1px] h-[32px] bg-slate-100 mx-[8px]"></div>
-
-                        {/* Filters Dropdowns */}
-                        <div className="flex flex-col sm:flex-row items-center gap-[8px] w-full xl:w-auto">
-                            <div className="relative flex-1 w-full sm:w-auto group">
-                                <select
-                                    value={filterType}
-                                    onChange={(e) => setFilterType(e.target.value)}
-                                    className="appearance-none w-full bg-slate-50 md:bg-white border border-slate-200 text-slate-600 text-[12px] font-bold rounded-[12px] md:rounded-[16px] px-[12px] md:px-[16px] py-[10px] md:py-[12px] pl-[36px] md:pl-[40px] pr-[32px] focus:outline-none focus:border-[#2d5bff] focus:ring-[4px] focus:ring-blue-500/10 cursor-pointer transition-all hover:border-slate-300 hover:shadow-sm"
-                                >
-                                    <option value="all">All Types</option>
-                                    <option value="income">Income</option>
-                                    <option value="expense">Expense</option>
-                                </select>
-                                <Filter className="w-[14px] h-[14px] md:w-[16px] md:h-[16px] text-slate-400 absolute left-[12px] md:left-[16px] top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-[#2d5bff] transition-colors" />
-                            </div>
-
-                            <div className="relative flex-1 w-full sm:w-auto group">
-                                <select
-                                    value={filterCategory}
-                                    onChange={(e) => setFilterCategory(e.target.value)}
-                                    className="appearance-none w-full bg-slate-50 md:bg-white border border-slate-200 text-slate-600 text-[12px] font-bold rounded-[12px] md:rounded-[16px] px-[12px] md:px-[16px] py-[10px] md:py-[12px] pl-[36px] md:pl-[40px] pr-[32px] focus:outline-none focus:border-[#2d5bff] focus:ring-[4px] focus:ring-blue-500/10 cursor-pointer transition-all hover:border-slate-300 hover:shadow-sm"
-                                >
-                                    <option value="all">All Categories</option>
-                                    <option value="General">General</option>
-                                    {categories.filter(c => c.name !== 'General').map(c => (
-                                        <option key={c.id} value={c.name}>{c.name}</option>
-                                    ))}
-                                </select>
-                                <Tag className="w-[14px] h-[14px] md:w-[16px] md:h-[16px] text-slate-400 absolute left-[12px] md:left-[16px] top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-[#2d5bff] transition-colors" />
+                                <div className="relative group shrink-0">
+                                    <select
+                                        value={filterCategory}
+                                        onChange={(e) => setFilterCategory(e.target.value)}
+                                        className="appearance-none w-full bg-slate-50 md:bg-white border border-slate-200 text-slate-600 text-[12px] font-bold rounded-[12px] md:rounded-[16px] px-[12px] md:px-[16px] py-[10px] md:py-[12px] pl-[36px] md:pl-[40px] pr-[32px] focus:outline-none focus:border-[#2d5bff] focus:ring-4 focus:ring-blue-500/10 cursor-pointer transition-all hover:border-slate-300 hover:shadow-sm"
+                                    >
+                                        <option value="all">All Categories</option>
+                                        <option value="General">General</option>
+                                        {categories.filter(c => c.name !== 'General').map(c => (
+                                            <option key={c.id} value={c.name}>{c.name}</option>
+                                        ))}
+                                    </select>
+                                    <Tag className="w-[14px] h-[14px] md:w-[16px] md:h-[16px] text-slate-400 absolute left-[12px] md:left-[16px] top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-[#2d5bff] transition-colors" />
+                                </div>
                             </div>
 
                             {/* Export Actions (Hidden on Mobile) */}
-                            <div className="hidden sm:block ml-auto xl:ml-0">
+                            <div className="hidden sm:block ml-auto">
                                 <ExportButtons
                                     onExportCSV={() => exportPersonalExpenseToCSV(filteredTransactions, `personal_expenses_${new Date().toISOString().split('T')[0]}`)}
                                     onExportPDF={() => exportPersonalExpenseToPDF({ data: filteredTransactions, period: filterTime === 'range' ? `${customRange.start || 'Start'} to ${customRange.end || 'End'}` : (filterTime === 'all' ? 'All Time' : filterTime), filename: `personal_expenses_${new Date().toISOString().split('T')[0]}` })}
@@ -567,24 +580,24 @@ const PersonalExpenseTracker = () => {
 
                                 <div>
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[6px] md:mb-[8px] block">Title</label>
-                                    <input required type="text" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} className="w-full bg-slate-50 border-none rounded-[12px] md:rounded-[16px] px-[16px] md:px-[20px] py-[12px] md:py-[16px] text-[13px] md:text-[14px] font-bold text-slate-800 placeholder:text-slate-300 focus:ring-[2px] focus:ring-[#2d5bff] transition-all" placeholder="e.g. Grocery Shopping" />
+                                    <input required type="text" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} className="w-full bg-slate-50 border-none rounded-[12px] md:rounded-[16px] px-[16px] md:px-[20px] py-[12px] md:py-[16px] text-[13px] md:text-[14px] font-bold text-slate-800 placeholder:text-slate-300 focus:ring-2 focus:ring-[#2d5bff] transition-all" placeholder="e.g. Grocery Shopping" />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-[12px] md:gap-[16px]">
                                     <div>
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[6px] md:mb-[8px] block">Amount</label>
-                                        <input required type="number" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} className="w-full bg-slate-50 border-none rounded-[12px] md:rounded-[16px] px-[16px] md:px-[20px] py-[12px] md:py-[16px] text-[13px] md:text-[14px] font-bold text-slate-800 placeholder:text-slate-300 focus:ring-[2px] focus:ring-[#2d5bff] transition-all" placeholder="₹0.00" />
+                                        <input required type="number" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} className="w-full bg-slate-50 border-none rounded-[12px] md:rounded-[16px] px-[16px] md:px-[20px] py-[12px] md:py-[16px] text-[13px] md:text-[14px] font-bold text-slate-800 placeholder:text-slate-300 focus:ring-2 focus:ring-[#2d5bff] transition-all" placeholder="₹0.00" />
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[6px] md:mb-[8px] block">Date</label>
-                                        <input required type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} className="w-full bg-slate-50 border-none rounded-[12px] md:rounded-[16px] px-[16px] md:px-[20px] py-[12px] md:py-[16px] text-[13px] md:text-[14px] font-bold text-slate-800 focus:ring-[2px] focus:ring-[#2d5bff] transition-all" />
+                                        <input required type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} className="w-full bg-slate-50 border-none rounded-[12px] md:rounded-[16px] px-[16px] md:px-[20px] py-[12px] md:py-[16px] text-[13px] md:text-[14px] font-bold text-slate-800 focus:ring-2 focus:ring-[#2d5bff] transition-all" />
                                     </div>
                                 </div>
 
                                 <div>
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[6px] md:mb-[8px] block">Category</label>
                                     <div className="relative">
-                                        <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} className="w-full bg-slate-50 border-none rounded-[12px] md:rounded-[16px] px-[16px] md:px-[20px] py-[12px] md:py-[16px] text-[13px] md:text-[14px] font-bold text-slate-800 appearance-none focus:ring-[2px] focus:ring-[#2d5bff] transition-all cursor-pointer">
+                                        <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} className="w-full bg-slate-50 border-none rounded-[12px] md:rounded-[16px] px-[16px] md:px-[20px] py-[12px] md:py-[16px] text-[13px] md:text-[14px] font-bold text-slate-800 appearance-none focus:ring-2 focus:ring-[#2d5bff] transition-all cursor-pointer">
                                             <option value="General">General</option>
                                             {categories.filter(c => c.name !== 'General').map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                                         </select>
@@ -605,10 +618,10 @@ const PersonalExpenseTracker = () => {
                 {showCategoryManager && (
                     <CategoryManager
                         categories={categories}
-                        onUpdate={fetchData}
+                        onUpdate={() => getExpenseCategories({ sector: 'personal' }).then(res => setCategories(res.data))}
                         onClose={() => setShowCategoryManager(false)}
-                        onCreate={createExpenseCategory}
-                        onDelete={deleteExpenseCategory}
+                        onCreate={(data) => createExpenseCategory({ ...data, sector: 'personal' })}
+                        onDelete={(id) => deleteExpenseCategory(id, 'personal')}
                     />
                 )}
 

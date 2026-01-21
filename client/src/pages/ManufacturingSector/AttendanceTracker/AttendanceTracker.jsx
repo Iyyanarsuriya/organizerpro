@@ -24,10 +24,10 @@ import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend
 } from 'recharts';
 import { exportAttendanceToCSV, exportAttendanceToTXT, exportAttendanceToPDF, processAttendanceExportData } from '../../../utils/exportUtils/index.js';
-import ExportButtons from '../../../components/ExportButtons';
-import ProjectManager from '../../../components/ProjectManager';
-import MemberManager from '../../../components/MemberManager';
-import RoleManager from '../../../components/RoleManager';
+import ExportButtons from '../../../components/Common/ExportButtons';
+import ProjectManager from '../../../components/Manufacturing/ProjectManager';
+import MemberManager from '../../../components/Manufacturing/MemberManager';
+import RoleManager from '../../../components/Manufacturing/RoleManager';
 import { getMemberRoles, createMemberRole, deleteMemberRole } from '../../../api/memberRoleApi';
 
 const AttendanceTracker = () => {
