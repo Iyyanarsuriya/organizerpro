@@ -835,6 +835,8 @@ const ITAttendance = () => {
                                                                         </span>
                                                                         {item.project_name && <span className="text-blue-500 flex items-center gap-1 font-black"><div className="w-1 h-1 rounded-full bg-blue-400" /> {item.project_name}</span>}
                                                                         {item.member_name && <span className="text-amber-500 flex items-center gap-1 font-black"><div className="w-1 h-1 rounded-full bg-amber-400" /> {item.member_name}</span>}
+                                                                        {item.created_by && <span className="text-purple-400 flex items-center gap-1">Created: {item.created_by}</span>}
+                                                                        {item.updated_by && <span className="text-orange-400 flex items-center gap-1">Updated: {item.updated_by}</span>}
                                                                     </div>
                                                                 </div>
                                                             </div>

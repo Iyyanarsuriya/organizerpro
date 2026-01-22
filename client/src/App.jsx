@@ -18,6 +18,7 @@ const PersonalExpenseTracker = lazy(() => import('./pages/PersonalSector/Persona
 const ITHome = lazy(() => import('./pages/ITSector/ITHome'));
 const ITReminders = lazy(() => import('./pages/ITSector/ITReminders'));
 const ITAttendance = lazy(() => import('./pages/ITSector/ITAttendance'));
+const ITTeamManagement = lazy(() => import('./pages/ITSector/Team/ITTeamManagement'));
 
 const Reminders = lazy(() => import('./pages/ManufacturingSector/ReminderTracker/Reminders'));
 const Profile = lazy(() => import('./pages/ManufacturingSector/ReminderTracker/ReminderDashboard'));
@@ -237,6 +238,7 @@ const AppContent = () => {
             <Route path="/it" element={<ProtectedRoute><ITHome /></ProtectedRoute>} />
             <Route path="/it/reminders" element={<ProtectedRoute><ITReminders /></ProtectedRoute>} />
             <Route path="/it/attendance" element={<ProtectedRoute><ITAttendance /></ProtectedRoute>} />
+            <Route path="/it/team" element={<ProtectedRoute><ITTeamManagement /></ProtectedRoute>} />
 
             <Route path="/reminders" element={<ProtectedRoute><Reminders /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

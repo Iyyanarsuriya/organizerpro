@@ -3,17 +3,12 @@ const bcrypt = require('bcryptjs');
 
 exports.getSubUsers = async (req, res) => {
     try {
-        // Only owners (or those with an implied usage of this endpoint) can see their team
-        // If I am a sub-user, my owner_id is set.
-        // If I am an owner, my owner_id is null.
-
-        // Strategy: Only 'owner' role can list users? or anyone in the team?
-        // Let's assume only the Owner (the one who pays/registered) can manage the team.
         if (req.user.role !== 'admin' && req.user.role !== 'owner') {
             return res.status(403).json({ error: 'Only the Workspace Owner can manage team members.' });
         }
 
-        const subUsers = await User.findByOwnerId(req.user.id, 'manufacturing');
+        // Fetch users specifically for the IT sector
+        const subUsers = await User.findByOwnerId(req.user.id, 'it');
         res.json(subUsers);
     } catch (error) {
         console.error('getSubUsers error:', error);
@@ -44,10 +39,10 @@ exports.createSubUser = async (req, res) => {
             username,
             email,
             password: hashedPassword,
-            role: role || 'user', // Default to user (child)
-            owner_id: req.user.id, // This links them to the current logged-in owner
+            role: role || 'user',
+            owner_id: req.user.id,
             local_id: localId,
-            sector: 'manufacturing'
+            sector: 'it' // Explicitly set sector to IT
         });
 
         res.status(201).json({ message: 'Team member added successfully', userId });
@@ -67,6 +62,8 @@ exports.deleteSubUser = async (req, res) => {
         }
 
         const { id } = req.params;
+        // The delete logic in User model checks owner_id, so it's safe. 
+        // We could technically verify the user is in 'it' sector, but owner ownership is strong enough.
         const success = await User.delete(id, req.user.id);
 
         if (!success) {

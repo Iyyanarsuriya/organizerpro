@@ -17,10 +17,10 @@ const getTables = (sector) => {
 
 const create = async (data) => {
     const { attendance: TABLE_NAME } = getTables(data.sector);
-    const { user_id, subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason } = data;
+    const { user_id, subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason, created_by } = data;
     const [result] = await db.query(
-        `INSERT INTO ${TABLE_NAME} (user_id, subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [user_id, subject, status, date, note, project_id || null, member_id || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null]
+        `INSERT INTO ${TABLE_NAME} (user_id, subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [user_id, subject, status, date, note, project_id || null, member_id || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, created_by || null, created_by || null]
     );
     return { id: result.insertId, ...data };
 };
@@ -88,10 +88,10 @@ const getAllByUserId = async (userId, filters = {}) => {
 
 const update = async (id, userId, data) => {
     const { attendance: TABLE_NAME } = getTables(data.sector);
-    const { subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason } = data;
+    const { subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason, updated_by } = data;
     const [result] = await db.query(
-        `UPDATE ${TABLE_NAME} SET subject = ?, status = ?, date = ?, note = ?, project_id = ?, member_id = ?, permission_duration = ?, permission_start_time = ?, permission_end_time = ?, permission_reason = ?, overtime_duration = ?, overtime_reason = ? WHERE id = ? AND user_id = ?`,
-        [subject, status, date, note, project_id || null, member_id || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, id, userId]
+        `UPDATE ${TABLE_NAME} SET subject = ?, status = ?, date = ?, note = ?, project_id = ?, member_id = ?, permission_duration = ?, permission_start_time = ?, permission_end_time = ?, permission_reason = ?, overtime_duration = ?, overtime_reason = ?, updated_by = ? WHERE id = ? AND user_id = ?`,
+        [subject, status, date, note, project_id || null, member_id || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, updated_by || null, id, userId]
     );
     return result.affectedRows > 0;
 };
@@ -212,7 +212,7 @@ const getMemberSummary = async (userId, filters = {}) => {
 
 const quickMark = async (data) => {
     const { attendance: TABLE_NAME } = getTables(data.sector);
-    const { user_id, member_id, date, status, project_id, subject, note, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason } = data;
+    const { user_id, member_id, date, status, project_id, subject, note, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason, updated_by } = data;
 
     // Find existing record for this member on this date and project
     let checkQuery = `SELECT id FROM ${TABLE_NAME} WHERE user_id = ? AND member_id = ? AND DATE(date) = ?`;
@@ -230,22 +230,23 @@ const quickMark = async (data) => {
     if (existing.length > 0) {
         // Update existing record
         await db.query(
-            `UPDATE ${TABLE_NAME} SET status = COALESCE(?, status), note = COALESCE(?, note), permission_duration = COALESCE(?, permission_duration), permission_start_time = COALESCE(?, permission_start_time), permission_end_time = COALESCE(?, permission_end_time), permission_reason = COALESCE(?, permission_reason), overtime_duration = COALESCE(?, overtime_duration), overtime_reason = COALESCE(?, overtime_reason) WHERE id = ?`,
-            [status || null, note || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, existing[0].id]
+            `UPDATE ${TABLE_NAME} SET status = COALESCE(?, status), note = COALESCE(?, note), permission_duration = COALESCE(?, permission_duration), permission_start_time = COALESCE(?, permission_start_time), permission_end_time = COALESCE(?, permission_end_time), permission_reason = COALESCE(?, permission_reason), overtime_duration = COALESCE(?, overtime_duration), overtime_reason = COALESCE(?, overtime_reason), updated_by = ? WHERE id = ?`,
+            [status || null, note || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, updated_by || null, existing[0].id]
         );
         return { id: existing[0].id, ...data, updated: true };
     } else {
         // Create new record
         const [result] = await db.query(
-            `INSERT INTO ${TABLE_NAME} (user_id, member_id, date, status, project_id, subject, note, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [user_id, member_id, date, status || 'present', project_id || null, subject || 'Daily Attendance', note || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null]
+            `INSERT INTO ${TABLE_NAME} (user_id, member_id, date, status, project_id, subject, note, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [user_id, member_id, date, status || 'present', project_id || null, subject || 'Daily Attendance', note || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, updated_by || null, updated_by || null]
         );
+        // Note: passing updated_by as created_by in quickMark because only one user argument is passed down usually
         return { id: result.insertId, ...data, created: true };
     }
 };
 
 const bulkMark = async (data) => {
-    const { user_id, member_ids, date, status, subject, note, sector } = data;
+    const { user_id, member_ids, date, status, subject, note, sector, updated_by } = data;
     if (!member_ids || member_ids.length === 0) return { count: 0 };
 
     const promises = member_ids.map(mid => quickMark({
@@ -255,7 +256,8 @@ const bulkMark = async (data) => {
         status,
         subject: subject || (status === 'week_off' ? 'Weekend' : 'Holiday'),
         note,
-        sector
+        sector,
+        updated_by // Use updated_by for consistency with quickMark above
     }));
 
     await Promise.all(promises);
