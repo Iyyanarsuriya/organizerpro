@@ -397,5 +397,18 @@ CREATE TABLE `it_member_roles` (
   UNIQUE KEY `unique_it_role` (`user_id`,`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- IT Categories
+DROP TABLE IF EXISTS `it_categories`;
+CREATE TABLE `it_categories` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(50) NOT NULL,
+  `color` varchar(20) DEFAULT '#2d5bff',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_user_itcat` (`user_id`,`name`),
+  CONSTRAINT `fk_it_cat_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
 

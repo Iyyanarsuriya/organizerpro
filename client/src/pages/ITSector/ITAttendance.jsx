@@ -24,10 +24,10 @@ import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend
 } from 'recharts';
 import { exportAttendanceToCSV, exportAttendanceToTXT, exportAttendanceToPDF, processAttendanceExportData } from '../../utils/exportUtils/index.js';
-import ExportButtons from '../../components/ExportButtons';
+import ExportButtons from '../../components/Common/ExportButtons';
 import ProjectManager from '../../components/Manufacturing/ProjectManager';
-import MemberManager from '../../components/Manufacturing/MemberManager';
-import RoleManager from '../../components/Manufacturing/RoleManager';
+import MemberManager from '../../components/IT/MemberManager';
+
 import { getMemberRoles, createMemberRole, deleteMemberRole } from '../../api/memberRoleApi';
 
 const SECTOR = 'it';
@@ -109,7 +109,6 @@ const ITAttendance = () => {
 
     // Role Management
     const [roles, setRoles] = useState([]);
-    const [showRoleManager, setShowRoleManager] = useState(false);
 
     const [confirmModal, setConfirmModal] = useState({ show: false, type: null, label: '', id: null });
     const [filterRole, setFilterRole] = useState('');
@@ -1269,17 +1268,7 @@ const ITAttendance = () => {
                 />
             )
             }
-            {
-                showRoleManager && (
-                    <RoleManager
-                        roles={roles}
-                        onCreate={(data) => createMemberRole({ ...data, sector: SECTOR })}
-                        onDelete={(id) => deleteMemberRole(id, { sector: SECTOR })}
-                        onClose={() => { setShowRoleManager(false); fetchData(); }}
-                        onRefresh={() => getMemberRoles({ sector: SECTOR }).then(res => setRoles(res.data.data))}
-                    />
-                )
-            }
+
             {showOvertimeModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
                     <div className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl p-6 relative animate-in zoom-in-95 duration-300">

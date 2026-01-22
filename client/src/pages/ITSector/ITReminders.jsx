@@ -10,8 +10,8 @@ import { FaBell, FaTimes } from 'react-icons/fa';
 import { LayoutDashboard } from 'lucide-react';
 import { getCategories, createCategory, deleteCategory } from '../../api/categoryApi';
 
-import CategoryManager from '../../components/CategoryManager';
-import ExportButtons from '../../components/ExportButtons';
+import CategoryManager from '../../components/Common/CategoryManager';
+import ExportButtons from '../../components/Common/ExportButtons';
 import { exportReminderToCSV, exportReminderToTXT, exportReminderToPDF } from '../../utils/exportUtils/index.js';
 import Notes from '../Notes/Notes'; // Helper Import
 
@@ -64,7 +64,7 @@ const ITReminders = () => {
             const [remindersRes, userRes, categoriesRes] = await Promise.all([
                 getReminders({ sector: SECTOR }),
                 getMe(),
-                getCategories()
+                getCategories({ sector: SECTOR })
             ]);
             setReminders(remindersRes.data);
             setUser(userRes.data);
@@ -110,7 +110,7 @@ const ITReminders = () => {
     }, [lastNotifiedTimes]);
 
     // Keep a ref of reminders for the background interval to avoid restarting it
-    const ITRemindersRef = useRef(reminders);
+    const remindersRef = useRef(reminders);
     useEffect(() => {
         remindersRef.current = reminders;
 
@@ -1059,11 +1059,11 @@ const ITReminders = () => {
                         <CategoryManager
                             categories={categories}
                             onUpdate={() => {
-                                getCategories().then(res => setCategories(res.data));
+                                getCategories({ sector: SECTOR }).then(res => setCategories(res.data));
                                 // No need to refresh reminders, but good practice
                             }}
-                            onCreate={createCategory}
-                            onDelete={deleteCategory}
+                            onCreate={(data) => createCategory({ ...data, sector: SECTOR })}
+                            onDelete={(id) => deleteCategory(id, { sector: SECTOR })}
                             onClose={() => setShowCategoryManager(false)}
                         />
                     )
