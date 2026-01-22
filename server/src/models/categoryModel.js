@@ -3,7 +3,6 @@ const db = require('../config/db');
 const getTableName = (sector) => {
     switch (sector) {
         case 'it': return 'it_categories';
-        case 'manufacturing': return 'manufacturing_expense_categories'; // Assuming this for later, keep in mind
         case 'personal':
         default: return 'personal_categories';
     }

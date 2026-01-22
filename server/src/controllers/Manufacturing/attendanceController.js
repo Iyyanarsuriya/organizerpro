@@ -141,6 +141,24 @@ const quickMarkAttendance = async (req, res) => {
     }
 };
 
+const bulkMarkAttendance = async (req, res) => {
+    try {
+        if (req.user.owner_id) {
+            const today = new Date().toISOString().split('T')[0];
+            if (req.body.date < today) {
+                return res.status(403).json({ success: false, message: "Child users cannot mark for previous days." });
+            }
+        }
+        const result = await Attendance.bulkMark({
+            ...req.body,
+            user_id: req.user.data_owner_id
+        });
+        res.status(200).json({ success: true, data: result });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     createAttendance,
     getAttendances,
@@ -148,5 +166,6 @@ module.exports = {
     deleteAttendance,
     getAttendanceStats,
     getMemberSummary,
-    quickMarkAttendance
+    quickMarkAttendance,
+    bulkMarkAttendance
 };

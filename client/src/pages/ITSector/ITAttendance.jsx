@@ -8,7 +8,9 @@ import {
     deleteAttendance,
     getAttendanceStats,
     getMemberSummary,
-    quickMarkAttendance
+    quickMarkAttendance,
+    quickMarkITAttendance,
+    bulkMarkITAttendance
 } from '../../api/attendanceApi';
 import { getProjects, createProject, deleteProject } from '../../api/projectApi';
 import { getActiveMembers } from '../../api/memberApi';
@@ -28,7 +30,7 @@ import ExportButtons from '../../components/Common/ExportButtons';
 import ProjectManager from '../../components/Manufacturing/ProjectManager';
 import MemberManager from '../../components/IT/MemberManager';
 
-import { getMemberRoles, createMemberRole, deleteMemberRole } from '../../api/memberRoleApi';
+import { getMemberRoles } from '../../api/memberRoleApi';
 
 const SECTOR = 'it';
 
@@ -98,6 +100,13 @@ const ITAttendance = () => {
         attendance_id: null
     });
 
+    const [showBulkStatusModal, setShowBulkStatusModal] = useState(false);
+    const [bulkStatusData, setBulkStatusData] = useState({
+        status: '',
+        date: '',
+        reason: ''
+    });
+
     const [showWorkDoneModal, setShowWorkDoneModal] = useState(false);
     const [workDoneModalData, setWorkDoneModalData] = useState({
         member_id: null,
@@ -132,7 +141,9 @@ const ITAttendance = () => {
         { id: 'absent', label: 'Absent', icon: FaTimesCircle, color: 'text-red-500', bg: 'bg-red-50', border: 'border-red-100' },
         { id: 'late', label: 'Late', icon: FaClock, color: 'text-amber-500', bg: 'bg-amber-50', border: 'border-amber-100' },
         { id: 'half-day', label: 'Half Day', icon: FaExclamationCircle, color: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-100' },
-        { id: 'permission', label: 'Permission', icon: FaBusinessTime, color: 'text-purple-500', bg: 'bg-purple-50', border: 'border-purple-100' }
+        { id: 'permission', label: 'Permission', icon: FaBusinessTime, color: 'text-purple-500', bg: 'bg-purple-50', border: 'border-purple-100' },
+        { id: 'week_off', label: 'Week Off', icon: FaCalendarAlt, color: 'text-slate-500', bg: 'bg-slate-50', border: 'border-slate-100' },
+        { id: 'holiday', label: 'Holiday', icon: FaCalendarAlt, color: 'text-pink-500', bg: 'bg-pink-50', border: 'border-pink-100' }
     ];
 
     function getHexColor(status) {
@@ -141,7 +152,9 @@ const ITAttendance = () => {
             case 'absent': return '#ef4444';
             case 'late': return '#f59e0b';
             case 'half-day': return '#3b82f6';
-            case 'permission': return '#a855f7'; // Purple
+            case 'permission': return '#a855f7';
+            case 'week_off': return '#64748b';
+            case 'holiday': return '#ec4899';
             default: return '#94a3b8';
         }
     }
@@ -240,7 +253,7 @@ const ITAttendance = () => {
                 payload.overtime_reason = overtimeData.reason;
             }
 
-            await quickMarkAttendance(payload);
+            await quickMarkITAttendance(payload);
             fetchData();
         } catch (error) {
             toast.error("Failed to update");
@@ -248,6 +261,55 @@ const ITAttendance = () => {
     };
 
 
+
+    const handleBulkMark = (status) => {
+        const targetDate = activeTargetDate;
+        const isChild = currentUser.owner_id != null;
+        const today = new Date().toISOString().split('T')[0];
+
+        if (isChild && targetDate < today) {
+            toast.error("Child users cannot mark for previous days.");
+            return;
+        }
+
+        setBulkStatusData({
+            status,
+            date: targetDate,
+            reason: ''
+        });
+        setShowBulkStatusModal(true);
+    };
+
+    const confirmBulkMark = async () => {
+        const { status, date, reason } = bulkStatusData;
+
+        let subject = status === 'week_off' ? 'Weekend' : 'Bulk Mark';
+        let note = null;
+
+        if (status === 'holiday') {
+            subject = reason.trim() || 'Holiday';
+            note = subject;
+        }
+
+        try {
+            const memberIds = members.map(m => m.id);
+            const payload = {
+                member_ids: memberIds,
+                date,
+                status,
+                subject,
+                note,
+                sector: SECTOR
+            };
+
+            await bulkMarkITAttendance(payload);
+            toast.success("Bulk update successful");
+            fetchData();
+            setShowBulkStatusModal(false);
+        } catch (err) {
+            toast.error("Failed to bulk update");
+        }
+    };
 
     const handleDelete = (id) => {
         setConfirmModal({ show: true, type: 'DELETE', label: 'Delete Record', id });
@@ -634,6 +696,29 @@ const ITAttendance = () => {
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         className="w-full h-[38px] pl-8 pr-3 bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all shadow-sm"
                                     />
+                                </div>
+
+                                {/* Bulk Mark - NEW */}
+                                <div className="relative group">
+                                    <button
+                                        className="h-[38px] px-3 bg-white border border-slate-200 rounded-xl flex items-center gap-2 text-[11px] font-bold text-slate-500 hover:text-blue-600 hover:border-blue-500 transition-all cursor-pointer shadow-sm"
+                                        title="Bulk Mark Status"
+                                    >
+                                        <FaCalendarAlt />
+                                        <span className="hidden md:inline">Bulk</span>
+                                    </button>
+                                    <select
+                                        value=""
+                                        onChange={(e) => {
+                                            if (e.target.value) handleBulkMark(e.target.value);
+                                        }}
+                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                    >
+                                        <option value="">Bulk Mark</option>
+                                        <option value="week_off">Week Off</option>
+                                        <option value="holiday">Holiday</option>
+                                        <option value="present">All Present</option>
+                                    </select>
                                 </div>
 
                             </div>
@@ -1394,6 +1479,55 @@ const ITAttendance = () => {
                                     className="flex-1 py-2.5 rounded-xl bg-purple-600 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-purple-500/20 hover:bg-purple-700 transition-colors"
                                 >
                                     Save
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showBulkStatusModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl p-6 relative animate-in zoom-in-95 duration-300">
+                        <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
+                            <FaCalendarAlt className="text-pink-500" />
+                            {bulkStatusData.status === 'holiday' ? 'Mark Holiday' : 'Bulk Mark Status'}
+                        </h3>
+
+                        <div className="space-y-4">
+                            <p className="text-xs font-bold text-slate-500 leading-relaxed">
+                                You are about to mark <span className="text-slate-900">{members.length} active members</span> as <span className="uppercase text-blue-600">{bulkStatusData.status.replace('_', ' ')}</span> for <span className="text-slate-900">{bulkStatusData.date}</span>.
+                            </p>
+
+                            {bulkStatusData.status === 'holiday' && (
+                                <div>
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Holiday Reason</label>
+                                    <input
+                                        type="text"
+                                        value={bulkStatusData.reason}
+                                        onChange={(e) => setBulkStatusData({ ...bulkStatusData, reason: e.target.value })}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-700 outline-none focus:border-pink-500 transition-colors"
+                                        placeholder="e.g. Diwali, Independence Day..."
+                                        autoFocus
+                                    />
+                                </div>
+                            )}
+
+                            <div className="flex gap-3 mt-4">
+                                <button
+                                    onClick={() => setShowBulkStatusModal(false)}
+                                    className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmBulkMark}
+                                    className={`flex-1 py-3 rounded-xl text-white text-xs font-black uppercase tracking-widest shadow-lg transition-colors ${bulkStatusData.status === 'holiday'
+                                        ? 'bg-pink-500 shadow-pink-500/20 hover:bg-pink-600'
+                                        : 'bg-blue-600 shadow-blue-500/20 hover:bg-blue-700'
+                                        }`}
+                                >
+                                    Confirm
                                 </button>
                             </div>
                         </div>

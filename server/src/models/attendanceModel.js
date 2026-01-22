@@ -244,6 +244,24 @@ const quickMark = async (data) => {
     }
 };
 
+const bulkMark = async (data) => {
+    const { user_id, member_ids, date, status, subject, note, sector } = data;
+    if (!member_ids || member_ids.length === 0) return { count: 0 };
+
+    const promises = member_ids.map(mid => quickMark({
+        user_id,
+        member_id: mid,
+        date,
+        status,
+        subject: subject || (status === 'week_off' ? 'Weekend' : 'Holiday'),
+        note,
+        sector
+    }));
+
+    await Promise.all(promises);
+    return { count: member_ids.length };
+};
+
 module.exports = {
     create,
     findById,
@@ -252,5 +270,6 @@ module.exports = {
     delete: deleteResult,
     getStats,
     getMemberSummary,
-    quickMark
+    quickMark,
+    bulkMark
 };

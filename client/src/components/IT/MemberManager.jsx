@@ -363,7 +363,7 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
 
                 {/* Filter Bar - Modern Design */}
                 <div className="bg-white/80 backdrop-blur-xl p-4 rounded-[24px] border border-white/20 shadow-xl shadow-slate-200/50 mb-6 sticky top-2 z-10">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                         {/* Category Filter - Indigo */}
                         <div className="relative group">
                             <FaTag className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400 group-hover:text-indigo-500 transition-colors" size={12} />
@@ -376,17 +376,7 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-indigo-400 text-[10px]">▼</div>
                         </div>
 
-                        {/* Type Filter - Emerald */}
-                        <div className="relative group">
-                            <FaUser className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-emerald-400 group-hover:text-emerald-500 transition-colors" size={12} />
-                            <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="w-full bg-emerald-50 hover:bg-emerald-100 border border-transparent rounded-2xl py-2 md:py-3 pl-8 md:pl-10 pr-6 md:pr-10 text-[10px] md:text-xs font-black text-emerald-600 text-center outline-none focus:ring-2 focus:ring-emerald-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
-                                <option value="all">All Types</option>
-                                <option value="worker">Worker</option>
-                                <option value="employee">Employee</option>
-                                <option value="guest">Guest</option>
-                            </select>
-                            <div className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 pointer-events-none text-emerald-400 text-[10px]">▼</div>
-                        </div>
+
 
                         {/* Status Filter - Purple */}
                         <div className="relative group">
@@ -475,13 +465,7 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
                                             </div>
                                         </div>
                                         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button
-                                                onClick={() => handleViewPayments(member)}
-                                                className="p-3 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
-                                                title="History"
-                                            >
-                                                <FaUniversity />
-                                            </button>
+
                                             {!member.isGuest && (
                                                 <>
                                                     <button
@@ -540,98 +524,7 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
                 type="danger"
             />
 
-            {/* History Modal */}
-            {
-                viewingPayments && (
-                    <div className="fixed inset-0 z-120 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-                        {/* ... modal content ... */}
-                        {/* I will assume the modal content is fine but need to ensure the closing tags for the main component are correct. */}
-                        {/* The logic suggests I have 2 div tags open: the main wrapper, and the flex-1 content wrapper. */}
-                        {/* The original code had 2 main div tags corresponding to the modal structure. */}
-                        {/* So the closing tags should be fine if I didn't change the number of open tags. */}
-                        {/* Checking the middle... */}
 
-                        <div className="bg-white rounded-[40px] p-[32px] sm:p-[40px] w-full max-w-2xl shadow-2xl relative animate-in zoom-in-95 duration-300 max-h-[85vh] flex flex-col font-['Outfit']">
-                            <button
-                                onClick={() => setViewingPayments(null)}
-                                className="absolute top-8 right-8 text-slate-400 hover:text-slate-800 transition-colors"
-                            >
-                                <FaTimes className="text-[20px]" />
-                            </button>
-
-                            <div className="mb-[32px]">
-                                <h2 className="text-[24px] font-black text-slate-900 flex items-center gap-3">
-                                    <div className="w-2 h-8 bg-emerald-500 rounded-full"></div>
-                                    Activity History: {viewingPayments.name}
-                                </h2>
-                                <p className="text-slate-500 text-[14px] mt-2 ml-5 uppercase font-bold tracking-widest">Linked records for this member</p>
-                            </div>
-
-                            <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-                                {paymentsLoading ? (
-                                    <div className="flex justify-center py-20">
-                                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
-                                    </div>
-                                ) : payments.length > 0 ? (
-                                    <div className="space-y-[16px]">
-                                        {payments.map(p => (
-                                            <div key={p.id} className="flex justify-between items-center p-[24px] bg-slate-50 rounded-[24px] border border-slate-100 hover:border-emerald-200 transition-all">
-                                                <div className="flex items-center gap-[16px]">
-                                                    <div className={`w-[48px] h-[48px] rounded-[16px] flex items-center justify-center text-[18px] ${p.type === 'income' ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-600'}`}>
-                                                        {p.type === 'income' ? <FaPlus /> : <FaMoneyBillWave />}
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-black text-slate-800">{p.title}</p>
-                                                        <div className="flex items-center gap-2 mt-1">
-                                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{p.category}</span>
-                                                            <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                                            <span className="text-[10px] font-bold text-slate-400">
-                                                                {(() => {
-                                                                    const d = new Date(p.date);
-                                                                    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-                                                                })()}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className={`text-[20px] font-black tracking-tighter ${p.type === 'income' ? 'text-blue-600' : 'text-red-600'}`}>
-                                                        {p.type === 'income' ? '+' : '-'}₹{p.amount}
-                                                    </p>
-                                                    {p.project_name && <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Project: {p.project_name}</p>}
-                                                </div>
-                                            </div>
-                                        ))}
-                                        <div className="pt-6 border-t border-slate-100 sticky bottom-0 bg-white">
-                                            <div className={`flex justify-between items-center p-[24px] rounded-[24px] text-white ${(() => {
-                                                const earned = payments.filter(p => p.category === 'Salary Pot').reduce((acc, p) => acc + parseFloat(p.amount), 0);
-                                                const paid = payments.filter(p => ['Salary', 'Advance'].includes(p.category)).reduce((acc, p) => acc + parseFloat(p.amount), 0);
-                                                return (earned - paid) > 0 ? 'bg-amber-600' : 'bg-slate-900';
-                                            })()
-                                                }`}>
-                                                <span className="font-black uppercase tracking-widest text-[12px]">Ledger Balance (Owed)</span>
-                                                <span className="text-[24px] font-black tracking-tighter">
-                                                    ₹{(() => {
-                                                        const earned = payments.filter(p => p.category === 'Salary Pot').reduce((acc, p) => acc + parseFloat(p.amount), 0);
-                                                        const paid = payments.filter(p => ['Salary', 'Advance'].includes(p.category)).reduce((acc, p) => acc + parseFloat(p.amount), 0);
-                                                        return (earned - paid).toFixed(2);
-                                                    })()}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-20 text-slate-400 font-['Outfit']">
-                                        <FaHistory className="text-[60px] mx-auto mb-4 opacity-10" />
-                                        <p className="font-black uppercase tracking-widest text-[14px] text-slate-300">No records found</p>
-                                        <p className="text-[10px] mt-2 font-bold uppercase tracking-widest text-slate-400">Add an expense and link this person to see history</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
         </div >
     );
 };
