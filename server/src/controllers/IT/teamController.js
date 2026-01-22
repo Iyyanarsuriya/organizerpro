@@ -1,4 +1,5 @@
 const User = require('../../models/userModel');
+const Member = require('../../models/memberModel');
 const bcrypt = require('bcryptjs');
 
 exports.getSubUsers = async (req, res) => {
@@ -44,6 +45,22 @@ exports.createSubUser = async (req, res) => {
             local_id: localId,
             sector: 'it' // Explicitly set sector to IT
         });
+
+        // Automatically create a Member entry for Attendance tracking
+        try {
+            await Member.create({
+                user_id: req.user.id, // Linked to the Owner
+                name: username,
+                role: role || 'staff',
+                email: email,
+                status: 'active',
+                sector: 'it',
+                member_type: 'employee' // default type
+            });
+        } catch (memberError) {
+            console.error('Failed to auto-create member for user:', memberError);
+            // We don't fail the request, but we log it. User is created.
+        }
 
         res.status(201).json({ message: 'Team member added successfully', userId });
     } catch (error) {

@@ -20,7 +20,7 @@ const create = async (data) => {
     const { user_id, subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason, created_by } = data;
     const [result] = await db.query(
         `INSERT INTO ${TABLE_NAME} (user_id, subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [user_id, subject, status, date, note, project_id || null, member_id || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, created_by || null, created_by || null]
+        [user_id, subject, status, date, note, project_id || null, member_id || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, created_by || null, null]
     );
     return { id: result.insertId, ...data };
 };
@@ -238,9 +238,9 @@ const quickMark = async (data) => {
         // Create new record
         const [result] = await db.query(
             `INSERT INTO ${TABLE_NAME} (user_id, member_id, date, status, project_id, subject, note, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [user_id, member_id, date, status || 'present', project_id || null, subject || 'Daily Attendance', note || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, updated_by || null, updated_by || null]
+            [user_id, member_id, date, status || 'present', project_id || null, subject || 'Daily Attendance', note || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, updated_by || null, null]
         );
-        // Note: passing updated_by as created_by in quickMark because only one user argument is passed down usually
+        // Note: passing updated_by as created_by in quickMark insert
         return { id: result.insertId, ...data, created: true };
     }
 };

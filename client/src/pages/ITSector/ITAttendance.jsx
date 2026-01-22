@@ -667,13 +667,7 @@ const ITAttendance = () => {
                                         ))}
                                     </select>
                                 </div>
-                                <button
-                                    onClick={() => setShowRoleManager(true)}
-                                    className="w-[38px] h-[38px] bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center hover:bg-purple-50 hover:text-purple-600 transition-all shadow-sm border border-slate-200 shrink-0"
-                                    title="Manage Categories"
-                                >
-                                    <FaTag />
-                                </button>
+
                             </div>
 
                             {/* Global Search & Mark Button */}
