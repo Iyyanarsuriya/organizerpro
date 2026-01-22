@@ -1,7 +1,9 @@
 const db = require('../config/db');
 
 const getTableName = (sector) => {
-    return sector === 'manufacturing' ? 'manufacturing_reminders' : 'personal_reminders';
+    if (sector === 'manufacturing') return 'manufacturing_reminders';
+    if (sector === 'it') return 'it_reminders';
+    return 'personal_reminders';
 };
 
 const getAllByUserId = async (userId, sector) => {
@@ -28,6 +30,9 @@ const create = async (reminderData) => {
     if (table === 'manufacturing_reminders') {
         query = `INSERT INTO ${table} (user_id, title, description, due_date, priority, status) VALUES (?, ?, ?, ?, ?, ?)`;
         params = [user_id, title, description, finalDate, priority || 'medium', 'pending'];
+    } else if (table === 'it_reminders') {
+        query = `INSERT INTO ${table} (user_id, title, description, due_date, priority, category) VALUES (?, ?, ?, ?, ?, ?)`;
+        params = [user_id, title, description, finalDate, priority || 'medium', category || 'General'];
     } else {
         query = `INSERT INTO ${table} (user_id, title, description, due_date, priority, category, google_event_id) VALUES (?, ?, ?, ?, ?, ?, ?)`;
         params = [user_id, title, description, finalDate, priority || 'medium', category || 'General', google_event_id || null];
@@ -39,7 +44,7 @@ const create = async (reminderData) => {
 
 const updateGoogleEventId = async (id, googleEventId, sector) => {
     const table = getTableName(sector);
-    if (table === 'manufacturing_reminders') return false; // Not supported
+    if (table !== 'personal_reminders') return false; // Only supported for personal
     const [result] = await db.query(
         `UPDATE ${table} SET google_event_id = ? WHERE id = ?`,
         [googleEventId, id]
@@ -58,14 +63,14 @@ const updateStatus = async (id, userId, is_completed, sector) => {
         } else {
             query += ', completed_at = NULL';
         }
-    } else {
-        // Manufacturing
+    } else if (table === 'manufacturing_reminders') {
         if (is_completed) {
             query += ', status = "completed"';
         } else {
             query += ', status = "pending"';
         }
     }
+    // IT reminders just toggle is_completed, no extra status/timestamp columns in current schema design.
 
     query += ' WHERE id = ? AND user_id = ?';
     params.push(id, userId);
@@ -73,6 +78,8 @@ const updateStatus = async (id, userId, is_completed, sector) => {
     const [result] = await db.query(query, params);
     return result.affectedRows > 0;
 };
+
+
 
 const deleteReminder = async (id, userId, sector) => {
     const table = getTableName(sector);

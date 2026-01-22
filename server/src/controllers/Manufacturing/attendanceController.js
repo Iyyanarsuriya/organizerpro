@@ -23,7 +23,8 @@ const getAttendances = async (req, res) => {
             period: req.query.period,
             startDate: req.query.startDate,
             endDate: req.query.endDate,
-            role: req.query.role
+            role: req.query.role,
+            sector: req.query.sector
         };
         const attendances = await Attendance.getAllByUserId(req.user.data_owner_id, filters);
         res.status(200).json({ success: true, data: attendances });
@@ -63,7 +64,7 @@ const deleteAttendance = async (req, res) => {
     try {
         if (req.user.owner_id) {
             const today = new Date().toISOString().split('T')[0];
-            const existing = await Attendance.findById(req.params.id);
+            const existing = await Attendance.findById(req.params.id, req.query.sector);
             if (!existing) {
                 return res.status(404).json({ success: false, message: "Attendance not found" });
             }
@@ -72,7 +73,7 @@ const deleteAttendance = async (req, res) => {
                 return res.status(403).json({ success: false, message: "Child users cannot delete attendance from previous days." });
             }
         }
-        const deleted = await Attendance.delete(req.params.id, req.user.data_owner_id);
+        const deleted = await Attendance.delete(req.params.id, req.user.data_owner_id, req.query.sector);
         if (deleted) {
             res.status(200).json({ success: true, message: "Attendance deleted" });
         } else {
@@ -91,7 +92,8 @@ const getAttendanceStats = async (req, res) => {
             endDate: req.query.endDate,
             projectId: req.query.projectId,
             memberId: req.query.memberId,
-            role: req.query.role
+            role: req.query.role,
+            sector: req.query.sector
         });
         res.status(200).json({ success: true, data: stats });
     } catch (error) {
@@ -107,7 +109,13 @@ const getMemberSummary = async (req, res) => {
             endDate: req.query.endDate,
             projectId: req.query.projectId
         };
-        const summary = await Attendance.getMemberSummary(req.user.data_owner_id, filters);
+        const summary = await Attendance.getMemberSummary(req.user.data_owner_id, {
+            period: req.query.period,
+            startDate: req.query.startDate,
+            endDate: req.query.endDate,
+            projectId: req.query.projectId,
+            sector: req.query.sector
+        });
         res.status(200).json({ success: true, data: summary });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

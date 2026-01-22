@@ -1,26 +1,29 @@
 const db = require('../config/db');
 
-const TABLE_NAME = 'manufacturing_member_roles';
+const getTableName = (sector) => sector === 'it' ? 'it_member_roles' : 'manufacturing_member_roles';
 
-const create = async (userId, name) => {
+const create = async (userId, name, sector) => {
+    const table = getTableName(sector);
     const [result] = await db.query(
-        `INSERT INTO ${TABLE_NAME} (user_id, name) VALUES (?, ?)`,
+        `INSERT INTO ${table} (user_id, name) VALUES (?, ?)`,
         [userId, name]
     );
     return { id: result.insertId, user_id: userId, name };
 };
 
-const getAllByUserId = async (userId) => {
+const getAllByUserId = async (userId, sector) => {
+    const table = getTableName(sector);
     const [rows] = await db.query(
-        `SELECT * FROM ${TABLE_NAME} WHERE user_id = ? ORDER BY name ASC`,
+        `SELECT * FROM ${table} WHERE user_id = ? ORDER BY name ASC`,
         [userId]
     );
     return rows;
 };
 
-const deleteResult = async (id, userId) => {
+const deleteResult = async (id, userId, sector) => {
+    const table = getTableName(sector);
     const [result] = await db.query(
-        `DELETE FROM ${TABLE_NAME} WHERE id = ? AND user_id = ?`,
+        `DELETE FROM ${table} WHERE id = ? AND user_id = ?`,
         [id, userId]
     );
     return result.affectedRows > 0;

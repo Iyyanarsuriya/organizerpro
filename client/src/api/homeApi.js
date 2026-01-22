@@ -1,7 +1,7 @@
 import axiosInstance from './axiosInstance';
 
-export const getReminders = async () => {
-    return await axiosInstance.get('/reminders');
+export const getReminders = async (params) => {
+    return await axiosInstance.get('/reminders', { params });
 };
 
 export const createReminder = async (reminderData) => {
@@ -12,8 +12,8 @@ export const updateReminder = async (id, updateData) => {
     return await axiosInstance.put(`/reminders/${id}`, updateData);
 };
 
-export const deleteReminder = async (id) => {
-    return await axiosInstance.delete(`/reminders/${id}`);
+export const deleteReminder = async (id, params) => {
+    return await axiosInstance.delete(`/reminders/${id}`, { params });
 };
 
 export const triggerMissedAlert = async (dateOrOptions = null) => {

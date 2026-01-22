@@ -305,5 +305,97 @@ CREATE TABLE `manufacturing_reminders` (
   CONSTRAINT `fk_man_remind_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+
+-- ==========================================
+-- IT SECTOR TABLES
+-- ==========================================
+
+-- IT Projects
+DROP TABLE IF EXISTS `it_projects`;
+CREATE TABLE `it_projects` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `description` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `fk_it_proj_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- IT Members
+DROP TABLE IF EXISTS `it_members`;
+CREATE TABLE `it_members` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `role` varchar(100) DEFAULT NULL,
+  `phone` varchar(20) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `status` enum('active','inactive') DEFAULT 'active',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `wage_type` enum('daily','monthly','piece_rate') DEFAULT 'daily',
+  `daily_wage` decimal(15,2) DEFAULT '0.00',
+  `member_type` enum('employee','worker') DEFAULT 'worker',
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `fk_it_memb_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- IT Attendance
+DROP TABLE IF EXISTS `it_attendance`;
+CREATE TABLE `it_attendance` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `member_id` int DEFAULT NULL,
+  `status` enum('present','absent','late','half-day','permission') NOT NULL,
+  `date` date NOT NULL,
+  `note` text,
+  `project_id` int DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `permission_duration` varchar(100) DEFAULT NULL,
+  `permission_start_time` varchar(20) DEFAULT NULL,
+  `permission_end_time` varchar(20) DEFAULT NULL,
+  `permission_reason` text,
+  `overtime_duration` varchar(100) DEFAULT NULL,
+  `overtime_reason` text,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  KEY `fk_it_att_proj` (`project_id`),
+  KEY `fk_it_att_memb` (`member_id`),
+  CONSTRAINT `fk_it_att_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_it_att_proj` FOREIGN KEY (`project_id`) REFERENCES `it_projects` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_it_att_memb` FOREIGN KEY (`member_id`) REFERENCES `it_members` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- IT Reminders
+DROP TABLE IF EXISTS `it_reminders`;
+CREATE TABLE `it_reminders` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text,
+  `due_date` datetime DEFAULT NULL,
+  `priority` enum('low','medium','high') DEFAULT 'medium',
+  `is_completed` tinyint(1) DEFAULT '0',
+  `category` varchar(50) DEFAULT 'General',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `fk_it_remind_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- IT Member Roles
+DROP TABLE IF EXISTS `it_member_roles`;
+CREATE TABLE `it_member_roles` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_it_role` (`user_id`,`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
 

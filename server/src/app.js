@@ -5,7 +5,6 @@ const fs = require("fs");
 require("dotenv").config();
 
 const authRoutes = require("./routes/Common/authRoutes");
-// const reminderRoutes = require("./routes/Personal/reminderRoutes"); // Moved inline
 const pushRoutes = require("./routes/Common/pushRoutes");
 const transactionRoutes = require("./routes/Common/transactionRoutes");
 const categoryRoutes = require("./routes/Common/categoryRoutes");

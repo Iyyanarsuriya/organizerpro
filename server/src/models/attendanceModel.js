@@ -1,10 +1,22 @@
 const db = require('../config/db');
 
-const TABLE_NAME = 'manufacturing_attendance';
-const MEMBERS_TABLE = 'manufacturing_members';
-const PROJECTS_TABLE = 'manufacturing_projects';
+const getTables = (sector) => {
+    if (sector === 'it') {
+        return {
+            attendance: 'it_attendance',
+            members: 'it_members',
+            projects: 'it_projects'
+        };
+    }
+    return {
+        attendance: 'manufacturing_attendance',
+        members: 'manufacturing_members',
+        projects: 'manufacturing_projects'
+    };
+};
 
 const create = async (data) => {
+    const { attendance: TABLE_NAME } = getTables(data.sector);
     const { user_id, subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason } = data;
     const [result] = await db.query(
         `INSERT INTO ${TABLE_NAME} (user_id, subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -13,12 +25,14 @@ const create = async (data) => {
     return { id: result.insertId, ...data };
 };
 
-const findById = async (id) => {
+const findById = async (id, sector) => {
+    const { attendance: TABLE_NAME } = getTables(sector);
     const [rows] = await db.query(`SELECT * FROM ${TABLE_NAME} WHERE id = ?`, [id]);
     return rows[0];
 };
 
 const getAllByUserId = async (userId, filters = {}) => {
+    const { attendance: TABLE_NAME, members: MEMBERS_TABLE, projects: PROJECTS_TABLE } = getTables(filters.sector);
     let query = `SELECT a.*, p.name as project_name, w.name as member_name 
                     FROM ${TABLE_NAME} a 
                     LEFT JOIN ${PROJECTS_TABLE} p ON a.project_id = p.id 
@@ -73,6 +87,7 @@ const getAllByUserId = async (userId, filters = {}) => {
 };
 
 const update = async (id, userId, data) => {
+    const { attendance: TABLE_NAME } = getTables(data.sector);
     const { subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason } = data;
     const [result] = await db.query(
         `UPDATE ${TABLE_NAME} SET subject = ?, status = ?, date = ?, note = ?, project_id = ?, member_id = ?, permission_duration = ?, permission_start_time = ?, permission_end_time = ?, permission_reason = ?, overtime_duration = ?, overtime_reason = ? WHERE id = ? AND user_id = ?`,
@@ -81,7 +96,8 @@ const update = async (id, userId, data) => {
     return result.affectedRows > 0;
 };
 
-const deleteResult = async (id, userId) => {
+const deleteResult = async (id, userId, sector) => {
+    const { attendance: TABLE_NAME } = getTables(sector);
     const [result] = await db.query(
         `DELETE FROM ${TABLE_NAME} WHERE id = ? AND user_id = ?`,
         [id, userId]
@@ -90,6 +106,7 @@ const deleteResult = async (id, userId) => {
 };
 
 const getStats = async (userId, filters = {}) => {
+    const { attendance: TABLE_NAME, members: MEMBERS_TABLE } = getTables(filters.sector);
     let query = `
         SELECT 
             status, 
@@ -137,6 +154,7 @@ const getStats = async (userId, filters = {}) => {
 };
 
 const getMemberSummary = async (userId, filters = {}) => {
+    const { attendance: TABLE_NAME, members: MEMBERS_TABLE } = getTables(filters.sector);
     let query = `
         SELECT 
             w.id,
@@ -193,6 +211,7 @@ const getMemberSummary = async (userId, filters = {}) => {
 };
 
 const quickMark = async (data) => {
+    const { attendance: TABLE_NAME } = getTables(data.sector);
     const { user_id, member_id, date, status, project_id, subject, note, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason } = data;
 
     // Find existing record for this member on this date and project

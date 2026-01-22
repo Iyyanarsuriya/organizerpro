@@ -4,7 +4,7 @@ const googleService = require('../../services/googleCalendarService');
 
 exports.getReminders = async (req, res) => {
     try {
-        const rows = await Reminder.getAllByUserId(req.user.data_owner_id);
+        const rows = await Reminder.getAllByUserId(req.user.data_owner_id, req.query.sector);
         res.json(rows);
     } catch (error) {
         console.error(error);
@@ -13,7 +13,7 @@ exports.getReminders = async (req, res) => {
 };
 
 exports.createReminder = async (req, res) => {
-    const { title, description, due_date, priority, category } = req.body;
+    const { title, description, due_date, priority, category, sector } = req.body;
     try {
         const newReminder = await Reminder.create({
             user_id: req.user.data_owner_id,
@@ -21,20 +21,23 @@ exports.createReminder = async (req, res) => {
             description,
             due_date,
             priority,
-            category
+            category,
+            sector
         });
 
-        // Sync with Google Calendar if connected (Using Data Owner's Token)
-        const user = await User.findById(req.user.data_owner_id);
-        if (user && user.google_refresh_token && due_date) {
-            try {
-                const event = await googleService.createEvent(user.google_refresh_token, newReminder);
-                if (event && event.id) {
-                    await Reminder.updateGoogleEventId(newReminder.id, event.id);
-                    newReminder.google_event_id = event.id;
+        // Sync with Google Calendar if connected (Using Data Owner's Token) & Sector is Personal (implicit check in model but good here too)
+        if (sector === 'personal' || !sector) {
+            const user = await User.findById(req.user.data_owner_id);
+            if (user && user.google_refresh_token && due_date) {
+                try {
+                    const event = await googleService.createEvent(user.google_refresh_token, newReminder);
+                    if (event && event.id) {
+                        await Reminder.updateGoogleEventId(newReminder.id, event.id, sector);
+                        newReminder.google_event_id = event.id;
+                    }
+                } catch (gErr) {
+                    console.error('Failed to create Google Event:', gErr.message);
                 }
-            } catch (gErr) {
-                console.error('Failed to create Google Event:', gErr.message);
             }
         }
 
@@ -47,16 +50,17 @@ exports.createReminder = async (req, res) => {
 
 exports.deleteReminder = async (req, res) => {
     const { id } = req.params;
+    const { sector } = req.query;
     try {
         // Fetch reminder to check for google_event_id before deleting
-        const reminders = await Reminder.getAllByUserId(req.user.data_owner_id);
+        const reminders = await Reminder.getAllByUserId(req.user.data_owner_id, sector);
         const reminderToDelete = reminders.find(r => r.id == id);
 
-        const success = await Reminder.delete(id, req.user.data_owner_id);
+        const success = await Reminder.delete(id, req.user.data_owner_id, sector);
         if (!success) return res.status(404).json({ error: 'Reminder not found' });
 
-        // Delete from Google Calendar if exists (Using Data Owner's Token)
-        if (reminderToDelete && reminderToDelete.google_event_id) {
+        // Delete from Google Calendar if exists (Using Data Owner's Token) AND sector is personal
+        if (reminderToDelete && reminderToDelete.google_event_id && (sector === 'personal' || !sector)) {
             const user = await User.findById(req.user.data_owner_id);
             if (user && user.google_refresh_token) {
                 await googleService.deleteEvent(user.google_refresh_token, reminderToDelete.google_event_id);
@@ -72,9 +76,9 @@ exports.deleteReminder = async (req, res) => {
 
 exports.updateReminder = async (req, res) => {
     const { id } = req.params;
-    const { is_completed } = req.body;
+    const { is_completed, sector } = req.body;
     try {
-        const success = await Reminder.updateStatus(id, req.user.data_owner_id, is_completed);
+        const success = await Reminder.updateStatus(id, req.user.data_owner_id, is_completed, sector);
         if (!success) return res.status(404).json({ error: 'Reminder not found' });
         res.json({ message: 'Reminder updated' });
     } catch (error) {

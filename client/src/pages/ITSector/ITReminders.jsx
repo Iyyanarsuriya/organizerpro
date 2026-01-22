@@ -2,9 +2,9 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { getReminders, createReminder, updateReminder, deleteReminder, triggerMissedAlert } from '../../api/homeApi';
 import { getMe } from '../../api/authApi';
 import { API_URL } from '../../api/axiosInstance';
-import ReminderForm from '../../components/ReminderForm';
-import ReminderList from '../../components/ReminderList';
-import { Link } from 'react-router-dom';
+import ReminderForm from '../../components/Common/ReminderForm';
+import ReminderList from '../../components/Common/ReminderList';
+import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { FaBell, FaTimes } from 'react-icons/fa';
 import { LayoutDashboard } from 'lucide-react';
@@ -16,6 +16,8 @@ import { exportReminderToCSV, exportReminderToTXT, exportReminderToPDF } from '.
 import Notes from '../Notes/Notes'; // Helper Import
 
 const ITReminders = () => {
+    const SECTOR = 'it';
+    const navigate = useNavigate();
     const [reminders, setReminders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(() => {
@@ -60,7 +62,7 @@ const ITReminders = () => {
 
         try {
             const [remindersRes, userRes, categoriesRes] = await Promise.all([
-                getReminders(),
+                getReminders({ sector: SECTOR }),
                 getMe(),
                 getCategories()
             ]);
@@ -170,7 +172,7 @@ const ITReminders = () => {
                                         // Snooze for 10 minutes
                                         try {
                                             const newDate = new Date(Date.now() + 10 * 60000).toISOString();
-                                            await updateReminder(reminder.id, { due_date: newDate });
+                                            await updateReminder(reminder.id, { due_date: newDate, sector: SECTOR });
                                             setReminders(prev => prev.map(r => r.id === reminder.id ? { ...r, due_date: newDate } : r));
                                             toast.success("Snoozed for 10 min", { icon: '💤' });
                                         } catch (e) {
@@ -201,7 +203,7 @@ const ITReminders = () => {
                                         // Snooze for 1 hour
                                         try {
                                             const newDate = new Date(Date.now() + 60 * 60000).toISOString();
-                                            await updateReminder(reminder.id, { due_date: newDate });
+                                            await updateReminder(reminder.id, { due_date: newDate, sector: SECTOR });
                                             setReminders(prev => prev.map(r => r.id === reminder.id ? { ...r, due_date: newDate } : r));
                                             toast.success("Snoozed for 1 hour", { icon: '💤' });
                                         } catch (e) {
@@ -223,7 +225,7 @@ const ITReminders = () => {
                                         toast.remove(t.id);
                                         delete activeToastsRef.current[reminder.id];
                                         try {
-                                            await updateReminder(reminder.id, { is_completed: true });
+                                            await updateReminder(reminder.id, { is_completed: true, sector: SECTOR });
                                             setReminders(prev => prev.map(r => r.id === reminder.id ? { ...r, is_completed: true, completed_at: new Date().toISOString() } : r));
                                             toast.success("Task completed!", { icon: '✅' });
                                         } catch {
@@ -358,7 +360,7 @@ const ITReminders = () => {
     };
     const handleAdd = useCallback(async (reminderData) => {
         try {
-            const res = await createReminder(reminderData);
+            const res = await createReminder({ ...reminderData, sector: SECTOR });
             setReminders(prev => [res.data, ...prev]);
             window.dispatchEvent(new Event('refresh-reminders'));
             toast.success("Reminder added!");
@@ -377,7 +379,7 @@ const ITReminders = () => {
             ));
 
             try {
-                await updateReminder(id, { is_completed: false });
+                await updateReminder(id, { is_completed: false, sector: SECTOR });
                 window.dispatchEvent(new Event('refresh-reminders'));
                 toast.success("Task marked as incomplete");
             } catch {
@@ -404,7 +406,7 @@ const ITReminders = () => {
         setConfirmToggle(null);
 
         try {
-            await updateReminder(id, { is_completed: true });
+            await updateReminder(id, { is_completed: true, sector: SECTOR });
             window.dispatchEvent(new Event('refresh-reminders'));
             toast.success("Task completed! 🥳");
         } catch {
@@ -415,7 +417,7 @@ const ITReminders = () => {
 
     const handleDelete = useCallback(async (id) => {
         try {
-            await deleteReminder(id);
+            await deleteReminder(id, { sector: SECTOR });
             setReminders(prev => prev.filter(r => r.id !== id));
             window.dispatchEvent(new Event('refresh-reminders'));
             toast.success("Reminder deleted");
@@ -495,6 +497,12 @@ const ITReminders = () => {
 
                 <div className="flex justify-between items-center mb-[16px] sm:mb-[24px] shrink-0 bg-linear-to-r from-[#2d5bff] via-[#4a69ff] to-[#6366f1] p-[10px] sm:p-[16px] rounded-[12px] sm:rounded-[16px] border border-blue-400/30 shadow-xl shadow-blue-500/20 relative z-20">
                     <div className="flex items-center gap-[12px] sm:gap-[16px]">
+                        <button
+                            onClick={() => navigate('/it')}
+                            className="w-8 h-8 md:w-10 md:h-10 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center text-white transition-all cursor-pointer"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
+                        </button>
                         <div className="flex bg-blue-700/30 rounded-xl p-1 border border-blue-400/30 backdrop-blur-sm">
                             <button
                                 onClick={() => setActiveTab('tasks')}
@@ -593,7 +601,7 @@ const ITReminders = () => {
                                 <button
                                     onClick={async () => {
                                         try {
-                                            await Promise.all(selectedIds.map(id => updateReminder(id, { is_completed: true })));
+                                            await Promise.all(selectedIds.map(id => updateReminder(id, { is_completed: true, sector: SECTOR })));
                                             setReminders(prev => prev.map(r => selectedIds.includes(r.id) ? { ...r, is_completed: true, completed_at: new Date().toISOString() } : r));
                                             window.dispatchEvent(new Event('refresh-reminders'));
                                             toast.success(`${selectedIds.length} tasks completed`);
@@ -942,7 +950,7 @@ const ITReminders = () => {
                                         <button
                                             onClick={async () => {
                                                 try {
-                                                    await Promise.all(selectedIds.map(id => deleteReminder(id)));
+                                                    await Promise.all(selectedIds.map(id => deleteReminder(id, { sector: SECTOR })));
                                                     setReminders(prev => prev.filter(r => !selectedIds.includes(r.id)));
                                                     window.dispatchEvent(new Event('refresh-reminders'));
                                                     toast.success("Tasks deleted");

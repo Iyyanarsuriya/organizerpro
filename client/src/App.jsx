@@ -15,6 +15,10 @@ const PersonalSectorHome = lazy(() => import('./pages/PersonalSector/PersonalDas
 const PersonalReminders = lazy(() => import('./pages/PersonalSector/PersonalReminders')); // Specific Personal Reminders
 const PersonalExpenseTracker = lazy(() => import('./pages/PersonalSector/PersonalExpenseTracker')); // New Personal Expenses
 
+const ITHome = lazy(() => import('./pages/ITSector/ITHome'));
+const ITReminders = lazy(() => import('./pages/ITSector/ITReminders'));
+const ITAttendance = lazy(() => import('./pages/ITSector/ITAttendance'));
+
 const Reminders = lazy(() => import('./pages/ManufacturingSector/ReminderTracker/Reminders'));
 const Profile = lazy(() => import('./pages/ManufacturingSector/ReminderTracker/ReminderDashboard'));
 const FinanceProfile = lazy(() => import('./pages/ManufacturingSector/ExpenseTracker/FinanceProfile'));
@@ -228,6 +232,11 @@ const AppContent = () => {
             <Route path="/personal" element={<ProtectedRoute><PersonalSectorHome /></ProtectedRoute>} />
             <Route path="/personal/reminders" element={<ProtectedRoute><PersonalReminders /></ProtectedRoute>} />
             <Route path="/personal/expenses" element={<ProtectedRoute><PersonalExpenseTracker /></ProtectedRoute>} />
+
+            {/* IT Sector Routes */}
+            <Route path="/it" element={<ProtectedRoute><ITHome /></ProtectedRoute>} />
+            <Route path="/it/reminders" element={<ProtectedRoute><ITReminders /></ProtectedRoute>} />
+            <Route path="/it/attendance" element={<ProtectedRoute><ITAttendance /></ProtectedRoute>} />
 
             <Route path="/reminders" element={<ProtectedRoute><Reminders /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

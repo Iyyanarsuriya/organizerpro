@@ -11,8 +11,8 @@ const createMember = async (req, res) => {
 
 const getMembers = async (req, res) => {
     try {
-        const { memberType } = req.query;
-        const members = await Member.getAllByUserId(req.user.data_owner_id, memberType);
+        const { memberType, sector } = req.query;
+        const members = await Member.getAllByUserId(req.user.data_owner_id, memberType, sector);
         res.status(200).json({ success: true, data: members });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -21,8 +21,8 @@ const getMembers = async (req, res) => {
 
 const getActiveMembers = async (req, res) => {
     try {
-        const { memberType } = req.query;
-        const members = await Member.getActiveMembers(req.user.data_owner_id, memberType);
+        const { memberType, sector } = req.query;
+        const members = await Member.getActiveMembers(req.user.data_owner_id, memberType, sector);
         res.status(200).json({ success: true, data: members });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -44,7 +44,7 @@ const updateMember = async (req, res) => {
 
 const deleteMember = async (req, res) => {
     try {
-        const deleted = await Member.delete(req.params.id, req.user.data_owner_id);
+        const deleted = await Member.delete(req.params.id, req.user.data_owner_id, req.query.sector);
         if (deleted) {
             res.status(200).json({ success: true, message: "Member deleted" });
         } else {
@@ -57,7 +57,7 @@ const deleteMember = async (req, res) => {
 
 const getGuests = async (req, res) => {
     try {
-        const guests = await Member.getGuests(req.user.data_owner_id);
+        const guests = await Member.getGuests(req.user.data_owner_id, req.query.sector);
         res.status(200).json({ success: true, data: guests });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

@@ -9,7 +9,7 @@ import ExportButtons from '../Common/ExportButtons';
 import { generateCSV, generatePDF, generateTXT } from '../../utils/exportUtils/base.js';
 import { useState, useEffect } from 'react';
 
-const MemberManager = ({ onClose, onUpdate }) => {
+const MemberManager = ({ onClose, onUpdate, sector }) => {
     const [members, setMembers] = useState([]);
     const [roles, setRoles] = useState([]); // ROLES STATE
     const [showRoleManager, setShowRoleManager] = useState(false); // MANAGER STATE
@@ -39,7 +39,11 @@ const MemberManager = ({ onClose, onUpdate }) => {
 
     const fetchMembers = async () => {
         try {
-            const [memRes, roleRes, guestRes] = await Promise.all([getMembers(), getMemberRoles(), getGuests()]);
+            const [memRes, roleRes, guestRes] = await Promise.all([
+                getMembers({ sector }),
+                getMemberRoles({ sector }),
+                getGuests({ sector })
+            ]);
             const guests = guestRes.data.data.map(g => ({ ...g, isGuest: true }));
             setMembers([...memRes.data.data, ...guests]);
             setRoles(roleRes.data.data);
@@ -135,10 +139,10 @@ const MemberManager = ({ onClose, onUpdate }) => {
         e.preventDefault();
         try {
             if (editingId) {
-                await updateMember(editingId, formData);
+                await updateMember(editingId, { ...formData, sector });
                 toast.success("Member updated!");
             } else {
-                await createMember(formData);
+                await createMember({ ...formData, sector });
                 toast.success("Member added!");
             }
             resetForm();
@@ -169,7 +173,7 @@ const MemberManager = ({ onClose, onUpdate }) => {
 
     const confirmDelete = async () => {
         try {
-            await deleteMember(deleteModal.id);
+            await deleteMember(deleteModal.id, { sector });
             toast.success("Member deleted");
             setDeleteModal({ show: false, id: null });
             fetchMembers();
@@ -188,7 +192,7 @@ const MemberManager = ({ onClose, onUpdate }) => {
         setViewingPayments(member);
         setPaymentsLoading(true);
         try {
-            const params = member.isGuest ? { guestName: member.name } : { memberId: member.id };
+            const params = member.isGuest ? { guestName: member.name, sector } : { memberId: member.id, sector };
             const res = await getTransactions(params);
             setPayments(res.data);
         } catch (error) {
@@ -522,10 +526,10 @@ const MemberManager = ({ onClose, onUpdate }) => {
                 showRoleManager && (
                     <RoleManager
                         roles={roles}
-                        onCreate={createMemberRole}
-                        onDelete={deleteMemberRole}
+                        onCreate={(data) => createMemberRole({ ...data, sector })}
+                        onDelete={(id) => deleteMemberRole(id, { sector })}
                         onClose={() => { setShowRoleManager(false); fetchMembers(); }}
-                        onRefresh={() => getMemberRoles().then(res => setRoles(res.data.data))}
+                        onRefresh={() => getMemberRoles({ sector }).then(res => setRoles(res.data.data))}
                     />
                 )
             }

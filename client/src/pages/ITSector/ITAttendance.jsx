@@ -25,10 +25,12 @@ import {
 } from 'recharts';
 import { exportAttendanceToCSV, exportAttendanceToTXT, exportAttendanceToPDF, processAttendanceExportData } from '../../utils/exportUtils/index.js';
 import ExportButtons from '../../components/ExportButtons';
-import ProjectManager from '../../components/ProjectManager';
-import MemberManager from '../../components/MemberManager';
-import RoleManager from '../../components/RoleManager';
+import ProjectManager from '../../components/Manufacturing/ProjectManager';
+import MemberManager from '../../components/Manufacturing/MemberManager';
+import RoleManager from '../../components/Manufacturing/RoleManager';
 import { getMemberRoles, createMemberRole, deleteMemberRole } from '../../api/memberRoleApi';
+
+const SECTOR = 'it';
 
 const ITAttendance = () => {
     const navigate = useNavigate();
@@ -159,24 +161,27 @@ const ITAttendance = () => {
                     memberId: filterMember,
                     period: isRange ? null : currentPeriod,
                     startDate: rangeStart,
-                    endDate: rangeEnd
+                    endDate: rangeEnd,
+                    sector: SECTOR
                 }),
                 getAttendanceStats({
                     projectId: filterProject,
                     memberId: filterMember,
                     period: isRange ? null : currentPeriod,
                     startDate: rangeStart,
-                    endDate: rangeEnd
+                    endDate: rangeEnd,
+                    sector: SECTOR
                 }),
                 getMemberSummary({
                     projectId: filterProject,
                     period: isRange ? null : currentPeriod,
                     startDate: rangeStart,
-                    endDate: rangeEnd
+                    endDate: rangeEnd,
+                    sector: SECTOR
                 }),
-                getProjects(),
-                getActiveMembers(),
-                getMemberRoles()
+                getProjects({ sector: SECTOR }),
+                getActiveMembers({ sector: SECTOR }),
+                getMemberRoles({ sector: SECTOR })
             ]);
             setAttendances(attRes.data.data);
             setStats(statsRes.data.data || []);
@@ -227,7 +232,8 @@ const ITAttendance = () => {
                 note,
                 permission_start_time,
                 permission_end_time,
-                permission_reason
+                permission_reason,
+                sector: SECTOR
             };
 
             if (overtimeData) {
@@ -251,7 +257,7 @@ const ITAttendance = () => {
     const handleModalConfirm = async () => {
         if (confirmModal.type === 'DELETE') {
             try {
-                await deleteAttendance(confirmModal.id);
+                await deleteAttendance(confirmModal.id, { sector: SECTOR });
                 toast.success("Record deleted");
                 fetchData();
             } catch (error) {
@@ -477,6 +483,12 @@ const ITAttendance = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
                         <div className="flex items-center gap-4">
+                            <button
+                                onClick={() => navigate('/it')}
+                                className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-xl sm:rounded-2xl flex items-center justify-center border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-600 transition-all cursor-pointer shadow-sm active:scale-95"
+                            >
+                                <FaChevronLeft className="text-sm sm:text-base from-neutral-400" />
+                            </button>
                             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-linear-to-br from-blue-500 to-indigo-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
                                 <FaUserCheck className="text-white text-lg sm:text-xl" />
                             </div>
@@ -923,7 +935,7 @@ const ITAttendance = () => {
                         </div>
                     </div>
                 ) : activeTab === 'members' ? (
-                    <MemberManager onClose={() => setActiveTab('records')} onUpdate={fetchData} />
+                    <MemberManager sector={SECTOR} onClose={() => setActiveTab('records')} onUpdate={fetchData} />
                 ) : (
                     /* Daily Sheet View */
                     <div className="bg-white rounded-[40px] shadow-xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -1250,10 +1262,10 @@ const ITAttendance = () => {
             {showProjectManager && (
                 <ProjectManager
                     projects={projects}
-                    onCreate={createProject}
-                    onDelete={deleteProject}
+                    onCreate={(data) => createProject({ ...data, sector: SECTOR })}
+                    onDelete={(id) => deleteProject(id, { sector: SECTOR })}
                     onClose={() => { setShowProjectManager(false); fetchData(); }}
-                    onRefresh={() => getProjects().then(res => setProjects(res.data))}
+                    onRefresh={() => getProjects({ sector: SECTOR }).then(res => setProjects(res.data))}
                 />
             )
             }
@@ -1261,10 +1273,10 @@ const ITAttendance = () => {
                 showRoleManager && (
                     <RoleManager
                         roles={roles}
-                        onCreate={createMemberRole}
-                        onDelete={deleteMemberRole}
+                        onCreate={(data) => createMemberRole({ ...data, sector: SECTOR })}
+                        onDelete={(id) => deleteMemberRole(id, { sector: SECTOR })}
                         onClose={() => { setShowRoleManager(false); fetchData(); }}
-                        onRefresh={() => getMemberRoles().then(res => setRoles(res.data.data))}
+                        onRefresh={() => getMemberRoles({ sector: SECTOR }).then(res => setRoles(res.data.data))}
                     />
                 )
             }

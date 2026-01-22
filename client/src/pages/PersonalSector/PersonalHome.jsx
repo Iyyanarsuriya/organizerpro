@@ -61,7 +61,7 @@ const PersonalHome = ({ onProfileClick }) => {
                                     </Link>
 
                                     <Link
-                                        to="/reminders"
+                                        to="/it"
                                         className="p-4 rounded-2xl border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all group text-left"
                                     >
                                         <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
