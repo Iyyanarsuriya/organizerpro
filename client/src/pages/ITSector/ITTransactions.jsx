@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaPlus, FaEdit, FaTrash, FaUserCheck, FaExchangeAlt, FaSearch, FaFilter, FaCalendarAlt, FaUser, FaProjectDiagram, FaTruck } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaUserCheck, FaExchangeAlt, FaSearch, FaFilter, FaCalendarAlt, FaUser, FaProjectDiagram, FaTruck, FaFolderPlus, FaTag } from 'react-icons/fa';
 import { formatDateTime, formatAmount } from '../../utils/formatUtils';
 import ExportButtons from '../../components/Common/ExportButtons';
 
@@ -24,7 +24,8 @@ const ITTransactions = ({
     periodType, setPeriodType,
     currentPeriod, setCurrentPeriod,
     customRange, setCustomRange,
-    onExportCSV, onExportPDF, onExportTXT
+    onExportCSV, onExportPDF, onExportTXT,
+    setShowProjectManager
 }) => {
     return (
         <div className="animate-in slide-in-from-right-10 duration-500">
@@ -112,15 +113,24 @@ const ITTransactions = ({
                         </div>
 
                         {/* Search - Blue Theme */}
-                        <div className="relative col-span-2 md:col-span-1 group">
-                            <FaSearch className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-blue-400 group-hover:text-blue-500 transition-colors" size={12} />
-                            <input
-                                type="text"
-                                placeholder="SEARCH..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-blue-50 hover:bg-blue-100 border border-transparent rounded-2xl py-2 md:py-3 pl-8 md:pl-10 pr-4 text-[10px] md:text-xs font-black text-blue-600 text-center placeholder:text-blue-300 outline-none focus:ring-2 focus:ring-blue-200 transition-all uppercase tracking-wide"
-                            />
+                        <div className="relative col-span-2 md:col-span-1 group flex items-center gap-2">
+                            <div className="relative flex-1">
+                                <FaSearch className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-blue-400 group-hover:text-blue-500 transition-colors" size={12} />
+                                <input
+                                    type="text"
+                                    placeholder="SEARCH..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full bg-blue-50 hover:bg-blue-100 border border-transparent rounded-2xl py-2 md:py-3 pl-8 md:pl-10 pr-4 text-[10px] md:text-xs font-black text-blue-600 text-center placeholder:text-blue-300 outline-none focus:ring-2 focus:ring-blue-200 transition-all uppercase tracking-wide"
+                                />
+                            </div>
+                            <button
+                                onClick={() => setShowProjectManager(true)}
+                                className="w-10 h-10 md:w-12 md:h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20 hover:scale-105 transition-all shrink-0 active:scale-95"
+                                title="Manage Projects"
+                            >
+                                <FaFolderPlus size={14} />
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -135,21 +145,25 @@ const ITTransactions = ({
                             </div>
                             <div>
                                 <h4 className="font-black text-slate-900 text-sm sm:text-base leading-tight">{t.title}</h4>
-                                <div className="h-[8px] mt-1.5 flex flex-wrap gap-1">
-                                    <div className="px-1 bg-slate-100 text-[6px] font-black text-slate-400 rounded-full flex items-center uppercase tracking-tighter">
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    <div className="px-2.5 py-1 bg-slate-100 text-[10px] font-bold text-slate-500 rounded-lg flex items-center gap-1.5 uppercase tracking-wide border border-slate-200/50">
+                                        <FaTag className="text-[9px] opacity-70" />
                                         {t.category}
                                     </div>
                                     {t.project_name && (
-                                        <div className="px-1 bg-blue-50 text-[6px] font-black text-blue-500 rounded-full flex items-center uppercase tracking-tighter">
+                                        <div className="px-2.5 py-1 bg-blue-50 text-[10px] font-bold text-blue-600 rounded-lg flex items-center gap-1.5 uppercase tracking-wide border border-blue-100/50 shadow-xs shadow-blue-500/5">
+                                            <FaProjectDiagram className="text-[9px] opacity-70" />
                                             {t.project_name}
                                         </div>
                                     )}
                                     {t.member_name && (
-                                        <div className={`px-1 text-[6px] font-black rounded-full flex items-center uppercase tracking-tighter ${!t.member_id ? 'bg-amber-50 text-amber-600' : 'bg-orange-50 text-orange-500'}`}>
+                                        <div className={`px-2.5 py-1 text-[10px] font-bold rounded-lg flex items-center gap-1.5 uppercase tracking-wide border shadow-xs ${!t.member_id ? 'bg-amber-50 text-amber-600 border-amber-100/50 shadow-amber-500/5' : 'bg-orange-50 text-orange-600 border-orange-100/50 shadow-orange-500/5'}`}>
+                                            <FaUser className="text-[9px] opacity-70" />
                                             {!t.member_id && 'GUEST: '}{t.member_name}
                                         </div>
                                     )}
-                                    <div className="px-1 bg-slate-50 text-[6px] font-black text-slate-300 rounded-full flex items-center uppercase tracking-tighter">
+                                    <div className="px-2.5 py-1 bg-slate-50 text-[10px] font-bold text-slate-400 rounded-lg flex items-center gap-1.5 uppercase tracking-wide border border-slate-100">
+                                        <FaCalendarAlt className="text-[9px] opacity-70" />
                                         {formatDateTime(t.updated_at || t.created_at)}
                                     </div>
                                 </div>

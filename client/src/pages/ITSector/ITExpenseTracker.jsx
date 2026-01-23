@@ -17,6 +17,7 @@ import { formatAmount } from '../../utils/formatUtils';
 
 import ITTransactions from './ITTransactions';
 import ITSalaryCalculator from './ITSalaryCalculator';
+import ProjectManager from '../../components/Manufacturing/ProjectManager';
 
 const ITExpenseTracker = () => {
     const navigate = useNavigate();
@@ -25,6 +26,7 @@ const ITExpenseTracker = () => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('Transactions');
     const [showAddModal, setShowAddModal] = useState(false);
+    const [showProjectManager, setShowProjectManager] = useState(false);
 
     // Filters & Period
     const [periodType, setPeriodType] = useState('day');
@@ -383,6 +385,7 @@ const ITExpenseTracker = () => {
                             onExportCSV={() => exportExpenseToCSV(transactions, 'it_expenses')}
                             onExportPDF={() => exportExpenseToPDF({ data: transactions, filename: 'it_expenses' })}
                             onExportTXT={() => exportExpenseToTXT({ data: transactions, filename: 'it_expenses' })}
+                            setShowProjectManager={setShowProjectManager}
                         />
                     )}
 
@@ -426,6 +429,16 @@ const ITExpenseTracker = () => {
             </main>
 
             {/* Add/Edit Modal */}
+            {showProjectManager && (
+                <ProjectManager
+                    projects={projects}
+                    onCreate={(data) => createProject({ ...data, sector: 'it' })}
+                    onDelete={(id) => deleteProject(id, { sector: 'it' })}
+                    onClose={() => { setShowProjectManager(false); fetchData(); }}
+                    onRefresh={() => getProjects({ sector: 'it' }).then(res => setProjects(res.data))}
+                />
+            )}
+
             {showAddModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
                     <div className="bg-white rounded-[32px] w-full max-w-lg shadow-2xl border border-white/20 animate-in zoom-in-95 duration-200">
