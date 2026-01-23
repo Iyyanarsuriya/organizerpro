@@ -410,7 +410,7 @@ CREATE TABLE `it_transactions` (
   `title` varchar(255) NOT NULL,
   `amount` decimal(15,2) NOT NULL,
   `type` enum('income','expense') NOT NULL,
-  `category` varchar(50) DEFAULT 'Other',
+  `category_id` int DEFAULT NULL,
   `date` datetime NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -425,9 +425,11 @@ CREATE TABLE `it_transactions` (
   KEY `user_id` (`user_id`),
   KEY `fk_it_trans_proj` (`project_id`),
   KEY `fk_it_trans_memb` (`member_id`),
+  KEY `fk_it_trans_cat` (`category_id`),
   CONSTRAINT `fk_it_trans_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_it_trans_proj` FOREIGN KEY (`project_id`) REFERENCES `it_projects` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `fk_it_trans_memb` FOREIGN KEY (`member_id`) REFERENCES `it_members` (`id`) ON DELETE SET NULL
+  CONSTRAINT `fk_it_trans_memb` FOREIGN KEY (`member_id`) REFERENCES `it_members` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_it_trans_cat` FOREIGN KEY (`category_id`) REFERENCES `it_categories` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- IT Categories

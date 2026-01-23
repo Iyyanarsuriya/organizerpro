@@ -8,7 +8,7 @@ const getTableName = (sector) => {
 };
 
 const create = async (data) => {
-    const { user_id, title, amount, type, category, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, sector, description } = data;
+    const { user_id, title, amount, type, category, category_id, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, sector, description } = data;
     const table = getTableName(sector);
 
     // Force date to noon to avoid timezone boundary shifts
@@ -20,12 +20,15 @@ const create = async (data) => {
     let query, params;
 
     if (table === 'manufacturing_transactions' || table === 'it_transactions') {
-        const columns = ['user_id', 'title', 'amount', 'type', 'category', 'date', 'project_id', 'member_id', 'guest_name', 'payment_status', 'quantity', 'unit_price'];
-        const values = [user_id, title, amount, type, category, finalDate, project_id || null, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0];
+        const columns = ['user_id', 'title', 'amount', 'type', 'date', 'project_id', 'member_id', 'guest_name', 'payment_status', 'quantity', 'unit_price'];
+        const values = [user_id, title, amount, type, finalDate, project_id || null, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0];
 
         if (table === 'it_transactions') {
-            columns.push('description');
-            values.push(description || null);
+            columns.push('category_id', 'description');
+            values.push(category_id || null, description || null);
+        } else {
+            columns.push('category');
+            values.push(category || 'Other');
         }
 
         query = `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${columns.map(() => '?').join(', ')})`;
@@ -48,17 +51,23 @@ const getAllByUserId = async (userId, filters = {}) => {
     if (table === 'manufacturing_transactions' || table === 'it_transactions') {
         const projectTable = table === 'manufacturing_transactions' ? 'manufacturing_projects' : 'it_projects';
         const memberTable = table === 'manufacturing_transactions' ? 'manufacturing_members' : 'it_members';
+        const categoryTable = table === 'it_transactions' ? 'it_categories' : null;
 
         query = `SELECT t.*, p.name as project_name, 
                 CASE 
                     WHEN t.member_id IS NOT NULL THEN w.name 
                     ELSE t.guest_name 
                 END as member_name,
-                w.member_type
+                w.member_type${categoryTable ? ', c.name as category_name' : ''}
                 FROM ${table} t 
                 LEFT JOIN ${projectTable} p ON t.project_id = p.id 
-                LEFT JOIN ${memberTable} w ON t.member_id = w.id
-                WHERE t.user_id = ?`;
+                LEFT JOIN ${memberTable} w ON t.member_id = w.id`;
+
+        if (categoryTable) {
+            query += ` LEFT JOIN ${categoryTable} c ON t.category_id = c.id`;
+        }
+
+        query += ` WHERE t.user_id = ?`;
 
         if (filters.projectId) {
             query += ' AND t.project_id = ?';
@@ -122,7 +131,7 @@ const getAllByUserId = async (userId, filters = {}) => {
 };
 
 const update = async (id, userId, data) => {
-    const { title, amount, type, category, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, sector, description } = data;
+    const { title, amount, type, category, category_id, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, sector, description } = data;
     const table = getTableName(sector);
 
     // Force date to noon to avoid timezone boundary shifts
@@ -136,8 +145,8 @@ const update = async (id, userId, data) => {
         query = `UPDATE ${table} SET title = ?, amount = ?, type = ?, category = ?, date = ?, project_id = ?, member_id = ?, guest_name = ?, payment_status = ?, quantity = ?, unit_price = ? WHERE id = ? AND user_id = ?`;
         params = [title, amount, type, category, finalDate, project_id || null, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0, id, userId];
     } else if (table === 'it_transactions') {
-        query = `UPDATE ${table} SET title = ?, amount = ?, type = ?, category = ?, date = ?, project_id = ?, member_id = ?, guest_name = ?, payment_status = ?, quantity = ?, unit_price = ?, description = ? WHERE id = ? AND user_id = ?`;
-        params = [title, amount, type, category, finalDate, project_id || null, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0, description || null, id, userId];
+        query = `UPDATE ${table} SET title = ?, amount = ?, type = ?, category_id = ?, date = ?, project_id = ?, member_id = ?, guest_name = ?, payment_status = ?, quantity = ?, unit_price = ?, description = ? WHERE id = ? AND user_id = ?`;
+        params = [title, amount, type, category_id || null, finalDate, project_id || null, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0, description || null, id, userId];
     } else {
         query = `UPDATE ${table} SET title = ?, amount = ?, type = ?, category = ?, date = ? WHERE id = ? AND user_id = ?`;
         params = [title, amount, type, category, finalDate, id, userId];
@@ -159,29 +168,29 @@ const deleteTransaction = async (id, userId, sector) => { // Renamed from 'delet
 const getStats = async (userId, period, projectId, startDate, endDate, memberId, filters = {}) => {
     const table = getTableName(filters.sector);
     let query = `SELECT 
-        SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as total_income,
-        SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as total_expense
-            FROM ${table} WHERE user_id = ?`;
+        SUM(CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END) as total_income,
+        SUM(CASE WHEN t.type = 'expense' THEN t.amount ELSE 0 END) as total_expense
+            FROM ${table} t WHERE t.user_id = ?`;
     const params = [userId];
 
     if (period) {
         if (period.length === 10) {
-            query += " AND DATE(date) = ?";
+            query += " AND DATE(t.date) = ?";
             params.push(period);
         } else if (period.length === 8 && period.includes('W')) {
-            query += " AND DATE_FORMAT(date, '%x-W%v') = ?";
+            query += " AND DATE_FORMAT(t.date, '%x-W%v') = ?";
             params.push(period);
         } else if (period.length === 7) {
-            query += " AND DATE_FORMAT(date, '%Y-%m') = ?";
+            query += " AND DATE_FORMAT(t.date, '%Y-%m') = ?";
             params.push(period);
         } else if (period.length === 4) {
-            query += " AND DATE_FORMAT(date, '%Y') = ?";
+            query += " AND DATE_FORMAT(t.date, '%Y') = ?";
             params.push(period);
         }
     }
 
     if (startDate && endDate) {
-        query += " AND DATE(date) BETWEEN ? AND ?";
+        query += " AND DATE(t.date) BETWEEN ? AND ?";
         params.push(startDate, endDate);
     }
 
@@ -189,18 +198,17 @@ const getStats = async (userId, period, projectId, startDate, endDate, memberId,
         const memberTable = table === 'manufacturing_transactions' ? 'manufacturing_members' : 'it_members';
 
         if (projectId) {
-            query += ` AND project_id = ?`;
+            query += ` AND t.project_id = ?`;
             params.push(projectId);
         }
 
         if (memberId) {
-            query += ` AND member_id = ?`;
+            query += ` AND t.member_id = ?`;
             params.push(memberId);
         }
 
         if (filters && filters.memberType && filters.memberType !== 'all') {
-            query = query.replace(`FROM ${table}`, `FROM ${table} t`);
-            query = query.replace('WHERE user_id = ?', `INNER JOIN ${memberTable} m ON t.member_id = m.id WHERE t.user_id = ?`);
+            query = query.replace(`FROM ${table} t`, `FROM ${table} t INNER JOIN ${memberTable} m ON t.member_id = m.id`);
             query += ' AND m.member_type = ?';
             params.push(filters.memberType);
         }
@@ -215,25 +223,24 @@ const getLifetimeStats = async (userId, projectId, memberId, filters = {}) => {
     if (table !== 'manufacturing_transactions' && table !== 'it_transactions') return { total_income: 0, total_expense: 0 };
 
     let query = `SELECT 
-        SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as total_income,
-        SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as total_expense
-            FROM ${table} WHERE user_id = ?`;
+        SUM(CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END) as total_income,
+        SUM(CASE WHEN t.type = 'expense' THEN t.amount ELSE 0 END) as total_expense
+            FROM ${table} t WHERE t.user_id = ?`;
     const params = [userId];
 
     if (projectId) {
-        query += ` AND project_id = ?`;
+        query += ` AND t.project_id = ?`;
         params.push(projectId);
     }
 
     if (memberId) {
-        query += ` AND member_id = ?`;
+        query += ` AND t.member_id = ?`;
         params.push(memberId);
     }
 
     if (filters && filters.memberType && filters.memberType !== 'all') {
         const memberTable = table === 'manufacturing_transactions' ? 'manufacturing_members' : 'it_members';
-        query = query.replace(`FROM ${table}`, `FROM ${table} t`);
-        query = query.replace('WHERE user_id = ?', `INNER JOIN ${memberTable} m ON t.member_id = m.id WHERE t.user_id = ?`);
+        query = query.replace(`FROM ${table} t`, `FROM ${table} t INNER JOIN ${memberTable} m ON t.member_id = m.id`);
         query += ' AND m.member_type = ?';
         params.push(filters.memberType);
     }
@@ -254,28 +261,37 @@ const getMemberProjectStats = async (userId, memberId) => {
 
 const getCategoryStats = async (userId, period, projectId, startDate, endDate, memberId, filters = {}) => {
     const table = getTableName(filters.sector);
-    let query = `SELECT category, type, SUM(amount) as total 
-            FROM ${table} WHERE user_id = ?`;
+    let query;
     const params = [userId];
+
+    if (table === 'it_transactions') {
+        query = `SELECT c.name as category, t.type, SUM(t.amount) as total 
+                 FROM it_transactions t 
+                 LEFT JOIN it_categories c ON t.category_id = c.id 
+                 WHERE t.user_id = ?`;
+    } else {
+        query = `SELECT t.category, t.type, SUM(t.amount) as total 
+                 FROM ${table} t WHERE t.user_id = ?`;
+    }
 
     if (period) {
         if (period.length === 10) {
-            query += " AND DATE(date) = ?";
+            query += " AND DATE(t.date) = ?";
             params.push(period);
         } else if (period.length === 8 && period.includes('W')) {
-            query += " AND DATE_FORMAT(date, '%x-W%v') = ?";
+            query += " AND DATE_FORMAT(t.date, '%x-W%v') = ?";
             params.push(period);
         } else if (period.length === 7) {
-            query += " AND DATE_FORMAT(date, '%Y-%m') = ?";
+            query += " AND DATE_FORMAT(t.date, '%Y-%m') = ?";
             params.push(period);
         } else if (period.length === 4) {
-            query += " AND DATE_FORMAT(date, '%Y') = ?";
+            query += " AND DATE_FORMAT(t.date, '%Y') = ?";
             params.push(period);
         }
     }
 
     if (startDate && endDate) {
-        query += " AND DATE(date) BETWEEN ? AND ?";
+        query += " AND DATE(t.date) BETWEEN ? AND ?";
         params.push(startDate, endDate);
     }
 
@@ -283,24 +299,27 @@ const getCategoryStats = async (userId, period, projectId, startDate, endDate, m
         const memberTable = table === 'manufacturing_transactions' ? 'manufacturing_members' : 'it_members';
 
         if (projectId) {
-            query += ` AND project_id = ?`;
+            query += ` AND t.project_id = ?`;
             params.push(projectId);
         }
 
         if (memberId) {
-            query += ` AND member_id = ?`;
+            query += ` AND t.member_id = ?`;
             params.push(memberId);
         }
 
         if (filters && filters.memberType && filters.memberType !== 'all') {
-            query = query.replace(`FROM ${table}`, `FROM ${table} t`);
-            query = query.replace('WHERE user_id = ?', `INNER JOIN ${memberTable} m ON t.member_id = m.id WHERE t.user_id = ?`);
+            query = query.replace(`FROM ${table} t`, `FROM ${table} t INNER JOIN ${memberTable} m ON t.member_id = m.id`);
             query += ' AND m.member_type = ?';
             params.push(filters.memberType);
         }
     }
 
-    query += ` GROUP BY category, type`;
+    if (table === 'it_transactions') {
+        query += ` GROUP BY c.name, t.type`;
+    } else {
+        query += ` GROUP BY t.category, t.type`;
+    }
 
     const [rows] = await db.query(query, params);
     return rows;

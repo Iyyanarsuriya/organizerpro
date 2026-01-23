@@ -151,7 +151,7 @@ const ITTransactions = ({
                                 <div className="mt-2 flex flex-wrap gap-2">
                                     <div className="px-2.5 py-1 bg-slate-100 text-[10px] font-bold text-slate-500 rounded-lg flex items-center gap-1.5 uppercase tracking-wide border border-slate-200/50">
                                         <FaTag className="text-[9px] opacity-70" />
-                                        {t.category}
+                                        {t.category_name || 'General'}
                                     </div>
                                     {t.project_name && (
                                         <div className="px-2.5 py-1 bg-blue-50 text-[10px] font-bold text-blue-600 rounded-lg flex items-center gap-1.5 uppercase tracking-wide border border-blue-100/50 shadow-xs shadow-blue-500/5">

@@ -12,7 +12,7 @@ exports.getTransactions = async (req, res) => {
 };
 
 exports.createTransaction = async (req, res) => {
-    const { title, amount, type, category, date, project_id, member_id, sector } = req.body;
+    const { title, amount, type, category, category_id, date, project_id, member_id, sector, description } = req.body;
     try {
         const newTransaction = await Transaction.create({
             user_id: req.user.data_owner_id,
@@ -20,10 +20,12 @@ exports.createTransaction = async (req, res) => {
             amount,
             type,
             category,
+            category_id,
             date,
             project_id,
             member_id,
-            sector
+            sector,
+            description
         });
         res.status(201).json(newTransaction);
     } catch (error) {
@@ -34,17 +36,19 @@ exports.createTransaction = async (req, res) => {
 
 exports.updateTransaction = async (req, res) => {
     const { id } = req.params;
-    const { title, amount, type, category, date, project_id, member_id, sector } = req.body;
+    const { title, amount, type, category, category_id, date, project_id, member_id, sector, description } = req.body;
     try {
         const success = await Transaction.update(id, req.user.data_owner_id, {
             title,
             amount,
             type,
             category,
+            category_id,
             date,
             project_id,
             member_id,
-            sector
+            sector,
+            description
         });
         if (!success) return res.status(404).json({ error: 'Transaction not found' });
         res.json({ message: 'Transaction updated' });

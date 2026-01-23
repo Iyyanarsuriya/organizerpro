@@ -57,7 +57,7 @@ const ITExpenseTracker = () => {
         quantity: 1,
         unit_price: 0,
         type: 'expense',
-        category: 'General',
+        category_id: '',
         date: new Date().toISOString().split('T')[0],
         project_id: '',
         member_id: '',
@@ -233,7 +233,7 @@ const ITExpenseTracker = () => {
                 quantity: 1,
                 unit_price: 0,
                 type: 'expense',
-                category: 'General',
+                category_id: '',
                 date: new Date().toISOString().split('T')[0],
                 project_id: filterProject || '',
                 member_id: filterMember || '',
@@ -252,7 +252,7 @@ const ITExpenseTracker = () => {
             quantity: transaction.quantity || 1,
             unit_price: transaction.unit_price || 0,
             type: transaction.type,
-            category: transaction.category,
+            category_id: transaction.category_id || '',
             date: new Date(transaction.date).toISOString().split('T')[0],
             project_id: transaction.project_id || '',
             member_id: transaction.member_id || '',
@@ -269,7 +269,7 @@ const ITExpenseTracker = () => {
             quantity: 1,
             unit_price: 0,
             type: 'expense',
-            category: 'General',
+            category_id: '',
             date: new Date().toISOString().split('T')[0],
             project_id: filterProject || '',
             member_id: filterMember || '',
@@ -481,8 +481,9 @@ const ITExpenseTracker = () => {
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Category</label>
                                     <div className="flex gap-2">
-                                        <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer">
-                                            {categories.length > 0 ? categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>) : <option value="General">General</option>}
+                                        <select value={formData.category_id} onChange={e => setFormData({ ...formData, category_id: e.target.value })} className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer">
+                                            <option value="">Select Category</option>
+                                            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                         </select>
                                         <button
                                             type="button"
