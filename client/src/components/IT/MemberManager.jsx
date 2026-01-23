@@ -3,7 +3,7 @@ import { getProjects } from '../../api/projectApi';
 import { getMemberRoles, createMemberRole, deleteMemberRole } from '../../api/memberRoleApi'; // IMPORTS
 import { getTransactions } from '../../api/transactionApi';
 import toast from 'react-hot-toast';
-import { FaTimes, FaPlus, FaEdit, FaTrash, FaUser, FaUsers, FaBriefcase, FaPhone, FaEnvelope, FaHistory, FaMoneyBillWave, FaUniversity, FaTag, FaSearch, FaFilter, FaFolder, FaBan } from 'react-icons/fa';
+import { FaTimes, FaPlus, FaEdit, FaTrash, FaUser, FaUsers, FaBriefcase, FaPhone, FaEnvelope, FaHistory, FaMoneyBillWave, FaUniversity, FaTag, FaSearch, FaFilter, FaFolder, FaBan, FaCheck } from 'react-icons/fa';
 import ConfirmModal from '../modals/ConfirmModal';
 import RoleManager from './RoleManager'; // IMPORT
 import ExportButtons from '../Common/ExportButtons';
@@ -558,21 +558,43 @@ const MemberManager = ({ onClose, onUpdate, sector, projects: parentProjects }) 
                                                     >
                                                         <FaEdit />
                                                     </button>
-                                                    {isOwner ? (
-                                                        <button
-                                                            onClick={() => handleDeleteClick(member.id)}
-                                                            className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                                                            title="Delete Member"
-                                                        >
-                                                            <FaTrash />
-                                                        </button>
-                                                    ) : (
+
+                                                    {/* Deactivate/Reactivate Button - Available to everyone with access */}
+                                                    {member.status === 'active' ? (
                                                         <button
                                                             onClick={() => handleDeactivateClick(member)}
                                                             className="p-3 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all"
-                                                            title="Deactivate (Set Inactive)"
+                                                            title="Deactivate (Hide from Daily Attendance)"
                                                         >
                                                             <FaBan />
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={async () => {
+                                                                try {
+                                                                    await updateMember(member.id, { ...member, status: 'active', sector });
+                                                                    toast.success("Member reactivated");
+                                                                    fetchMembers();
+                                                                    if (onUpdate) onUpdate();
+                                                                } catch (error) {
+                                                                    toast.error("Failed to reactivate");
+                                                                }
+                                                            }}
+                                                            className="p-3 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
+                                                            title="Reactivate Member"
+                                                        >
+                                                            <FaCheck />
+                                                        </button>
+                                                    )}
+
+                                                    {/* Delete Button - Only for Owners */}
+                                                    {isOwner && (
+                                                        <button
+                                                            onClick={() => handleDeleteClick(member.id)}
+                                                            className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                                                            title="Delete Permanently"
+                                                        >
+                                                            <FaTrash />
                                                         </button>
                                                     )}
                                                 </>

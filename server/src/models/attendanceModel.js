@@ -164,6 +164,9 @@ const getMemberSummary = async (userId, filters = {}) => {
             COUNT(CASE WHEN a.status = 'late' THEN 1 END) as late,
             COUNT(CASE WHEN a.status = 'half-day' THEN 1 END) as half_day,
             COUNT(CASE WHEN a.status = 'permission' THEN 1 END) as permission,
+            COUNT(CASE WHEN a.status = 'week_off' THEN 1 END) as week_off,
+            COUNT(CASE WHEN a.status = 'holiday' THEN 1 END) as holiday,
+            COUNT(CASE WHEN a.status NOT IN ('week_off', 'holiday') THEN 1 END) as working_days,
             COUNT(a.id) as total
         FROM ${MEMBERS_TABLE} w
         LEFT JOIN ${TABLE_NAME} a ON w.id = a.member_id

@@ -13,7 +13,7 @@ import {
     bulkMarkITAttendance
 } from '../../api/attendanceApi';
 import { getProjects, createProject, deleteProject } from '../../api/projectApi';
-import { getActiveMembers } from '../../api/memberApi';
+import { getMembers } from '../../api/memberApi';
 import toast from 'react-hot-toast';
 import {
     FaCheckCircle, FaTimesCircle, FaClock, FaExclamationCircle,
@@ -192,7 +192,7 @@ const ITAttendance = () => {
                     sector: SECTOR
                 }),
                 getProjects({ sector: SECTOR }),
-                getActiveMembers({ sector: SECTOR }),
+                getMembers({ sector: SECTOR }),
                 getMemberRoles({ sector: SECTOR })
             ]);
             setAttendances(attRes.data.data);
@@ -681,7 +681,9 @@ const ITAttendance = () => {
                                     >
                                         <option value="">All Members</option>
                                         {members.sort((a, b) => a.name.localeCompare(b.name)).map(m => (
-                                            <option key={m.id} value={m.id}>{m.name}</option>
+                                            <option key={m.id} value={m.id}>
+                                                {m.name} {m.status === 'inactive' ? '(Inactive)' : ''}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
@@ -895,7 +897,7 @@ const ITAttendance = () => {
                                         <div className="px-4 py-1 text-center">
                                             <p className="text-[8px] font-black text-slate-400 uppercase">Avg</p>
                                             <p className="text-sm font-black text-blue-600">
-                                                {(memberSummary.reduce((acc, curr) => acc + (curr.total > 0 ? ((curr.present + curr.half_day * 0.5) / curr.total) * 100 : 0), 0) / (memberSummary.length || 1)).toFixed(0)}%
+                                                {(memberSummary.reduce((acc, curr) => acc + (curr.working_days > 0 ? ((curr.present + curr.half_day * 0.5) / curr.working_days) * 100 : 0), 0) / (memberSummary.length || 1)).toFixed(0)}%
                                             </p>
                                         </div>
                                     </div>
@@ -910,7 +912,7 @@ const ITAttendance = () => {
                                 <thead>
                                     <tr className="bg-slate-50/50">
                                         <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Member</th>
-                                        <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-center">Stats (P/A/L/H/Per)</th>
+                                        <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-center">Stats (Days/P/A/L/H/Per)</th>
                                         <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-right">Progress</th>
                                     </tr>
                                 </thead>
@@ -923,7 +925,7 @@ const ITAttendance = () => {
                                             return matchesRole && matchesSearch && matchesMember;
                                         })
                                         .map((w) => {
-                                            const rate = w.total > 0 ? ((w.present + w.half_day * 0.5) / w.total * 100) : 0;
+                                            const rate = w.working_days > 0 ? ((w.present + w.half_day * 0.5) / w.working_days * 100) : 0;
                                             return (
                                                 <tr key={w.id} className="hover:bg-slate-50/80 transition-colors group">
                                                     <td className="px-8 py-5">
@@ -942,6 +944,7 @@ const ITAttendance = () => {
                                                     </td>
                                                     <td className="px-6 py-5">
                                                         <div className="flex items-center justify-center gap-1">
+                                                            <span className="w-8 h-8 flex items-center justify-center bg-slate-800 text-white rounded-lg font-black text-[10px] border border-slate-700 shadow-sm" title="Working Days">{w.working_days}</span>
                                                             <span className="w-8 h-8 flex items-center justify-center bg-emerald-50 text-emerald-600 rounded-lg font-black text-[10px] border border-emerald-100" title="Present">{w.present}</span>
                                                             <span className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 rounded-lg font-black text-[10px] border border-red-100" title="Absent">{w.absent}</span>
                                                             <span className="w-8 h-8 flex items-center justify-center bg-amber-50 text-amber-600 rounded-lg font-black text-[10px] border border-amber-100" title="Late">{w.late}</span>
@@ -974,7 +977,7 @@ const ITAttendance = () => {
                                     return matchesRole && matchesSearch && matchesMember;
                                 })
                                 .map((w) => {
-                                    const rate = w.total > 0 ? ((w.present + w.half_day * 0.5) / w.total * 100) : 0;
+                                    const rate = w.working_days > 0 ? ((w.present + w.half_day * 0.5) / w.working_days * 100) : 0;
                                     return (
                                         <div key={w.id} className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
                                             <div className="flex items-center justify-between mb-4">
@@ -995,7 +998,12 @@ const ITAttendance = () => {
                                                     <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest text-right">Performance</p>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded-2xl">
+                                            <div className="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded-2xl mb-3">
+                                                <div className="flex-1 text-center">
+                                                    <p className="text-[8px] font-black text-slate-500 uppercase">Days</p>
+                                                    <p className="text-xs font-black text-slate-900">{w.working_days}</p>
+                                                </div>
+                                                <div className="w-px h-4 bg-slate-200" />
                                                 <div className="flex-1 text-center">
                                                     <p className="text-[8px] font-black text-emerald-500 uppercase">P</p>
                                                     <p className="text-xs font-black text-slate-900">{w.present}</p>
@@ -1005,7 +1013,8 @@ const ITAttendance = () => {
                                                     <p className="text-[8px] font-black text-red-500 uppercase">A</p>
                                                     <p className="text-xs font-black text-slate-900">{w.absent}</p>
                                                 </div>
-                                                <div className="w-px h-4 bg-slate-200" />
+                                            </div>
+                                            <div className="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded-2xl">
                                                 <div className="flex-1 text-center">
                                                     <p className="text-[8px] font-black text-amber-500 uppercase">L</p>
                                                     <p className="text-xs font-black text-slate-900">{w.late}</p>
@@ -1103,6 +1112,7 @@ const ITAttendance = () => {
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
                                         {members
+                                            .filter(m => m.status === 'active') // Only show active members in daily sheet
                                             .filter(m => {
                                                 const matchesRole = !filterRole || m.role === filterRole;
                                                 const matchesSearch = !searchQuery || m.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -1246,6 +1256,7 @@ const ITAttendance = () => {
                             {/* Mobile Card View */}
                             <div className="md:hidden space-y-3 p-4 bg-slate-50/50">
                                 {members
+                                    .filter(m => m.status === 'active') // Only show active members in daily sheet
                                     .filter(m => {
                                         const matchesRole = !filterRole || m.role === filterRole;
                                         const matchesSearch = !searchQuery || m.name.toLowerCase().includes(searchQuery.toLowerCase());

@@ -19,6 +19,9 @@ const calculateAttendanceSummary = (data) => {
                 late: 0,
                 halfDay: 0,
                 permission: 0,
+                weekOff: 0,
+                holiday: 0,
+                workingDays: 0,
                 minutes: 0,
                 total: 0
             };
@@ -31,6 +34,14 @@ const calculateAttendanceSummary = (data) => {
             memberSummary[mId].present++;
         } else if (a.status === 'absent') {
             memberSummary[mId].absent++;
+        } else if (a.status === 'week_off') {
+            memberSummary[mId].weekOff++;
+        } else if (a.status === 'holiday') {
+            memberSummary[mId].holiday++;
+        }
+
+        if (a.status !== 'week_off' && a.status !== 'holiday') {
+            memberSummary[mId].workingDays++;
         }
 
         if (a.status === 'late') memberSummary[mId].late++;
@@ -102,6 +113,7 @@ const calculateAttendanceSummary = (data) => {
         m.absent,
         m.halfDay,
         m.permission,
+        m.workingDays,
         formatMins(m.minutes),
         m.overtime || 0,
         formatMins(m.overtimeMinutes || 0),
@@ -114,6 +126,8 @@ const calculateAttendanceSummary = (data) => {
 const getPAStatus = (status) => {
     if (status === 'half-day') return 'H';
     if (status === 'overtime') return 'O';
+    if (status === 'week_off') return 'W';
+    if (status === 'holiday') return 'Hol';
     const presentStatuses = ['present', 'late', 'permission'];
     return presentStatuses.includes(status) ? 'P' : 'A';
 };
@@ -214,7 +228,7 @@ export const processAttendanceExportData = (attendances, members, { periodType, 
 export const exportAttendanceToCSV = (data, filename) => {
     const { memberStatsRows } = calculateAttendanceSummary(data);
 
-    const summaryHeaders = ["Member Summary", "Present Total", "Absent", "Half Day", "Permissions", "Total Perm. Hrs", "Overtime", "Total OT Hrs", "Total Records"];
+    const summaryHeaders = ["Member Summary", "Present Total", "Absent", "Half Day", "Permissions", "Working Days", "Total Perm. Hrs", "Overtime", "Total OT Hrs", "Total Records"];
     const detailHeaders = ["Date", "Member", "Role", "Wage Info", "Status Code", "Status", "Perm. Duration", "Perm. Hrs", "Perm. Reason", "OT Duration", "OT Hrs", "OT Reason", "Subject", "Project", "Note"];
 
     const rows = [
@@ -253,7 +267,7 @@ export const exportAttendanceToTXT = ({ data, period, filename }) => {
     const { globalStats, memberStatsRows } = calculateAttendanceSummary(data);
 
     let titleSuffix = "\nMEMBER SUMMARY\n" + "--------------------------------------------------\n";
-    titleSuffix += ["Member", "Pres", "Abs", "Half", "Perm", "Hrs", "OT", "OT Hrs", "Total"].map(h => h.padEnd(8, ' ')).join(' | ') + "\n";
+    titleSuffix += ["Member", "Pres", "Abs", "Half", "Perm", "WrkDays", "Hrs", "OT", "OT Hrs", "Total"].map(h => h.padEnd(8, ' ')).join(' | ') + "\n";
     memberStatsRows.forEach(row => {
         titleSuffix += row.map((v, i) => String(v).padEnd(8, ' ')).join(' | ') + "\n";
     });
@@ -312,7 +326,7 @@ export const exportAttendanceToPDF = ({ data, period, subHeader, filename }) => 
 
     autoTable(doc, {
         startY: 65,
-        head: [['Member Name', 'Total Presents', 'Total Absents', 'Half Days', 'No. of permissions', 'Total Perm. Hours', 'Overtime', 'Total OT Hours', 'Total Records']],
+        head: [['Member Name', 'Total Presents', 'Total Absents', 'Half Days', 'No. permissions', 'Working Days', 'Total Perm. Hours', 'Overtime', 'Total OT Hours', 'Total Records']],
         body: memberStatsRows,
         theme: 'grid',
         headStyles: { fillColor: [248, 250, 252], textColor: [37, 99, 235], fontSize: 9, halign: 'center' },
