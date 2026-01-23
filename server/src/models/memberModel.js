@@ -1,26 +1,36 @@
 const db = require('../config/db');
 
 const getTableName = (sector) => sector === 'it' ? 'it_members' : 'manufacturing_members';
+const getProjectTableName = (sector) => sector === 'it' ? 'it_projects' : 'manufacturing_projects';
 
 const create = async (data) => {
     const table = getTableName(data.sector);
-    const { user_id, name, role, phone, email, status, wage_type, daily_wage, member_type } = data;
+    const { user_id, name, role, phone, email, status, wage_type, daily_wage, member_type, project_id } = data;
     const [result] = await db.query(
-        `INSERT INTO ${table} (user_id, name, role, phone, email, status, wage_type, daily_wage, member_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [user_id, name, role || null, phone || null, email || null, status || 'active', wage_type || 'daily', daily_wage || 0, member_type || 'worker']
+        `INSERT INTO ${table} (user_id, name, role, phone, email, status, wage_type, daily_wage, member_type, project_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [user_id, name, role || null, phone || null, email || null, status || 'active', wage_type || 'daily', daily_wage || 0, member_type || 'worker', project_id || null]
     );
     return { id: result.insertId, ...data };
 };
 
 const getAllByUserId = async (userId, memberType = null, sector) => {
     const table = getTableName(sector);
-    let query = `SELECT * FROM ${table} WHERE user_id = ?`;
+    const projectTable = getProjectTableName(sector);
+
+    let query = `
+        SELECT m.*, p.name as project_name 
+        FROM ${table} m 
+        LEFT JOIN ${projectTable} p ON m.project_id = p.id 
+        WHERE m.user_id = ?
+    `;
     let params = [userId];
+
     if (memberType && memberType !== 'all') {
-        query += ' AND member_type = ?';
+        query += ' AND m.member_type = ?';
         params.push(memberType);
     }
-    query += ' ORDER BY created_at DESC';
+
+    query += ' ORDER BY m.created_at DESC';
     const [rows] = await db.query(query, params);
     return rows;
 };
@@ -36,10 +46,10 @@ const getById = async (id, userId, sector) => {
 
 const update = async (id, userId, data) => {
     const table = getTableName(data.sector);
-    const { name, role, phone, email, status, wage_type, daily_wage, member_type } = data;
+    const { name, role, phone, email, status, wage_type, daily_wage, member_type, project_id } = data;
     const [result] = await db.query(
-        `UPDATE ${table} SET name = ?, role = ?, phone = ?, email = ?, status = ?, wage_type = ?, daily_wage = ?, member_type = ? WHERE id = ? AND user_id = ?`,
-        [name, role || null, phone || null, email || null, status || 'active', wage_type || 'daily', daily_wage || 0, member_type || 'worker', id, userId]
+        `UPDATE ${table} SET name = ?, role = ?, phone = ?, email = ?, status = ?, wage_type = ?, daily_wage = ?, member_type = ?, project_id = ? WHERE id = ? AND user_id = ?`,
+        [name, role || null, phone || null, email || null, status || 'active', wage_type || 'daily', daily_wage || 0, member_type || 'worker', project_id || null, id, userId]
     );
     return result.affectedRows > 0;
 };

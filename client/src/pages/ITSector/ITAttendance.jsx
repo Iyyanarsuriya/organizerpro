@@ -1015,7 +1015,7 @@ const ITAttendance = () => {
                         </div>
                     </div>
                 ) : activeTab === 'members' ? (
-                    <MemberManager sector={SECTOR} onClose={() => setActiveTab('records')} onUpdate={fetchData} />
+                    <MemberManager sector={SECTOR} projects={projects} onClose={() => setActiveTab('records')} onUpdate={fetchData} />
                 ) : (
                     /* Daily Sheet View */
                     <div className="bg-white rounded-[40px] shadow-xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">

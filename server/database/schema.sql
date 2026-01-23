@@ -149,9 +149,11 @@ CREATE TABLE `manufacturing_members` (
   `wage_type` enum('daily','monthly','piece_rate') DEFAULT 'daily',
   `daily_wage` decimal(15,2) DEFAULT '0.00',
   `member_type` enum('employee','worker') DEFAULT 'worker',
+  `project_id` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
-  CONSTRAINT `fk_man_memb_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+  CONSTRAINT `fk_man_memb_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_man_memb_proj` FOREIGN KEY (`project_id`) REFERENCES `manufacturing_projects` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Manufacturing Transactions
@@ -337,9 +339,11 @@ CREATE TABLE `it_members` (
   `wage_type` enum('daily','monthly','piece_rate') DEFAULT 'daily',
   `daily_wage` decimal(15,2) DEFAULT '0.00',
   `member_type` enum('employee','worker') DEFAULT 'worker',
+  `project_id` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
-  CONSTRAINT `fk_it_memb_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+  CONSTRAINT `fk_it_memb_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_it_memb_proj` FOREIGN KEY (`project_id`) REFERENCES `it_projects` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- IT Attendance

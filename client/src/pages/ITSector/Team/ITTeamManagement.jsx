@@ -2,25 +2,34 @@ import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { FaUserPlus, FaTrash, FaUserTie, FaTimes, FaEnvelope, FaPhone, FaCalendar, FaChevronLeft } from 'react-icons/fa';
+import { FaUserPlus, FaTrash, FaUserTie, FaTimes, FaEnvelope, FaPhone, FaCalendar, FaChevronLeft, FaFolder, FaUsers } from 'react-icons/fa'; // Added icons
+import { getProjects } from '../../../api/projectApi'; // Import project API
+import ConfirmModal from '../../../components/modals/ConfirmModal';
 
 const ITTeamManagement = () => {
     const [team, setTeam] = useState([]);
+    const [projects, setProjects] = useState([]); // Projects state
     const [loading, setLoading] = useState(true);
-    const [formData, setFormData] = useState({ username: '', email: '', password: '', role: 'staff' });
+    const [formData, setFormData] = useState({ username: '', email: '', password: '', role: 'staff', project_id: '' }); // Added project_id
     const [showModal, setShowModal] = useState(false);
+    const [deleteModal, setDeleteModal] = useState({ show: false, id: null }); // Delete modal state
     const [selectedUser, setSelectedUser] = useState(null);
     const location = useLocation();
 
     const token = localStorage.getItem('token');
     const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api/it-team`;
+    const SECTOR = 'it'; // Define sector
 
     const fetchTeam = async () => {
         try {
-            const res = await axios.get(API_URL, { headers: { Authorization: `Bearer ${token}` } });
-            setTeam(res.data);
+            const [teamRes, projRes] = await Promise.all([
+                axios.get(API_URL, { headers: { Authorization: `Bearer ${token}` } }),
+                getProjects({ sector: SECTOR })
+            ]);
+            setTeam(teamRes.data);
+            setProjects(projRes.data);
         } catch (error) {
-            console.error("Fetch team error", error);
+            console.error("Fetch data error", error);
         } finally {
             setLoading(false);
         }
@@ -40,18 +49,24 @@ const ITTeamManagement = () => {
             await axios.post(API_URL, formData, { headers: { Authorization: `Bearer ${token}` } });
             toast.success("Team member added successfully!");
             setShowModal(false);
-            setFormData({ username: '', email: '', password: '', role: 'staff' });
+            setFormData({ username: '', email: '', password: '', role: 'staff', project_id: '' });
             fetchTeam();
         } catch (error) {
             toast.error(error.response?.data?.error || "Failed to add team member");
         }
     };
 
-    const handleDelete = async (id) => {
-        if (!window.confirm("Are you sure you want to remove this user?")) return;
+    const handleDeleteClick = (id) => {
+        setDeleteModal({ show: true, id });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteModal.id) return;
         try {
-            await axios.delete(`${API_URL}/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.delete(`${API_URL}/${deleteModal.id}`, { headers: { Authorization: `Bearer ${token}` } });
             toast.success("User removed");
+            setDeleteModal({ show: false, id: null });
+            setSelectedUser(null); // Close details modal if open
             fetchTeam();
         } catch (error) {
             toast.error("Failed to remove user");
@@ -115,7 +130,7 @@ const ITTeamManagement = () => {
                                                         </div>
                                                     </div>
                                                     <button
-                                                        onClick={() => handleDelete(user.id)}
+                                                        onClick={() => handleDeleteClick(user.id)}
                                                         className="w-[32px] h-[32px] flex items-center justify-center rounded-[8px] text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors"
                                                     >
                                                         <FaTrash className="text-[12px]" />
@@ -131,6 +146,12 @@ const ITTeamManagement = () => {
                                                         }`}>
                                                         {user.role}
                                                     </span>
+                                                    {user.project_name && (
+                                                        <span className="inline-flex items-center gap-1.5 px-[10px] py-[4px] rounded-full bg-orange-50 text-orange-600 text-[10px] font-black uppercase tracking-widest border border-orange-100">
+                                                            <FaFolder className="text-[10px]" />
+                                                            {user.project_name}
+                                                        </span>
+                                                    )}
                                                     <span className="text-[11px] text-slate-400 font-bold flex items-center gap-[4px]">
                                                         <FaCalendar className="text-[10px]" />
                                                         {new Date(user.created_at).toLocaleDateString()}
@@ -156,6 +177,7 @@ const ITTeamManagement = () => {
                                             <tr className="bg-slate-50/50 border-b border-slate-100">
                                                 <th className="px-[32px] py-[20px] text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">User Profile</th>
                                                 <th className="px-[32px] py-[20px] text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Role & Access</th>
+                                                <th className="px-[32px] py-[20px] text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Project</th>
                                                 <th className="px-[32px] py-[20px] text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Joined Date</th>
                                                 <th className="px-[32px] py-[20px] text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none text-right">Actions</th>
                                             </tr>
@@ -184,6 +206,16 @@ const ITTeamManagement = () => {
                                                         </span>
                                                     </td>
                                                     <td className="px-[32px] py-[20px]">
+                                                        {user.project_name ? (
+                                                            <span className="inline-flex items-center gap-1.5 px-[10px] py-[4px] rounded-full bg-orange-50 text-orange-600 text-[10px] font-black uppercase tracking-widest border border-orange-100">
+                                                                <FaFolder className="text-[10px]" />
+                                                                {user.project_name}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No Project</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-[32px] py-[20px]">
                                                         <span className="text-[12px] font-bold text-slate-500">
                                                             {new Date(user.created_at).toLocaleDateString()}
                                                         </span>
@@ -197,7 +229,7 @@ const ITTeamManagement = () => {
                                                                 View Details
                                                             </button>
                                                             <button
-                                                                onClick={() => handleDelete(user.id)}
+                                                                onClick={() => handleDeleteClick(user.id)}
                                                                 className="w-[32px] h-[32px] flex items-center justify-center rounded-[12px] text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
                                                                 title="Delete User"
                                                             >
@@ -278,13 +310,25 @@ const ITTeamManagement = () => {
                         </div>
 
                         <div className="mt-[32px] pt-[24px] border-t border-slate-100 flex justify-end">
-                            <button onClick={() => { if (window.confirm('Delete user?')) { handleDelete(selectedUser.id); setSelectedUser(null); } }} className="text-red-500 text-[12px] font-black uppercase tracking-widest hover:text-red-600 flex items-center gap-[8px] px-[16px] py-[8px] hover:bg-red-50 rounded-[10px] transition-colors">
+                            <button onClick={() => handleDeleteClick(selectedUser.id)} className="text-red-500 text-[12px] font-black uppercase tracking-widest hover:text-red-600 flex items-center gap-[8px] px-[16px] py-[8px] hover:bg-red-50 rounded-[10px] transition-colors">
                                 <FaTrash /> Remove Member
                             </button>
                         </div>
                     </div>
                 </div>
             )}
+
+            {/* Confirm Delete Modal */}
+            <ConfirmModal
+                isOpen={deleteModal.show}
+                title="Remove User?"
+                message="Are you sure you want to remove this user from the team? This action cannot be undone."
+                onConfirm={confirmDelete}
+                onCancel={() => setDeleteModal({ show: false, id: null })}
+                confirmText="Remove"
+                cancelText="Cancel"
+                type="danger"
+            />
 
             {/* Add Member Modal */}
             {showModal && (
@@ -344,6 +388,25 @@ const ITTeamManagement = () => {
                                 </div>
                             </div>
 
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Assign Project</label>
+                                <div className="relative">
+                                    <FaFolder className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <select
+                                        value={formData.project_id}
+                                        onChange={e => setFormData({ ...formData, project_id: e.target.value })}
+                                        className="w-full h-12 pl-10 pr-4 rounded-xl bg-slate-50 border border-slate-200 focus:border-[#2d5bff] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-bold text-slate-700 appearance-none"
+                                    >
+                                        <option value="">No Project (General)</option>
+                                        {projects.map(p => (
+                                            <option key={p.id} value={p.id}>{p.name}</option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[10px]">▼</div>
+                                </div>
+                            </div>
+
                             <div className="flex gap-3 mt-8">
                                 <button
                                     type="button"
@@ -361,9 +424,9 @@ const ITTeamManagement = () => {
                             </div>
                         </form>
                     </div>
-                </div>
+                </div >
             )}
-        </div>
+        </div >
     );
 };
 

@@ -10,7 +10,27 @@ exports.getSubUsers = async (req, res) => {
 
         // Fetch users specifically for the IT sector
         const subUsers = await User.findByOwnerId(req.user.id, 'it');
-        res.json(subUsers);
+
+        // Fetch members to get project info
+        const members = await Member.getAllByUserId(req.user.id, null, 'it');
+
+        // Create a map of email to member for quick lookup
+        const memberMap = {};
+        members.forEach(m => {
+            if (m.email) memberMap[m.email.toLowerCase()] = m;
+        });
+
+        // Enrich subUsers with project info
+        const enrichedUsers = subUsers.map(user => {
+            const member = memberMap[user.email?.toLowerCase()];
+            return {
+                ...user,
+                project_id: member?.project_id || null,
+                project_name: member?.project_name || null
+            };
+        });
+
+        res.json(enrichedUsers);
     } catch (error) {
         console.error('getSubUsers error:', error);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -23,7 +43,7 @@ exports.createSubUser = async (req, res) => {
             return res.status(403).json({ error: 'Only the Workspace Owner can add team members.' });
         }
 
-        let { username, email, password, role } = req.body;
+        let { username, email, password, role, project_id } = req.body;
         username = username?.trim();
         email = email?.trim().toLowerCase();
         password = password?.trim();
@@ -55,7 +75,8 @@ exports.createSubUser = async (req, res) => {
                 email: email,
                 status: 'active',
                 sector: 'it',
-                member_type: 'employee' // default type
+                member_type: 'employee', // default type
+                project_id: project_id || null
             });
         } catch (memberError) {
             console.error('Failed to auto-create member for user:', memberError);

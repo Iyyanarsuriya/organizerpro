@@ -1,17 +1,19 @@
 import { getMembers, createMember, updateMember, deleteMember, getGuests } from '../../api/memberApi';
+import { getProjects } from '../../api/projectApi';
 import { getMemberRoles, createMemberRole, deleteMemberRole } from '../../api/memberRoleApi'; // IMPORTS
 import { getTransactions } from '../../api/transactionApi';
 import toast from 'react-hot-toast';
-import { FaTimes, FaPlus, FaEdit, FaTrash, FaUser, FaUsers, FaBriefcase, FaPhone, FaEnvelope, FaHistory, FaMoneyBillWave, FaUniversity, FaTag, FaSearch, FaFilter } from 'react-icons/fa';
+import { FaTimes, FaPlus, FaEdit, FaTrash, FaUser, FaUsers, FaBriefcase, FaPhone, FaEnvelope, FaHistory, FaMoneyBillWave, FaUniversity, FaTag, FaSearch, FaFilter, FaFolder } from 'react-icons/fa';
 import ConfirmModal from '../modals/ConfirmModal';
 import RoleManager from './RoleManager'; // IMPORT
 import ExportButtons from '../Common/ExportButtons';
 import { generateCSV, generatePDF, generateTXT } from '../../utils/exportUtils/base.js';
 import { useState, useEffect } from 'react';
 
-const MemberManager = ({ onClose, onUpdate, sector }) => {
+const MemberManager = ({ onClose, onUpdate, sector, projects: parentProjects }) => {
 
     const [members, setMembers] = useState([]);
+    const [projects, setProjects] = useState(parentProjects || []);
     const [roles, setRoles] = useState([]); // ROLES STATE
     const [showRoleManager, setShowRoleManager] = useState(false); // MANAGER STATE
     const [loading, setLoading] = useState(true);
@@ -20,6 +22,7 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
         role: '',
         phone: '',
         email: '',
+        project_id: '',
         member_type: 'employee',
         wage_type: 'monthly',
         daily_wage: '',
@@ -29,6 +32,7 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
     // Filter State
     const [searchQuery, setSearchQuery] = useState('');
     const [filterRole, setFilterRole] = useState('');
+    const [filterProject, setFilterProject] = useState('');
     const [filterType, setFilterType] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
 
@@ -40,16 +44,35 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
 
     const fetchMembers = async () => {
         try {
-            const [memRes, roleRes, guestRes] = await Promise.all([
+            console.log('Fetching members for sector:', sector);
+            const promises = [
                 getMembers({ sector }),
                 getMemberRoles({ sector }),
                 getGuests({ sector })
-            ]);
+            ];
+
+            // Only fetch projects if not provided by parent
+            if (!parentProjects || parentProjects.length === 0) {
+                promises.push(getProjects({ sector }));
+            }
+
+            const results = await Promise.all(promises);
+            const memRes = results[0];
+            const roleRes = results[1];
+            const guestRes = results[2];
+
+            // If we fetched projects, it's the 4th result. Otherwise use parentProjects.
+            const fetchedProjects = (!parentProjects || parentProjects.length === 0) ? results[3].data : parentProjects;
+
+            console.log('Projects used in member manager:', fetchedProjects);
+
             const guests = guestRes.data.data.map(g => ({ ...g, isGuest: true }));
             setMembers([...memRes.data.data, ...guests]);
             setRoles(roleRes.data.data);
+            setProjects(fetchedProjects);
             setLoading(false);
         } catch (error) {
+            console.error('Error in fetchMembers:', error);
             toast.error("Failed to fetch data");
             setLoading(false);
         }
@@ -66,11 +89,12 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
             (m.email && m.email.toLowerCase().includes(searchQuery.toLowerCase()));
 
         const matchesRole = !filterRole || m.role === filterRole;
+        const matchesProject = !filterProject || (m.project_id && m.project_id.toString() === filterProject.toString());
         const matchesType = filterType === 'all' ||
             (filterType === 'guest' ? m.isGuest : m.member_type === filterType);
         const matchesStatus = filterStatus === 'all' || m.status === filterStatus;
 
-        return matchesSearch && matchesRole && matchesType && matchesStatus;
+        return matchesSearch && matchesRole && matchesProject && matchesType && matchesStatus;
     });
 
     // Export Handlers
@@ -163,7 +187,8 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
             member_type: member.member_type || 'worker',
             wage_type: member.wage_type || 'daily',
             daily_wage: member.daily_wage || '',
-            status: member.status
+            status: member.status,
+            project_id: member.project_id || ''
         });
         setEditingId(member.id);
     };
@@ -185,7 +210,7 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
     };
 
     const resetForm = () => {
-        setFormData({ name: '', role: '', phone: '', email: '', member_type: 'employee', wage_type: 'monthly', daily_wage: '', status: 'active' });
+        setFormData({ name: '', role: '', phone: '', email: '', project_id: '', member_type: 'employee', wage_type: 'monthly', daily_wage: '', status: 'active' });
         setEditingId(null);
     };
 
@@ -262,6 +287,22 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
                                     <FaPlus size={10} />
                                 </button>
                             </div>
+                        </div>
+
+                        <div className="col-span-1 lg:col-span-1">
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                                <FaFolder className="inline mr-1 text-[8px]" /> Project
+                            </label>
+                            <select
+                                value={formData.project_id}
+                                onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
+                            >
+                                <option value="">No Project</option>
+                                {projects.map(p => (
+                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                            </select>
                         </div>
                         <div className="col-span-1 lg:col-span-1">
                             <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
@@ -363,7 +404,7 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
 
                 {/* Filter Bar - Modern Design */}
                 <div className="bg-white/80 backdrop-blur-xl p-4 rounded-[24px] border border-white/20 shadow-xl shadow-slate-200/50 mb-6 sticky top-2 z-10">
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         {/* Category Filter - Indigo */}
                         <div className="relative group">
                             <FaTag className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400 group-hover:text-indigo-500 transition-colors" size={12} />
@@ -377,6 +418,18 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
                         </div>
 
 
+
+                        {/* Project Filter - Orange */}
+                        <div className="relative group">
+                            <FaFolder className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-400 group-hover:text-orange-500 transition-colors" size={12} />
+                            <select value={filterProject} onChange={(e) => setFilterProject(e.target.value)} className="w-full bg-orange-50 hover:bg-orange-100 border border-transparent rounded-2xl py-3 pl-10 pr-10 text-xs font-black text-orange-600 text-center outline-none focus:ring-2 focus:ring-orange-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
+                                <option value="">All Projects</option>
+                                {projects.map(p => (
+                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-orange-400 text-[10px]">▼</div>
+                        </div>
 
                         {/* Status Filter - Purple */}
                         <div className="relative group">
@@ -453,6 +506,12 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
                                                     <div className="flex items-center gap-2">
                                                         <FaEnvelope className="text-slate-400 text-[12px]" />
                                                         <span className="font-medium">{member.email}</span>
+                                                    </div>
+                                                )}
+                                                {member.project_name && (
+                                                    <div className="flex items-center gap-2">
+                                                        <FaFolder className="text-slate-400 text-[12px]" />
+                                                        <span className="font-medium">{member.project_name}</span>
                                                     </div>
                                                 )}
                                                 <div className="flex items-center gap-2">
