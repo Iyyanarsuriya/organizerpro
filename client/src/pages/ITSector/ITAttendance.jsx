@@ -20,7 +20,7 @@ import {
     FaPlus, FaTrash, FaEdit, FaCalendarAlt, FaSearch,
     FaFilter, FaChartBar, FaUserCheck, FaChevronLeft, FaChevronRight,
     FaFolderPlus, FaTimes, FaInbox, FaUserEdit, FaCheck, FaQuestionCircle,
-    FaFileAlt, FaTag, FaBusinessTime
+    FaFileAlt, FaTag, FaBusinessTime, FaChevronDown
 } from 'react-icons/fa';
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend
@@ -262,6 +262,9 @@ const ITAttendance = () => {
 
 
 
+
+
+
     const handleBulkMark = (status) => {
         const targetDate = activeTargetDate;
         const isChild = currentUser.owner_id != null;
@@ -272,23 +275,42 @@ const ITAttendance = () => {
             return;
         }
 
-        setBulkStatusData({
-            status,
-            date: targetDate,
-            reason: ''
-        });
-        setShowBulkStatusModal(true);
+        if (status === 'custom') {
+            setBulkStatusData({
+                status: 'custom',
+                date: targetDate,
+                reason: '',
+                selectedStatus: 'present'
+            });
+            setShowBulkStatusModal(true);
+        } else {
+            setBulkStatusData({
+                status: status,
+                date: targetDate,
+                reason: '',
+                selectedStatus: status
+            });
+            setShowBulkStatusModal(true);
+        }
     };
 
     const confirmBulkMark = async () => {
-        const { status, date, reason } = bulkStatusData;
+        const { status, date, reason, selectedStatus } = bulkStatusData;
 
-        let subject = status === 'week_off' ? 'Weekend' : 'Bulk Mark';
+        // Determine final values
+        const finalStatus = status === 'custom' ? selectedStatus : status;
+        let subject = finalStatus === 'week_off' ? 'Weekend' : 'Bulk Mark';
         let note = null;
 
         if (status === 'holiday') {
             subject = reason.trim() || 'Holiday';
             note = subject;
+        } else if (status === 'custom') {
+            // For custom, use the entered reason as note/subject if provided
+            if (reason && reason.trim()) {
+                note = reason.trim();
+                subject = reason.trim(); // Optional: or keep as 'Bulk Mark'
+            }
         }
 
         try {
@@ -296,7 +318,7 @@ const ITAttendance = () => {
             const payload = {
                 member_ids: memberIds,
                 date,
-                status,
+                status: finalStatus,
                 subject,
                 note,
                 sector: SECTOR
@@ -692,28 +714,7 @@ const ITAttendance = () => {
                                     />
                                 </div>
 
-                                {/* Bulk Mark - NEW */}
-                                <div className="relative group">
-                                    <button
-                                        className="h-[38px] px-3 bg-white border border-slate-200 rounded-xl flex items-center gap-2 text-[11px] font-bold text-slate-500 hover:text-blue-600 hover:border-blue-500 transition-all cursor-pointer shadow-sm"
-                                        title="Bulk Mark Status"
-                                    >
-                                        <FaCalendarAlt />
-                                        <span className="hidden md:inline">Bulk</span>
-                                    </button>
-                                    <select
-                                        value=""
-                                        onChange={(e) => {
-                                            if (e.target.value) handleBulkMark(e.target.value);
-                                        }}
-                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                                    >
-                                        <option value="">Bulk Mark</option>
-                                        <option value="week_off">Week Off</option>
-                                        <option value="holiday">Holiday</option>
-                                        <option value="present">All Present</option>
-                                    </select>
-                                </div>
+
 
                             </div>
 
@@ -1492,8 +1493,36 @@ const ITAttendance = () => {
 
                         <div className="space-y-4">
                             <p className="text-xs font-bold text-slate-500 leading-relaxed">
-                                You are about to mark <span className="text-slate-900">{members.length} active members</span> as <span className="uppercase text-blue-600">{bulkStatusData.status.replace('_', ' ')}</span> for <span className="text-slate-900">{bulkStatusData.date}</span>.
+                                You are about to mark <span className="text-slate-900">{members.length} active members</span> as <span className="uppercase text-blue-600">{bulkStatusData.status === 'custom' ? (bulkStatusData.selectedStatus ? bulkStatusData.selectedStatus.replace('_', ' ') : 'Present') : bulkStatusData.status.replace('_', ' ')}</span> for <span className="text-slate-900">{bulkStatusData.date}</span>.
                             </p>
+
+                            {bulkStatusData.status === 'custom' && (
+                                <div>
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Select Status</label>
+                                    <div className="grid grid-cols-2 gap-2 mb-3">
+                                        {statusOptions.filter(o => o.id !== 'all').map(option => (
+                                            <button
+                                                key={option.id}
+                                                onClick={() => setBulkStatusData({ ...bulkStatusData, selectedStatus: option.id })}
+                                                className={`p-2 rounded-lg border text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${bulkStatusData.selectedStatus === option.id
+                                                    ? `${option.bg} ${option.color} ${option.border} ring-2 ring-offset-1 ring-blue-200`
+                                                    : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-50'
+                                                    }`}
+                                            >
+                                                <option.icon /> {option.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Note (Optional)</label>
+                                    <input
+                                        type="text"
+                                        value={bulkStatusData.reason || ''}
+                                        onChange={(e) => setBulkStatusData({ ...bulkStatusData, reason: e.target.value })}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-colors"
+                                        placeholder="Add a note..."
+                                    />
+                                </div>
+                            )}
 
                             {bulkStatusData.status === 'holiday' && (
                                 <div>

@@ -3,7 +3,7 @@ import { getProjects } from '../../api/projectApi';
 import { getMemberRoles, createMemberRole, deleteMemberRole } from '../../api/memberRoleApi'; // IMPORTS
 import { getTransactions } from '../../api/transactionApi';
 import toast from 'react-hot-toast';
-import { FaTimes, FaPlus, FaEdit, FaTrash, FaUser, FaUsers, FaBriefcase, FaPhone, FaEnvelope, FaHistory, FaMoneyBillWave, FaUniversity, FaTag, FaSearch, FaFilter, FaFolder } from 'react-icons/fa';
+import { FaTimes, FaPlus, FaEdit, FaTrash, FaUser, FaUsers, FaBriefcase, FaPhone, FaEnvelope, FaHistory, FaMoneyBillWave, FaUniversity, FaTag, FaSearch, FaFilter, FaFolder, FaBan } from 'react-icons/fa';
 import ConfirmModal from '../modals/ConfirmModal';
 import RoleManager from './RoleManager'; // IMPORT
 import ExportButtons from '../Common/ExportButtons';
@@ -11,6 +11,11 @@ import { generateCSV, generatePDF, generateTXT } from '../../utils/exportUtils/b
 import { useState, useEffect } from 'react';
 
 const MemberManager = ({ onClose, onUpdate, sector, projects: parentProjects }) => {
+
+    // Get current user role
+    const userJson = localStorage.getItem('user');
+    const currentUser = userJson ? JSON.parse(userJson) : null;
+    const isOwner = currentUser?.role === 'owner';
 
     const [members, setMembers] = useState([]);
     const [projects, setProjects] = useState(parentProjects || []);
@@ -38,6 +43,7 @@ const MemberManager = ({ onClose, onUpdate, sector, projects: parentProjects }) 
 
     const [editingId, setEditingId] = useState(null);
     const [deleteModal, setDeleteModal] = useState({ show: false, id: null });
+    const [deactivateModal, setDeactivateModal] = useState({ show: false, member: null }); // Deactivate modal state
     const [viewingPayments, setViewingPayments] = useState(null); // Member object
     const [payments, setPayments] = useState([]);
     const [paymentsLoading, setPaymentsLoading] = useState(false);
@@ -195,6 +201,24 @@ const MemberManager = ({ onClose, onUpdate, sector, projects: parentProjects }) 
 
     const handleDeleteClick = (id) => {
         setDeleteModal({ show: true, id });
+    };
+
+    const handleDeactivateClick = (member) => {
+        setDeactivateModal({ show: true, member });
+    };
+
+    const confirmDeactivate = async () => {
+        const member = deactivateModal.member;
+        if (!member) return;
+        try {
+            await updateMember(member.id, { ...member, status: 'inactive', sector });
+            toast.success("Member deactivated");
+            setDeactivateModal({ show: false, member: null });
+            fetchMembers();
+            if (onUpdate) onUpdate();
+        } catch (error) {
+            toast.error("Failed to deactivate member");
+        }
     };
 
     const confirmDelete = async () => {
@@ -530,15 +554,27 @@ const MemberManager = ({ onClose, onUpdate, sector, projects: parentProjects }) 
                                                     <button
                                                         onClick={() => handleEdit(member)}
                                                         className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                                                        title="Edit Member"
                                                     >
                                                         <FaEdit />
                                                     </button>
-                                                    <button
-                                                        onClick={() => handleDeleteClick(member.id)}
-                                                        className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                                                    >
-                                                        <FaTrash />
-                                                    </button>
+                                                    {isOwner ? (
+                                                        <button
+                                                            onClick={() => handleDeleteClick(member.id)}
+                                                            className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                                                            title="Delete Member"
+                                                        >
+                                                            <FaTrash />
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => handleDeactivateClick(member)}
+                                                            className="p-3 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all"
+                                                            title="Deactivate (Set Inactive)"
+                                                        >
+                                                            <FaBan />
+                                                        </button>
+                                                    )}
                                                 </>
                                             )}
                                         </div>
@@ -556,6 +592,19 @@ const MemberManager = ({ onClose, onUpdate, sector, projects: parentProjects }) 
                 </div>
             </div>
 
+
+
+            {/* Deactivate Confirm Modal */}
+            <ConfirmModal
+                isOpen={deactivateModal.show}
+                title="Deactivate Member?"
+                message={`Are you sure you want to deactivate ${deactivateModal.member?.name}? They will be marked as inactive.`}
+                onConfirm={confirmDeactivate}
+                onCancel={() => setDeactivateModal({ show: false, member: null })}
+                confirmText="Deactivate"
+                cancelText="Cancel"
+                type="warning"
+            />
 
             {/* Role Manager Modal */}
             {
