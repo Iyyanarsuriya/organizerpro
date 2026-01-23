@@ -279,6 +279,9 @@ const ITAttendance = () => {
             setBulkStatusData({
                 status: 'custom',
                 date: targetDate,
+                endDate: targetDate,
+                returnDate: targetDate,
+                isRange: false,
                 reason: '',
                 selectedStatus: 'present'
             });
@@ -287,6 +290,9 @@ const ITAttendance = () => {
             setBulkStatusData({
                 status: status,
                 date: targetDate,
+                endDate: targetDate,
+                returnDate: targetDate,
+                isRange: false,
                 reason: '',
                 selectedStatus: status
             });
@@ -315,16 +321,30 @@ const ITAttendance = () => {
 
         try {
             const memberIds = members.map(m => m.id);
-            const payload = {
-                member_ids: memberIds,
-                date,
-                status: finalStatus,
-                subject,
-                note,
-                sector: SECTOR
-            };
+            let datesToMark = [date];
 
-            await bulkMarkITAttendance(payload);
+            if (bulkStatusData.isRange && bulkStatusData.endDate) {
+                const start = new Date(date);
+                const end = new Date(bulkStatusData.endDate);
+                datesToMark = [];
+                for (let d = start; d <= end; d.setDate(d.getDate() + 1)) {
+                    datesToMark.push(new Date(d).toISOString().split('T')[0]);
+                }
+            }
+
+            const promises = datesToMark.map(d => {
+                const payload = {
+                    member_ids: memberIds,
+                    date: d,
+                    status: finalStatus,
+                    subject,
+                    note,
+                    sector: SECTOR
+                };
+                return bulkMarkITAttendance(payload);
+            });
+
+            await Promise.all(promises);
             toast.success("Bulk update successful");
             fetchData();
             setShowBulkStatusModal(false);
@@ -1045,6 +1065,30 @@ const ITAttendance = () => {
                         </div>
 
                         <div className="p-0">
+                            {/* Bulk Action Toolbar */}
+                            <div className="px-6 sm:px-8 py-4 bg-slate-50/50 border-b border-slate-100 flex flex-wrap items-center gap-3">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 hidden sm:block">Quick Actions:</p>
+                                <button
+                                    onClick={() => handleBulkMark('present')}
+                                    className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 shadow-sm transition-all flex items-center gap-2"
+                                >
+                                    <FaCheckCircle className="text-sm" /> Mark All Present
+                                </button>
+                                <div className="w-px h-6 bg-slate-200 hidden sm:block" />
+                                <button
+                                    onClick={() => handleBulkMark('week_off')}
+                                    className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 hover:border-slate-300 shadow-sm transition-all flex items-center gap-2"
+                                >
+                                    <FaCalendarAlt className="text-sm" /> Mark Weekend
+                                </button>
+                                <button
+                                    onClick={() => handleBulkMark('holiday')}
+                                    className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-pink-500 hover:bg-pink-50 hover:border-pink-200 shadow-sm transition-all flex items-center gap-2"
+                                >
+                                    <FaTag className="text-sm" /> Mark Holiday
+                                </button>
+                            </div>
+
                             {/* Desktop Table View */}
                             <div className="hidden md:block overflow-x-auto">
                                 <table className="w-full text-left">
@@ -1493,8 +1537,54 @@ const ITAttendance = () => {
 
                         <div className="space-y-4">
                             <p className="text-xs font-bold text-slate-500 leading-relaxed">
-                                You are about to mark <span className="text-slate-900">{members.length} active members</span> as <span className="uppercase text-blue-600">{bulkStatusData.status === 'custom' ? (bulkStatusData.selectedStatus ? bulkStatusData.selectedStatus.replace('_', ' ') : 'Present') : bulkStatusData.status.replace('_', ' ')}</span> for <span className="text-slate-900">{bulkStatusData.date}</span>.
+                                You are about to mark <span className="text-slate-900">{members.length} active members</span> as <span className="uppercase text-blue-600">{bulkStatusData.status === 'custom' ? (bulkStatusData.selectedStatus ? bulkStatusData.selectedStatus.replace('_', ' ') : 'Present') : bulkStatusData.status.replace('_', ' ')}</span>.
                             </p>
+
+                            {/* Date Selection Mode */}
+                            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                <div className="flex items-center justify-between mb-3">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Date Selection</span>
+                                    <div className="flex bg-white rounded-lg p-1 border border-slate-200">
+                                        <button
+                                            onClick={() => setBulkStatusData({ ...bulkStatusData, isRange: false })}
+                                            className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-wider transition-all ${!bulkStatusData.isRange ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                        >
+                                            Single Day
+                                        </button>
+                                        <button
+                                            onClick={() => setBulkStatusData({ ...bulkStatusData, isRange: true })}
+                                            className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-wider transition-all ${bulkStatusData.isRange ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                        >
+                                            Date Range
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex-1">
+                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Start Date</label>
+                                        <input
+                                            type="date"
+                                            value={bulkStatusData.date}
+                                            onChange={(e) => setBulkStatusData({ ...bulkStatusData, date: e.target.value })}
+                                            className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold text-slate-700 outline-none focus:border-blue-500"
+                                        />
+                                    </div>
+                                    {bulkStatusData.isRange && (
+                                        <>
+                                            <span className="mt-6 text-slate-300">-</span>
+                                            <div className="flex-1">
+                                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">End Date</label>
+                                                <input
+                                                    type="date"
+                                                    value={bulkStatusData.endDate}
+                                                    onChange={(e) => setBulkStatusData({ ...bulkStatusData, endDate: e.target.value })}
+                                                    className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold text-slate-700 outline-none focus:border-blue-500"
+                                                />
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
 
                             {bulkStatusData.status === 'custom' && (
                                 <div>
