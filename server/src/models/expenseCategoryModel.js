@@ -1,6 +1,7 @@
 const db = require('../config/db');
 
 const getTableName = (sector) => {
+    if (sector === 'it') return 'it_categories';
     return sector === 'manufacturing' ? 'manufacturing_expense_categories' : 'personal_categories';
 };
 
@@ -8,7 +9,7 @@ const getAllByUserId = async (userId, sector) => {
     const table = getTableName(sector);
     const query = sector === 'manufacturing'
         ? `SELECT * FROM ${table} WHERE user_id = ? ORDER BY type, name`
-        : `SELECT *, 'expense' as type FROM ${table} WHERE user_id = ? ORDER BY name`; // Shim type for personal
+        : `SELECT *, 'expense' as type FROM ${table} WHERE user_id = ? ORDER BY name`; // Shim type for personal/it
 
     const [rows] = await db.query(query, [userId]);
     return rows;
@@ -26,7 +27,7 @@ const create = async (data) => {
         query = `INSERT INTO ${table} (user_id, name, type) VALUES (?, ?, ?)`;
         params = [user_id, name, type || 'expense'];
     } else {
-        // Personal
+        // Personal and IT
         query = `INSERT INTO ${table} (user_id, name, color) VALUES (?, ?, ?)`;
         params = [user_id, name, '#2d5bff']; // Default color
     }

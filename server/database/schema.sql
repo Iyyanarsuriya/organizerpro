@@ -402,6 +402,33 @@ CREATE TABLE `it_member_roles` (
   UNIQUE KEY `unique_it_role` (`user_id`,`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- IT Transactions
+DROP TABLE IF EXISTS `it_transactions`;
+CREATE TABLE `it_transactions` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `amount` decimal(15,2) NOT NULL,
+  `type` enum('income','expense') NOT NULL,
+  `category` varchar(50) DEFAULT 'Other',
+  `date` datetime NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `project_id` int DEFAULT NULL,
+  `member_id` int DEFAULT NULL,
+  `payment_status` varchar(20) DEFAULT 'completed',
+  `guest_name` varchar(255) DEFAULT NULL,
+  `quantity` decimal(15,2) DEFAULT '1.00',
+  `unit_price` decimal(15,2) DEFAULT '0.00',
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  KEY `fk_it_trans_proj` (`project_id`),
+  KEY `fk_it_trans_memb` (`member_id`),
+  CONSTRAINT `fk_it_trans_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_it_trans_proj` FOREIGN KEY (`project_id`) REFERENCES `it_projects` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_it_trans_memb` FOREIGN KEY (`member_id`) REFERENCES `it_members` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 -- IT Categories
 DROP TABLE IF EXISTS `it_categories`;
 CREATE TABLE `it_categories` (

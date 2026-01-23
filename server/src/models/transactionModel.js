@@ -3,6 +3,7 @@ const db = require('../config/db');
 // Helper to determine table name
 const getTableName = (sector) => {
     if (!sector) return 'personal_transactions';
+    if (sector === 'it') return 'it_transactions';
     return sector === 'manufacturing' ? 'manufacturing_transactions' : 'personal_transactions';
 };
 
@@ -18,7 +19,7 @@ const create = async (data) => {
 
     let query, params;
 
-    if (table === 'manufacturing_transactions') {
+    if (table === 'manufacturing_transactions' || table === 'it_transactions') {
         query = `INSERT INTO ${table} (user_id, title, amount, type, category, date, project_id, member_id, guest_name, payment_status, quantity, unit_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         params = [user_id, title, amount, type, category, finalDate, project_id || null, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0];
     } else {
@@ -36,7 +37,10 @@ const getAllByUserId = async (userId, filters = {}) => {
     let query;
     const params = [userId];
 
-    if (table === 'manufacturing_transactions') {
+    if (table === 'manufacturing_transactions' || table === 'it_transactions') {
+        const projectTable = table === 'manufacturing_transactions' ? 'manufacturing_projects' : 'it_projects';
+        const memberTable = table === 'manufacturing_transactions' ? 'manufacturing_members' : 'it_members';
+
         query = `SELECT t.*, p.name as project_name, 
                 CASE 
                     WHEN t.member_id IS NOT NULL THEN w.name 
@@ -44,8 +48,8 @@ const getAllByUserId = async (userId, filters = {}) => {
                 END as member_name,
                 w.member_type
                 FROM ${table} t 
-                LEFT JOIN manufacturing_projects p ON t.project_id = p.id 
-                LEFT JOIN manufacturing_members w ON t.member_id = w.id
+                LEFT JOIN ${projectTable} p ON t.project_id = p.id 
+                LEFT JOIN ${memberTable} w ON t.member_id = w.id
                 WHERE t.user_id = ?`;
 
         if (filters.projectId) {
@@ -170,7 +174,9 @@ const getStats = async (userId, period, projectId, startDate, endDate, memberId,
         params.push(startDate, endDate);
     }
 
-    if (table === 'manufacturing_transactions') {
+    if (table === 'manufacturing_transactions' || table === 'it_transactions') {
+        const memberTable = table === 'manufacturing_transactions' ? 'manufacturing_members' : 'it_members';
+
         if (projectId) {
             query += ` AND project_id = ?`;
             params.push(projectId);
@@ -183,7 +189,7 @@ const getStats = async (userId, period, projectId, startDate, endDate, memberId,
 
         if (filters && filters.memberType && filters.memberType !== 'all') {
             query = query.replace(`FROM ${table}`, `FROM ${table} t`);
-            query = query.replace('WHERE user_id = ?', 'INNER JOIN manufacturing_members m ON t.member_id = m.id WHERE t.user_id = ?');
+            query = query.replace('WHERE user_id = ?', `INNER JOIN ${memberTable} m ON t.member_id = m.id WHERE t.user_id = ?`);
             query += ' AND m.member_type = ?';
             params.push(filters.memberType);
         }
@@ -195,7 +201,7 @@ const getStats = async (userId, period, projectId, startDate, endDate, memberId,
 
 const getLifetimeStats = async (userId, projectId, memberId, filters = {}) => {
     const table = getTableName(filters.sector);
-    if (table !== 'manufacturing_transactions') return { total_income: 0, total_expense: 0 };
+    if (table !== 'manufacturing_transactions' && table !== 'it_transactions') return { total_income: 0, total_expense: 0 };
 
     let query = `SELECT 
         SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as total_income,
@@ -214,8 +220,9 @@ const getLifetimeStats = async (userId, projectId, memberId, filters = {}) => {
     }
 
     if (filters && filters.memberType && filters.memberType !== 'all') {
+        const memberTable = table === 'manufacturing_transactions' ? 'manufacturing_members' : 'it_members';
         query = query.replace(`FROM ${table}`, `FROM ${table} t`);
-        query = query.replace('WHERE user_id = ?', 'INNER JOIN manufacturing_members m ON t.member_id = m.id WHERE t.user_id = ?');
+        query = query.replace('WHERE user_id = ?', `INNER JOIN ${memberTable} m ON t.member_id = m.id WHERE t.user_id = ?`);
         query += ' AND m.member_type = ?';
         params.push(filters.memberType);
     }
@@ -261,7 +268,9 @@ const getCategoryStats = async (userId, period, projectId, startDate, endDate, m
         params.push(startDate, endDate);
     }
 
-    if (table === 'manufacturing_transactions') {
+    if (table === 'manufacturing_transactions' || table === 'it_transactions') {
+        const memberTable = table === 'manufacturing_transactions' ? 'manufacturing_members' : 'it_members';
+
         if (projectId) {
             query += ` AND project_id = ?`;
             params.push(projectId);
@@ -274,7 +283,7 @@ const getCategoryStats = async (userId, period, projectId, startDate, endDate, m
 
         if (filters && filters.memberType && filters.memberType !== 'all') {
             query = query.replace(`FROM ${table}`, `FROM ${table} t`);
-            query = query.replace('WHERE user_id = ?', 'INNER JOIN manufacturing_members m ON t.member_id = m.id WHERE t.user_id = ?');
+            query = query.replace('WHERE user_id = ?', `INNER JOIN ${memberTable} m ON t.member_id = m.id WHERE t.user_id = ?`);
             query += ' AND m.member_type = ?';
             params.push(filters.memberType);
         }
@@ -287,9 +296,12 @@ const getCategoryStats = async (userId, period, projectId, startDate, endDate, m
 };
 
 const getMemberExpenseSummary = async (userId, period, projectId, startDate, endDate, filters = {}) => {
+    const table = getTableName(filters.sector);
+    const memberTable = table === 'manufacturing_transactions' ? 'manufacturing_members' : (table === 'it_transactions' ? 'it_members' : 'manufacturing_members');
+
     let query = `SELECT m.name as member_name, SUM(t.amount) as total 
-                FROM manufacturing_transactions t
-                JOIN manufacturing_members m ON t.member_id = m.id
+                FROM ${table} t
+                JOIN ${memberTable} m ON t.member_id = m.id
                 WHERE t.user_id = ? AND t.type = 'expense'`;
     const params = [userId];
 

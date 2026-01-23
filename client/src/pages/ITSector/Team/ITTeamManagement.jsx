@@ -81,7 +81,7 @@ const ITTeamManagement = () => {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-[32px] gap-[16px]">
                     <div className="flex items-center gap-4">
                         <Link
-                            to="/it"
+                            to="/it-sector"
                             className="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-500 hover:text-[#2d5bff] hover:border-[#2d5bff] transition-all shadow-sm hover:shadow-md active:scale-95 shrink-0"
                         >
                             <FaChevronLeft className="w-4 h-4" />
