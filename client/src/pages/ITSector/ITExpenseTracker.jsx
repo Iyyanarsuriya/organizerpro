@@ -18,6 +18,7 @@ import { formatAmount } from '../../utils/formatUtils';
 import ITTransactions from './ITTransactions';
 import ITSalaryCalculator from './ITSalaryCalculator';
 import ProjectManager from '../../components/Manufacturing/ProjectManager';
+import CategoryManager from '../../components/Common/CategoryManager';
 
 const ITExpenseTracker = () => {
     const navigate = useNavigate();
@@ -27,6 +28,7 @@ const ITExpenseTracker = () => {
     const [activeTab, setActiveTab] = useState('Transactions');
     const [showAddModal, setShowAddModal] = useState(false);
     const [showProjectManager, setShowProjectManager] = useState(false);
+    const [showCategoryManager, setShowCategoryManager] = useState(false);
 
     // Filters & Period
     const [periodType, setPeriodType] = useState('day');
@@ -474,9 +476,19 @@ const ITExpenseTracker = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Category</label>
-                                    <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer">
-                                        {categories.length > 0 ? categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>) : <option value="General">General</option>}
-                                    </select>
+                                    <div className="flex gap-2">
+                                        <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer">
+                                            {categories.length > 0 ? categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>) : <option value="General">General</option>}
+                                        </select>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowCategoryManager(true)}
+                                            className="w-12 h-12 flex items-center justify-center bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-100 transition-all border border-blue-100/50 shadow-sm active:scale-95"
+                                            title="Add Category"
+                                        >
+                                            <FaPlus />
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Date</label>
@@ -524,6 +536,16 @@ const ITExpenseTracker = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {showCategoryManager && (
+                <CategoryManager
+                    categories={categories}
+                    onUpdate={fetchData}
+                    onClose={() => setShowCategoryManager(false)}
+                    onCreate={(data) => createExpenseCategory({ ...data, sector: 'it' })}
+                    onDelete={(id) => deleteExpenseCategory(id, 'it')}
+                />
             )}
 
         </div>
