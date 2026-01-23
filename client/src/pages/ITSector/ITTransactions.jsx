@@ -145,6 +145,9 @@ const ITTransactions = ({
                             </div>
                             <div>
                                 <h4 className="font-black text-slate-900 text-sm sm:text-base leading-tight">{t.title}</h4>
+                                {t.description && (
+                                    <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 max-w-md">{t.description}</p>
+                                )}
                                 <div className="mt-2 flex flex-wrap gap-2">
                                     <div className="px-2.5 py-1 bg-slate-100 text-[10px] font-bold text-slate-500 rounded-lg flex items-center gap-1.5 uppercase tracking-wide border border-slate-200/50">
                                         <FaTag className="text-[9px] opacity-70" />

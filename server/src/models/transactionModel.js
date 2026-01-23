@@ -8,7 +8,7 @@ const getTableName = (sector) => {
 };
 
 const create = async (data) => {
-    const { user_id, title, amount, type, category, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, sector } = data;
+    const { user_id, title, amount, type, category, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, sector, description } = data;
     const table = getTableName(sector);
 
     // Force date to noon to avoid timezone boundary shifts
@@ -20,8 +20,16 @@ const create = async (data) => {
     let query, params;
 
     if (table === 'manufacturing_transactions' || table === 'it_transactions') {
-        query = `INSERT INTO ${table} (user_id, title, amount, type, category, date, project_id, member_id, guest_name, payment_status, quantity, unit_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-        params = [user_id, title, amount, type, category, finalDate, project_id || null, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0];
+        const columns = ['user_id', 'title', 'amount', 'type', 'category', 'date', 'project_id', 'member_id', 'guest_name', 'payment_status', 'quantity', 'unit_price'];
+        const values = [user_id, title, amount, type, category, finalDate, project_id || null, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0];
+
+        if (table === 'it_transactions') {
+            columns.push('description');
+            values.push(description || null);
+        }
+
+        query = `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${columns.map(() => '?').join(', ')})`;
+        params = values;
     } else {
         // Personal
         query = `INSERT INTO ${table} (user_id, title, amount, type, category, date) VALUES (?, ?, ?, ?, ?, ?)`;
@@ -114,7 +122,7 @@ const getAllByUserId = async (userId, filters = {}) => {
 };
 
 const update = async (id, userId, data) => {
-    const { title, amount, type, category, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, sector } = data;
+    const { title, amount, type, category, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, sector, description } = data;
     const table = getTableName(sector);
 
     // Force date to noon to avoid timezone boundary shifts
@@ -127,6 +135,9 @@ const update = async (id, userId, data) => {
     if (table === 'manufacturing_transactions') {
         query = `UPDATE ${table} SET title = ?, amount = ?, type = ?, category = ?, date = ?, project_id = ?, member_id = ?, guest_name = ?, payment_status = ?, quantity = ?, unit_price = ? WHERE id = ? AND user_id = ?`;
         params = [title, amount, type, category, finalDate, project_id || null, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0, id, userId];
+    } else if (table === 'it_transactions') {
+        query = `UPDATE ${table} SET title = ?, amount = ?, type = ?, category = ?, date = ?, project_id = ?, member_id = ?, guest_name = ?, payment_status = ?, quantity = ?, unit_price = ?, description = ? WHERE id = ? AND user_id = ?`;
+        params = [title, amount, type, category, finalDate, project_id || null, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0, description || null, id, userId];
     } else {
         query = `UPDATE ${table} SET title = ?, amount = ?, type = ?, category = ?, date = ? WHERE id = ? AND user_id = ?`;
         params = [title, amount, type, category, finalDate, id, userId];

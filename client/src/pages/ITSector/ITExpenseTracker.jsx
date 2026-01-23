@@ -61,7 +61,8 @@ const ITExpenseTracker = () => {
         date: new Date().toISOString().split('T')[0],
         project_id: '',
         member_id: '',
-        payment_status: 'completed'
+        payment_status: 'completed',
+        description: ''
     });
     const [editingId, setEditingId] = useState(null);
 
@@ -235,7 +236,8 @@ const ITExpenseTracker = () => {
                 category: 'General',
                 date: new Date().toISOString().split('T')[0],
                 project_id: filterProject || '',
-                member_id: filterMember || ''
+                member_id: filterMember || '',
+                description: ''
             });
             fetchData();
         } catch (error) {
@@ -253,7 +255,8 @@ const ITExpenseTracker = () => {
             category: transaction.category,
             date: new Date(transaction.date).toISOString().split('T')[0],
             project_id: transaction.project_id || '',
-            member_id: transaction.member_id || ''
+            member_id: transaction.member_id || '',
+            description: transaction.description || ''
         });
         setEditingId(transaction.id);
         setShowAddModal(true);
@@ -269,7 +272,8 @@ const ITExpenseTracker = () => {
             category: 'General',
             date: new Date().toISOString().split('T')[0],
             project_id: filterProject || '',
-            member_id: filterMember || ''
+            member_id: filterMember || '',
+            description: ''
         });
         setEditingId(null);
         setShowAddModal(true);
@@ -511,6 +515,17 @@ const ITExpenseTracker = () => {
                                         {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                                     </select>
                                 </div>
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Description (Optional)</label>
+                                <textarea
+                                    value={formData.description}
+                                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                    rows="2"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-300 resize-none"
+                                    placeholder="Add notes or details..."
+                                />
                             </div>
 
                             <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all mt-4">

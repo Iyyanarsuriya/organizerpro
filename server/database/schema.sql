@@ -420,6 +420,7 @@ CREATE TABLE `it_transactions` (
   `guest_name` varchar(255) DEFAULT NULL,
   `quantity` decimal(15,2) DEFAULT '1.00',
   `unit_price` decimal(15,2) DEFAULT '0.00',
+  `description` text DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   KEY `fk_it_trans_proj` (`project_id`),
