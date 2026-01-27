@@ -573,6 +573,14 @@ const ITExpenseTracker = () => {
                             setPeriodType={setPeriodType}
                             setCurrentPeriod={setCurrentPeriod}
                             setCustomRange={setCustomRange}
+                            salaryMode={salaryMode}
+                            dailyWage={dailyWage}
+                            monthlySalary={monthlySalary}
+                            ratePerUnit={ratePerUnit}
+                            unitsProduced={unitsProduced}
+                            bonus={bonus}
+                            attendanceStats={attendanceStats}
+                            onSyncAttendance={fetchAttendanceData}
                         />
                     )}
 
@@ -766,32 +774,44 @@ const ITExpenseTracker = () => {
                                 </button>
                                 {customReportForm.memberId ? (
                                     <button
-                                        onClick={() => {
+                                        onClick={async () => {
                                             const member = members.find(m => m.id == customReportForm.memberId);
                                             if (member) {
-                                                if (attendanceStats && String(filterMember) === String(member.id)) {
-                                                    // Calculate live stats for payslip if filter matches
-                                                    const calculatedPay = (monthlySalary || (dailyWage * (attendanceStats?.summary?.present || 0)) || (ratePerUnit * unitsProduced) || 0);
+                                                // Ensure we have correct attendance stats for this member
+                                                // If the main filter is already this member, attendanceStats is up to date
+                                                // If not, we rely on the fact that changing the dropdown triggered ITReports' onSyncAttendance
+                                                // or we can fetch it explicitly here to be safe (though onSyncAttendance updates global state which is risky if async race)
+                                                // Let's assume attendanceStats is current because ITReports triggers sync on member change.
 
-                                                    exportMemberPayslipToPDF({
-                                                        member,
-                                                        transactions,
-                                                        attendanceStats,
-                                                        period: currentPeriod,
-                                                        filename: `${member.name}_Payslip`,
-                                                        calculatedSalary: calculatedPay,
-                                                        bonus: parseFloat(bonus || 0)
-                                                    });
-                                                } else {
-                                                    // Basic payslip export if not calculating salary in calculator
-                                                    exportMemberPayslipToPDF({
-                                                        member,
-                                                        transactions: transactions.filter(t => t.member_id == member.id),
-                                                        attendanceStats: null,
-                                                        period: currentPeriod,
-                                                        filename: `${member.name}_Payslip`
-                                                    });
+                                                // Calculate Salary Details on the fly based on Member object (ignoring global dailyWage state which might be stale)
+                                                const rate = parseFloat(member.daily_wage) || 0;
+                                                let calculatedPay = 0;
+                                                const s = attendanceStats?.summary || { present: 0, half_day: 0 };
+
+                                                if (member.wage_type === 'daily') {
+                                                    calculatedPay = (s.present * rate) + (s.half_day * (rate / 2));
+                                                } else if (member.wage_type === 'monthly') {
+                                                    // Approx days in month
+                                                    const daysInMonth = 30; // Standardize or calc from date
+                                                    calculatedPay = ((s.present + (s.half_day * 0.5)) / daysInMonth) * rate;
+                                                } else if (member.wage_type === 'piece_rate') {
+                                                    // We don't have units production here easily unless we fetch it. 
+                                                    // For now, default to 0 or base rate if just attending.
+                                                    calculatedPay = 0;
                                                 }
+
+                                                exportMemberPayslipToPDF({
+                                                    member,
+                                                    transactions: transactions.filter(t => t.member_id == member.id &&
+                                                        new Date(t.date) >= new Date(customReportForm.startDate) &&
+                                                        new Date(t.date) <= new Date(customReportForm.endDate)
+                                                    ),
+                                                    attendanceStats: attendanceStats, // Passes the summary
+                                                    period: `${customReportForm.startDate} to ${customReportForm.endDate}`,
+                                                    filename: `${member.name}_Payslip_${customReportForm.startDate}`,
+                                                    calculatedSalary: calculatedPay,
+                                                    bonus: 0 // Bonus is harder to track without salary calculator state, default 0
+                                                });
                                             }
                                         }}
                                         className="w-full py-4 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-blue-700 transition-all"

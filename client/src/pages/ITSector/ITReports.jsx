@@ -22,8 +22,23 @@ const ITReports = ({
     customReportForm,
     setPeriodType,
     setCurrentPeriod,
-    setCustomRange
+    setCustomRange,
+    salaryMode,
+    dailyWage,
+    monthlySalary,
+    ratePerUnit,
+    unitsProduced,
+    bonus,
+    attendanceStats,
+    onSyncAttendance
 }) => {
+    // Sync attendance when custom report member changes
+    React.useEffect(() => {
+        if (customReportForm.memberId) {
+            onSyncAttendance(customReportForm.memberId);
+        }
+    }, [customReportForm.memberId]);
+
     // Ledger Logic for Member View
     const memberLedgerBalance = React.useMemo(() => {
         if (!filterMember) return { earned: 0, paid: 0, balance: 0 };
@@ -105,7 +120,7 @@ const ITReports = ({
                 </div>
 
                 {/* Dynamic Date Inputs */}
-                <div className="w-full md:w-auto flex-[2] min-w-[200px]">
+                <div className="w-full md:w-auto flex-2 min-w-[200px]">
                     {periodType === 'year' && (
                         <div className="w-full">
                             <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select Year</label>
