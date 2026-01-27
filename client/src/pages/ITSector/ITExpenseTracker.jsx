@@ -685,6 +685,109 @@ const ITExpenseTracker = () => {
                 />
             )}
 
+            {showCustomReportModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-[32px] w-full max-w-lg shadow-2xl border border-white/20 animate-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                            <h3 className="text-xl font-black text-slate-900">Custom Analytics & Reports</h3>
+                            <button onClick={() => setShowCustomReportModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 transition-colors">
+                                <FaTimes />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Start Date</label>
+                                    <input type="date" value={customReportForm.startDate} onChange={e => setCustomReportForm({ ...customReportForm, startDate: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">End Date</label>
+                                    <input type="date" value={customReportForm.endDate} onChange={e => setCustomReportForm({ ...customReportForm, endDate: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all" />
+                                </div>
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Filter by Project</label>
+                                <select value={customReportForm.projectId} onChange={e => setCustomReportForm({ ...customReportForm, projectId: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all cursor-pointer">
+                                    <option value="">All Projects</option>
+                                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                </select>
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Filter by Member</label>
+                                <select value={customReportForm.memberId} onChange={e => setCustomReportForm({ ...customReportForm, memberId: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all cursor-pointer">
+                                    <option value="">All Members</option>
+                                    {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                </select>
+                            </div>
+
+                            <div className="pt-4 grid grid-cols-2 gap-4">
+                                <button
+                                    onClick={() => {
+                                        // Logic to filter transactions based on form and export PDF
+                                        const filtered = transactions.filter(t => {
+                                            const d = new Date(t.date);
+                                            const start = new Date(customReportForm.startDate);
+                                            const end = new Date(customReportForm.endDate);
+                                            return d >= start && d <= end &&
+                                                (!customReportForm.projectId || t.project_id == customReportForm.projectId) &&
+                                                (!customReportForm.memberId || t.member_id == customReportForm.memberId);
+                                        });
+                                        exportExpenseToPDF({ data: filtered, filename: 'custom_report' });
+                                    }}
+                                    className="w-full py-4 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-slate-800 transition-all"
+                                >
+                                    Export Full Report
+                                </button>
+                                {customReportForm.memberId ? (
+                                    <button
+                                        onClick={() => {
+                                            const member = members.find(m => m.id == customReportForm.memberId);
+                                            if (member) {
+                                                if (attendanceStats && String(filterMember) === String(member.id)) {
+                                                    // Calculate live stats for payslip if filter matches
+                                                    const calculatedPay = (monthlySalary || (dailyWage * (attendanceStats?.summary?.present || 0)) || (ratePerUnit * unitsProduced) || 0);
+
+                                                    exportMemberPayslipToPDF({
+                                                        member,
+                                                        transactions,
+                                                        attendanceStats,
+                                                        period: currentPeriod,
+                                                        filename: `${member.name}_Payslip`,
+                                                        calculatedSalary: calculatedPay,
+                                                        bonus: parseFloat(bonus || 0)
+                                                    });
+                                                } else {
+                                                    // Basic payslip export if not calculating salary in calculator
+                                                    exportMemberPayslipToPDF({
+                                                        member,
+                                                        transactions: transactions.filter(t => t.member_id == member.id),
+                                                        attendanceStats: null,
+                                                        period: currentPeriod,
+                                                        filename: `${member.name}_Payslip`
+                                                    });
+                                                }
+                                            }
+                                        }}
+                                        className="w-full py-4 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-blue-700 transition-all"
+                                    >
+                                        Generate Payslip
+                                    </button>
+                                ) : (
+                                    <button
+                                        disabled
+                                        className="w-full py-4 bg-slate-100 text-slate-400 rounded-xl text-xs font-black uppercase tracking-widest cursor-not-allowed"
+                                    >
+                                        Select Member for Payslip
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 };
