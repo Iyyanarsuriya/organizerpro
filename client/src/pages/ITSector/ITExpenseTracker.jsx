@@ -544,6 +544,7 @@ const ITExpenseTracker = () => {
                             handleExportPayslip={exportMemberPayslipToPDF}
                             currentPeriod={currentPeriod}
                             transactions={transactions}
+                            categories={categories}
                             onSyncAttendance={fetchAttendanceData}
                             setPeriodType={setPeriodType}
                             setCurrentPeriod={setCurrentPeriod}

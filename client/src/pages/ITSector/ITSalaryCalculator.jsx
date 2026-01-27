@@ -35,6 +35,7 @@ const ITSalaryCalculator = ({
     handleExportPayslip,
     currentPeriod,
     transactions,
+    categories,
     onSyncAttendance,
     setPeriodType,
     setCurrentPeriod,
@@ -174,7 +175,7 @@ const ITSalaryCalculator = ({
                     </div>
 
                     {/* Dynamic Date Inputs */}
-                    <div className="w-full md:w-auto flex-[2] min-w-[200px]">
+                    <div className="w-full md:w-auto flex-2 min-w-[200px]">
                         {periodType === 'year' && (
                             <div className="w-full">
                                 <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select Year</label>
@@ -485,12 +486,14 @@ const ITSalaryCalculator = ({
                                         onClick={() => {
                                             const memberObj = members.find(m => m.id == filterMember);
                                             const isEmployee = memberObj?.member_type === 'employee';
+                                            const potCat = categories.find(c => c.name === 'Salary Pot');
                                             setFormData({
                                                 ...formData,
                                                 title: isEmployee ? `Salary Accrued: ${formatAmount(currentAttendanceEarned)}` : `Daily Work: ${salaryMode.toUpperCase()} (${formatAmount(currentAttendanceEarned)})`,
                                                 amount: currentAttendanceEarned,
                                                 type: 'expense',
                                                 category: 'Salary Pot',
+                                                category_id: potCat ? potCat.id : '',
                                                 member_id: memberObj?.isGuest ? '' : filterMember,
                                                 guest_name: memberObj?.isGuest ? memberObj.name : '',
                                                 date: new Date().toISOString().split('T')[0]
@@ -504,12 +507,14 @@ const ITSalaryCalculator = ({
                                     <button
                                         onClick={() => {
                                             const memberObj = members.find(m => m.id == filterMember);
+                                            const advCat = categories.find(c => c.name === 'Advance');
                                             setFormData({
                                                 ...formData,
                                                 title: `Advance - ${memberObj?.name}`,
                                                 amount: '',
                                                 type: 'expense',
                                                 category: 'Advance',
+                                                category_id: advCat ? advCat.id : '',
                                                 member_id: memberObj?.isGuest ? '' : filterMember,
                                                 guest_name: memberObj?.isGuest ? memberObj.name : '',
                                                 date: new Date().toISOString().split('T')[0]
@@ -619,12 +624,14 @@ const ITSalaryCalculator = ({
                                 <button
                                     onClick={() => {
                                         const memberObj = members.find(m => m.id == filterMember);
+                                        const salCat = categories.find(c => c.name === 'Salary');
                                         setFormData({
                                             ...formData,
                                             title: `Salary Settlement - ${memberObj?.name}`,
                                             amount: netPayable,
                                             type: 'expense',
                                             category: 'Salary',
+                                            category_id: salCat ? salCat.id : '',
                                             member_id: memberObj?.isGuest ? '' : filterMember,
                                             guest_name: memberObj?.isGuest ? memberObj.name : '',
                                             date: new Date().toISOString().split('T')[0]
@@ -650,12 +657,15 @@ const ITSalaryCalculator = ({
                                     <span className="text-[12px] font-black text-amber-500">₹{formatAmount(ledger.earned)}</span>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Advances Paid</span>
-                                    <span className="text-[12px] font-black text-indigo-500">₹{formatAmount(ledger.advance)}</span>
+                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Total Paid (Period)</span>
+                                    <span className="text-[12px] font-black text-indigo-500">₹{formatAmount(ledger.totalPaid)}</span>
                                 </div>
                                 <div className="flex items-center justify-between border-t border-slate-50 pt-3">
-                                    <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">Total Due (Historical)</span>
-                                    <span className="text-[14px] font-black text-slate-900">₹{formatAmount(ledger.balance)}</span>
+                                    <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">Period Balance (Ledger)</span>
+                                    <span className={`text-[14px] font-black ${ledger.balance > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                        {ledger.balance > 0 ? 'Due ' : 'Paid '}
+                                        ₹{formatAmount(Math.abs(ledger.balance))}
+                                    </span>
                                 </div>
                             </div>
                         </div>
