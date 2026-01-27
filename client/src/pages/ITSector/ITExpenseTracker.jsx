@@ -17,6 +17,7 @@ import { formatAmount } from '../../utils/formatUtils';
 
 import ITTransactions from './ITTransactions';
 import ITSalaryCalculator from './ITSalaryCalculator';
+import ITExpenseDashboard from './ITExpenseDashboard';
 import ProjectManager from '../../components/Manufacturing/ProjectManager';
 import CategoryManager from '../../components/Common/CategoryManager';
 
@@ -25,7 +26,7 @@ const ITExpenseTracker = () => {
     const [transactions, setTransactions] = useState([]);
     const [stats, setStats] = useState({ summary: { total_income: 0, total_expense: 0 }, categories: [] });
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('Transactions');
+    const [activeTab, setActiveTab] = useState('Dashboard');
     const [showAddModal, setShowAddModal] = useState(false);
     const [showProjectManager, setShowProjectManager] = useState(false);
     const [showCategoryManager, setShowCategoryManager] = useState(false);
@@ -336,6 +337,10 @@ const ITExpenseTracker = () => {
                     </div>
                 </div>
                 <nav className="flex-1 space-y-2">
+                    <button onClick={() => setActiveTab('Dashboard')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'Dashboard' ? 'bg-[#2d5bff] text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
+                        <FaChartBar className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Dashboard' ? 'text-white' : 'text-slate-400'}`} />
+                        <span className="font-black text-xs uppercase tracking-widest">Dashboard</span>
+                    </button>
                     <button onClick={() => setActiveTab('Transactions')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'Transactions' ? 'bg-[#2d5bff] text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
                         <FaExchangeAlt className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Transactions' ? 'text-white' : 'text-slate-400'}`} />
                         <span className="font-black text-xs uppercase tracking-widest">Transactions</span>
@@ -361,38 +366,176 @@ const ITExpenseTracker = () => {
                         </div>
                     </div>
 
+
+                    {activeTab === 'Dashboard' && (
+                        <div className="flex flex-col gap-4">
+                            {/* Filter Grid */}
+                            <div className="flex flex-wrap items-end gap-3 p-6 bg-white rounded-[32px] border border-slate-100 shadow-sm transition-all hover:shadow-md mb-6">
+                                {/* Period Type - Full Width Row */}
+                                <div className="w-full">
+                                    <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Period Type</label>
+                                    <div className="flex p-1 bg-slate-50 rounded-xl border border-slate-100">
+                                        {['day', 'week', 'month', 'year', 'range'].map((type) => (
+                                            <button
+                                                key={type}
+                                                onClick={() => setPeriodType(type)}
+                                                className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${periodType === type ? 'bg-white text-blue-600 shadow-md scale-100' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
+                                            >
+                                                {type}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Date Controls */}
+                                <div className="flex-1 min-w-[200px]">
+                                    {periodType === 'year' && (
+                                        <div className="w-full">
+                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select Year</label>
+                                            <input type="number" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all text-center" />
+                                        </div>
+                                    )}
+                                    {periodType === 'month' && (
+                                        <div className="w-full">
+                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select Month</label>
+                                            <input type="month" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all" />
+                                        </div>
+                                    )}
+                                    {periodType === 'week' && (
+                                        <div className="w-full">
+                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select Week</label>
+                                            <input type="week" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all" />
+                                        </div>
+                                    )}
+                                    {periodType === 'day' && (
+                                        <div className="w-full">
+                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select Date</label>
+                                            <input type="date" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all" />
+                                        </div>
+                                    )}
+                                    {periodType === 'range' && (
+                                        <div className="flex gap-2 w-full">
+                                            <div className="flex-1">
+                                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Start Date</label>
+                                                <input type="date" value={customRange.start} onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">End Date</label>
+                                                <input type="date" value={customRange.end} onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all" />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <ITExpenseDashboard
+                                periodType={periodType}
+                                customRange={customRange}
+                                currentPeriod={currentPeriod}
+                                stats={stats}
+                                pieData={stats.categories.filter(c => c.type === 'expense').map(c => ({ name: c.category, value: parseFloat(c.total) }))}
+                                barData={[{ name: 'This Period', Income: parseFloat(stats.summary?.total_income || 0), Expenses: parseFloat(stats.summary?.total_expense || 0) }]}
+                                COLORS={['#2d5bff', '#f43f5e', '#0ea5e9', '#f59e0b', '#8b5cf6', '#10b981']}
+                                transactions={transactions}
+                                handleAddNewTransaction={handleAddNewTransaction}
+                                setActiveTab={setActiveTab}
+                                formatCurrency={(val) => '₹' + formatAmount(val)}
+                            />
+                        </div>
+                    )}
+
                     {activeTab === 'Transactions' && (
-                        <ITTransactions
-                            filteredTransactions={filteredTransactions}
-                            searchQuery={searchQuery}
-                            setSearchQuery={setSearchQuery}
-                            filterType={filterType}
-                            setFilterType={setFilterType}
-                            sortBy={sortBy}
-                            setSortBy={setSortBy}
-                            handleAddNewTransaction={handleAddNewTransaction}
-                            handleEdit={handleEdit}
-                            confirmDelete={confirmDelete}
-                            projects={projects}
-                            members={members}
-                            roles={roles}
-                            filterProject={filterProject}
-                            setFilterProject={setFilterProject}
-                            filterMember={filterMember}
-                            setFilterMember={setFilterMember}
-                            filterRole={filterRole}
-                            setFilterRole={setFilterRole}
-                            periodType={periodType}
-                            setPeriodType={setPeriodType}
-                            currentPeriod={currentPeriod}
-                            setCurrentPeriod={setCurrentPeriod}
-                            customRange={customRange}
-                            setCustomRange={setCustomRange}
-                            onExportCSV={() => exportExpenseToCSV(transactions, 'it_expenses')}
-                            onExportPDF={() => exportExpenseToPDF({ data: transactions, filename: 'it_expenses' })}
-                            onExportTXT={() => exportExpenseToTXT({ data: transactions, filename: 'it_expenses' })}
-                            setShowProjectManager={setShowProjectManager}
-                        />
+                        <div className="flex flex-col gap-6">
+                            {/* Filter Grid for Transactions - Reused from Dashboard Logic or similar */}
+                            <div className="flex flex-wrap items-end gap-3 p-6 bg-white rounded-[32px] border border-slate-100 shadow-sm transition-all hover:shadow-md">
+                                {/* Period Type - Full Width Row */}
+                                <div className="w-full">
+                                    <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Period Type</label>
+                                    <div className="flex p-1 bg-slate-50 rounded-xl border border-slate-100">
+                                        {['day', 'week', 'month', 'year', 'range'].map((type) => (
+                                            <button
+                                                key={type}
+                                                onClick={() => setPeriodType(type)}
+                                                className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${periodType === type ? 'bg-white text-blue-600 shadow-md scale-100' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
+                                            >
+                                                {type}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Date Controls */}
+                                <div className="flex-1 min-w-[200px]">
+                                    {periodType === 'year' && (
+                                        <div className="w-full">
+                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select Year</label>
+                                            <input type="number" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all text-center" />
+                                        </div>
+                                    )}
+                                    {periodType === 'month' && (
+                                        <div className="w-full">
+                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select Month</label>
+                                            <input type="month" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all" />
+                                        </div>
+                                    )}
+                                    {periodType === 'week' && (
+                                        <div className="w-full">
+                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select Week</label>
+                                            <input type="week" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all" />
+                                        </div>
+                                    )}
+                                    {periodType === 'day' && (
+                                        <div className="w-full">
+                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select Date</label>
+                                            <input type="date" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all" />
+                                        </div>
+                                    )}
+                                    {periodType === 'range' && (
+                                        <div className="flex gap-2 w-full">
+                                            <div className="flex-1">
+                                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Start Date</label>
+                                                <input type="date" value={customRange.start} onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">End Date</label>
+                                                <input type="date" value={customRange.end} onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all" />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <ITTransactions
+                                filteredTransactions={filteredTransactions}
+                                searchQuery={searchQuery}
+                                setSearchQuery={setSearchQuery}
+                                filterType={filterType}
+                                setFilterType={setFilterType}
+                                sortBy={sortBy}
+                                setSortBy={setSortBy}
+                                handleAddNewTransaction={handleAddNewTransaction}
+                                handleEdit={handleEdit}
+                                confirmDelete={confirmDelete}
+                                projects={projects}
+                                members={members}
+                                roles={roles}
+                                filterProject={filterProject}
+                                setFilterProject={setFilterProject}
+                                filterMember={filterMember}
+                                setFilterMember={setFilterMember}
+                                filterRole={filterRole}
+                                setFilterRole={setFilterRole}
+                                periodType={periodType}
+                                setPeriodType={setPeriodType}
+                                currentPeriod={currentPeriod}
+                                setCurrentPeriod={setCurrentPeriod}
+                                customRange={customRange}
+                                setCustomRange={setCustomRange}
+                                onExportCSV={() => exportExpenseToCSV(transactions, 'it_expenses')}
+                                onExportPDF={() => exportExpenseToPDF({ data: transactions, filename: 'it_expenses' })}
+                                onExportTXT={() => exportExpenseToTXT({ data: transactions, filename: 'it_expenses' })}
+                                setShowProjectManager={setShowProjectManager}
+                            />
+                        </div>
                     )}
 
                     {activeTab === 'Salary' && (
