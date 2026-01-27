@@ -18,6 +18,7 @@ import { formatAmount } from '../../utils/formatUtils';
 import ITTransactions from './ITTransactions';
 import ITSalaryCalculator from './ITSalaryCalculator';
 import ITExpenseDashboard from './ITExpenseDashboard';
+import ITReports from './ITReports';
 import ProjectManager from '../../components/Manufacturing/ProjectManager';
 import CategoryManager from '../../components/Common/CategoryManager';
 
@@ -82,6 +83,16 @@ const ITExpenseTracker = () => {
     const [ratePerUnit, setRatePerUnit] = useState(0);
     const [bonus, setBonus] = useState(0);
     const [salaryLoading, setSalaryLoading] = useState(false);
+
+    const [showCustomReportModal, setShowCustomReportModal] = useState(false);
+    const [customReportForm, setCustomReportForm] = useState({
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date().toISOString().split('T')[0],
+        projectId: '',
+        memberId: '',
+        type: 'all',
+        category: 'all'
+    });
 
     const fetchData = async () => {
         try {
@@ -345,6 +356,10 @@ const ITExpenseTracker = () => {
                         <FaExchangeAlt className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Transactions' ? 'text-white' : 'text-slate-400'}`} />
                         <span className="font-black text-xs uppercase tracking-widest">Transactions</span>
                     </button>
+                    <button onClick={() => setActiveTab('Reports')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'Reports' ? 'bg-[#2d5bff] text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
+                        <FaFileAlt className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Reports' ? 'text-white' : 'text-slate-400'}`} />
+                        <span className="font-black text-xs uppercase tracking-widest">Reports</span>
+                    </button>
                     <button onClick={() => { setActiveTab('Salary'); setFilterMemberType('all') }} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'Salary' ? 'bg-[#2d5bff] text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
                         <FaCalculator className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Salary' ? 'text-white' : 'text-slate-400'}`} />
                         <span className="font-black text-xs uppercase tracking-widest">Salary</span>
@@ -516,6 +531,27 @@ const ITExpenseTracker = () => {
                         />
 
                     )}
+                    {activeTab === 'Reports' && (
+                        <ITReports
+                            transactions={transactions}
+                            filteredTransactions={filteredTransactions}
+                            handleExportPDF={() => exportExpenseToPDF({ data: transactions, filename: 'it_report' })}
+                            handleExportCSV={() => exportExpenseToCSV(transactions, 'it_report')}
+                            handleExportTXT={() => exportExpenseToTXT({ data: transactions, filename: 'it_report' })}
+                            filterMember={filterMember}
+                            filterProject={filterProject}
+                            members={members}
+                            projects={projects}
+                            periodType={periodType}
+                            customRange={customRange}
+                            currentPeriod={currentPeriod}
+                            stats={stats}
+                            setShowCustomReportModal={setShowCustomReportModal}
+                            setCustomReportForm={setCustomReportForm}
+                            customReportForm={customReportForm}
+                        />
+                    )}
+
                 </div>
             </main>
 
