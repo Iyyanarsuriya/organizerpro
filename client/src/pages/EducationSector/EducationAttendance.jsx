@@ -24,10 +24,10 @@ import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend
 } from 'recharts';
 import { exportAttendanceToCSV, exportAttendanceToTXT, exportAttendanceToPDF, processAttendanceExportData } from '../../utils/exportUtils/index.js';
-import ExportButtons from '../../components/ExportButtons';
-import ProjectManager from '../../components/ProjectManager';
-import MemberManager from '../../components/MemberManager';
-import RoleManager from '../../components/RoleManager';
+import ExportButtons from '../../components/Common/ExportButtons';
+import ProjectManager from '../../components/Manufacturing/ProjectManager';
+import MemberManager from '../../components/IT/MemberManager';
+import RoleManager from '../../components/IT/RoleManager';
 import { getMemberRoles, createMemberRole, deleteMemberRole } from '../../api/memberRoleApi';
 
 const EducationAttendance = () => {
@@ -159,24 +159,27 @@ const EducationAttendance = () => {
                     memberId: filterMember,
                     period: isRange ? null : currentPeriod,
                     startDate: rangeStart,
-                    endDate: rangeEnd
+                    endDate: rangeEnd,
+                    sector: 'education'
                 }),
                 getAttendanceStats({
                     projectId: filterProject,
                     memberId: filterMember,
                     period: isRange ? null : currentPeriod,
                     startDate: rangeStart,
-                    endDate: rangeEnd
+                    endDate: rangeEnd,
+                    sector: 'education'
                 }),
                 getMemberSummary({
                     projectId: filterProject,
                     period: isRange ? null : currentPeriod,
                     startDate: rangeStart,
-                    endDate: rangeEnd
+                    endDate: rangeEnd,
+                    sector: 'education'
                 }),
-                getProjects(),
-                getActiveMembers(),
-                getMemberRoles()
+                getProjects({ sector: 'education' }),
+                getActiveMembers({ sector: 'education' }),
+                getMemberRoles({ sector: 'education' })
             ]);
             setAttendances(attRes.data.data);
             setStats(statsRes.data.data || []);
@@ -227,7 +230,8 @@ const EducationAttendance = () => {
                 note,
                 permission_start_time,
                 permission_end_time,
-                permission_reason
+                permission_reason,
+                sector: 'education'
             };
 
             if (overtimeData) {

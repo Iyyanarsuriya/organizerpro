@@ -29,6 +29,9 @@ const ExpenseTracker = lazy(() => import('./pages/ManufacturingSector/ExpenseTra
 const AttendanceTracker = lazy(() => import('./pages/ManufacturingSector/AttendanceTracker/AttendanceTracker'));
 const TeamManagement = lazy(() => import('./pages/ManufacturingSector/Team/TeamManagement'));
 const ManufacturingHome = lazy(() => import('./pages/ManufacturingSector/ManufacturingHome'));
+const EducationHome = lazy(() => import('./pages/EducationSector/EducationHome'));
+const EducationReminders = lazy(() => import('./pages/EducationSector/EducationReminders'));
+const EducationAttendance = lazy(() => import('./pages/EducationSector/EducationAttendance'));
 const Notes = lazy(() => import('./pages/Notes/Notes'));
 const ForgotPassword = lazy(() => import('./pages/Authentication/ForgotPassword'));
 
@@ -251,6 +254,12 @@ const AppContent = () => {
             <Route path="/manufacturing/expenses" element={<ProtectedRoute><ExpenseTracker /></ProtectedRoute>} />
             <Route path="/manufacturing/attendance" element={<ProtectedRoute><AttendanceTracker /></ProtectedRoute>} />
             <Route path="/manufacturing/team" element={<ProtectedRoute><TeamManagement /></ProtectedRoute>} />
+
+            {/* Education Sector Routes */}
+            <Route path="/education-sector" element={<ProtectedRoute><EducationHome /></ProtectedRoute>} />
+            <Route path="/education-sector/reminders" element={<ProtectedRoute><EducationReminders /></ProtectedRoute>} />
+            <Route path="/education-sector/attendance" element={<ProtectedRoute><EducationAttendance /></ProtectedRoute>} />
+
             <Route path="/expenses" element={<ProtectedRoute><ExpenseTracker /></ProtectedRoute>} />
             <Route path="/attendance" element={<ProtectedRoute><AttendanceTracker /></ProtectedRoute>} />
             <Route path="/team" element={<ProtectedRoute><TeamManagement /></ProtectedRoute>} />

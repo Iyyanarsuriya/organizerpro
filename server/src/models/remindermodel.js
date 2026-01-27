@@ -3,6 +3,7 @@ const db = require('../config/db');
 const getTableName = (sector) => {
     if (sector === 'manufacturing') return 'manufacturing_reminders';
     if (sector === 'it') return 'it_reminders';
+    if (sector === 'education') return 'education_reminders';
     return 'personal_reminders';
 };
 
@@ -30,7 +31,7 @@ const create = async (reminderData) => {
     if (table === 'manufacturing_reminders') {
         query = `INSERT INTO ${table} (user_id, title, description, due_date, priority, status) VALUES (?, ?, ?, ?, ?, ?)`;
         params = [user_id, title, description, finalDate, priority || 'medium', 'pending'];
-    } else if (table === 'it_reminders') {
+    } else if (table === 'it_reminders' || table === 'education_reminders') {
         query = `INSERT INTO ${table} (user_id, title, description, due_date, priority, category) VALUES (?, ?, ?, ?, ?, ?)`;
         params = [user_id, title, description, finalDate, priority || 'medium', category || 'General'];
     } else {

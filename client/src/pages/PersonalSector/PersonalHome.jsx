@@ -51,7 +51,7 @@ const PersonalHome = ({ onProfileClick }) => {
                                     </Link>
 
                                     <Link
-                                        to="/attendance"
+                                        to="/education-sector"
                                         className="p-4 rounded-2xl border border-slate-200 hover:border-orange-500 hover:bg-orange-50 transition-all group text-left"
                                     >
                                         <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">

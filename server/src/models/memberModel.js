@@ -1,7 +1,15 @@
 const db = require('../config/db');
 
-const getTableName = (sector) => sector === 'it' ? 'it_members' : 'manufacturing_members';
-const getProjectTableName = (sector) => sector === 'it' ? 'it_projects' : 'manufacturing_projects';
+const getTableName = (sector) => {
+    if (sector === 'it') return 'it_members';
+    if (sector === 'education') return 'education_members';
+    return 'manufacturing_members';
+};
+const getProjectTableName = (sector) => {
+    if (sector === 'it') return 'it_projects';
+    if (sector === 'education') return 'education_projects';
+    return 'manufacturing_projects';
+};
 
 const create = async (data) => {
     const table = getTableName(data.sector);
@@ -77,7 +85,7 @@ const getActiveMembers = async (userId, memberType = null, sector) => {
 };
 
 const getGuests = async (userId, sector) => {
-    if (sector === 'it') return [];
+    if (sector === 'it' || sector === 'education') return [];
 
     // Default manufacturing logic
     const query = `

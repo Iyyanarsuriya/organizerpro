@@ -7,6 +7,12 @@ const getTables = (sector) => {
             members: 'it_members',
             projects: 'it_projects'
         };
+    } else if (sector === 'education') {
+        return {
+            attendance: 'education_attendance',
+            members: 'education_members',
+            projects: 'education_projects'
+        };
     }
     return {
         attendance: 'manufacturing_attendance',

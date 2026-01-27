@@ -1,6 +1,10 @@
 const db = require('../config/db');
 
-const getTableName = (sector) => sector === 'it' ? 'it_projects' : 'manufacturing_projects';
+const getTableName = (sector) => {
+    if (sector === 'it') return 'it_projects';
+    if (sector === 'education') return 'education_projects';
+    return 'manufacturing_projects';
+};
 
 const create = async (userId, name, description, sector) => {
     const table = getTableName(sector);
