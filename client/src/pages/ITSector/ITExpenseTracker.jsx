@@ -789,12 +789,23 @@ const ITExpenseTracker = () => {
                                                 let calculatedPay = 0;
                                                 const s = attendanceStats?.summary || { present: 0, half_day: 0 };
 
+                                                const getWorkingDaysInMonth = (year, month) => {
+                                                    let count = 0;
+                                                    const date = new Date(year, month, 1);
+                                                    while (date.getMonth() === month) {
+                                                        const day = date.getDay();
+                                                        if (day !== 0 && day !== 6) count++;
+                                                        date.setDate(date.getDate() + 1);
+                                                    }
+                                                    return count;
+                                                };
+
                                                 if (member.wage_type === 'daily') {
                                                     calculatedPay = (s.present * rate) + (s.half_day * (rate / 2));
                                                 } else if (member.wage_type === 'monthly') {
-                                                    // Approx days in month
-                                                    const daysInMonth = 30; // Standardize or calc from date
-                                                    calculatedPay = ((s.present + (s.half_day * 0.5)) / daysInMonth) * rate;
+                                                    const d = new Date(customReportForm.startDate);
+                                                    const workingDays = getWorkingDaysInMonth(d.getFullYear(), d.getMonth());
+                                                    calculatedPay = ((s.present + (s.half_day * 0.5)) / (workingDays || 22)) * rate;
                                                 } else if (member.wage_type === 'piece_rate') {
                                                     // We don't have units production here easily unless we fetch it. 
                                                     // For now, default to 0 or base rate if just attending.

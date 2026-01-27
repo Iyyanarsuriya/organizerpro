@@ -97,17 +97,53 @@ const ITSalaryCalculator = ({
         if (salaryMode === 'daily') {
             return ((attendanceStats?.summary?.present || 0) * dailyWage) + ((attendanceStats?.summary?.half_day || 0) * (dailyWage / 2));
         } else if (salaryMode === 'monthly') {
-            // Calculate days in month dynamically
-            let daysInMonth = 30;
-            if (currentPeriod) {
-                const [y, m] = currentPeriod.split('-');
-                if (y && m) daysInMonth = new Date(y, m, 0).getDate();
+            let workingDaysDenominator = 22; // Fallback average
+
+            const getWorkingDaysInMonth = (year, month) => {
+                let count = 0;
+                const date = new Date(year, month, 1);
+                while (date.getMonth() === month) {
+                    const day = date.getDay();
+                    if (day !== 0 && day !== 6) count++; // Exclude Sun(0) & Sat(6)
+                    date.setDate(date.getDate() + 1);
+                }
+                return count;
+            };
+
+            // Determine Context Year/Month
+            let targetDate = new Date();
+            if (periodType === 'range' && customRange.start) {
+                const d = new Date(customRange.start);
+                if (!isNaN(d.getTime())) targetDate = d;
+            } else if (periodType === 'week' && currentPeriod && currentPeriod.includes('-W')) {
+                const parts = currentPeriod.split('-');
+                if (parts[0]) targetDate = new Date(parseInt(parts[0]), 0, 1); // Use Jan 1st of that year as fallback to get Year context
+            } else if (currentPeriod) {
+                // Try parsing standard formats
+                const d = new Date(currentPeriod);
+                if (!isNaN(d.getTime())) {
+                    targetDate = d;
+                } else if ((periodType === 'month' || periodType === 'day') && currentPeriod.includes('-')) {
+                    const parts = currentPeriod.split('-');
+                    if (parts.length >= 2) targetDate = new Date(parts[0], parts[1] - 1, 1);
+                }
             }
-            return (((attendanceStats?.summary?.present || 0) + (attendanceStats?.summary?.half_day || 0) * 0.5) * (monthlySalary / daysInMonth));
+
+            if (periodType === 'year') {
+                const y = parseInt(currentPeriod) || targetDate.getFullYear();
+                let count = 0;
+                for (let m = 0; m < 12; m++) count += getWorkingDaysInMonth(y, m);
+                workingDaysDenominator = count || 260;
+            } else {
+                // Monthly Denominator
+                workingDaysDenominator = getWorkingDaysInMonth(targetDate.getFullYear(), targetDate.getMonth());
+            }
+
+            return (((attendanceStats?.summary?.present || 0) + (attendanceStats?.summary?.half_day || 0) * 0.5) * (monthlySalary / (workingDaysDenominator || 1)));
         } else {
             return (unitsProduced * ratePerUnit);
         }
-    }, [salaryMode, attendanceStats, dailyWage, monthlySalary, unitsProduced, ratePerUnit, currentPeriod]);
+    }, [salaryMode, attendanceStats, dailyWage, monthlySalary, unitsProduced, ratePerUnit, currentPeriod, periodType, customRange]);
 
     const totalGross = currentAttendanceEarned + parseFloat(bonus || 0);
     // Note: Deductions usually include both Salary payments and Advances in this period
