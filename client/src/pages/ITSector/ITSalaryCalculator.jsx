@@ -34,7 +34,8 @@ const ITSalaryCalculator = ({
     setShowAddModal,
     handleExportPayslip,
     currentPeriod,
-    transactions
+    transactions,
+    onSyncAttendance
 }) => {
     // Local Filter State
     const [searchQuery, setSearchQuery] = useState('');
@@ -304,7 +305,13 @@ const ITSalaryCalculator = ({
                                     </div>
                                 </div>
                                 <div className="flex gap-2 w-full sm:w-auto">
-                                    {/* Removed Change button as selection is now at top */}
+                                    <button
+                                        onClick={() => onSyncAttendance && onSyncAttendance(filterMember)}
+                                        className="px-4 py-2 bg-slate-100 font-black text-[10px] text-slate-500 uppercase tracking-widest rounded-xl hover:bg-slate-200 transition-all flex items-center gap-2"
+                                        title="Refresh Attendance Data"
+                                    >
+                                        <FaHistory /> Sync Stats
+                                    </button>
                                 </div>
                             </div>
 

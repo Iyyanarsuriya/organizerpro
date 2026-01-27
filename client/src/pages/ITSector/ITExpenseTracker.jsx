@@ -130,26 +130,7 @@ const ITExpenseTracker = () => {
             setRoles(roleRes.data.data);
 
             if (filterMember) {
-                setSalaryLoading(true);
-                const attRes = await getAttendanceStats({
-                    memberId: filterMember,
-                    period: isRange ? null : currentPeriod,
-                    startDate: rangeStart,
-                    endDate: rangeEnd,
-                    sector: 'it'
-                });
-
-                const statsArray = attRes.data?.data || [];
-                const summary = {
-                    present: statsArray.filter(s => ['present', 'late', 'permission'].includes(s.status))
-                        .reduce((acc, curr) => acc + curr.count, 0),
-                    absent: statsArray.find(s => s.status === 'absent')?.count || 0,
-                    late: statsArray.find(s => s.status === 'late')?.count || 0,
-                    half_day: statsArray.find(s => s.status === 'half-day')?.count || 0,
-                };
-
-                setAttendanceStats({ summary, raw: statsArray });
-                setSalaryLoading(false);
+                await fetchAttendanceData(filterMember);
             } else {
                 setAttendanceStats(null);
             }
@@ -159,6 +140,41 @@ const ITExpenseTracker = () => {
             console.error("Fetch Data Error Details:", error.response || error);
             toast.error(`Failed to fetch data: ${error.response?.data?.message || error.message}`);
             setLoading(false);
+        }
+    };
+
+    const fetchAttendanceData = async (memberId) => {
+        if (!memberId) return;
+
+        const isRange = periodType === 'range';
+        const rangeStart = isRange ? customRange.start : null;
+        const rangeEnd = isRange ? customRange.end : null;
+
+        setSalaryLoading(true);
+        try {
+            const attRes = await getAttendanceStats({
+                memberId: memberId,
+                period: isRange ? null : currentPeriod,
+                startDate: rangeStart,
+                endDate: rangeEnd,
+                sector: 'it'
+            });
+
+            const statsArray = attRes.data?.data || [];
+            const summary = {
+                present: statsArray.filter(s => ['present', 'late', 'permission'].includes(s.status))
+                    .reduce((acc, curr) => acc + curr.count, 0),
+                absent: statsArray.find(s => s.status === 'absent')?.count || 0,
+                late: statsArray.find(s => s.status === 'late')?.count || 0,
+                half_day: statsArray.find(s => s.status === 'half-day')?.count || 0,
+            };
+
+            setAttendanceStats({ summary, raw: statsArray });
+        } catch (error) {
+            console.error("Attendance Fetch Error:", error);
+            toast.error("Failed to sync attendance data");
+        } finally {
+            setSalaryLoading(false);
         }
     };
 
@@ -528,6 +544,7 @@ const ITExpenseTracker = () => {
                             handleExportPayslip={exportMemberPayslipToPDF}
                             currentPeriod={currentPeriod}
                             transactions={transactions}
+                            onSyncAttendance={fetchAttendanceData}
                         />
 
                     )}
