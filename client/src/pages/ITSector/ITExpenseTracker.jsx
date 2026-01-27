@@ -446,64 +446,6 @@ const ITExpenseTracker = () => {
 
                     {activeTab === 'Transactions' && (
                         <div className="flex flex-col gap-6">
-                            {/* Filter Grid for Transactions - Reused from Dashboard Logic or similar */}
-                            <div className="flex flex-wrap items-end gap-3 p-6 bg-white rounded-[32px] border border-slate-100 shadow-sm transition-all hover:shadow-md">
-                                {/* Period Type - Full Width Row */}
-                                <div className="w-full">
-                                    <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Period Type</label>
-                                    <div className="flex p-1 bg-slate-50 rounded-xl border border-slate-100">
-                                        {['day', 'week', 'month', 'year', 'range'].map((type) => (
-                                            <button
-                                                key={type}
-                                                onClick={() => setPeriodType(type)}
-                                                className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${periodType === type ? 'bg-white text-blue-600 shadow-md scale-100' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
-                                            >
-                                                {type}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Date Controls */}
-                                <div className="flex-1 min-w-[200px]">
-                                    {periodType === 'year' && (
-                                        <div className="w-full">
-                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select Year</label>
-                                            <input type="number" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all text-center" />
-                                        </div>
-                                    )}
-                                    {periodType === 'month' && (
-                                        <div className="w-full">
-                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select Month</label>
-                                            <input type="month" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all" />
-                                        </div>
-                                    )}
-                                    {periodType === 'week' && (
-                                        <div className="w-full">
-                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select Week</label>
-                                            <input type="week" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all" />
-                                        </div>
-                                    )}
-                                    {periodType === 'day' && (
-                                        <div className="w-full">
-                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select Date</label>
-                                            <input type="date" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all" />
-                                        </div>
-                                    )}
-                                    {periodType === 'range' && (
-                                        <div className="flex gap-2 w-full">
-                                            <div className="flex-1">
-                                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Start Date</label>
-                                                <input type="date" value={customRange.start} onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">End Date</label>
-                                                <input type="date" value={customRange.end} onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all" />
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
                             <ITTransactions
                                 filteredTransactions={filteredTransactions}
                                 searchQuery={searchQuery}
