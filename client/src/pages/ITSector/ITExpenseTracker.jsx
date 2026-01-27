@@ -624,89 +624,94 @@ const ITExpenseTracker = () => {
 
             {showAddModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-[32px] w-full max-w-lg shadow-2xl border border-white/20 animate-in zoom-in-95 duration-200">
-                        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-                            <h3 className="text-xl font-black text-slate-900">{editingId ? 'Edit Transaction' : 'New Transaction'}</h3>
-                            <button onClick={() => setShowAddModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 transition-colors">
-                                <FaTimes />
+                    <div className="bg-white rounded-[20px] sm:rounded-[32px] w-full max-w-sm sm:max-w-[550px] shadow-2xl border border-white/20 animate-in zoom-in-95 duration-200">
+                        <div className="p-[12px] sm:p-[24px] border-b border-slate-100 flex items-center justify-between">
+                            <h3 className="text-base sm:text-xl font-black text-slate-900">{editingId ? 'Edit Transaction' : 'New Transaction'}</h3>
+                            <button onClick={() => setShowAddModal(false)} className="w-[24px] h-[24px] sm:w-[32px] sm:h-[32px] flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 transition-colors">
+                                <FaTimes className="text-[10px] sm:text-sm" />
                             </button>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Type</label>
-                                    <div className="flex p-1 bg-slate-50 rounded-xl border border-slate-100">
-                                        <button type="button" onClick={() => setFormData({ ...formData, type: 'income' })} className={`flex-1 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${formData.type === 'income' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'text-slate-400 hover:text-slate-600'}`}>Income</button>
-                                        <button type="button" onClick={() => setFormData({ ...formData, type: 'expense' })} className={`flex-1 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${formData.type === 'expense' ? 'bg-red-500 text-white shadow-lg shadow-red-500/30' : 'text-slate-400 hover:text-slate-600'}`}>Expense</button>
+                        <form onSubmit={handleSubmit} className="p-[12px] sm:p-[24px] space-y-[8px] sm:space-y-[20px]">
+                            <div className="grid grid-cols-2 gap-[8px] sm:gap-[20px]">
+                                <div className="space-y-[2px] sm:space-y-[6px]">
+                                    <label className="text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Type</label>
+                                    <div className="flex p-[2px] sm:p-[4px] bg-slate-50 rounded-xl border border-slate-100 h-[36px] sm:h-[48px]">
+                                        <button type="button" onClick={() => setFormData({ ...formData, type: 'income' })} className={`flex-1 rounded-lg text-[10px] sm:text-[12px] font-black uppercase tracking-wider transition-all flex items-center justify-center ${formData.type === 'income' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'text-slate-400 hover:text-slate-600'}`}>
+                                            <span className="block sm:hidden">Inc</span>
+                                            <span className="hidden sm:block">Income</span>
+                                        </button>
+                                        <button type="button" onClick={() => setFormData({ ...formData, type: 'expense' })} className={`flex-1 rounded-lg text-[10px] sm:text-[12px] font-black uppercase tracking-wider transition-all flex items-center justify-center ${formData.type === 'expense' ? 'bg-red-500 text-white shadow-lg shadow-red-500/30' : 'text-slate-400 hover:text-slate-600'}`}>
+                                            <span className="block sm:hidden">Exp</span>
+                                            <span className="hidden sm:block">Expense</span>
+                                        </button>
                                     </div>
                                 </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Amount</label>
+                                <div className="space-y-[2px] sm:space-y-[6px]">
+                                    <label className="text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Amount</label>
                                     <div className="relative">
-                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</div>
-                                        <input type="number" required value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-8 pr-4 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-300" placeholder="0.00" />
+                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-[10px] sm:text-sm">₹</div>
+                                        <input type="number" required value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} className="w-full h-[36px] sm:h-[48px] bg-slate-50 border border-slate-200 rounded-xl pl-6 sm:pl-8 pr-2 sm:pr-4 text-[12px] sm:text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-300" placeholder="0.00" />
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Title</label>
-                                <input type="text" required value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-300" placeholder="Transaction title..." />
+                            <div className="space-y-[2px] sm:space-y-[6px]">
+                                <label className="text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Title</label>
+                                <input type="text" required value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} className="w-full h-[36px] sm:h-[48px] bg-slate-50 border border-slate-200 rounded-xl px-3 sm:px-4 text-[12px] sm:text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-300" placeholder="Transaction title..." />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Category</label>
-                                    <div className="flex gap-2">
-                                        <select value={formData.category_id} onChange={e => setFormData({ ...formData, category_id: e.target.value })} className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer">
+                            <div className="grid grid-cols-2 gap-[8px] sm:gap-[20px]">
+                                <div className="space-y-[2px] sm:space-y-[6px]">
+                                    <label className="text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Category</label>
+                                    <div className="flex gap-1 sm:gap-3">
+                                        <select value={formData.category_id} onChange={e => setFormData({ ...formData, category_id: e.target.value })} className="flex-1 h-[36px] sm:h-[48px] bg-slate-50 border border-slate-200 rounded-xl px-2 sm:px-4 text-[11px] sm:text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer">
                                             <option value="">Select Category</option>
                                             {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                         </select>
                                         <button
                                             type="button"
                                             onClick={() => setShowCategoryManager(true)}
-                                            className="w-12 h-12 flex items-center justify-center bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-100 transition-all border border-blue-100/50 shadow-sm active:scale-95"
+                                            className="w-[36px] h-[36px] sm:w-[48px] sm:h-[48px] flex items-center justify-center bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-all border border-blue-100/50 shadow-sm active:scale-95 shrink-0"
                                             title="Add Category"
                                         >
-                                            <FaPlus />
+                                            <FaPlus className="text-[10px] sm:text-sm" />
                                         </button>
                                     </div>
                                 </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Date</label>
-                                    <input type="date" required value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all" />
+                                <div className="space-y-[2px] sm:space-y-[6px]">
+                                    <label className="text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Date</label>
+                                    <input type="date" required value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} className="w-full h-[36px] sm:h-[48px] bg-slate-50 border border-slate-200 rounded-xl px-2 sm:px-4 text-[11px] sm:text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all" />
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Project (Optional)</label>
-                                    <select value={formData.project_id} onChange={e => setFormData({ ...formData, project_id: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer">
+                            <div className="grid grid-cols-2 gap-[8px] sm:gap-[20px]">
+                                <div className="space-y-[2px] sm:space-y-[6px]">
+                                    <label className="text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Project</label>
+                                    <select value={formData.project_id} onChange={e => setFormData({ ...formData, project_id: e.target.value })} className="w-full h-[36px] sm:h-[48px] bg-slate-50 border border-slate-200 rounded-xl px-2 sm:px-4 text-[11px] sm:text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer">
                                         <option value="">None</option>
                                         {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                     </select>
                                 </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Member (Optional)</label>
-                                    <select value={formData.member_id || ''} onChange={e => setFormData({ ...formData, member_id: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer">
+                                <div className="space-y-[2px] sm:space-y-[6px]">
+                                    <label className="text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Member</label>
+                                    <select value={formData.member_id || ''} onChange={e => setFormData({ ...formData, member_id: e.target.value })} className="w-full h-[36px] sm:h-[48px] bg-slate-50 border border-slate-200 rounded-xl px-2 sm:px-4 text-[11px] sm:text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer">
                                         <option value="">None</option>
                                         {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                                     </select>
                                 </div>
                             </div>
 
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Description (Optional)</label>
+                            <div className="space-y-[2px] sm:space-y-[6px]">
+                                <label className="text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Description (Optional)</label>
                                 <textarea
                                     value={formData.description}
                                     onChange={e => setFormData({ ...formData, description: e.target.value })}
-                                    rows="2"
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-300 resize-none"
-                                    placeholder="Add notes or details..."
+                                    className="w-full h-[36px] sm:h-[80px] bg-slate-50 border border-slate-200 rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-[12px] sm:text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-300 resize-none"
+                                    placeholder="Add notes..."
                                 />
                             </div>
 
-                            <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all mt-4">
+                            <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-[40px] sm:h-[56px] flex items-center justify-center text-xs sm:text-sm uppercase tracking-widest rounded-xl shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all pt-1 sm:pt-0 mt-2 sm:mt-6">
                                 {editingId ? 'Update Transaction' : 'Add Transaction'}
                             </button>
                         </form>
