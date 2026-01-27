@@ -587,7 +587,7 @@ const ITAttendance = () => {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
                         <div className="flex items-center gap-4">
                             <button
-                                onClick={() => navigate('/it')}
+                                onClick={() => navigate('/it-sector')}
                                 className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-xl sm:rounded-2xl flex items-center justify-center border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-600 transition-all cursor-pointer shadow-sm active:scale-95"
                             >
                                 <FaChevronLeft className="text-sm sm:text-base from-neutral-400" />
