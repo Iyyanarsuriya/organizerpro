@@ -927,7 +927,7 @@ const EducationAttendance = () => {
                         </div>
                     </div>
                 ) : activeTab === 'members' ? (
-                    <MemberManager onClose={() => setActiveTab('records')} onUpdate={fetchData} />
+                    <MemberManager onClose={() => setActiveTab('records')} onUpdate={fetchData} sector="education" />
                 ) : (
                     /* Daily Sheet View */
                     <div className="bg-white rounded-[40px] shadow-xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -1254,10 +1254,10 @@ const EducationAttendance = () => {
             {showProjectManager && (
                 <ProjectManager
                     projects={projects}
-                    onCreate={createProject}
-                    onDelete={deleteProject}
+                    onCreate={(data) => createProject({ ...data, sector: 'education' })}
+                    onDelete={(id) => deleteProject(id, { sector: 'education' })}
                     onClose={() => { setShowProjectManager(false); fetchData(); }}
-                    onRefresh={() => getProjects().then(res => setProjects(res.data))}
+                    onRefresh={() => getProjects({ sector: 'education' }).then(res => setProjects(res.data))}
                 />
             )
             }
@@ -1265,10 +1265,10 @@ const EducationAttendance = () => {
                 showRoleManager && (
                     <RoleManager
                         roles={roles}
-                        onCreate={createMemberRole}
-                        onDelete={deleteMemberRole}
+                        onCreate={(data) => createMemberRole({ ...data, sector: 'education' })}
+                        onDelete={(id) => deleteMemberRole(id, { sector: 'education' })}
                         onClose={() => { setShowRoleManager(false); fetchData(); }}
-                        onRefresh={() => getMemberRoles().then(res => setRoles(res.data.data))}
+                        onRefresh={() => getMemberRoles({ sector: 'education' }).then(res => setRoles(res.data.data))}
                     />
                 )
             }
