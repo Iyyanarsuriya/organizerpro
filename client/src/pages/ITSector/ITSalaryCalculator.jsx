@@ -35,7 +35,11 @@ const ITSalaryCalculator = ({
     handleExportPayslip,
     currentPeriod,
     transactions,
-    onSyncAttendance
+    onSyncAttendance,
+    setPeriodType,
+    setCurrentPeriod,
+    customRange,
+    setCustomRange
 }) => {
     // Local Filter State
     const [searchQuery, setSearchQuery] = useState('');
@@ -147,9 +151,66 @@ const ITSalaryCalculator = ({
                                 onExportTXT={() => onExport('TXT')}
                             />
                         )}
-                        <div className="flex-1 sm:flex-none px-4 py-2 bg-blue-50 text-blue-600 border border-blue-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-center">
-                            {periodType} REF
+                        {/* Period Badge - Removed in favor of full controls below */}
+                    </div>
+                </div>
+
+                {/* Date & Period Controls */}
+                <div className="flex flex-wrap items-end gap-3 p-4 bg-white rounded-3xl border border-slate-100 shadow-sm">
+                    {/* Period Type Buttons */}
+                    <div className="w-full md:w-auto flex-1">
+                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Period Type</label>
+                        <div className="flex p-1 bg-slate-50 rounded-xl border border-slate-100">
+                            {['day', 'week', 'month', 'year', 'range'].map((type) => (
+                                <button
+                                    key={type}
+                                    onClick={() => setPeriodType(type)}
+                                    className={`flex-1 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${periodType === type ? 'bg-white text-blue-600 shadow-md scale-100' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
+                                >
+                                    {type}
+                                </button>
+                            ))}
                         </div>
+                    </div>
+
+                    {/* Dynamic Date Inputs */}
+                    <div className="w-full md:w-auto flex-[2] min-w-[200px]">
+                        {periodType === 'year' && (
+                            <div className="w-full">
+                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select Year</label>
+                                <input type="number" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-900 outline-none focus:border-blue-500 transition-all text-center h-[42px]" />
+                            </div>
+                        )}
+                        {periodType === 'month' && (
+                            <div className="w-full">
+                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select Month</label>
+                                <input type="month" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-900 outline-none focus:border-blue-500 transition-all h-[42px]" />
+                            </div>
+                        )}
+                        {periodType === 'week' && (
+                            <div className="w-full">
+                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select Week</label>
+                                <input type="week" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-900 outline-none focus:border-blue-500 transition-all h-[42px]" />
+                            </div>
+                        )}
+                        {periodType === 'day' && (
+                            <div className="w-full">
+                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select Date</label>
+                                <input type="date" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-900 outline-none focus:border-blue-500 transition-all h-[42px]" />
+                            </div>
+                        )}
+                        {periodType === 'range' && (
+                            <div className="flex gap-2 w-full">
+                                <div className="flex-1">
+                                    <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Start Date</label>
+                                    <input type="date" value={customRange.start} onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-900 outline-none focus:border-blue-500 transition-all h-[42px]" />
+                                </div>
+                                <div className="flex-1">
+                                    <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">End Date</label>
+                                    <input type="date" value={customRange.end} onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-900 outline-none focus:border-blue-500 transition-all h-[42px]" />
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 

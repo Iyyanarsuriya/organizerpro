@@ -545,6 +545,10 @@ const ITExpenseTracker = () => {
                             currentPeriod={currentPeriod}
                             transactions={transactions}
                             onSyncAttendance={fetchAttendanceData}
+                            setPeriodType={setPeriodType}
+                            setCurrentPeriod={setCurrentPeriod}
+                            customRange={customRange}
+                            setCustomRange={setCustomRange}
                         />
 
                     )}
@@ -566,6 +570,9 @@ const ITExpenseTracker = () => {
                             setShowCustomReportModal={setShowCustomReportModal}
                             setCustomReportForm={setCustomReportForm}
                             customReportForm={customReportForm}
+                            setPeriodType={setPeriodType}
+                            setCurrentPeriod={setCurrentPeriod}
+                            setCustomRange={setCustomRange}
                         />
                     )}
 
