@@ -19,6 +19,7 @@ import ITTransactions from './ITTransactions';
 import ITSalaryCalculator from './ITSalaryCalculator';
 import ITExpenseDashboard from './ITExpenseDashboard';
 import ITReports from './ITReports';
+import MemberManager from '../../components/IT/MemberManager';
 import ProjectManager from '../../components/Manufacturing/ProjectManager';
 import CategoryManager from '../../components/Common/CategoryManager';
 
@@ -348,6 +349,14 @@ const ITExpenseTracker = () => {
             });
     }, [transactions, filterType, filterCat, sortBy, searchQuery, filterProject, filterRole, memberIdToRoleMap]);
 
+    const exportPeriod = useMemo(() => {
+        if (periodType === 'range') {
+            if (customRange.start && customRange.end) return `${customRange.start} to ${customRange.end}`;
+            return 'Custom Range';
+        }
+        return currentPeriod;
+    }, [periodType, customRange, currentPeriod]);
+
     if (loading) return <div className="h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-[#2d5bff]"></div></div>;
 
     return (
@@ -379,6 +388,10 @@ const ITExpenseTracker = () => {
                     <button onClick={() => { setActiveTab('Salary'); setFilterMemberType('all') }} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'Salary' ? 'bg-[#2d5bff] text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
                         <FaCalculator className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Salary' ? 'text-white' : 'text-slate-400'}`} />
                         <span className="font-black text-xs uppercase tracking-widest">Salary</span>
+                    </button>
+                    <button onClick={() => setActiveTab('Members')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'Members' ? 'bg-[#2d5bff] text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
+                        <FaUsers className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Members' ? 'text-white' : 'text-slate-400'}`} />
+                        <span className="font-black text-xs uppercase tracking-widest">Members</span>
                     </button>
                 </nav>
             </aside>
@@ -471,6 +484,9 @@ const ITExpenseTracker = () => {
                                 handleAddNewTransaction={handleAddNewTransaction}
                                 setActiveTab={setActiveTab}
                                 formatCurrency={(val) => '₹' + formatAmount(val)}
+                                handleExportPDF={() => exportExpenseToPDF({ data: transactions, period: exportPeriod, filename: 'it_dashboard_report' })}
+                                handleExportCSV={() => exportExpenseToCSV(transactions, 'it_dashboard_report')}
+                                handleExportTXT={() => exportExpenseToTXT({ data: transactions, period: exportPeriod, filename: 'it_dashboard_report' })}
                             />
                         </div>
                     )}
@@ -504,8 +520,8 @@ const ITExpenseTracker = () => {
                                 customRange={customRange}
                                 setCustomRange={setCustomRange}
                                 onExportCSV={() => exportExpenseToCSV(transactions, 'it_expenses')}
-                                onExportPDF={() => exportExpenseToPDF({ data: transactions, filename: 'it_expenses' })}
-                                onExportTXT={() => exportExpenseToTXT({ data: transactions, filename: 'it_expenses' })}
+                                onExportPDF={() => exportExpenseToPDF({ data: transactions, period: exportPeriod, filename: 'it_expenses' })}
+                                onExportTXT={() => exportExpenseToTXT({ data: transactions, period: exportPeriod, filename: 'it_expenses' })}
                                 setShowProjectManager={setShowProjectManager}
                             />
                         </div>
@@ -520,9 +536,9 @@ const ITExpenseTracker = () => {
                             members={members}
                             roles={roles}
                             filteredTransactions={filteredTransactions}
-                            handleExportPDF={() => exportExpenseToPDF({ data: transactions, filename: 'it_salary' })}
+                            handleExportPDF={() => exportExpenseToPDF({ data: transactions, period: exportPeriod, filename: 'it_salary' })}
                             handleExportCSV={() => exportExpenseToCSV(transactions, 'it_salary')}
-                            handleExportTXT={() => exportExpenseToTXT(transactions, 'it_salary')}
+                            handleExportTXT={() => exportExpenseToTXT({ data: transactions, period: exportPeriod, filename: 'it_salary' })}
                             salaryLoading={salaryLoading}
                             attendanceStats={attendanceStats}
                             salaryMode={salaryMode}
@@ -557,9 +573,9 @@ const ITExpenseTracker = () => {
                         <ITReports
                             transactions={transactions}
                             filteredTransactions={filteredTransactions}
-                            handleExportPDF={() => exportExpenseToPDF({ data: transactions, filename: 'it_report' })}
+                            handleExportPDF={() => exportExpenseToPDF({ data: transactions, period: exportPeriod, filename: 'it_report' })}
                             handleExportCSV={() => exportExpenseToCSV(transactions, 'it_report')}
-                            handleExportTXT={() => exportExpenseToTXT({ data: transactions, filename: 'it_report' })}
+                            handleExportTXT={() => exportExpenseToTXT({ data: transactions, period: exportPeriod, filename: 'it_report' })}
                             filterMember={filterMember}
                             filterProject={filterProject}
                             members={members}
@@ -582,6 +598,13 @@ const ITExpenseTracker = () => {
                             bonus={bonus}
                             attendanceStats={attendanceStats}
                             onSyncAttendance={fetchAttendanceData}
+                        />
+                    )}
+                    {activeTab === 'Members' && (
+                        <MemberManager
+                            sector="it"
+                            onUpdate={fetchData}
+                            projects={projects}
                         />
                     )}
 

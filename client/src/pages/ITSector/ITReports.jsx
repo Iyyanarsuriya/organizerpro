@@ -1,6 +1,7 @@
 import React from 'react';
 import { FaFileAlt, FaReceipt, FaHandHoldingUsd, FaMoneyBillWave } from 'react-icons/fa';
 import { formatAmount } from '../../utils/formatUtils';
+import ExportButtons from '../../components/Common/ExportButtons';
 
 const ITReports = ({
     transactions,
@@ -80,24 +81,11 @@ const ITReports = ({
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                 <h2 className="text-[20px] sm:text-[24px] font-black tracking-tight text-slate-900">IT Financial Reports</h2>
                 <div className="flex items-center gap-[8px]">
-                    <button
-                        onClick={() => handleExportRequest('PDF', 'Export Report as PDF?')}
-                        className="bg-slate-900 text-white px-[16px] py-[10px] rounded-[14px] text-[10px] font-black uppercase tracking-widest shadow-lg shadow-black/10 hover:scale-105 transition-all whitespace-nowrap"
-                    >
-                        PDF
-                    </button>
-                    <button
-                        onClick={() => handleExportRequest('CSV', 'Export Report as CSV?')}
-                        className="bg-white border border-slate-200 px-[16px] py-[10px] rounded-[14px] text-[10px] font-black uppercase tracking-widest hover:border-blue-500 hover:text-blue-500 transition-all whitespace-nowrap"
-                    >
-                        CSV
-                    </button>
-                    <button
-                        onClick={() => handleExportRequest('TXT', 'Export Report as Text?')}
-                        className="bg-white border border-slate-200 px-[16px] py-[10px] rounded-[14px] text-[10px] font-black uppercase tracking-widest hover:border-blue-500 hover:text-blue-500 transition-all whitespace-nowrap"
-                    >
-                        Text
-                    </button>
+                    <ExportButtons
+                        onExportPDF={() => handleExportRequest('PDF', 'Export Report as PDF?')}
+                        onExportCSV={() => handleExportRequest('CSV', 'Export Report as CSV?')}
+                        onExportTXT={() => handleExportRequest('TXT', 'Export Report as Text?')}
+                    />
                 </div>
             </div>
 

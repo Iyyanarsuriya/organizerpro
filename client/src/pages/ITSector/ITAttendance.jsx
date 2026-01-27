@@ -740,12 +740,13 @@ const ITAttendance = () => {
 
                             </div>
 
-                            <ExportButtons
-                                onExportCSV={() => setConfirmModal({ show: true, type: 'CSV', label: 'CSV Report' })}
-                                onExportPDF={() => setConfirmModal({ show: true, type: 'PDF', label: 'PDF Report' })}
-                                onExportTXT={() => setConfirmModal({ show: true, type: 'TXT', label: 'Plain Text Log' })}
-                                className="w-full justify-center"
-                            />
+                            <div className="flex items-center gap-2">
+                                <ExportButtons
+                                    onExportPDF={() => onExport('PDF')}
+                                    onExportCSV={() => onExport('CSV')}
+                                    onExportTXT={() => onExport('TXT')}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

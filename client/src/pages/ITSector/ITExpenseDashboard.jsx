@@ -5,6 +5,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
 import { formatAmount } from '../../utils/formatUtils';
+import ExportButtons from '../../components/Common/ExportButtons';
 
 const StatCard = ({ title, value, color, subtitle, onClick }) => (
     <div
@@ -32,10 +33,20 @@ const ITExpenseDashboard = ({
     handleShowTransactions,
     handleAddNewTransaction,
     setActiveTab,
-    formatCurrency
+    formatCurrency,
+    handleExportPDF,
+    handleExportCSV,
+    handleExportTXT
 }) => {
     return (
         <div className="animate-in fade-in duration-500">
+            <div className="flex justify-end mb-6">
+                <ExportButtons
+                    onExportPDF={handleExportPDF}
+                    onExportCSV={handleExportCSV}
+                    onExportTXT={handleExportTXT}
+                />
+            </div>
             {/* Period Summary Stats */}
             <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 sm:mb-8">
                 <div className="bg-white p-6 sm:p-8 rounded-[32px] shadow-sm border border-slate-100 relative group overflow-hidden">
