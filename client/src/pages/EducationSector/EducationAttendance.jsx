@@ -158,6 +158,55 @@ const EducationAttendance = () => {
         fetchData();
     }, [currentPeriod, filterMember, periodType, customRange.start, customRange.end]);
 
+    const handleBulkMark = (status) => {
+        if (!currentPeriod || periodType !== 'day') {
+            toast.error("Please switch to 'Day' view to use Quick Actions");
+            return;
+        }
+
+        const membersToMark = members.filter(m => (!filterDepartment || m.department === filterDepartment) && (!filterRole || m.role === filterRole) && (m.status === 'active'));
+
+        if (membersToMark.length === 0) {
+            toast.error("No active members found to mark");
+            return;
+        }
+
+        setConfirmModal({
+            show: true,
+            type: 'bulk_mark',
+            title: 'Confirm Bulk Action',
+            message: `Are you sure you want to mark "${status.replace('_', ' ')}" for ${membersToMark.length} members for ${currentPeriod}?`,
+            status: status
+        });
+    };
+
+    const handleModalConfirm = async () => {
+        if (confirmModal.type === 'bulk_mark') {
+            const { status } = confirmModal;
+            const membersToMark = members.filter(m => (!filterDepartment || m.department === filterDepartment) && (!filterRole || m.role === filterRole) && (m.status === 'active'));
+
+            try {
+                const promises = membersToMark.map(member => {
+                    return quickMarkEduAttendance({
+                        member_id: member.id,
+                        date: currentPeriod,
+                        status: status,
+                        subject: status === 'holiday' ? 'Holiday' : (status === 'week_off' ? 'Weekend' : 'Daily Attendance'),
+                        note: status === 'holiday' ? 'Holiday' : (status === 'week_off' ? 'Weekend' : null)
+                    });
+                });
+
+                await Promise.all(promises);
+                toast.success(`Marked ${status} for ${membersToMark.length} members`);
+                fetchData();
+            } catch (error) {
+                console.error("Bulk mark error:", error);
+                toast.error("Failed to mark properly");
+            }
+        }
+        setConfirmModal({ show: false, type: null });
+    };
+
     const filteredAttendances = useMemo(() => {
         return attendances.filter(a => {
             const d = new Date(a.date);
@@ -260,6 +309,29 @@ const EducationAttendance = () => {
                                 <p className="text-[9px] text-blue-300 font-black uppercase tracking-widest mb-1">Marking Mode</p>
                                 <p className="font-black text-white text-sm">Single Click Upsert</p>
                             </div>
+                        </div>
+
+                        {/* Bulk Action Toolbar */}
+                        <div className="px-6 sm:px-8 py-4 bg-slate-50/50 border-b border-slate-100 flex flex-wrap items-center gap-3">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 hidden sm:block">Quick Actions:</p>
+                            <button
+                                onClick={() => handleBulkMark('present')}
+                                className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 shadow-sm transition-all flex items-center gap-2 cursor-pointer"
+                            >
+                                <FaCheckCircle className="text-sm" /> Mark All Present
+                            </button>
+                            <button
+                                onClick={() => handleBulkMark('week_off')}
+                                className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 hover:border-slate-300 shadow-sm transition-all flex items-center gap-2 cursor-pointer"
+                            >
+                                <FaCalendarAlt className="text-sm" /> Mark Weekend
+                            </button>
+                            <button
+                                onClick={() => handleBulkMark('holiday')}
+                                className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-pink-500 hover:bg-pink-50 hover:border-pink-200 shadow-sm transition-all flex items-center gap-2 cursor-pointer"
+                            >
+                                <FaTag className="text-sm" /> Mark Holiday
+                            </button>
                         </div>
 
                         {/* List View */}
@@ -600,6 +672,17 @@ const EducationAttendance = () => {
                     </div>
                 </div>
             )}
+
+            {/* Generic Confirm Modal */}
+            <ConfirmModal
+                isOpen={confirmModal.show}
+                title={confirmModal.title || "Confirm Action"}
+                message={confirmModal.message || "Are you sure?"}
+                onConfirm={handleModalConfirm}
+                onCancel={() => setConfirmModal({ ...confirmModal, show: false })}
+                type={confirmModal.type === 'DELETE' ? 'danger' : 'info'}
+                confirmText="Yes, Proceed"
+            />
 
         </div>
     );
