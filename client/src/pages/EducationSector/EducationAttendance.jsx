@@ -16,7 +16,7 @@ import {
     FaCalendarAlt, FaSearch,
     FaFilter, FaChartBar, FaUserCheck,
     FaInbox, FaUserEdit,
-    FaTag, FaBusinessTime, FaBuilding, FaPlane, FaBriefcaseMedical, FaHome
+    FaTag, FaBusinessTime, FaBuilding, FaPlane, FaBriefcaseMedical, FaHome, FaArrowLeft
 } from 'react-icons/fa';
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend
@@ -48,6 +48,21 @@ const EducationAttendance = () => {
     const [departments, setDepartments] = useState([]); // Add departments state
     const [filterRole, setFilterRole] = useState('');
     const [confirmModal, setConfirmModal] = useState({ show: false, type: null, label: '', id: null });
+
+    const [showPermissionModal, setShowPermissionModal] = useState(false);
+    const [permissionModalData, setPermissionModalData] = useState({
+        member_id: null,
+        member_name: '',
+        status: 'permission',
+        start_hour: '09',
+        start_minute: '00',
+        start_period: 'AM',
+        end_hour: '10',
+        end_minute: '00',
+        end_period: 'AM',
+        reason: '',
+        attendance_id: null
+    });
 
     const statusOptions = [
         { id: 'present', label: 'Present', icon: FaCheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-50', border: 'border-emerald-100' },
@@ -183,6 +198,12 @@ const EducationAttendance = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
                         <div className="flex items-center gap-4">
+                            <button
+                                onClick={() => navigate('/education-sector')}
+                                className="w-10 h-10 sm:w-12 sm:h-12 bg-white border border-slate-200 rounded-xl sm:rounded-2xl flex items-center justify-center text-slate-500 hover:text-slate-900 hover:border-slate-300 hover:shadow-md transition-all duration-300 group"
+                            >
+                                <FaArrowLeft className="text-base sm:text-lg group-hover:-translate-x-1 transition-transform" />
+                            </button>
                             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-linear-to-br from-blue-500 to-indigo-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
                                 <FaUserCheck className="text-white text-lg sm:text-xl" />
                             </div>
@@ -321,9 +342,42 @@ const EducationAttendance = () => {
 
                                             {/* Permission */}
                                             <div className="col-span-2 text-center">
-                                                <button className="text-[10px] font-bold text-slate-400 hover:text-blue-600 bg-slate-50 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">
-                                                    + Add Perm
+                                                <button
+                                                    onClick={() => {
+                                                        const currentReason = todayRecord?.permission_reason || '';
+                                                        const [startStr, endStr] = (todayRecord?.permission_duration || '09:00 AM - 10:00 AM').split(' - ');
+                                                        const parseTime = (str) => {
+                                                            const [time, period] = (str || '').split(' ');
+                                                            const [h, m] = (time || '09:00').split(':');
+                                                            return { h: h || '09', m: m || '00', p: period || 'AM' };
+                                                        };
+                                                        const start = parseTime(startStr);
+                                                        const end = parseTime(endStr);
+
+                                                        setPermissionModalData({
+                                                            member_id: member.id,
+                                                            member_name: member.name,
+                                                            status: 'permission',
+                                                            start_hour: start.h,
+                                                            start_minute: start.m,
+                                                            start_period: start.p,
+                                                            end_hour: end.h,
+                                                            end_minute: end.m,
+                                                            end_period: end.p,
+                                                            reason: currentReason,
+                                                            attendance_id: todayRecord?.id
+                                                        });
+                                                        setShowPermissionModal(true);
+                                                    }}
+                                                    className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all inline-flex items-center gap-1.5 ${todayRecord?.permission_duration ? 'bg-purple-500 text-white shadow-xs' : 'bg-slate-50 text-slate-400 border border-slate-200 hover:bg-purple-50 hover:text-purple-600'}`}
+                                                >
+                                                    <FaClock className="text-[10px]" /> {todayRecord?.permission_duration ? 'Perm.' : 'Add Perm'}
                                                 </button>
+                                                {todayRecord?.permission_duration && (
+                                                    <div className="mt-1 bg-white border border-slate-100 rounded-lg px-2 py-1 text-[8px] font-bold text-slate-600 shadow-sm mx-auto max-w-[100px] truncate">
+                                                        {todayRecord.permission_duration}
+                                                    </div>
+                                                )}
                                             </div>
 
                                             {/* Current Status Badge */}
@@ -437,6 +491,91 @@ const EducationAttendance = () => {
                 {activeTab === 'members' && <EducationMemberManager onUpdate={fetchData} />}
 
             </main>
+
+            {showPermissionModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl p-6 relative animate-in zoom-in-95 duration-300">
+                        <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
+                            <FaClock className="text-purple-500" /> Permission Details
+                        </h3>
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Start Time</label>
+                                    <div className="flex bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                                        <select value={permissionModalData.start_hour} onChange={(e) => setPermissionModalData({ ...permissionModalData, start_hour: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none"><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
+                                        <div className="w-px bg-slate-200"></div>
+                                        <select value={permissionModalData.start_minute} onChange={(e) => setPermissionModalData({ ...permissionModalData, start_minute: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none">
+                                            {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
+                                                <option key={m} value={m}>{m}</option>
+                                            ))}
+                                        </select>
+                                        <div className="w-px bg-slate-200"></div>
+                                        <select value={permissionModalData.start_period} onChange={(e) => setPermissionModalData({ ...permissionModalData, start_period: e.target.value })} className="w-full bg-transparent p-2 text-[10px] font-black uppercase text-slate-500 outline-none"><option value="AM">AM</option><option value="PM">PM</option></select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">End Time</label>
+                                    <div className="flex bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                                        <select value={permissionModalData.end_hour} onChange={(e) => setPermissionModalData({ ...permissionModalData, end_hour: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none"><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
+                                        <div className="w-px bg-slate-200"></div>
+                                        <select value={permissionModalData.end_minute} onChange={(e) => setPermissionModalData({ ...permissionModalData, end_minute: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none">
+                                            {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
+                                                <option key={m} value={m}>{m}</option>
+                                            ))}
+                                        </select>
+                                        <div className="w-px bg-slate-200"></div>
+                                        <select value={permissionModalData.end_period} onChange={(e) => setPermissionModalData({ ...permissionModalData, end_period: e.target.value })} className="w-full bg-transparent p-2 text-[10px] font-black uppercase text-slate-500 outline-none"><option value="AM">AM</option><option value="PM">PM</option></select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Reason</label>
+                                <textarea
+                                    value={permissionModalData.reason}
+                                    onChange={(e) => setPermissionModalData({ ...permissionModalData, reason: e.target.value })}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-700 resize-none outline-none focus:border-purple-500 transition-colors"
+                                    rows="3"
+                                    placeholder="Enter permission reason..."
+                                ></textarea>
+                            </div>
+                            <div className="flex gap-3 mt-2">
+                                <button onClick={() => setShowPermissionModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">Cancel</button>
+                                <button
+                                    onClick={async () => {
+                                        const duration = `${permissionModalData.start_hour}:${permissionModalData.start_minute} ${permissionModalData.start_period} - ${permissionModalData.end_hour}:${permissionModalData.end_minute} ${permissionModalData.end_period}`;
+                                        const startTime = `${permissionModalData.start_hour}:${permissionModalData.start_minute} ${permissionModalData.start_period}`;
+                                        const endTime = `${permissionModalData.end_hour}:${permissionModalData.end_minute} ${permissionModalData.end_period}`;
+
+                                        try {
+                                            await quickMarkEduAttendance({
+                                                member_id: permissionModalData.member_id,
+                                                date: currentPeriod,
+                                                status: 'present',
+                                                subject: 'Daily Attendance',
+                                                permission_duration: duration,
+                                                permission_start_time: startTime,
+                                                permission_end_time: endTime,
+                                                permission_reason: permissionModalData.reason
+                                            });
+                                            toast.success("Permission Saved");
+                                            setShowPermissionModal(false);
+                                            fetchData();
+                                        } catch (err) {
+                                            console.error(err);
+                                            toast.error("Failed to save permission");
+                                        }
+                                    }}
+                                    className="flex-1 py-2.5 rounded-xl bg-purple-600 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-purple-500/20 hover:bg-purple-700 transition-colors"
+                                >
+                                    Save
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 };
