@@ -10,8 +10,8 @@ const getTables = (sector) => {
     } else if (sector === 'education') {
         return {
             attendance: 'education_attendance',
-            members: 'education_members',
-            projects: 'education_projects'
+            members: 'education_members'
+
         };
     }
     return {
@@ -24,9 +24,13 @@ const getTables = (sector) => {
 const create = async (data) => {
     const { attendance: TABLE_NAME } = getTables(data.sector);
     const { user_id, subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason, created_by } = data;
+
+    // For education, force project_id to NULL
+    const finalProjectId = data.sector === 'education' ? null : (project_id || null);
+
     const [result] = await db.query(
         `INSERT INTO ${TABLE_NAME} (user_id, subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [user_id, subject, status, date, note, project_id || null, member_id || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, created_by || null, null]
+        [user_id, subject, status, date, note, finalProjectId, member_id || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, created_by || null, null]
     );
     return { id: result.insertId, ...data };
 };
@@ -39,14 +43,27 @@ const findById = async (id, sector) => {
 
 const getAllByUserId = async (userId, filters = {}) => {
     const { attendance: TABLE_NAME, members: MEMBERS_TABLE, projects: PROJECTS_TABLE } = getTables(filters.sector);
-    let query = `SELECT a.*, p.name as project_name, w.name as member_name 
+
+    let additionalColumns = '';
+    let projectJoin = '';
+    let projectSelect = ', p.name as project_name';
+
+    if (filters.sector === 'education') {
+        additionalColumns = ', w.department as member_department, w.staff_id as member_staff_id';
+        projectSelect = ''; // No project name for education
+        // No join for education
+    } else {
+        projectJoin = `LEFT JOIN ${PROJECTS_TABLE} p ON a.project_id = p.id`;
+    }
+
+    let query = `SELECT a.*${projectSelect}, w.name as member_name, w.role as member_role${additionalColumns} 
                     FROM ${TABLE_NAME} a 
-                    LEFT JOIN ${PROJECTS_TABLE} p ON a.project_id = p.id 
+                    ${projectJoin}
                     LEFT JOIN ${MEMBERS_TABLE} w ON a.member_id = w.id 
                     WHERE a.user_id = ?`;
     const params = [userId];
 
-    if (filters.projectId) {
+    if (filters.projectId && filters.sector !== 'education') {
         query += ' AND a.project_id = ?';
         params.push(filters.projectId);
     }
@@ -95,9 +112,20 @@ const getAllByUserId = async (userId, filters = {}) => {
 const update = async (id, userId, data) => {
     const { attendance: TABLE_NAME } = getTables(data.sector);
     const { subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason, updated_by } = data;
+
+    let updateFields = 'subject = ?, status = ?, date = ?, note = ?, member_id = ?, permission_duration = ?, permission_start_time = ?, permission_end_time = ?, permission_reason = ?, overtime_duration = ?, overtime_reason = ?, updated_by = ?';
+    let params = [subject, status, date, note, member_id || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, updated_by || null];
+
+    if (data.sector !== 'education') {
+        updateFields += ', project_id = ?';
+        params.push(project_id || null);
+    }
+
+    params.push(id, userId);
+
     const [result] = await db.query(
-        `UPDATE ${TABLE_NAME} SET subject = ?, status = ?, date = ?, note = ?, project_id = ?, member_id = ?, permission_duration = ?, permission_start_time = ?, permission_end_time = ?, permission_reason = ?, overtime_duration = ?, overtime_reason = ?, updated_by = ? WHERE id = ? AND user_id = ?`,
-        [subject, status, date, note, project_id || null, member_id || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, updated_by || null, id, userId]
+        `UPDATE ${TABLE_NAME} SET ${updateFields} WHERE id = ? AND user_id = ?`,
+        params
     );
     return result.affectedRows > 0;
 };
@@ -172,6 +200,10 @@ const getMemberSummary = async (userId, filters = {}) => {
             COUNT(CASE WHEN a.status = 'permission' THEN 1 END) as permission,
             COUNT(CASE WHEN a.status = 'week_off' THEN 1 END) as week_off,
             COUNT(CASE WHEN a.status = 'holiday' THEN 1 END) as holiday,
+            COUNT(CASE WHEN a.status = 'CL' THEN 1 END) as CL,
+            COUNT(CASE WHEN a.status = 'SL' THEN 1 END) as SL,
+            COUNT(CASE WHEN a.status = 'EL' THEN 1 END) as EL,
+            COUNT(CASE WHEN a.status = 'OD' THEN 1 END) as OD,
             COUNT(CASE WHEN a.status NOT IN ('week_off', 'holiday') THEN 1 END) as working_days,
             COUNT(a.id) as total
         FROM ${MEMBERS_TABLE} w
@@ -223,15 +255,17 @@ const quickMark = async (data) => {
     const { attendance: TABLE_NAME } = getTables(data.sector);
     const { user_id, member_id, date, status, project_id, subject, note, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason, updated_by } = data;
 
-    // Find existing record for this member on this date and project
+    // Find existing record for this member on this date
     let checkQuery = `SELECT id FROM ${TABLE_NAME} WHERE user_id = ? AND member_id = ? AND DATE(date) = ?`;
     const checkParams = [user_id, member_id, date];
 
-    if (project_id) {
-        checkQuery += ' AND project_id = ?';
-        checkParams.push(project_id);
-    } else {
-        checkQuery += ' AND project_id IS NULL';
+    if (data.sector !== 'education') {
+        if (project_id) {
+            checkQuery += ' AND project_id = ?';
+            checkParams.push(project_id);
+        } else {
+            checkQuery += ' AND project_id IS NULL';
+        }
     }
 
     const [existing] = await db.query(checkQuery, checkParams);
@@ -244,10 +278,20 @@ const quickMark = async (data) => {
         );
         return { id: existing[0].id, ...data, updated: true };
     } else {
-        // Create new record
+        // Re-building insert for clarity and safety
+        const fields = ['user_id', 'member_id', 'date', 'status', 'subject', 'note', 'permission_duration', 'permission_start_time', 'permission_end_time', 'permission_reason', 'overtime_duration', 'overtime_reason', 'created_by', 'updated_by'];
+        const vals = [user_id, member_id, date, status || 'present', subject || 'Daily Attendance', note || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, updated_by || null, null];
+
+        if (data.sector !== 'education') {
+            fields.push('project_id');
+            vals.push(project_id || null);
+        }
+
+        const placeholders = fields.map(() => '?').join(', ');
+
         const [result] = await db.query(
-            `INSERT INTO ${TABLE_NAME} (user_id, member_id, date, status, project_id, subject, note, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [user_id, member_id, date, status || 'present', project_id || null, subject || 'Daily Attendance', note || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, updated_by || null, null]
+            `INSERT INTO ${TABLE_NAME} (${fields.join(', ')}) VALUES (${placeholders})`,
+            vals
         );
         // Note: passing updated_by as created_by in quickMark insert
         return { id: result.insertId, ...data, created: true };

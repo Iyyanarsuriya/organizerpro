@@ -190,6 +190,7 @@ CREATE TABLE `manufacturing_attendance` (
   `user_id` int NOT NULL,
   `member_id` int DEFAULT NULL,
   `status` enum('present','absent','late','half-day','permission') NOT NULL,
+  `subject` varchar(255) DEFAULT 'Daily Attendance',
   `date` date NOT NULL,
   `note` text,
   `project_id` int DEFAULT NULL,
@@ -454,26 +455,15 @@ CREATE TABLE `it_categories` (
 -- EDUCATION SECTOR TABLES
 -- ==========================================
 
--- Education Projects (e.g., Classes, Departments, Events)
-DROP TABLE IF EXISTS `education_projects`;
-CREATE TABLE `education_projects` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `user_id` int NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `description` text,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `user_id` (`user_id`),
-  CONSTRAINT `fk_edu_proj_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
 -- Education Members (Teachers, Staff, Students)
 DROP TABLE IF EXISTS `education_members`;
 CREATE TABLE `education_members` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
   `name` varchar(255) NOT NULL,
+  `staff_id` varchar(50) DEFAULT NULL,
   `role` varchar(100) DEFAULT NULL,
+  `department` varchar(100) DEFAULT NULL,
   `phone` varchar(20) DEFAULT NULL,
   `email` varchar(255) DEFAULT NULL,
   `status` enum('active','inactive') DEFAULT 'active',
@@ -481,11 +471,9 @@ CREATE TABLE `education_members` (
   `wage_type` enum('daily','monthly','piece_rate') DEFAULT 'monthly', -- Staff likely monthly
   `daily_wage` decimal(15,2) DEFAULT '0.00',
   `member_type` enum('employee','worker','student') DEFAULT 'employee', -- Added student for education
-  `project_id` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
-  CONSTRAINT `fk_edu_memb_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_edu_memb_proj` FOREIGN KEY (`project_id`) REFERENCES `education_projects` (`id`) ON DELETE SET NULL
+  CONSTRAINT `fk_edu_memb_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Education Attendance
@@ -494,11 +482,10 @@ CREATE TABLE `education_attendance` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
   `member_id` int DEFAULT NULL,
-  `status` enum('present','absent','late','half-day','permission','week_off','holiday') NOT NULL,
+  `status` enum('present','absent','late','half-day','permission','week_off','holiday','CL','SL','EL','OD') NOT NULL,
   `subject` varchar(255) DEFAULT 'Daily Attendance',
   `date` date NOT NULL,
   `note` text,
-  `project_id` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `permission_duration` varchar(100) DEFAULT NULL,
@@ -511,10 +498,8 @@ CREATE TABLE `education_attendance` (
   `updated_by` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
-  KEY `fk_edu_att_proj` (`project_id`),
   KEY `fk_edu_att_memb` (`member_id`),
   CONSTRAINT `fk_edu_att_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_edu_att_proj` FOREIGN KEY (`project_id`) REFERENCES `education_projects` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_edu_att_memb` FOREIGN KEY (`member_id`) REFERENCES `education_members` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -558,7 +543,6 @@ CREATE TABLE `education_transactions` (
   `date` datetime NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `project_id` int DEFAULT NULL,
   `member_id` int DEFAULT NULL,
   `payment_status` varchar(20) DEFAULT 'completed',
   `guest_name` varchar(255) DEFAULT NULL,
@@ -567,11 +551,9 @@ CREATE TABLE `education_transactions` (
   `description` text DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
-  KEY `fk_edu_trans_proj` (`project_id`),
   KEY `fk_edu_trans_memb` (`member_id`),
   KEY `fk_edu_trans_cat` (`category_id`),
   CONSTRAINT `fk_edu_trans_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_edu_trans_proj` FOREIGN KEY (`project_id`) REFERENCES `education_projects` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_edu_trans_memb` FOREIGN KEY (`member_id`) REFERENCES `education_members` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_edu_trans_cat` FOREIGN KEY (`category_id`) REFERENCES `education_categories` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -587,6 +569,19 @@ CREATE TABLE `education_categories` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_user_educat` (`user_id`,`name`),
   CONSTRAINT `fk_edu_cat_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+-- Education Departments
+DROP TABLE IF EXISTS `education_departments`;
+CREATE TABLE `education_departments` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_edu_dept` (`user_id`,`name`),
+  CONSTRAINT `fk_edu_dept_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;

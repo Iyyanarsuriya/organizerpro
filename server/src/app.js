@@ -35,7 +35,7 @@ app.use("/api/transactions", transactionRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/expense-categories", expenseCategoryRoutes);
 app.use("/api/projects", require("./routes/Manufacturing/projectRoutes"));
-app.use("/api/attendance", require("./routes/Manufacturing/attendanceRoutes"));
+app.use("/api/manufacturing-attendance", require("./routes/Manufacturing/attendanceRoutes"));
 app.use("/api/members", require("./routes/Manufacturing/memberRoutes"));
 app.use("/api/work-logs", require("./routes/Manufacturing/dailyWorkLogRoutes"));
 app.use("/api/member-roles", require("./routes/Manufacturing/memberRoleRoutes"));
@@ -45,6 +45,8 @@ app.use("/api/team", require("./routes/Manufacturing/teamRoutes"));
 app.use("/api/notes", require("./routes/Personal/noteRoutes"));
 app.use("/api/it-attendance", require("./routes/IT/attendanceRoutes"));
 app.use("/api/it-team", require("./routes/IT/teamRoutes"));
+app.use("/api/education-attendance", require("./routes/Education/attendanceRoutes"));
+app.use("/api/departments", require("./routes/Education/departmentRoutes"));
 
 app.listen(PORT, () => {
     console.log(` Server running on port ${PORT}`);
