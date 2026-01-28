@@ -1,4 +1,4 @@
-import axiosInstance from './axiosInstance';
+import axiosInstance from '../axiosInstance';
 
 export const getProjects = (params) => axiosInstance.get('/projects', { params });
 export const createProject = (data) => axiosInstance.post('/projects', data);

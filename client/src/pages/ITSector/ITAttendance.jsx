@@ -8,12 +8,13 @@ import {
     deleteAttendance,
     getAttendanceStats,
     getMemberSummary,
-    quickMarkAttendance,
-    quickMarkITAttendance,
-    bulkMarkITAttendance
-} from '../../api/attendanceApi';
-import { getProjects, createProject, deleteProject } from '../../api/projectApi';
-import { getMembers } from '../../api/memberApi';
+    quickMarkAttendance as quickMarkITAttendance,
+    bulkMarkAttendance as bulkMarkITAttendance,
+    getProjects,
+    createProject,
+    deleteProject
+} from '../../api/Attendance/itAttendance';
+import { getMembers, getMemberRoles } from '../../api/TeamManagement/itTeam';
 import toast from 'react-hot-toast';
 import {
     FaCheckCircle, FaTimesCircle, FaClock, FaExclamationCircle,
@@ -29,8 +30,6 @@ import { exportAttendanceToCSV, exportAttendanceToTXT, exportAttendanceToPDF, pr
 import ExportButtons from '../../components/Common/ExportButtons';
 import ProjectManager from '../../components/Manufacturing/ProjectManager';
 import MemberManager from '../../components/IT/MemberManager';
-
-import { getMemberRoles } from '../../api/memberRoleApi';
 
 const SECTOR = 'it';
 

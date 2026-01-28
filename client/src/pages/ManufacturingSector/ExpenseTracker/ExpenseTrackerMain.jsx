@@ -2,19 +2,25 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import ReactDOM from 'react-dom'; // Keep ReactDOM as it IS used for the portal
-import { getTransactions, createTransaction, updateTransaction, deleteTransaction, getTransactionStats } from '../../../api/transactionApi';
+import {
+    getTransactions,
+    createTransaction,
+    updateTransaction,
+    deleteTransaction,
+    getTransactionStats,
+    getExpenseCategories,
+    createExpenseCategory,
+    deleteExpenseCategory
+} from '../../../api/Expense/mfgExpense';
+import { getVehicleLogs } from '../../../api/Expense/personalExpense';
+import { getProjects, createProject, deleteProject, getAttendanceStats } from '../../../api/Attendance/mfgAttendance';
+import { getMembers, getActiveMembers, getGuests, getMemberRoles } from '../../../api/TeamManagement/mfgTeam';
 import toast from 'react-hot-toast';
 import {
     FaWallet, FaPlus, FaTrash, FaChartBar, FaExchangeAlt, FaFileAlt, FaEdit, FaTimes,
     FaPlusCircle, FaFolderPlus, FaBoxes, FaTruck,
     FaCheck, FaQuestionCircle, FaCalculator, FaTag, FaUsers, FaFilePdf, FaFileCsv, FaChevronLeft
 } from 'react-icons/fa';
-import { getExpenseCategories, createExpenseCategory, deleteExpenseCategory } from '../../../api/expenseCategoryApi';
-import { getProjects, createProject, deleteProject } from '../../../api/projectApi';
-import { getMembers, getActiveMembers, getGuests } from '../../../api/memberApi';
-import { getMemberRoles } from '../../../api/memberRoleApi';
-import { getAttendanceStats } from '../../../api/attendanceApi';
-import { getVehicleLogs } from '../../../api/vehicleLogApi';
 import { exportExpenseToCSV, exportExpenseToTXT, exportExpenseToPDF, exportMemberPayslipToPDF } from '../../../utils/exportUtils/index.js';
 import { formatAmount } from '../../../utils/formatUtils';
 

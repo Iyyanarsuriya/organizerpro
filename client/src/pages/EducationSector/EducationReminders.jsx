@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { getReminders, createReminder, updateReminder, deleteReminder, triggerMissedAlert } from '../../api/homeApi';
+import { getReminders, createReminder, updateReminder, deleteReminder, triggerMissedAlert, getCategories, createCategory, deleteCategory } from '../../api/Reminder/eduReminder';
 import { getMe } from '../../api/authApi';
 import { API_URL } from '../../api/axiosInstance';
 import ReminderForm from '../../components/Common/ReminderForm';
@@ -8,7 +8,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { FaBell, FaTimes } from 'react-icons/fa';
 import { LayoutDashboard } from 'lucide-react';
-import { getCategories, createCategory, deleteCategory } from '../../api/categoryApi';
 
 import CategoryManager from '../../components/Common/CategoryManager';
 import ExportButtons from '../../components/Common/ExportButtons';
@@ -847,7 +846,7 @@ const EducationReminders = () => {
                 {/* NOTES View */}
                 {activeTab === 'notes' && (
                     <div className="h-full overflow-y-auto">
-                        <Notes />
+                        <Notes isEmbedded={true} sector={SECTOR} />
                     </div>
                 )}
             </div>

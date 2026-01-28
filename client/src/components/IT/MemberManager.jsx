@@ -1,7 +1,6 @@
-import { getMembers, createMember, updateMember, deleteMember, getGuests } from '../../api/memberApi';
-import { getProjects } from '../../api/projectApi';
-import { getMemberRoles, createMemberRole, deleteMemberRole } from '../../api/memberRoleApi'; // IMPORTS
-import { getTransactions } from '../../api/transactionApi';
+import { getMembers, createMember, updateMember, deleteMember, getGuests, getMemberRoles, createMemberRole, deleteMemberRole } from '../../api/TeamManagement/itTeam';
+import { getProjects } from '../../api/Attendance/itAttendance';
+import { getTransactions } from '../../api/Expense/itExpense';
 import toast from 'react-hot-toast';
 import { FaTimes, FaPlus, FaEdit, FaTrash, FaUser, FaUsers, FaBriefcase, FaPhone, FaEnvelope, FaHistory, FaMoneyBillWave, FaUniversity, FaTag, FaSearch, FaFilter, FaFolder, FaBan, FaCheck } from 'react-icons/fa';
 import ConfirmModal from '../modals/ConfirmModal';

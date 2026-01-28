@@ -2,14 +2,14 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ConfirmModal from '../../components/modals/ConfirmModal';
 import {
-    getEduAttendances,
-    updateEduAttendance,
-    deleteEduAttendance,
-    getEduAttendanceStats,
-    getEduMemberSummary,
-    quickMarkEduAttendance
-} from '../../api/attendanceApi';
-import { getActiveMembers } from '../../api/memberApi';
+    getAttendances as getEduAttendances,
+    updateAttendance as updateEduAttendance,
+    deleteAttendance as deleteEduAttendance,
+    getAttendanceStats as getEduAttendanceStats,
+    getMemberSummary as getEduMemberSummary,
+    quickMarkAttendance as quickMarkEduAttendance
+} from '../../api/Attendance/eduAttendance';
+import { getActiveMembers, getMemberRoles, getDepartments } from '../../api/TeamManagement/eduTeam';
 import toast from 'react-hot-toast';
 import {
     FaCheckCircle, FaTimesCircle, FaClock, FaExclamationCircle,
@@ -24,8 +24,6 @@ import {
 import { exportAttendanceToCSV, exportAttendanceToTXT, exportAttendanceToPDF, processAttendanceExportData } from '../../utils/exportUtils/index.js';
 import ExportButtons from '../../components/Common/ExportButtons';
 import EducationMemberManager from '../../components/Education/MemberManager';
-import { getMemberRoles } from '../../api/memberRoleApi';
-import { getDepartments } from '../../api/departmentApi';
 
 const EducationAttendance = () => {
     const navigate = useNavigate();

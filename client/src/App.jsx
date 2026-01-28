@@ -1,7 +1,7 @@
 import { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster, useToasterStore, toast } from 'react-hot-toast';
-import { getReminders } from './api/homeApi';
+import { getReminders } from './api/Reminder/personalReminder';
 import { updateProfile, getMe } from './api/authApi';
 
 // Components

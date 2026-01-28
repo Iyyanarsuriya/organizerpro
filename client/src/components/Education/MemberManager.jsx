@@ -1,5 +1,4 @@
-import { getMembers, createMember, updateMember, deleteMember } from '../../api/memberApi';
-import { getMemberRoles, createMemberRole, deleteMemberRole } from '../../api/memberRoleApi';
+import { getMembers, createMember, updateMember, deleteMember, getMemberRoles, createMemberRole, deleteMemberRole, getDepartments, createDepartment, deleteDepartment } from '../../api/TeamManagement/eduTeam';
 import toast from 'react-hot-toast';
 import { FaTimes, FaPlus, FaEdit, FaTrash, FaUser, FaUsers, FaBriefcase, FaPhone, FaEnvelope, FaTag, FaSearch, FaFilter, FaIdCard, FaBuilding, FaBan, FaCheck } from 'react-icons/fa';
 import ConfirmModal from '../modals/ConfirmModal';
@@ -7,8 +6,6 @@ import RoleManager from '../IT/RoleManager'; // Reuse IT RoleManager or create n
 import ExportButtons from '../Common/ExportButtons';
 import { generateCSV, generatePDF, generateTXT } from '../../utils/exportUtils/base.js';
 import { useState, useEffect } from 'react';
-
-import { getDepartments, createDepartment, deleteDepartment } from '../../api/departmentApi';
 import DepartmentManager from './DepartmentManager';
 
 const EducationMemberManager = ({ onClose, onUpdate, sector = 'education' }) => {

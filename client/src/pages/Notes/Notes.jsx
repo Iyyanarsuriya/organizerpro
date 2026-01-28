@@ -1,12 +1,27 @@
 import { useState, useEffect } from 'react';
-import { getNotes, createNote, updateNote, deleteNote } from '../../api/noteApi';
+import * as personalApi from '../../api/Reminder/personalReminder';
+import * as itApi from '../../api/Reminder/itReminder';
+import * as mfgApi from '../../api/Reminder/mfgReminder';
+import * as eduApi from '../../api/Reminder/eduReminder';
 import { FaPlus, FaTrash, FaPen, FaThumbtack, FaArrowLeft, FaSearch, FaTimes } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import ExportButtons from '../../components/Common/ExportButtons';
 import { generateCSV, generatePDF, generateTXT } from '../../utils/exportUtils/base';
 
-const Notes = ({ isEmbedded = false }) => {
+const Notes = ({ isEmbedded = false, sector = 'personal' }) => {
+    const apiMap = {
+        personal: personalApi,
+        it: itApi,
+        manufacturing: mfgApi,
+        mfg: mfgApi, // Compatibility
+        education: eduApi,
+        edu: eduApi // Compatibility
+    };
+
+    const api = apiMap[sector] || personalApi;
+    const { getNotes, createNote, updateNote, deleteNote } = api;
+
     const navigate = useNavigate();
     const [notes, setNotes] = useState([]);
     const [showModal, setShowModal] = useState(false);
@@ -49,7 +64,7 @@ const Notes = ({ isEmbedded = false }) => {
     useEffect(() => {
         fetchNotes();
         // eslint-disable-next-line
-    }, []);
+    }, [sector]);
 
     const resetForm = () => {
         setTitle('');
@@ -476,7 +491,7 @@ const Notes = ({ isEmbedded = false }) => {
 
             {/* Delete Confirmation Modal */}
             {showDeleteModal && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+                <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
                     <div onClick={() => setShowDeleteModal(false)} className="absolute inset-0"></div>
                     <div className="bg-white w-[300px] sm:w-[400px] rounded-[24px] p-6 sm:p-8 shadow-2xl relative flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
                         <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-500 flex items-center justify-center mb-4">

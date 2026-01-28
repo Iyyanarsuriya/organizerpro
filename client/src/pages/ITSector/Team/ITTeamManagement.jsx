@@ -3,7 +3,7 @@ import { useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { FaUserPlus, FaTrash, FaUserTie, FaTimes, FaEnvelope, FaPhone, FaCalendar, FaChevronLeft, FaFolder, FaUsers } from 'react-icons/fa'; // Added icons
-import { getProjects } from '../../../api/projectApi'; // Import project API
+import { getProjects } from '../../../api/Attendance/itAttendance'; // Import project API
 import ConfirmModal from '../../../components/modals/ConfirmModal';
 
 const ITTeamManagement = () => {

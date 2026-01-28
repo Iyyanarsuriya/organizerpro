@@ -8,10 +8,12 @@ import {
     deleteAttendance,
     getAttendanceStats,
     getMemberSummary,
-    quickMarkAttendance
-} from '../../../api/attendanceApi';
-import { getProjects, createProject, deleteProject } from '../../../api/projectApi';
-import { getActiveMembers } from '../../../api/memberApi';
+    quickMarkAttendance,
+    getProjects,
+    createProject,
+    deleteProject
+} from '../../../api/Attendance/mfgAttendance';
+import { getActiveMembers } from '../../../api/TeamManagement/mfgTeam';
 import toast from 'react-hot-toast';
 import {
     FaCheckCircle, FaTimesCircle, FaClock, FaExclamationCircle,

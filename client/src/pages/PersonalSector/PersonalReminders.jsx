@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { getReminders, createReminder, updateReminder, deleteReminder, triggerMissedAlert } from '../../api/homeApi';
+import { getReminders, createReminder, updateReminder, deleteReminder, triggerMissedAlert, getCategories, createCategory, deleteCategory } from '../../api/Reminder/personalReminder';
 import { getMe } from '../../api/authApi';
 import { API_URL } from '../../api/axiosInstance';
 import ReminderForm from '../../components/Common/ReminderForm';
@@ -8,7 +8,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { FaBell, FaTimes, FaArrowLeft } from 'react-icons/fa';
 import { LayoutDashboard } from 'lucide-react';
-import { getCategories, createCategory, deleteCategory } from '../../api/categoryApi';
 
 import CategoryManager from '../../components/Common/CategoryManager';
 import ExportButtons from '../../components/Common/ExportButtons';
@@ -883,7 +882,7 @@ const PersonalReminders = () => {
                 {/* NOTES VIEW */}
                 {activeTab === 'notes' && (
                     <div className="flex-1 h-full overflow-hidden">
-                        <Notes isEmbedded={true} />
+                        <Notes isEmbedded={true} sector="personal" />
                     </div>
                 )}
                 {/* Completion Confirmation Modal */}
