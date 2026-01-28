@@ -30,7 +30,7 @@ import ExportButtons from '../../../components/Common/ExportButtons';
 import ProjectManager from '../../../components/Manufacturing/ProjectManager';
 import MemberManager from '../../../components/Manufacturing/MemberManager';
 import RoleManager from '../../../components/Manufacturing/RoleManager';
-import { getMemberRoles, createMemberRole, deleteMemberRole } from '../../../api/memberRoleApi';
+import { getMemberRoles, createMemberRole, deleteMemberRole } from '../../../api/TeamManagement/mfgTeam';
 
 const AttendanceTracker = () => {
     const navigate = useNavigate();

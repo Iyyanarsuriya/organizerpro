@@ -5,7 +5,7 @@ export const getActiveMembers = (params) => axiosInstance.get('/manufacturing-se
 export const createMember = (data) => axiosInstance.post('/manufacturing-sector/members', data);
 export const updateMember = (id, data) => axiosInstance.put(`/manufacturing-sector/members/${id}`, data);
 export const deleteMember = (id) => axiosInstance.delete(`/manufacturing-sector/members/${id}`);
-export const getGuests = (params) => axiosInstance.get('/members/guests/all', { params });
+export const getGuests = (params) => axiosInstance.get('/manufacturing-sector/members/guests/all', { params });
 
 export const getMemberRoles = (params) => axiosInstance.get('/manufacturing-sector/member-roles', { params });
 export const createMemberRole = (data) => axiosInstance.post('/manufacturing-sector/member-roles', data);

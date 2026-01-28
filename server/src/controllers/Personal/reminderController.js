@@ -79,7 +79,14 @@ exports.updateReminder = async (req, res) => {
     const { is_completed, sector } = req.body;
     try {
         const success = await Reminder.updateStatus(id, req.user.data_owner_id, is_completed, sector);
-        if (!success) return res.status(404).json({ error: 'Reminder not found' });
+        if (!success) {
+            // Check if reminder exists to verify if it was a "no-op" update or truly missing
+            const existing = await Reminder.getById(id, req.user.data_owner_id, sector);
+            if (existing) {
+                return res.json({ message: 'Reminder updated', note: 'No changes were necessary' });
+            }
+            return res.status(404).json({ error: 'Reminder not found' });
+        }
         res.json({ message: 'Reminder updated' });
     } catch (error) {
         console.error(error);

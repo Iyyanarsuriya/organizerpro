@@ -17,7 +17,7 @@ const ITTeamManagement = () => {
     const location = useLocation();
 
     const token = localStorage.getItem('token');
-    const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api/it-team`;
+    const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api/it-sector/team`;
     const SECTOR = 'it'; // Define sector
 
     const fetchTeam = async () => {

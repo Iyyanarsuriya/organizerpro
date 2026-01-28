@@ -13,7 +13,7 @@ const TeamManagement = () => {
     const location = useLocation();
 
     const token = localStorage.getItem('token');
-    const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api/team`;
+    const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api/manufacturing-sector/team`;
 
     const fetchTeam = async () => {
         try {

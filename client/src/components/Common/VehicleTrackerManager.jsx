@@ -50,7 +50,7 @@ const VehicleTrackerManager = () => {
     const fetchLogs = async () => {
         try {
             const data = await getVehicleLogs();
-            setLogs(data);
+            setLogs(data?.data || []);
         } catch (error) {
             toast.error('Failed to load vehicle logs');
         } finally {

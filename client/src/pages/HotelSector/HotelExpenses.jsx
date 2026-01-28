@@ -152,10 +152,10 @@ const HotelExpenses = () => {
                 getVehicleLogs()
             ]);
             setTransactions(transRes.data);
-            setVehicleLogs(vehicleRes || []);
+            setVehicleLogs(vehicleRes?.data || []);
 
             // PROCESS VEHICLE LOGS
-            const vehicleLogs = vehicleRes || [];
+            const vehicleLogs = vehicleRes?.data || [];
             const filteredVehicleLogs = vehicleLogs.filter(log => {
                 const logDate = (log.out_time || log.created_at || '').split('T')[0];
                 if (!logDate) return false;
