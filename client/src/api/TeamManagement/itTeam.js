@@ -10,3 +10,8 @@ export const getGuests = (params) => axiosInstance.get('/members/guests/all', { 
 export const getMemberRoles = (params) => axiosInstance.get('/it-sector/member-roles', { params });
 export const createMemberRole = (data) => axiosInstance.post('/it-sector/member-roles', data);
 export const deleteMemberRole = (id) => axiosInstance.delete(`/it-sector/member-roles/${id}`);
+
+export const getProjects = (params) => axiosInstance.get('/it-sector/projects', { params });
+export const createProject = (data) => axiosInstance.post('/it-sector/projects', data);
+export const deleteProject = (id) => axiosInstance.delete(`/it-sector/projects/${id}`);
+

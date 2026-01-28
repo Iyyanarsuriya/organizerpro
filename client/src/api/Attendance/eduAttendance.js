@@ -7,6 +7,3 @@ export const getMemberSummary = (params) => axiosInstance.get('/education-sector
 export const updateAttendance = (id, data) => axiosInstance.put(`/education-sector/attendance/${id}`, data);
 export const deleteAttendance = (id) => axiosInstance.delete(`/education-sector/attendance/${id}`);
 
-export const getProjects = (params) => axiosInstance.get('/projects', { params: { ...params, sector: 'education' } });
-export const createProject = (data) => axiosInstance.post('/projects', { ...data, sector: 'education' });
-export const deleteProject = (id, params) => axiosInstance.delete(`/projects/${id}`, { params: { ...params, sector: 'education' } });

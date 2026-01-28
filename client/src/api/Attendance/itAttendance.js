@@ -9,6 +9,7 @@ export const deleteAttendance = (id) => axiosInstance.delete(`/it-sector/attenda
 export const getAttendanceStats = (params) => axiosInstance.get('/it-sector/attendance/stats', { params });
 export const getMemberSummary = (params) => axiosInstance.get('/it-sector/attendance/summary', { params });
 
-export const getProjects = (params) => axiosInstance.get('/projects', { params: { ...params, sector: 'it' } });
-export const createProject = (data) => axiosInstance.post('/projects', { ...data, sector: 'it' });
-export const deleteProject = (id, params) => axiosInstance.delete(`/projects/${id}`, { params: { ...params, sector: 'it' } });
+export const getProjects = (params) => axiosInstance.get('/it-sector/projects', { params });
+export const createProject = (data) => axiosInstance.post('/it-sector/projects', data);
+export const deleteProject = (id) => axiosInstance.delete(`/it-sector/projects/${id}`);
+
