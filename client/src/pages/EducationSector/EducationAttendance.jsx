@@ -379,7 +379,7 @@ const EducationAttendance = () => {
                                             </div>
 
                                             {/* Current Status Badge */}
-                                            <div className="col-span-2 xl:col-span-2 flex justify-center">
+                                            <div className="col-span-2 xl:col-span-2 flex justify-center items-center gap-2">
                                                 <div className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-2 ${currentStatus !== 'not-marked' && option ? `${option.bg} ${option.color}` : 'bg-slate-100 text-slate-400'}`}>
                                                     {currentStatus !== 'not-marked' && option ? (
                                                         <>
@@ -390,6 +390,33 @@ const EducationAttendance = () => {
                                                         <span>Pending</span>
                                                     )}
                                                 </div>
+
+                                                {/* Info Icon for Owners - Shows created_by and updated_by */}
+                                                {currentUser.role === 'owner' && todayRecord && (todayRecord.created_by || todayRecord.updated_by) && (
+                                                    <div className="relative group/info">
+                                                        <FaUserEdit className="text-slate-400 hover:text-blue-500 cursor-help text-xs transition-colors" />
+
+                                                        {/* Tooltip */}
+                                                        <div className="absolute bottom-full right-0 mb-2 hidden group-hover/info:block z-50 w-48">
+                                                            <div className="bg-slate-900 text-white text-[10px] rounded-lg shadow-xl p-3 space-y-2">
+                                                                {todayRecord.created_by && (
+                                                                    <div>
+                                                                        <div className="text-slate-400 font-semibold uppercase tracking-wider text-[8px] mb-0.5">Created By</div>
+                                                                        <div className="font-bold">{todayRecord.created_by}</div>
+                                                                    </div>
+                                                                )}
+                                                                {todayRecord.updated_by && (
+                                                                    <div>
+                                                                        <div className="text-slate-400 font-semibold uppercase tracking-wider text-[8px] mb-0.5">Updated By</div>
+                                                                        <div className="font-bold">{todayRecord.updated_by}</div>
+                                                                    </div>
+                                                                )}
+                                                                {/* Arrow */}
+                                                                <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-900"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     );
