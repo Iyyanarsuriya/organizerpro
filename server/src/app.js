@@ -86,10 +86,6 @@ eduRouter.use('/attendance', require("./routes/Education/attendanceRoutes"));
 eduRouter.use('/departments', require("./routes/Education/departmentRoutes"));
 app.use('/api/education-sector', eduRouter);
 
-// Legacy/Direct Routes (Aliases)
-app.use("/api/manufacturing-attendance", require("./routes/Manufacturing/attendanceRoutes"));
-app.use("/api/it-attendance", require("./routes/IT/attendanceRoutes"));
-app.use("/api/education-attendance", require("./routes/Education/attendanceRoutes"));
 
 app.listen(PORT, () => {
     console.log(` Server running on port ${PORT}`);

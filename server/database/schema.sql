@@ -1,5 +1,66 @@
--- Database Schema V2: Sector Isolation
--- Generated for multi-sector support
+-- ==========================================
+-- OrganizerPro Database Schema V2
+-- ==========================================
+-- Last Updated: January 28, 2026
+-- Total Tables: 32 (2 Shared + 4 Personal + 11 Manufacturing + 8 IT + 7 Education)
+-- 
+-- ARCHITECTURE:
+-- - Sector-based isolation for data organization
+-- - Shared tables for authentication and notifications
+-- - Sector-specific tables for reminders, notes, transactions, attendance, etc.
+-- 
+-- LEGACY CLEANUP COMPLETED:
+-- Removed 12 redundant generic tables (attendance, categories, members, notes, 
+-- projects, reminders, transactions, etc.) - all replaced with sector-specific versions
+-- ==========================================
+--
+-- TABLE OF CONTENTS:
+-- ==========================================
+-- 
+-- SHARED TABLES (2):
+--   1. users - User authentication and profiles
+--   2. push_subscriptions - Web push notification subscriptions
+--
+-- PERSONAL SECTOR (4):
+--   3. personal_transactions - Personal income/expense tracking
+--   4. personal_reminders - Personal tasks and reminders
+--   5. personal_notes - Personal notes and memos
+--   6. personal_categories - Personal reminder categories
+--
+-- MANUFACTURING SECTOR (11):
+--   7. manufacturing_transactions - Manufacturing financial transactions
+--   8. manufacturing_reminders - Manufacturing sector reminders
+--   9. manufacturing_notes - Manufacturing sector notes
+--  10. manufacturing_member_roles - Manufacturing employee roles
+--  11. manufacturing_members - Manufacturing employees/workers
+--  12. manufacturing_projects - Manufacturing projects
+--  13. manufacturing_attendance - Manufacturing employee attendance
+--  14. manufacturing_work_types - Manufacturing work type definitions
+--  15. manufacturing_work_logs - Daily work logs for manufacturing
+--  16. manufacturing_vehicle_logs - Vehicle tracking for manufacturing
+--  17. manufacturing_expense_categories - Manufacturing expense categories
+--
+-- IT SECTOR (8):
+--  18. it_transactions - IT sector financial transactions
+--  19. it_reminders - IT sector reminders
+--  20. it_notes - IT sector notes
+--  21. it_member_roles - IT team member roles
+--  22. it_members - IT team members
+--  23. it_projects - IT projects
+--  24. it_attendance - IT team attendance
+--  25. it_categories - IT expense/transaction categories
+--
+-- EDUCATION SECTOR (7):
+--  26. education_transactions - Education sector financial transactions
+--  27. education_reminders - Education sector reminders
+--  28. education_notes - Education sector notes
+--  29. education_member_roles - Education staff/student roles
+--  30. education_members - Education staff and students
+--  31. education_attendance - Education attendance tracking
+--  32. education_categories - Education expense categories
+--  33. education_departments - Education departments
+-- ==========================================
+
 
 SET FOREIGN_KEY_CHECKS = 0;
 
