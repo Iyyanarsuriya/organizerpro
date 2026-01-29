@@ -349,6 +349,19 @@ const EducationAttendance = () => {
                                 {periodType === 'day' ? <input type="date" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-[11px] font-bold text-slate-700 outline-none bg-transparent" /> : null}
                                 {periodType === 'month' ? <input type="month" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-[11px] font-bold text-slate-700 outline-none bg-transparent" /> : null}
                                 {periodType === 'year' ? <input type="number" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-[11px] font-bold text-slate-700 outline-none bg-transparent" /> : null}
+                                {periodType === 'range' && (
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex flex-col">
+                                            <span className="text-[7px] font-black text-slate-400 uppercase leading-none mb-0.5">Start</span>
+                                            <input type="date" value={customRange.start} onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })} className="text-[10px] font-bold text-slate-700 outline-none bg-transparent h-3 w-20" />
+                                        </div>
+                                        <div className="w-px h-6 bg-slate-200"></div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[7px] font-black text-slate-400 uppercase leading-none mb-0.5">End</span>
+                                            <input type="date" value={customRange.end} onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })} className="text-[10px] font-bold text-slate-700 outline-none bg-transparent h-3 w-20" />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             <div className="w-full sm:w-auto flex items-center gap-2">
                                 <div className="flex items-center gap-1 group">
