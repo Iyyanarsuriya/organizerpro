@@ -557,16 +557,29 @@ CREATE TABLE `education_members` (
   `staff_id` varchar(50) DEFAULT NULL,
   `role` varchar(100) DEFAULT NULL,
   `department` varchar(100) DEFAULT NULL,
+  `subjects` text DEFAULT NULL,
   `phone` varchar(20) DEFAULT NULL,
   `email` varchar(255) DEFAULT NULL,
+  `gender` enum('male','female','other') DEFAULT NULL,
+  `profile_image` varchar(255) DEFAULT NULL,
   `status` enum('active','inactive') DEFAULT 'active',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `wage_type` enum('daily','monthly','piece_rate') DEFAULT 'monthly', -- Staff likely monthly
+  `wage_type` enum('daily','monthly','piece_rate') DEFAULT 'monthly',
   `daily_wage` decimal(15,2) DEFAULT '0.00',
-  `member_type` enum('employee','worker','student') DEFAULT 'employee', -- Added student for education
+  `member_type` enum('employee','worker','student') DEFAULT 'employee',
+  `employment_type` enum('permanent','contract','visiting','part_time') DEFAULT 'permanent',
+  `date_of_joining` date DEFAULT NULL,
+  `reporting_manager_id` int DEFAULT NULL,
+  `shift_start_time` time DEFAULT NULL,
+  `shift_end_time` time DEFAULT NULL,
+  `cl_balance` decimal(5,2) DEFAULT '0.00',
+  `sl_balance` decimal(5,2) DEFAULT '0.00',
+  `el_balance` decimal(5,2) DEFAULT '0.00',
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
-  CONSTRAINT `fk_edu_memb_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+  KEY `fk_edu_memb_manager` (`reporting_manager_id`),
+  CONSTRAINT `fk_edu_memb_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_edu_memb_manager` FOREIGN KEY (`reporting_manager_id`) REFERENCES `education_members` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Education Attendance

@@ -13,7 +13,9 @@ const getProjectTableName = (sector) => {
 
 const create = async (data) => {
     const table = getTableName(data.sector);
-    const { user_id, name, role, phone, email, status, wage_type, daily_wage, member_type, project_id, staff_id, department } = data;
+    const { user_id, name, role, phone, email, status, wage_type, daily_wage, member_type, project_id, staff_id, department, subjects,
+        gender, profile_image, employment_type, date_of_joining, reporting_manager_id, shift_start_time, shift_end_time,
+        cl_balance, sl_balance, el_balance } = data;
 
     let columns = ['user_id', 'name', 'role', 'phone', 'email', 'status', 'wage_type', 'daily_wage', 'member_type'];
     let values = [user_id, name, role || null, phone || null, email || null, status || 'active', wage_type || 'daily', daily_wage || 0, member_type || 'worker'];
@@ -26,9 +28,23 @@ const create = async (data) => {
     }
 
     if (data.sector === 'education') {
-        columns.push('staff_id', 'department');
-        values.push(staff_id || null, department || null);
-        placeholders.push('?', '?');
+        columns.push('staff_id', 'department', 'subjects', 'gender', 'profile_image', 'employment_type', 'date_of_joining', 'reporting_manager_id', 'shift_start_time', 'shift_end_time', 'cl_balance', 'sl_balance', 'el_balance');
+        values.push(
+            staff_id || null,
+            department || null,
+            subjects || null,
+            gender || null,
+            profile_image || null,
+            employment_type || 'permanent',
+            date_of_joining || null,
+            reporting_manager_id || null,
+            shift_start_time || null,
+            shift_end_time || null,
+            cl_balance || 0,
+            sl_balance || 0,
+            el_balance || 0
+        );
+        placeholders.push('?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?');
     }
 
     const [result] = await db.query(
@@ -43,6 +59,8 @@ const getAllByUserId = async (userId, memberType = null, sector) => {
 
     let query;
     if (sector === 'education') {
+        // Need to join self to get manager name if needed, but for now just fetching raw fields is fine.
+        // Or if we want reporting manager name, handled in frontend lookup.
         query = `SELECT m.* FROM ${table} m WHERE m.user_id = ?`;
     } else {
         const projectTable = getProjectTableName(sector);
@@ -77,7 +95,9 @@ const getById = async (id, userId, sector) => {
 
 const update = async (id, userId, data) => {
     const table = getTableName(data.sector);
-    const { name, role, phone, email, status, wage_type, daily_wage, member_type, project_id, staff_id, department } = data;
+    const { name, role, phone, email, status, wage_type, daily_wage, member_type, project_id, staff_id, department, subjects,
+        gender, profile_image, employment_type, date_of_joining, reporting_manager_id, shift_start_time, shift_end_time,
+        cl_balance, sl_balance, el_balance } = data;
 
     let updates = ['name = ?', 'role = ?', 'phone = ?', 'email = ?', 'status = ?', 'wage_type = ?', 'daily_wage = ?', 'member_type = ?'];
     let values = [name, role || null, phone || null, email || null, status || 'active', wage_type || 'daily', daily_wage || 0, member_type || 'worker'];
@@ -88,8 +108,27 @@ const update = async (id, userId, data) => {
     }
 
     if (data.sector === 'education') {
-        updates.push('staff_id = ?', 'department = ?');
-        values.push(staff_id || null, department || null);
+        updates.push(
+            'staff_id = ?', 'department = ?', 'subjects = ?', 'gender = ?', 'profile_image = ?',
+            'employment_type = ?', 'date_of_joining = ?', 'reporting_manager_id = ?',
+            'shift_start_time = ?', 'shift_end_time = ?',
+            'cl_balance = ?', 'sl_balance = ?', 'el_balance = ?'
+        );
+        values.push(
+            staff_id || null,
+            department || null,
+            subjects || null,
+            gender || null,
+            profile_image || null,
+            employment_type || 'permanent',
+            date_of_joining || null,
+            reporting_manager_id || null,
+            shift_start_time || null,
+            shift_end_time || null,
+            cl_balance || 0,
+            sl_balance || 0,
+            el_balance || 0
+        );
     }
 
     values.push(id, userId);
