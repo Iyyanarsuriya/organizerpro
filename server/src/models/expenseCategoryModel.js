@@ -2,6 +2,7 @@ const db = require('../config/db');
 
 const getTableName = (sector) => {
     if (sector === 'it') return 'it_categories';
+    if (sector === 'education') return 'education_categories';
     return sector === 'manufacturing' ? 'manufacturing_expense_categories' : 'personal_categories';
 };
 
