@@ -12,21 +12,22 @@ import {
 } from '../../api/Expense/eduExpense';
 import { getMembers } from '../../api/TeamManagement/eduTeam';
 import toast from 'react-hot-toast';
-import {
-    FaWallet, FaPlus, FaTrash, FaChartBar, FaExchangeAlt, FaFileAlt, FaEdit, FaTimes,
-    FaUsers, FaChevronLeft
-} from 'react-icons/fa';
-import { exportExpenseToCSV, exportExpenseToTXT, exportExpenseToPDF } from '../../utils/exportUtils/index.js';
+import { exportExpenseToCSV, exportExpenseToTXT, exportExpenseToPDF, exportMemberPayslipToPDF } from '../../utils/exportUtils/index.js';
 import EducationTransactions from './EducationTransactions';
+import EducationExpenseDashboard from './EducationExpenseDashboard';
+import EducationSalaryCalculator from './EducationSalaryCalculator';
+import EducationReports from './EducationReports';
 import MemberManager from '../../components/Education/MemberManager';
 import CategoryManager from '../../components/Common/CategoryManager';
+import { getAttendanceStats } from '../../api/Attendance/eduAttendance';
+import { FaWallet, FaPlus, FaTrash, FaChartBar, FaExchangeAlt, FaFileAlt, FaEdit, FaTimes, FaUsers, FaChevronLeft, FaCalculator } from 'react-icons/fa';
 
 const EducationExpenses = () => {
     const navigate = useNavigate();
     const [transactions, setTransactions] = useState([]);
     const [stats, setStats] = useState({ summary: { total_income: 0, total_expense: 0 }, categories: [] });
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('Transactions');
+    const [activeTab, setActiveTab] = useState('Dashboard');
     const [showAddModal, setShowAddModal] = useState(false);
     const [showCategoryManager, setShowCategoryManager] = useState(false);
 
@@ -38,8 +39,25 @@ const EducationExpenses = () => {
     // Active Filters
     const [filterMember, setFilterMember] = useState('');
 
-    // Modals
     const [deleteModalOuter, setDeleteModalOuter] = useState({ show: false, id: null });
+
+    // Salary Calculator State
+    const [salaryMode, setSalaryMode] = useState('daily');
+    const [dailyWage, setDailyWage] = useState(0);
+    const [monthlySalary, setMonthlySalary] = useState(0);
+    const [unitsProduced, setUnitsProduced] = useState(0);
+    const [ratePerUnit, setRatePerUnit] = useState(10);
+    const [bonus, setBonus] = useState(0);
+    const [attendanceStats, setAttendanceStats] = useState(null);
+    const [salaryLoading, setSalaryLoading] = useState(false);
+
+    // Reports State
+    const [showCustomReportModal, setShowCustomReportModal] = useState(false);
+    const [customReportForm, setCustomReportForm] = useState({
+        memberId: '',
+        startDate: '',
+        endDate: ''
+    });
 
     // Data Lists
     const [categories, setCategories] = useState([]);
@@ -80,22 +98,22 @@ const EducationExpenses = () => {
                 sector: 'education'
             };
 
-            const [transRes, catRes] = await Promise.all([
+            const [transRes, catRes, statsRes] = await Promise.all([
                 getTransactions(params),
-                getExpenseCategories({ sector: 'education' })
+                getExpenseCategories({ sector: 'education' }),
+                getTransactionStats(params)
             ]);
 
             // Fetch members if not already loaded or if needed
-            // Ideally we fetch members once
             if (members.length === 0) {
                 const membersRes = await getMembers({ sector: 'education' });
                 const rawMembers = membersRes.data.data || [];
-                // Guests logic if needed, but maybe not for Education in same way
                 setMembers(rawMembers);
             }
 
             setTransactions(transRes.data);
             setCategories(catRes.data);
+            setStats(statsRes.data);
             setLoading(false);
         } catch (error) {
             console.error("Fetch Data Error Details:", error.response || error);
@@ -140,6 +158,52 @@ const EducationExpenses = () => {
             if (!customRange.start) setCustomRange({ start: `${yyyy}-${mm}-${dd}`, end: `${yyyy}-${mm}-${dd}` });
         }
     }, [periodType]);
+
+    useEffect(() => {
+        if (filterMember && members.length > 0) {
+            const member = members.find(m => m.id == filterMember);
+            if (member) {
+                const mode = member.wage_type || 'monthly';
+                setSalaryMode(mode);
+                // In DB we store rate in 'daily_wage' column for both daily wage and monthly salary
+                // based on context of wage_type
+                const rate = parseFloat(member.daily_wage) || 0;
+
+                if (mode === 'daily') {
+                    setDailyWage(rate);
+                    // Don't necessarily reset monthlySalary, or maybe set to 0
+                    setMonthlySalary(0);
+                } else if (mode === 'monthly') {
+                    setMonthlySalary(rate);
+                    setDailyWage(0);
+                } else {
+                    // production or others
+                    setDailyWage(0);
+                    setMonthlySalary(0);
+                }
+            }
+        }
+    }, [filterMember, members]);
+
+    const fetchAttendanceData = async (memberId) => {
+        if (!memberId) return;
+        setSalaryLoading(true);
+        try {
+            const params = {
+                memberId,
+                period: periodType === 'range' ? null : currentPeriod,
+                startDate: periodType === 'range' ? customRange.start : null,
+                endDate: periodType === 'range' ? customRange.end : null,
+                sector: 'education'
+            };
+            const res = await getAttendanceStats(params);
+            setAttendanceStats(res.data);
+            setSalaryLoading(false);
+        } catch (error) {
+            console.error(error);
+            setSalaryLoading(false);
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -273,9 +337,21 @@ const EducationExpenses = () => {
                     </div>
                 </div>
                 <nav className="flex-1 space-y-2">
+                    <button onClick={() => setActiveTab('Dashboard')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'Dashboard' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
+                        <FaChartBar className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Dashboard' ? 'text-white' : 'text-slate-400'}`} />
+                        <span className="font-black text-xs uppercase tracking-widest">Dashboard</span>
+                    </button>
                     <button onClick={() => setActiveTab('Transactions')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'Transactions' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
                         <FaExchangeAlt className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Transactions' ? 'text-white' : 'text-slate-400'}`} />
                         <span className="font-black text-xs uppercase tracking-widest">Transactions</span>
+                    </button>
+                    <button onClick={() => setActiveTab('Reports')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'Reports' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
+                        <FaFileAlt className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Reports' ? 'text-white' : 'text-slate-400'}`} />
+                        <span className="font-black text-xs uppercase tracking-widest">Reports</span>
+                    </button>
+                    <button onClick={() => setActiveTab('Salary')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'Salary' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
+                        <FaCalculator className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Salary' ? 'text-white' : 'text-slate-400'}`} />
+                        <span className="font-black text-xs uppercase tracking-widest">Salary</span>
                     </button>
                     <button onClick={() => setActiveTab('Members')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'Members' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
                         <FaUsers className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Members' ? 'text-white' : 'text-slate-400'}`} />
@@ -297,6 +373,83 @@ const EducationExpenses = () => {
                             </div>
                         </div>
                     </div>
+
+                    {activeTab === 'Dashboard' && (
+                        <div className="flex flex-col gap-4">
+                            {/* Filter Grid - Dashboard Only */}
+                            <div className="flex flex-wrap items-end gap-3 p-6 bg-white rounded-[32px] border border-slate-100 shadow-sm transition-all hover:shadow-md mb-6">
+                                <div className="w-full">
+                                    <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Period Type</label>
+                                    <div className="flex p-1 bg-slate-50 rounded-xl border border-slate-100">
+                                        {['day', 'week', 'month', 'year', 'range'].map((type) => (
+                                            <button
+                                                key={type}
+                                                onClick={() => setPeriodType(type)}
+                                                className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${periodType === type ? 'bg-white text-blue-600 shadow-md scale-100' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
+                                            >
+                                                {type}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="flex-1 min-w-[200px]">
+                                    {periodType === 'year' && (
+                                        <div className="w-full">
+                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select Year</label>
+                                            <input type="number" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all text-center" />
+                                        </div>
+                                    )}
+                                    {periodType === 'month' && (
+                                        <div className="w-full">
+                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select Month</label>
+                                            <input type="month" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all" />
+                                        </div>
+                                    )}
+                                    {periodType === 'week' && (
+                                        <div className="w-full">
+                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select Week</label>
+                                            <input type="week" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all" />
+                                        </div>
+                                    )}
+                                    {periodType === 'day' && (
+                                        <div className="w-full">
+                                            <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Select Date</label>
+                                            <input type="date" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all" />
+                                        </div>
+                                    )}
+                                    {periodType === 'range' && (
+                                        <div className="flex gap-2 w-full">
+                                            <div className="flex-1">
+                                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Start Date</label>
+                                                <input type="date" value={customRange.start} onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">End Date</label>
+                                                <input type="date" value={customRange.end} onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all" />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <EducationExpenseDashboard
+                                periodType={periodType}
+                                customRange={customRange}
+                                currentPeriod={currentPeriod}
+                                stats={stats}
+                                pieData={stats.categories ? stats.categories.filter(c => c.type === 'expense').map(c => ({ name: c.category, value: parseFloat(c.total) })) : []}
+                                barData={[{ name: 'This Period', Income: parseFloat(stats.summary?.total_income || 0), Expenses: parseFloat(stats.summary?.total_expense || 0) }]}
+                                COLORS={['#2d5bff', '#f43f5e', '#0ea5e9', '#f59e0b', '#8b5cf6', '#10b981']}
+                                transactions={transactions}
+                                handleAddNewTransaction={handleAddNewTransaction}
+                                setActiveTab={setActiveTab}
+                                formatCurrency={(val) => '₹' + parseFloat(val).toFixed(2)}
+                                handleExportPDF={() => exportExpenseToPDF({ data: transactions, period: exportPeriod, filename: 'education_dashboard_report' })}
+                                handleExportCSV={() => exportExpenseToCSV(transactions, 'education_dashboard_report')}
+                                handleExportTXT={() => exportExpenseToTXT({ data: transactions, period: exportPeriod, filename: 'education_dashboard_report' })}
+                            />
+                        </div>
+                    )}
 
                     {activeTab === 'Transactions' && (
                         <div className="flex flex-col gap-6">
@@ -325,6 +478,69 @@ const EducationExpenses = () => {
                                 onExportTXT={() => exportExpenseToTXT({ data: transactions, period: exportPeriod, filename: 'education_expenses' })}
                             />
                         </div>
+                    )}
+
+                    {activeTab === 'Salary' && (
+                        <EducationSalaryCalculator
+                            periodType={periodType}
+                            filterMember={filterMember}
+                            setFilterMember={setFilterMember}
+                            members={members}
+                            filteredTransactions={filteredTransactions}
+                            handleExportPDF={() => exportExpenseToPDF({ data: transactions, period: exportPeriod, filename: 'education_salary' })}
+                            handleExportCSV={() => exportExpenseToCSV(transactions, 'education_salary')}
+                            handleExportTXT={() => exportExpenseToTXT({ data: transactions, period: exportPeriod, filename: 'education_salary' })}
+                            salaryLoading={salaryLoading}
+                            attendanceStats={attendanceStats}
+                            salaryMode={salaryMode}
+                            setSalaryMode={setSalaryMode}
+                            dailyWage={dailyWage}
+                            setDailyWage={setDailyWage}
+                            monthlySalary={monthlySalary}
+                            setMonthlySalary={setMonthlySalary}
+                            unitsProduced={unitsProduced}
+                            setUnitsProduced={setUnitsProduced}
+                            ratePerUnit={ratePerUnit}
+                            setRatePerUnit={setRatePerUnit}
+                            bonus={bonus}
+                            setBonus={setBonus}
+                            stats={stats}
+                            setFormData={setFormData}
+                            formData={formData}
+                            setShowAddModal={setShowAddModal}
+                            handleExportPayslip={exportMemberPayslipToPDF}
+                            currentPeriod={currentPeriod}
+                            transactions={transactions}
+                            categories={categories}
+                            onSyncAttendance={fetchAttendanceData}
+                            setPeriodType={setPeriodType}
+                            setCurrentPeriod={setCurrentPeriod}
+                            customRange={customRange}
+                            setCustomRange={setCustomRange}
+                        />
+                    )}
+
+                    {activeTab === 'Reports' && (
+                        <EducationReports
+                            transactions={transactions}
+                            filteredTransactions={filteredTransactions}
+                            handleExportPDF={() => exportExpenseToPDF({ data: transactions, period: exportPeriod, filename: 'education_report' })}
+                            handleExportCSV={() => exportExpenseToCSV(transactions, 'education_report')}
+                            handleExportTXT={() => exportExpenseToTXT({ data: transactions, period: exportPeriod, filename: 'education_report' })}
+                            filterMember={filterMember}
+                            members={members}
+                            periodType={periodType}
+                            customRange={customRange}
+                            currentPeriod={currentPeriod}
+                            stats={stats}
+                            setShowCustomReportModal={setShowCustomReportModal}
+                            setCustomReportForm={setCustomReportForm}
+                            customReportForm={customReportForm}
+                            setPeriodType={setPeriodType}
+                            setCurrentPeriod={setCurrentPeriod}
+                            setCustomRange={setCustomRange}
+                            onSyncAttendance={fetchAttendanceData}
+                        />
                     )}
 
                     {activeTab === 'Members' && (

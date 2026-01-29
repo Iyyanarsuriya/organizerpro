@@ -89,6 +89,7 @@ eduRouter.use('/members', require("./routes/Manufacturing/memberRoutes")); // Ge
 eduRouter.use('/member-roles', require("./routes/Manufacturing/memberRoleRoutes")); // Generic Role Controller
 eduRouter.use('/attendance', require("./routes/Education/attendanceRoutes"));
 eduRouter.use('/departments', require("./routes/Education/departmentRoutes"));
+eduRouter.use('/team', require("./routes/Education/teamRoutes"));
 app.use('/api/education-sector', eduRouter);
 
 

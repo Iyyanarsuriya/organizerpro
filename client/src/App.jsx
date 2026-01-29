@@ -33,6 +33,7 @@ const EducationHome = lazy(() => import('./pages/EducationSector/EducationHome')
 const EducationReminders = lazy(() => import('./pages/EducationSector/EducationReminders'));
 const EducationAttendance = lazy(() => import('./pages/EducationSector/EducationAttendance'));
 const EducationExpenses = lazy(() => import('./pages/EducationSector/EducationExpenses'));
+const EducationTeam = lazy(() => import('./pages/EducationSector/EducationTeam'));
 const Notes = lazy(() => import('./pages/Notes/Notes'));
 const ForgotPassword = lazy(() => import('./pages/Authentication/ForgotPassword'));
 
@@ -261,6 +262,7 @@ const AppContent = () => {
             <Route path="/education-sector/reminders" element={<ProtectedRoute><EducationReminders /></ProtectedRoute>} />
             <Route path="/education-sector/attendance" element={<ProtectedRoute><EducationAttendance /></ProtectedRoute>} />
             <Route path="/education-sector/expenses" element={<ProtectedRoute><EducationExpenses /></ProtectedRoute>} />
+            <Route path="/education-sector/team" element={<ProtectedRoute><EducationTeam /></ProtectedRoute>} />
 
             <Route path="/expenses" element={<ProtectedRoute><ExpenseTracker /></ProtectedRoute>} />
             <Route path="/attendance" element={<ProtectedRoute><AttendanceTracker /></ProtectedRoute>} />

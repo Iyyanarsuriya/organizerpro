@@ -19,7 +19,7 @@ const EducationHome = () => {
                     <p className="text-slate-500 font-medium text-[14px] sm:text-[16px]">Select a module to manage your Education workflow</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-[20px] sm:gap-[32px] justify-center max-w-[1200px] mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[20px] sm:gap-[32px] justify-center max-w-[1400px] mx-auto">
 
                     {/* Reminders Card */}
                     <Link to="/education-sector/reminders" className="group flex flex-col items-center justify-center p-[32px] sm:p-[40px] rounded-[32px] sm:rounded-[40px] bg-blue-50/50 hover:bg-blue-50 border border-blue-100/50 hover:border-blue-200 transition-all duration-300 hover:-translate-y-[8px] hover:shadow-2xl hover:shadow-blue-500/20 active:scale-95">
@@ -43,6 +43,14 @@ const EducationHome = () => {
                             <Wallet className="w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] text-white" />
                         </div>
                         <h2 className="text-[20px] sm:text-[24px] font-black text-[#10b981] tracking-tight group-hover:tracking-wide transition-all">Expenses</h2>
+                    </Link>
+
+                    {/* Team Management Card */}
+                    <Link to="/education-sector/team" className="group flex flex-col items-center justify-center p-[32px] sm:p-[40px] rounded-[32px] sm:rounded-[40px] bg-indigo-50/50 hover:bg-indigo-50 border border-indigo-100/50 hover:border-indigo-200 transition-all duration-300 hover:-translate-y-[8px] hover:shadow-2xl hover:shadow-indigo-500/20 active:scale-95">
+                        <div className="w-[72px] h-[72px] sm:w-[96px] sm:h-[96px] bg-[#6366f1] rounded-[24px] sm:rounded-[32px] flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:scale-110 transition-transform duration-300 mb-[24px] sm:mb-[32px]">
+                            <Users className="w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] text-white" />
+                        </div>
+                        <h2 className="text-[20px] sm:text-[24px] font-black text-[#6366f1] tracking-tight group-hover:tracking-wide transition-all">Team Mgmt</h2>
                     </Link>
 
                 </div>
