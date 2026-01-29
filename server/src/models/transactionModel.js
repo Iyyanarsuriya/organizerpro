@@ -9,7 +9,8 @@ const getTableName = (sector) => {
 };
 
 const create = async (data) => {
-    const { user_id, title, amount, type, category, category_id, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, sector, description } = data;
+    const { user_id, title, amount, type, category, category_id, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, sector, description,
+        vendor_id, department_id, approval_status, approved_by, payment_mode, bill_image, remarks } = data;
     const table = getTableName(sector);
 
     // Force date to noon to avoid timezone boundary shifts
@@ -35,6 +36,11 @@ const create = async (data) => {
         } else {
             columns.push('category');
             values.push(category || 'Other');
+        }
+
+        if (table === 'education_transactions') {
+            columns.push('vendor_id', 'department_id', 'approval_status', 'approved_by', 'payment_mode', 'bill_image', 'remarks');
+            values.push(vendor_id || null, department_id || null, approval_status || 'approved', approved_by || null, payment_mode || 'Cash', bill_image || null, remarks || null);
         }
 
         query = `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${columns.map(() => '?').join(', ')})`;
@@ -66,6 +72,10 @@ const getAllByUserId = async (userId, filters = {}) => {
                 END as member_name,
                 w.member_type${categoryTable ? ', c.name as category_name' : ''}`;
 
+        if (table === 'education_transactions') {
+            selectFields += `, d.name as department_name, v.name as vendor_name`;
+        }
+
         if (projectTable) {
             selectFields += `, p.name as project_name`;
         }
@@ -80,6 +90,11 @@ const getAllByUserId = async (userId, filters = {}) => {
 
         if (categoryTable) {
             query += ` LEFT JOIN ${categoryTable} c ON t.category_id = c.id`;
+        }
+
+        if (table === 'education_transactions') {
+            query += ` LEFT JOIN education_departments d ON t.department_id = d.id`;
+            query += ` LEFT JOIN education_vendors v ON t.vendor_id = v.id`;
         }
 
         query += ` WHERE t.user_id = ?`;
@@ -106,6 +121,16 @@ const getAllByUserId = async (userId, filters = {}) => {
         if (filters.guestName) {
             query += ' AND t.guest_name = ?';
             params.push(filters.guestName);
+        }
+
+        if (filters.approval_status) {
+            query += ' AND t.approval_status = ?';
+            params.push(filters.approval_status);
+        }
+
+        if (filters.department_id) {
+            query += ' AND t.department_id = ?';
+            params.push(filters.department_id);
         }
 
     } else {
@@ -146,7 +171,8 @@ const getAllByUserId = async (userId, filters = {}) => {
 };
 
 const update = async (id, userId, data) => {
-    const { title, amount, type, category, category_id, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, sector, description } = data;
+    const { title, amount, type, category, category_id, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, sector, description,
+        vendor_id, department_id, approval_status, approved_by, payment_mode, bill_image, remarks } = data;
     const table = getTableName(sector);
 
     // Force date to noon to avoid timezone boundary shifts
@@ -163,8 +189,11 @@ const update = async (id, userId, data) => {
         query = `UPDATE ${table} SET title = ?, amount = ?, type = ?, category_id = ?, date = ?, project_id = ?, member_id = ?, guest_name = ?, payment_status = ?, quantity = ?, unit_price = ?, description = ? WHERE id = ? AND user_id = ?`;
         params = [title, amount, type, category_id || null, finalDate, project_id || null, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0, description || null, id, userId];
     } else if (table === 'education_transactions') {
-        query = `UPDATE ${table} SET title = ?, amount = ?, type = ?, category_id = ?, date = ?, member_id = ?, guest_name = ?, payment_status = ?, quantity = ?, unit_price = ?, description = ? WHERE id = ? AND user_id = ?`;
-        params = [title, amount, type, category_id || null, finalDate, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0, description || null, id, userId];
+        query = `UPDATE ${table} SET title = ?, amount = ?, type = ?, category_id = ?, date = ?, member_id = ?, guest_name = ?, payment_status = ?, quantity = ?, unit_price = ?, description = ?, 
+                 vendor_id = ?, department_id = ?, approval_status = ?, approved_by = ?, payment_mode = ?, bill_image = ?, remarks = ? 
+                 WHERE id = ? AND user_id = ?`;
+        params = [title, amount, type, category_id || null, finalDate, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0, description || null,
+            vendor_id || null, department_id || null, approval_status || 'approved', approved_by || null, payment_mode || 'Cash', bill_image || null, remarks || null, id, userId];
     } else {
         query = `UPDATE ${table} SET title = ?, amount = ?, type = ?, category = ?, date = ? WHERE id = ? AND user_id = ?`;
         params = [title, amount, type, category, finalDate, id, userId];
@@ -173,6 +202,7 @@ const update = async (id, userId, data) => {
     const [result] = await db.query(query, params);
     return result.affectedRows > 0;
 };
+
 
 const deleteTransaction = async (id, userId, sector) => { // Renamed from 'delete' to avoid reserved word issues if any, but exported as 'delete'
     const table = getTableName(sector);

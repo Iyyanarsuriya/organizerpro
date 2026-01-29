@@ -11,6 +11,8 @@ import {
     deleteExpenseCategory
 } from '../../api/Expense/eduExpense';
 import { getMembers } from '../../api/TeamManagement/eduTeam';
+import { getVendors } from '../../api/Expense/eduVendor';
+import { getDepartments } from '../../api/TeamManagement/eduTeam'; // Assuming it's there
 import toast from 'react-hot-toast';
 import { exportExpenseToCSV, exportExpenseToTXT, exportExpenseToPDF, exportMemberPayslipToPDF } from '../../utils/exportUtils/index.js';
 import EducationTransactions from './EducationTransactions';
@@ -19,8 +21,11 @@ import EducationSalaryCalculator from './EducationSalaryCalculator';
 import EducationReports from './EducationReports';
 import MemberManager from '../../components/Education/MemberManager';
 import CategoryManager from '../../components/Common/CategoryManager';
+import VendorManager from '../../components/Education/VendorManager';
+import PayrollManager from '../../components/Education/PayrollManager';
+import AuditLogs from '../../components/Education/AuditLogs';
 import { getAttendanceStats } from '../../api/Attendance/eduAttendance';
-import { FaWallet, FaPlus, FaTrash, FaChartBar, FaExchangeAlt, FaFileAlt, FaEdit, FaTimes, FaUsers, FaChevronLeft, FaCalculator } from 'react-icons/fa';
+import { FaWallet, FaPlus, FaTrash, FaChartBar, FaExchangeAlt, FaFileAlt, FaEdit, FaTimes, FaUsers, FaChevronLeft, FaCalculator, FaStore, FaMoneyCheckAlt, FaHistory } from 'react-icons/fa';
 
 const EducationExpenses = () => {
     const navigate = useNavigate();
@@ -56,12 +61,17 @@ const EducationExpenses = () => {
     const [customReportForm, setCustomReportForm] = useState({
         memberId: '',
         startDate: '',
-        endDate: ''
+        endDate: '',
+        categoryId: '',
+        departmentId: '',
+        type: 'all'
     });
 
     // Data Lists
     const [categories, setCategories] = useState([]);
     const [members, setMembers] = useState([]);
+    const [vendors, setVendors] = useState([]);
+    const [departments, setDepartments] = useState([]);
 
     // Form Data
     const [formData, setFormData] = useState({
@@ -74,12 +84,18 @@ const EducationExpenses = () => {
         date: new Date().toISOString().split('T')[0],
         member_id: '',
         payment_status: 'completed',
-        description: ''
+        description: '',
+        vendor_id: '',
+        department_id: '',
+        payment_mode: 'Cash',
+        remarks: ''
     });
     const [editingId, setEditingId] = useState(null);
 
     // Transaction List Filters
     const [filterType, setFilterType] = useState('all');
+    const [filterCategory, setFilterCategory] = useState('all');
+    const [filterDepartment, setFilterDepartment] = useState('all');
     const [sortBy, setSortBy] = useState('date_desc');
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -98,19 +114,18 @@ const EducationExpenses = () => {
                 sector: 'education'
             };
 
-            const [transRes, catRes, statsRes] = await Promise.all([
+            const [transRes, catRes, statsRes, membersRes, vendorsRes, deptsRes] = await Promise.all([
                 getTransactions(params),
                 getExpenseCategories({ sector: 'education' }),
-                getTransactionStats(params)
+                getTransactionStats(params),
+                getMembers({ sector: 'education' }),
+                getVendors(),
+                getDepartments({ sector: 'education' })
             ]);
 
-            // Fetch members if not already loaded or if needed
-            if (members.length === 0) {
-                const membersRes = await getMembers({ sector: 'education' });
-                const rawMembers = membersRes.data.data || [];
-                setMembers(rawMembers);
-            }
-
+            setMembers(membersRes.data.data || []);
+            setVendors(vendorsRes.data.data || []);
+            setDepartments(deptsRes.data.data || []);
             setTransactions(transRes.data);
             setCategories(catRes.data);
             setStats(statsRes.data);
@@ -230,7 +245,11 @@ const EducationExpenses = () => {
                 category_id: '',
                 date: new Date().toISOString().split('T')[0],
                 member_id: filterMember || '',
-                description: ''
+                description: '',
+                vendor_id: '',
+                department_id: '',
+                payment_mode: 'Cash',
+                remarks: ''
             });
             fetchData();
         } catch (error) {
@@ -248,7 +267,11 @@ const EducationExpenses = () => {
             category_id: transaction.category_id || '',
             date: new Date(transaction.date).toISOString().split('T')[0],
             member_id: transaction.member_id || '',
-            description: transaction.description || ''
+            description: transaction.description || '',
+            vendor_id: transaction.vendor_id || '',
+            department_id: transaction.department_id || '',
+            payment_mode: transaction.payment_mode || 'Cash',
+            remarks: transaction.remarks || ''
         });
         setEditingId(transaction.id);
         setShowAddModal(true);
@@ -264,7 +287,11 @@ const EducationExpenses = () => {
             category_id: '',
             date: new Date().toISOString().split('T')[0],
             member_id: filterMember || '',
-            description: ''
+            description: '',
+            vendor_id: '',
+            department_id: '',
+            payment_mode: 'Cash',
+            remarks: ''
         });
         setEditingId(null);
         setShowAddModal(true);
@@ -301,8 +328,10 @@ const EducationExpenses = () => {
         return transactions
             .filter(t => {
                 const matchesType = filterType === 'all' || t.type === filterType;
+                const matchesCategory = filterCategory === 'all' || t.category_id == filterCategory;
+                const matchesDepartment = filterDepartment === 'all' || t.department_id == filterDepartment;
                 const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase());
-                return matchesType && matchesSearch;
+                return matchesType && matchesCategory && matchesDepartment && matchesSearch;
             })
             .sort((a, b) => {
                 if (sortBy === 'date_desc') return new Date(b.date) - new Date(a.date);
@@ -351,11 +380,23 @@ const EducationExpenses = () => {
                     </button>
                     <button onClick={() => setActiveTab('Salary')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'Salary' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
                         <FaCalculator className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Salary' ? 'text-white' : 'text-slate-400'}`} />
-                        <span className="font-black text-xs uppercase tracking-widest">Salary</span>
+                        <span className="font-black text-xs uppercase tracking-widest">Calculator</span>
+                    </button>
+                    <button onClick={() => setActiveTab('Payroll')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'Payroll' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
+                        <FaMoneyCheckAlt className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Payroll' ? 'text-white' : 'text-slate-400'}`} />
+                        <span className="font-black text-xs uppercase tracking-widest">Payroll</span>
+                    </button>
+                    <button onClick={() => setActiveTab('Vendors')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'Vendors' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
+                        <FaStore className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Vendors' ? 'text-white' : 'text-slate-400'}`} />
+                        <span className="font-black text-xs uppercase tracking-widest">Vendors</span>
                     </button>
                     <button onClick={() => setActiveTab('Members')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'Members' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
                         <FaUsers className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Members' ? 'text-white' : 'text-slate-400'}`} />
                         <span className="font-black text-xs uppercase tracking-widest">Members</span>
+                    </button>
+                    <button onClick={() => setActiveTab('Audit')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'Audit' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
+                        <FaHistory className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Audit' ? 'text-white' : 'text-slate-400'}`} />
+                        <span className="font-black text-xs uppercase tracking-widest">Audit Logs</span>
                     </button>
                 </nav>
             </aside>
@@ -543,12 +584,26 @@ const EducationExpenses = () => {
                         />
                     )}
 
+                    {activeTab === 'Payroll' && (
+                        <PayrollManager
+                            onUpdate={fetchData}
+                        />
+                    )}
+
+                    {activeTab === 'Vendors' && (
+                        <VendorManager
+                            onUpdate={fetchData}
+                        />
+                    )}
+
                     {activeTab === 'Members' && (
                         <MemberManager
                             sector="education"
                             onUpdate={fetchData}
                         />
                     )}
+
+                    {activeTab === 'Audit' && <AuditLogs />}
 
                 </div>
             </main>
@@ -616,16 +671,44 @@ const EducationExpenses = () => {
                                 </div>
                             </div>
 
-                            <div className="space-y-[2px] sm:space-y-[6px]">
-                                <label className="text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Member (Optional)</label>
-                                <select value={formData.member_id || ''} onChange={e => setFormData({ ...formData, member_id: e.target.value })} className="w-full h-[36px] sm:h-[48px] bg-slate-50 border border-slate-200 rounded-xl px-2 sm:px-4 text-[11px] sm:text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer">
-                                    <option value="">None</option>
-                                    {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                                </select>
+                            <div className="grid grid-cols-2 gap-[8px] sm:gap-[20px]">
+                                <div className="space-y-[2px] sm:space-y-[6px]">
+                                    <label className="text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Vendor (Optional)</label>
+                                    <select value={formData.vendor_id || ''} onChange={e => setFormData({ ...formData, vendor_id: e.target.value })} className="w-full h-[36px] sm:h-[48px] bg-slate-50 border border-slate-200 rounded-xl px-2 sm:px-4 text-[11px] sm:text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer">
+                                        <option value="">None</option>
+                                        {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                                    </select>
+                                </div>
+                                <div className="space-y-[2px] sm:space-y-[6px]">
+                                    <label className="text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Department (Optional)</label>
+                                    <select value={formData.department_id || ''} onChange={e => setFormData({ ...formData, department_id: e.target.value })} className="w-full h-[36px] sm:h-[48px] bg-slate-50 border border-slate-200 rounded-xl px-2 sm:px-4 text-[11px] sm:text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer">
+                                        <option value="">Global / None</option>
+                                        {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-[8px] sm:gap-[20px]">
+                                <div className="space-y-[2px] sm:space-y-[6px]">
+                                    <label className="text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Payment Mode</label>
+                                    <select value={formData.payment_mode} onChange={e => setFormData({ ...formData, payment_mode: e.target.value })} className="w-full h-[36px] sm:h-[48px] bg-slate-50 border border-slate-200 rounded-xl px-2 sm:px-4 text-[11px] sm:text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer">
+                                        <option value="Cash">Cash</option>
+                                        <option value="Bank Transfer">Bank Transfer</option>
+                                        <option value="UPI">UPI</option>
+                                        <option value="Cheque">Cheque</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-[2px] sm:space-y-[6px]">
+                                    <label className="text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Member (Optional)</label>
+                                    <select value={formData.member_id || ''} onChange={e => setFormData({ ...formData, member_id: e.target.value })} className="w-full h-[36px] sm:h-[48px] bg-slate-50 border border-slate-200 rounded-xl px-2 sm:px-4 text-[11px] sm:text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer">
+                                        <option value="">None</option>
+                                        {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                    </select>
+                                </div>
                             </div>
 
                             <div className="space-y-[2px] sm:space-y-[6px]">
-                                <label className="text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Description (Optional)</label>
+                                <label className="text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Description / Remarks (Optional)</label>
                                 <textarea
                                     value={formData.description}
                                     onChange={e => setFormData({ ...formData, description: e.target.value })}
@@ -638,6 +721,158 @@ const EducationExpenses = () => {
                                 {editingId ? 'Update Transaction' : 'Add Transaction'}
                             </button>
                         </form>
+                    </div>
+                </div>
+            )}
+            {/* Custom Report Configuration Modal */}
+            {showCustomReportModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-[32px] w-full max-w-lg shadow-2xl border border-white/20 p-8 animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between mb-8">
+                            <div className="flex items-center gap-3">
+                                <div className="w-1.5 h-8 bg-blue-600 rounded-full"></div>
+                                <div>
+                                    <h3 className="text-2xl font-black text-slate-900 tracking-tight">Custom Report</h3>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowCustomReportModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 transition-colors">
+                                <FaTimes />
+                            </button>
+                        </div>
+
+                        <div className="space-y-6">
+                            {/* Date Range */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Start Date</label>
+                                    <input
+                                        type="date"
+                                        value={customReportForm.startDate}
+                                        onChange={(e) => setCustomReportForm({ ...customReportForm, startDate: e.target.value })}
+                                        className="w-full h-[48px] bg-slate-50 border border-slate-200 rounded-xl px-4 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all font-mono"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">End Date</label>
+                                    <input
+                                        type="date"
+                                        value={customReportForm.endDate}
+                                        onChange={(e) => setCustomReportForm({ ...customReportForm, endDate: e.target.value })}
+                                        className="w-full h-[48px] bg-slate-50 border border-slate-200 rounded-xl px-4 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all font-mono"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Department and Member */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Department</label>
+                                    <select
+                                        value={customReportForm.departmentId}
+                                        onChange={(e) => setCustomReportForm({ ...customReportForm, departmentId: e.target.value })}
+                                        className="w-full h-[48px] bg-slate-50 border border-slate-200 rounded-xl px-4 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 cursor-pointer"
+                                    >
+                                        <option value="">All Departments</option>
+                                        {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Member / Staff</label>
+                                    <select
+                                        value={customReportForm.memberId}
+                                        onChange={(e) => setCustomReportForm({ ...customReportForm, memberId: e.target.value })}
+                                        className="w-full h-[48px] bg-slate-50 border border-slate-200 rounded-xl px-4 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 cursor-pointer"
+                                    >
+                                        <option value="">Everyone (Summary)</option>
+                                        {members.map(m => (
+                                            <option key={m.id} value={m.id}>{m.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Type and Category */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Type</label>
+                                    <select
+                                        value={customReportForm.type}
+                                        onChange={(e) => setCustomReportForm({ ...customReportForm, type: e.target.value })}
+                                        className="w-full h-[48px] bg-slate-50 border border-slate-200 rounded-xl px-4 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 cursor-pointer"
+                                    >
+                                        <option value="all">All Transactions</option>
+                                        <option value="income">Income Only</option>
+                                        <option value="expense">Expense Only</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Category</label>
+                                    <select
+                                        value={customReportForm.categoryId}
+                                        onChange={(e) => setCustomReportForm({ ...customReportForm, categoryId: e.target.value })}
+                                        className="w-full h-[48px] bg-slate-50 border border-slate-200 rounded-xl px-4 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 cursor-pointer"
+                                    >
+                                        <option value="">All Categories</option>
+                                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Buttons */}
+                            <div className="pt-4 space-y-3">
+                                <button
+                                    onClick={() => {
+                                        setPeriodType('range');
+                                        setCustomRange({ start: customReportForm.startDate, end: customReportForm.endDate });
+                                        setFilterMember(customReportForm.memberId);
+                                        setFilterDepartment(customReportForm.departmentId || 'all');
+                                        setFilterCategory(customReportForm.categoryId || 'all');
+                                        setFilterType(customReportForm.type || 'all');
+                                        setShowCustomReportModal(false);
+                                        fetchData();
+                                        exportExpenseToPDF({ data: transactions, period: `${customReportForm.startDate} to ${customReportForm.endDate}`, filename: 'custom_report' });
+                                    }}
+                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black h-[56px] flex items-center justify-center text-sm rounded-xl shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all gap-2"
+                                >
+                                    <FaFileAlt /> Download PDF Report
+                                </button>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        onClick={() => {
+                                            setPeriodType('range');
+                                            setCustomRange({ start: customReportForm.startDate, end: customReportForm.endDate });
+                                            setFilterMember(customReportForm.memberId);
+                                            setFilterDepartment(customReportForm.departmentId || 'all');
+                                            setFilterCategory(customReportForm.categoryId || 'all');
+                                            setFilterType(customReportForm.type || 'all');
+                                            setShowCustomReportModal(false);
+                                            fetchData();
+                                            exportExpenseToCSV(transactions, 'custom_report');
+                                        }}
+                                        className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black h-[48px] flex items-center justify-center text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all gap-2"
+                                    >
+                                        <FaFileAlt /> CSV
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setPeriodType('range');
+                                            setCustomRange({ start: customReportForm.startDate, end: customReportForm.endDate });
+                                            setFilterMember(customReportForm.memberId);
+                                            setFilterDepartment(customReportForm.departmentId || 'all');
+                                            setFilterCategory(customReportForm.categoryId || 'all');
+                                            setFilterType(customReportForm.type || 'all');
+                                            setShowCustomReportModal(false);
+                                            fetchData();
+                                            exportExpenseToTXT({ data: transactions, period: `${customReportForm.startDate} to ${customReportForm.endDate}`, filename: 'custom_report' });
+                                        }}
+                                        className="w-full bg-slate-700 hover:bg-slate-800 text-white font-black h-[48px] flex items-center justify-center text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-slate-700/20 active:scale-[0.98] transition-all gap-2"
+                                    >
+                                        <FaFileAlt /> Text
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

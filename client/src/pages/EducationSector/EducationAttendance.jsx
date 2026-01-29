@@ -7,8 +7,12 @@ import {
     deleteAttendance as deleteEduAttendance,
     getAttendanceStats as getEduAttendanceStats,
     getMemberSummary as getEduMemberSummary,
-    quickMarkAttendance as quickMarkEduAttendance
+    quickMarkAttendance as quickMarkEduAttendance,
+    lockAttendance as lockEduAttendance,
+    unlockAttendance as unlockEduAttendance,
+    getLockedDates as getEduLockedDates
 } from '../../api/Attendance/eduAttendance';
+
 import {
     getActiveMembers, getMemberRoles, getDepartments,
     createMemberRole, deleteMemberRole, createDepartment, deleteDepartment
@@ -51,6 +55,7 @@ const EducationAttendance = () => {
     const [departments, setDepartments] = useState([]); // Add departments state
     const [filterRole, setFilterRole] = useState('');
     const [confirmModal, setConfirmModal] = useState({ show: false, type: null, label: '', id: null });
+    const [lockedDates, setLockedDates] = useState([]);
 
     const [showPermissionModal, setShowPermissionModal] = useState(false);
     const [permissionModalData, setPermissionModalData] = useState({
@@ -112,7 +117,7 @@ const EducationAttendance = () => {
 
             if (isRange && (!rangeStart || !rangeEnd)) return;
 
-            const [attRes, statsRes, summaryRes, membersRes, roleRes, deptRes] = await Promise.all([
+            const [attRes, statsRes, summaryRes, membersRes, roleRes, deptRes, lockRes] = await Promise.all([
                 getEduAttendances({
                     memberId: filterMember,
                     period: isRange ? null : currentPeriod,
@@ -137,20 +142,44 @@ const EducationAttendance = () => {
                 }),
                 getActiveMembers({ sector: 'education' }),
                 getMemberRoles({ sector: 'education' }),
-                getDepartments({ sector: 'education' }) // Fetch departments
+                getDepartments({ sector: 'education' }),
+                getEduLockedDates(new Date(currentPeriod).getMonth() + 1, new Date(currentPeriod).getFullYear())
             ]);
             setAttendances(attRes.data.data);
             setStats(statsRes.data.data || []);
             setMemberSummary(summaryRes.data.data);
             setMembers(membersRes.data.data);
             setRoles(roleRes.data.data);
-            setDepartments(deptRes.data.data); // Set departments
+            setDepartments(deptRes.data.data);
+            setLockedDates(lockRes.data.data.map(d => d.split('T')[0]));
             setLoading(false);
         } catch (error) {
             toast.error("Failed to fetch attendance data");
             setLoading(false);
         }
     };
+
+    const handleToggleLock = async () => {
+        if (!currentPeriod || periodType !== 'day') {
+            toast.error("Please select a specific day to lock/unlock");
+            return;
+        }
+
+        const isCurrentlyLocked = lockedDates.includes(currentPeriod);
+        try {
+            if (isCurrentlyLocked) {
+                await unlockEduAttendance(currentPeriod);
+                toast.success("Attendance Unlocked");
+            } else {
+                await lockEduAttendance(currentPeriod);
+                toast.success("Attendance Locked");
+            }
+            fetchData();
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Action failed");
+        }
+    };
+
 
     useEffect(() => {
         const today = new Date();
@@ -415,17 +444,36 @@ const EducationAttendance = () => {
                         <div className="bg-[#0f172a] rounded-[32px] p-8 text-white shadow-xl shadow-slate-200/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
                             <div className="relative z-10">
-                                <h2 className="text-3xl font-black tracking-tight mb-2 text-white">Daily Attendance Sheet</h2>
+                                <h2 className="text-3xl font-black tracking-tight mb-2 text-white flex items-center gap-4">
+                                    Daily Attendance Sheet
+                                    {lockedDates.includes(currentPeriod) && (
+                                        <span className="bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] px-3 py-1 rounded-full uppercase tracking-widest font-black">Locked</span>
+                                    )}
+                                </h2>
                                 <div className="flex items-center gap-3 text-slate-400 font-bold uppercase tracking-widest text-xs">
                                     <FaCalendarAlt className="text-blue-500" />
                                     {new Date(currentPeriod).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                                 </div>
                             </div>
-                            <div className="relative z-10 bg-white/10 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/10 flex flex-col items-end">
-                                <p className="text-[9px] text-blue-300 font-black uppercase tracking-widest mb-1">Marking Mode</p>
-                                <p className="font-black text-white text-sm">Single Click Upsert</p>
+                            <div className="flex items-center gap-4 group relative z-10">
+                                {currentUser.role === 'owner' && (
+                                    <button
+                                        onClick={handleToggleLock}
+                                        className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 ${lockedDates.includes(currentPeriod)
+                                            ? 'bg-emerald-500 text-white shadow-emerald-500/20 hover:bg-emerald-600'
+                                            : 'bg-red-500 text-white shadow-red-500/20 hover:bg-red-600'
+                                            }`}
+                                    >
+                                        {lockedDates.includes(currentPeriod) ? 'Unlock Attendance' : 'Lock Attendance'}
+                                    </button>
+                                )}
+                                <div className="bg-white/10 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/10 flex flex-col items-end">
+                                    <p className="text-[9px] text-blue-300 font-black uppercase tracking-widest mb-1">Marking Mode</p>
+                                    <p className="font-black text-white text-sm">Single Click Upsert</p>
+                                </div>
                             </div>
                         </div>
+
 
                         {/* Bulk Action Toolbar */}
                         <div className="px-6 sm:px-8 py-4 bg-slate-50/50 border-b border-slate-100 flex flex-wrap items-center gap-3">

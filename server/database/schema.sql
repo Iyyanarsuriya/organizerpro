@@ -671,13 +671,24 @@ CREATE TABLE `education_transactions` (
   `quantity` decimal(15,2) DEFAULT '1.00',
   `unit_price` decimal(15,2) DEFAULT '0.00',
   `description` text DEFAULT NULL,
+  `vendor_id` int DEFAULT NULL,
+  `department_id` int DEFAULT NULL,
+  `payment_mode` varchar(50) DEFAULT 'Cash',
+  `remarks` text DEFAULT NULL,
+  `bill_image` varchar(255) DEFAULT NULL,
+  `approval_status` enum('pending', 'approved', 'rejected') DEFAULT 'approved',
+  `approval_by` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   KEY `fk_edu_trans_memb` (`member_id`),
   KEY `fk_edu_trans_cat` (`category_id`),
+  KEY `fk_edu_trans_vend` (`vendor_id`),
+  KEY `fk_edu_trans_dept` (`department_id`),
   CONSTRAINT `fk_edu_trans_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_edu_trans_memb` FOREIGN KEY (`member_id`) REFERENCES `education_members` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `fk_edu_trans_cat` FOREIGN KEY (`category_id`) REFERENCES `education_categories` (`id`) ON DELETE SET NULL
+  CONSTRAINT `fk_edu_trans_cat` FOREIGN KEY (`category_id`) REFERENCES `education_categories` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_edu_trans_vend` FOREIGN KEY (`vendor_id`) REFERENCES `education_vendors` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_edu_trans_dept` FOREIGN KEY (`department_id`) REFERENCES `education_departments` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Education Categories
@@ -706,5 +717,82 @@ CREATE TABLE `education_departments` (
   CONSTRAINT `fk_edu_dept_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- Education Vendors
+DROP TABLE IF EXISTS `education_vendors`;
+CREATE TABLE `education_vendors` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `contact_person` varchar(255) DEFAULT NULL,
+  `phone` varchar(20) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `address` text,
+  `category` varchar(100) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `fk_edu_vend_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Education Payroll
+DROP TABLE IF EXISTS `education_payroll`;
+CREATE TABLE `education_payroll` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `member_id` int NOT NULL,
+  `month` int NOT NULL,
+  `year` int NOT NULL,
+  `working_days` int DEFAULT 0,
+  `present_days` decimal(5,2) DEFAULT 0,
+  `absent_days` decimal(5,2) DEFAULT 0,
+  `half_days` int DEFAULT 0,
+  `lop_days` decimal(5,2) DEFAULT 0,
+  `cl_used` decimal(5,2) DEFAULT 0,
+  `sl_used` decimal(5,2) DEFAULT 0,
+  `el_used` decimal(5,2) DEFAULT 0,
+  `base_salary` decimal(15,2) DEFAULT 0,
+  `net_salary` decimal(15,2) DEFAULT 0,
+  `bonus` decimal(15,2) DEFAULT 0,
+  `deductions` decimal(15,2) DEFAULT 0,
+  `status` enum('pending_approval', 'approved', 'paid') DEFAULT 'pending_approval',
+  `generated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  KEY `member_id` (`member_id`),
+  CONSTRAINT `fk_edu_pay_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_edu_pay_memb` FOREIGN KEY (`member_id`) REFERENCES `education_members` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Education Attendance Locks
+DROP TABLE IF EXISTS `education_attendance_locks`;
+CREATE TABLE `education_attendance_locks` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `date` date NOT NULL,
+  `is_locked` tinyint(1) DEFAULT 1,
+  `locked_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `locked_by` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_date_user` (`user_id`, `date`),
+  CONSTRAINT `fk_edu_lock_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Education Audit Logs
+DROP TABLE IF EXISTS `education_audit_logs`;
+CREATE TABLE `education_audit_logs` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `action` varchar(255) NOT NULL,
+  `module` varchar(100) NOT NULL,
+  `details` text,
+  `performed_by` int NOT NULL,
+  `timestamp` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  KEY `performed_by` (`performed_by`),
+  CONSTRAINT `fk_edu_audit_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
+
 

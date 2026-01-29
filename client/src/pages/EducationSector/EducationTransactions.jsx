@@ -143,6 +143,18 @@ const EducationTransactions = ({
                                         <FaCalendarAlt className="text-[9px] opacity-70" />
                                         {formatDateTime(t.updated_at || t.created_at)}
                                     </div>
+                                    {t.vendor_name && (
+                                        <div className="px-2.5 py-1 bg-blue-50 text-[10px] font-bold text-blue-600 rounded-lg flex items-center gap-1.5 uppercase tracking-wide border border-blue-100/50 shadow-blue-500/5">
+                                            <FaStore className="text-[9px] opacity-70" />
+                                            {t.vendor_name}
+                                        </div>
+                                    )}
+                                    {t.department_name && (
+                                        <div className="px-2.5 py-1 bg-indigo-50 text-[10px] font-bold text-indigo-600 rounded-lg flex items-center gap-1.5 uppercase tracking-wide border border-indigo-100/50 shadow-indigo-500/5">
+                                            <FaTag className="text-[9px] opacity-70" />
+                                            {t.department_name}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

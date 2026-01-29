@@ -63,6 +63,45 @@ const EducationMemberManager = ({ onClose, onUpdate, sector = 'education' }) => 
     const [deleteModal, setDeleteModal] = useState({ show: false, id: null });
     const [deactivateModal, setDeactivateModal] = useState({ show: false, member: null });
 
+    // Subject Tag Input State
+    const [subjectInput, setSubjectInput] = useState('');
+
+    const handleSubjectKeyDown = (e) => {
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            const val = subjectInput.trim();
+            if (val) {
+                const current = formData.subjects ? formData.subjects.split(',').map(s => s.trim()).filter(Boolean) : [];
+                if (!current.some(s => s.toLowerCase() === val.toLowerCase())) {
+                    const newSubjects = [...current, val].join(', ');
+                    setFormData({ ...formData, subjects: newSubjects });
+                }
+                setSubjectInput('');
+            }
+        }
+    };
+
+    const removeSubject = (subjectToRemove) => {
+        const current = formData.subjects ? formData.subjects.split(',').map(s => s.trim()).filter(Boolean) : [];
+        const newSubjects = current.filter(s => s !== subjectToRemove).join(', ');
+        setFormData({ ...formData, subjects: newSubjects });
+    };
+
+    const addDepartment = (val) => {
+        if (!val) return;
+        const current = formData.department ? formData.department.split(',').map(s => s.trim()).filter(Boolean) : [];
+        if (!current.includes(val)) {
+            const newDepts = [...current, val].join(', ');
+            setFormData({ ...formData, department: newDepts });
+        }
+    };
+
+    const removeDepartment = (val) => {
+        const current = formData.department ? formData.department.split(',').map(s => s.trim()).filter(Boolean) : [];
+        const newDepts = current.filter(d => d !== val).join(', ');
+        setFormData({ ...formData, department: newDepts });
+    };
+
     // Multi-select state
     const [selectedMembers, setSelectedMembers] = useState([]);
     const [bulkDeleteModal, setBulkDeleteModal] = useState(false);
@@ -372,13 +411,29 @@ const EducationMemberManager = ({ onClose, onUpdate, sector = 'education' }) => 
                         {!collapsed.job && (
                             <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-2">
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Department *</label>
-                                    <div className="flex gap-2">
-                                        <select required value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 cursor-pointer">
-                                            <option value="">Select Department</option>
+                                    <div className="flex items-center justify-between mb-1.5 ml-1">
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Departments *</label>
+                                        <button type="button" onClick={() => setShowDeptManager(true)} className="text-[10px] font-bold text-blue-600 hover:underline flex items-center gap-1">
+                                            <FaPlus size={8} /> Manage
+                                        </button>
+                                    </div>
+                                    <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2 py-2 min-h-[48px] flex flex-wrap items-center gap-2 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all cursor-text" onClick={() => document.getElementById('dept-select')?.focus()}>
+                                        {formData.department && formData.department.split(',').map(d => d.trim()).filter(Boolean).map((dept, idx) => (
+                                            <span key={idx} className="bg-orange-100 text-orange-700 text-[11px] font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 animate-in zoom-in duration-200 border border-orange-200">
+                                                {dept}
+                                                <button type="button" onClick={(e) => { e.stopPropagation(); removeDepartment(dept); }} className="hover:text-orange-900 w-4 h-4 flex items-center justify-center rounded-full hover:bg-orange-200 transition-colors"><FaTimes size={10} /></button>
+                                            </span>
+                                        ))}
+                                        <select
+                                            id="dept-select"
+                                            value=""
+                                            onChange={(e) => addDepartment(e.target.value)}
+                                            className="bg-transparent border-none outline-none text-xs font-bold text-slate-600 placeholder:text-slate-400 flex-1 min-w-[120px] h-[32px] cursor-pointer"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <option value="">+ Add / Select Department</option>
                                             {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
                                         </select>
-                                        <button type="button" onClick={() => setShowDeptManager(true)} className="w-11 h-11 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center hover:bg-orange-50 hover:text-orange-600 transition-all border border-slate-200 shrink-0"><FaPlus size={12} /></button>
                                     </div>
                                 </div>
                                 <div>
@@ -393,9 +448,24 @@ const EducationMemberManager = ({ onClose, onUpdate, sector = 'education' }) => 
                                 </div>
 
                                 {formData.role?.toLowerCase().includes('teacher') && (
-                                    <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Subjects</label>
-                                        <input type="text" value={formData.subjects || ''} onChange={(e) => setFormData({ ...formData, subjects: e.target.value })} placeholder="E.g. Maths, Physics" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-xs font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all" />
+                                    <div className="md:col-span-2 lg:col-span-1">
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Subjects (Press Enter to add)</label>
+                                        <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2 py-2 min-h-[44px] flex flex-wrap gap-2 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all">
+                                            {formData.subjects && formData.subjects.split(',').map(s => s.trim()).filter(Boolean).map((subject, idx) => (
+                                                <span key={idx} className="bg-indigo-100 text-indigo-700 text-[11px] font-bold px-2 py-1 rounded-lg flex items-center gap-1">
+                                                    {subject}
+                                                    <button type="button" onClick={() => removeSubject(subject)} className="hover:text-indigo-900"><FaTimes size={10} /></button>
+                                                </span>
+                                            ))}
+                                            <input
+                                                type="text"
+                                                value={subjectInput}
+                                                onChange={(e) => setSubjectInput(e.target.value)}
+                                                onKeyDown={handleSubjectKeyDown}
+                                                placeholder={formData.subjects ? "" : "Maths, Physics..."}
+                                                className="bg-transparent border-none outline-none text-xs font-bold text-slate-700 flex-1 min-w-[80px] h-6"
+                                            />
+                                        </div>
                                     </div>
                                 )}
 
@@ -423,10 +493,14 @@ const EducationMemberManager = ({ onClose, onUpdate, sector = 'education' }) => 
                                 <div>
                                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Reporting To (HOD/Manager) *</label>
                                     <select required value={formData.reporting_manager_id} onChange={(e) => setFormData({ ...formData, reporting_manager_id: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 cursor-pointer">
-                                        <option value="">Select Manager</option>
-                                        {members.filter(m => m.id !== editingId).map(m => (
-                                            <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
-                                        ))}
+                                        <option value="">Select Manager / HOD</option>
+                                        <option value="self">No Reporting Manager (Self)</option>
+                                        {members
+                                            .filter(m => m.id !== editingId)
+                                            .sort((a, b) => a.name.localeCompare(b.name))
+                                            .map(m => (
+                                                <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
+                                            ))}
                                     </select>
                                 </div>
                                 <div>
@@ -507,7 +581,7 @@ const EducationMemberManager = ({ onClose, onUpdate, sector = 'education' }) => 
                             </button>
                         )}
                     </div>
-                </form>
+                </form >
 
                 <div className="bg-white/80 backdrop-blur-xl p-4 rounded-[24px] border border-white/20 shadow-xl shadow-slate-200/50 mb-6 sticky top-2 z-10">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -630,13 +704,13 @@ const EducationMemberManager = ({ onClose, onUpdate, sector = 'education' }) => 
                         ) : <div className="text-center py-[48px] text-slate-400">No staff found</div>}
                     </div>
                 </div>
-            </div>
+            </div >
             <ConfirmModal isOpen={deactivateModal.show} title="Deactivate Staff?" message={`Deactivate ${deactivateModal.member?.name}?`} onConfirm={confirmDeactivate} onCancel={() => setDeactivateModal({ show: false, member: null })} confirmText="Deactivate" cancelText="Cancel" type="warning" />
             <ConfirmModal isOpen={deleteModal.show} title="Delete Staff?" message="This action cannot be undone." onConfirm={confirmDelete} onCancel={() => setDeleteModal({ show: false, id: null })} confirmText="Delete" cancelText="Cancel" type="danger" />
             <ConfirmModal isOpen={bulkDeleteModal} title="Delete Selected Staff?" message={`Are you sure you want to delete ${selectedMembers.length} staff members? This action cannot be undone.`} onConfirm={handleBulkDelete} onCancel={() => setBulkDeleteModal(false)} confirmText={`Delete ${selectedMembers.length} Staff`} cancelText="Cancel" type="danger" />
             {showRoleManager && <RoleManager roles={roles} onCreate={(data) => createMemberRole({ ...data, sector })} onDelete={(id) => deleteMemberRole(id, { sector })} onClose={() => { setShowRoleManager(false); fetchMembers(); }} onRefresh={() => getMemberRoles({ sector }).then(res => setRoles(res.data.data))} placeholder="Teacher, Clerk..." />}
             {showDeptManager && <DepartmentManager departments={departments} onCreate={(data) => createDepartment({ ...data, sector })} onDelete={(id) => deleteDepartment(id, { sector })} onClose={() => { setShowDeptManager(false); fetchMembers(); }} onRefresh={() => getDepartments({ sector }).then(res => setDepartments(res.data.data))} placeholder="Maths, Science, Admin..." />}
-        </div>
+        </div >
     );
 };
 
