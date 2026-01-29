@@ -9,14 +9,17 @@ import {
     getMemberSummary as getEduMemberSummary,
     quickMarkAttendance as quickMarkEduAttendance
 } from '../../api/Attendance/eduAttendance';
-import { getActiveMembers, getMemberRoles, getDepartments } from '../../api/TeamManagement/eduTeam';
+import {
+    getActiveMembers, getMemberRoles, getDepartments,
+    createMemberRole, deleteMemberRole, createDepartment, deleteDepartment
+} from '../../api/TeamManagement/eduTeam';
 import toast from 'react-hot-toast';
 import {
     FaCheckCircle, FaTimesCircle, FaClock, FaExclamationCircle,
     FaCalendarAlt, FaSearch,
     FaFilter, FaChartBar, FaUserCheck,
     FaInbox, FaUserEdit,
-    FaTag, FaBusinessTime, FaBuilding, FaPlane, FaBriefcaseMedical, FaHome, FaArrowLeft
+    FaTag, FaBusinessTime, FaBuilding, FaPlane, FaBriefcaseMedical, FaHome, FaArrowLeft, FaPlus
 } from 'react-icons/fa';
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend
@@ -24,6 +27,8 @@ import {
 import { exportAttendanceToCSV, exportAttendanceToTXT, exportAttendanceToPDF, processAttendanceExportData } from '../../utils/exportUtils/index.js';
 import ExportButtons from '../../components/Common/ExportButtons';
 import EducationMemberManager from '../../components/Education/MemberManager';
+import RoleManager from '../../components/IT/RoleManager';
+import DepartmentManager from '../../components/Education/DepartmentManager';
 
 const EducationAttendance = () => {
     const navigate = useNavigate();
@@ -60,6 +65,16 @@ const EducationAttendance = () => {
         end_period: 'AM',
         reason: '',
         attendance_id: null
+    });
+
+    const [showRoleManager, setShowRoleManager] = useState(false);
+    const [showDeptManager, setShowDeptManager] = useState(false);
+    const [showManualAttendance, setShowManualAttendance] = useState(false);
+    const [manualAttendanceData, setManualAttendanceData] = useState({
+        member_id: '',
+        date: new Date().toISOString().split('T')[0],
+        status: 'present',
+        note: ''
     });
 
     const statusOptions = [
@@ -336,14 +351,38 @@ const EducationAttendance = () => {
                                 {periodType === 'year' ? <input type="number" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-[11px] font-bold text-slate-700 outline-none bg-transparent" /> : null}
                             </div>
                             <div className="w-full sm:w-auto flex items-center gap-2">
-                                <select value={filterDepartment} onChange={(e) => setFilterDepartment(e.target.value)} className="h-[38px] bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-700 outline-none px-3 cursor-pointer">
-                                    <option value="">All Depts</option>
-                                    {[...new Set([...departments.map(d => d.name), ...uniqueDepartments])].map(d => <option key={d} value={d}>{d}</option>)}
-                                </select>
-                                <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} className="h-[38px] bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-700 outline-none px-3 cursor-pointer">
-                                    <option value="">All Roles</option>
-                                    {roles.map(r => <option key={r.id} value={r.name}>{r.name}</option>)}
-                                </select>
+                                <div className="flex items-center gap-1 group">
+                                    <select value={filterDepartment} onChange={(e) => setFilterDepartment(e.target.value)} className="h-[38px] bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-700 outline-none px-3 cursor-pointer">
+                                        <option value="">All Depts</option>
+                                        {[...new Set([...departments.map(d => d.name), ...uniqueDepartments])].map(d => <option key={d} value={d}>{d}</option>)}
+                                    </select>
+                                    <button onClick={() => setShowDeptManager(true)} className="h-[38px] w-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:text-orange-600 hover:border-orange-200 transition-all shadow-xs shrink-0"><FaPlus size={10} /></button>
+                                </div>
+                                <div className="flex items-center gap-1 group">
+                                    <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} className="h-[38px] bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-700 outline-none px-3 cursor-pointer">
+                                        <option value="">All Roles</option>
+                                        {roles.map(r => <option key={r.id} value={r.name}>{r.name}</option>)}
+                                    </select>
+                                    <button onClick={() => setShowRoleManager(true)} className="h-[38px] w-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:text-purple-600 hover:border-purple-200 transition-all shadow-xs shrink-0"><FaPlus size={10} /></button>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        if (activeTab === 'members') {
+                                            // Handle scroll to add form in members tab
+                                            setActiveTab('members');
+                                            setTimeout(() => {
+                                                const form = document.querySelector('form');
+                                                if (form) form.scrollIntoView({ behavior: 'smooth' });
+                                            }, 100);
+                                        } else {
+                                            setShowManualAttendance(true);
+                                        }
+                                    }}
+                                    className="h-[38px] w-10 sm:w-[48px] sm:h-[48px] bg-blue-600 text-white rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all active:scale-95 shrink-0 ml-2"
+                                    title={activeTab === 'members' ? "Register Staff" : "Add Attendance"}
+                                >
+                                    <FaPlus className="text-sm sm:text-lg" />
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -747,6 +786,107 @@ const EducationAttendance = () => {
                 type={confirmModal.type === 'DELETE' ? 'danger' : 'info'}
                 confirmText="Yes, Proceed"
             />
+
+            {showManualAttendance && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[32px] w-full max-w-sm shadow-2xl p-8 relative animate-in zoom-in-95 duration-300">
+                        <h3 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
+                            Attendance Entry
+                        </h3>
+                        <div className="space-y-5">
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Staff Member</label>
+                                <select
+                                    value={manualAttendanceData.member_id}
+                                    onChange={(e) => setManualAttendanceData({ ...manualAttendanceData, member_id: e.target.value })}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-12 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all font-['Outfit']"
+                                >
+                                    <option value="">Select Staff...</option>
+                                    {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                </select>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Date</label>
+                                    <input
+                                        type="date"
+                                        value={manualAttendanceData.date}
+                                        onChange={(e) => setManualAttendanceData({ ...manualAttendanceData, date: e.target.value })}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-12 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Status</label>
+                                    <select
+                                        value={manualAttendanceData.status}
+                                        onChange={(e) => setManualAttendanceData({ ...manualAttendanceData, status: e.target.value })}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-12 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all"
+                                    >
+                                        {statusOptions.map(opt => <option key={opt.id} value={opt.id}>{opt.label}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Note (Optional)</label>
+                                <textarea
+                                    value={manualAttendanceData.note}
+                                    onChange={(e) => setManualAttendanceData({ ...manualAttendanceData, note: e.target.value })}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all resize-none"
+                                    rows="3"
+                                    placeholder="Add notes..."
+                                ></textarea>
+                            </div>
+                            <div className="flex gap-4 pt-2">
+                                <button onClick={() => setShowManualAttendance(false)} className="flex-1 py-3 text-slate-500 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-50 transition-colors">Cancel</button>
+                                <button
+                                    onClick={async () => {
+                                        if (!manualAttendanceData.member_id) return toast.error("Select staff");
+                                        try {
+                                            await quickMarkEduAttendance({
+                                                member_id: manualAttendanceData.member_id,
+                                                date: manualAttendanceData.date,
+                                                status: manualAttendanceData.status,
+                                                note: manualAttendanceData.note,
+                                                subject: 'Manual Entry'
+                                            });
+                                            toast.success("Attendance added");
+                                            setShowManualAttendance(false);
+                                            fetchData();
+                                        } catch (err) {
+                                            toast.error("Failed to add entry");
+                                        }
+                                    }}
+                                    className="flex-1 py-3 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all active:scale-95"
+                                >
+                                    Save Entry
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showRoleManager && (
+                <RoleManager
+                    roles={roles}
+                    onCreate={(data) => createMemberRole({ ...data, sector: 'education' }).then(() => fetchData())}
+                    onDelete={(id) => deleteMemberRole(id, { sector: 'education' }).then(() => fetchData())}
+                    onRefresh={fetchData}
+                    onClose={() => setShowRoleManager(false)}
+                    placeholder="Teacher, Manager, Staff..."
+                />
+            )}
+
+            {showDeptManager && (
+                <DepartmentManager
+                    departments={departments}
+                    onCreate={(data) => createDepartment({ ...data, sector: 'education' }).then(() => fetchData())}
+                    onDelete={(id) => deleteDepartment(id, { sector: 'education' }).then(() => fetchData())}
+                    onRefresh={fetchData}
+                    onClose={() => setShowDeptManager(false)}
+                    placeholder="Math, Science, English..."
+                />
+            )}
 
         </div>
     );

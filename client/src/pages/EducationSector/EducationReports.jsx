@@ -343,7 +343,7 @@ const EducationReports = ({
 
             {/* Confirmation Modal */}
             {confirmExport.show && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-white rounded-[32px] w-full max-w-sm shadow-2xl border border-white/20 p-8 text-center animate-in zoom-in-95 duration-200">
                         <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm">
                             <FaFileAlt />
