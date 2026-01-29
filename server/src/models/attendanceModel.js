@@ -25,12 +25,19 @@ const create = async (data) => {
     const { attendance: TABLE_NAME } = getTables(data.sector);
     const { user_id, subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason, created_by } = data;
 
-    // For education, force project_id to NULL
-    const finalProjectId = data.sector === 'education' ? null : (project_id || null);
+    let columns = ['user_id', 'subject', 'status', 'date', 'note', 'member_id', 'permission_duration', 'permission_start_time', 'permission_end_time', 'permission_reason', 'overtime_duration', 'overtime_reason', 'created_by', 'updated_by'];
+    let values = [user_id, subject || null, status || null, date, note || null, member_id || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, created_by || null, null];
+    let placeholders = ['?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?'];
+
+    if (data.sector !== 'education') {
+        columns.push('project_id');
+        values.push(project_id || null);
+        placeholders.push('?');
+    }
 
     const [result] = await db.query(
-        `INSERT INTO ${TABLE_NAME} (user_id, subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [user_id, subject, status, date, note, finalProjectId, member_id || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, created_by || null, null]
+        `INSERT INTO ${TABLE_NAME} (${columns.join(', ')}) VALUES (${placeholders.join(', ')})`,
+        values
     );
     return { id: result.insertId, ...data };
 };
@@ -205,7 +212,8 @@ const getMemberSummary = async (userId, filters = {}) => {
             COUNT(CASE WHEN a.status = 'EL' THEN 1 END) as EL,
             COUNT(CASE WHEN a.status = 'OD' THEN 1 END) as OD,
             COUNT(CASE WHEN a.status NOT IN ('week_off', 'holiday') THEN 1 END) as working_days,
-            COUNT(a.id) as total
+            COUNT(a.id) as total,
+            w.daily_wage
         FROM ${MEMBERS_TABLE} w
         LEFT JOIN ${TABLE_NAME} a ON w.id = a.member_id
     `;
@@ -233,7 +241,7 @@ const getMemberSummary = async (userId, filters = {}) => {
         params.push(filters.startDate, filters.endDate);
     }
 
-    if (filters.projectId) {
+    if (filters.projectId && filters.sector !== 'education') {
         joinConditions.push("a.project_id = ?");
         params.push(filters.projectId);
     }

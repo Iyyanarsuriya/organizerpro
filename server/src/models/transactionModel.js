@@ -39,7 +39,7 @@ const create = async (data) => {
         }
 
         if (table === 'education_transactions') {
-            columns.push('vendor_id', 'department_id', 'approval_status', 'approved_by', 'payment_mode', 'bill_image', 'remarks');
+            columns.push('vendor_id', 'department_id', 'approval_status', 'approval_by', 'payment_mode', 'bill_image', 'remarks');
             values.push(vendor_id || null, department_id || null, approval_status || 'approved', approved_by || null, payment_mode || 'Cash', bill_image || null, remarks || null);
         }
 
@@ -190,7 +190,7 @@ const update = async (id, userId, data) => {
         params = [title, amount, type, category_id || null, finalDate, project_id || null, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0, description || null, id, userId];
     } else if (table === 'education_transactions') {
         query = `UPDATE ${table} SET title = ?, amount = ?, type = ?, category_id = ?, date = ?, member_id = ?, guest_name = ?, payment_status = ?, quantity = ?, unit_price = ?, description = ?, 
-                 vendor_id = ?, department_id = ?, approval_status = ?, approved_by = ?, payment_mode = ?, bill_image = ?, remarks = ? 
+                 vendor_id = ?, department_id = ?, approval_status = ?, approval_by = ?, payment_mode = ?, bill_image = ?, remarks = ? 
                  WHERE id = ? AND user_id = ?`;
         params = [title, amount, type, category_id || null, finalDate, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0, description || null,
             vendor_id || null, department_id || null, approval_status || 'approved', approved_by || null, payment_mode || 'Cash', bill_image || null, remarks || null, id, userId];

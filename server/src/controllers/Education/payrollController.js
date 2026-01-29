@@ -24,6 +24,9 @@ const generatePayroll = async (req, res) => {
             return res.status(400).json({ success: false, message: "No attendance data found for this month." });
         }
 
+        // Delete existing draft/pending payrolls for this month to avoid duplicates
+        await Payroll.deleteByMonthYear(userId, month, year);
+
         const payrolls = [];
         for (const s of summary) {
             // Calculate salary
@@ -55,7 +58,7 @@ const generatePayroll = async (req, res) => {
                 el_used: elUsed,
                 base_salary: baseSalary,
                 net_salary: netSalary,
-                status: 'draft'
+                status: 'pending_approval'
             };
 
             const result = await Payroll.create(payrollData);

@@ -6,19 +6,19 @@ const create = async (data) => {
     const {
         user_id, member_id, month, year, working_days, present_days, absent_days,
         half_days, lop_days, cl_used, sl_used, el_used, base_salary, net_salary,
-        bonus, deductions, status, payment_mode
+        bonus, deductions, status
     } = data;
 
     const [result] = await db.query(
         `INSERT INTO ${TABLE_NAME} 
-        (user_id, member_id, month, year, working_days, present_days, absent_days, half_days, lop_days, cl_used, sl_used, el_used, base_salary, net_salary, bonus, deductions, status, payment_mode) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (user_id, member_id, month, year, working_days, present_days, absent_days, half_days, lop_days, cl_used, sl_used, el_used, base_salary, net_salary, bonus, deductions, status) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE 
         working_days = VALUES(working_days), present_days = VALUES(present_days), absent_days = VALUES(absent_days), 
         half_days = VALUES(half_days), lop_days = VALUES(lop_days), cl_used = VALUES(cl_used), sl_used = VALUES(sl_used), 
         el_used = VALUES(el_used), base_salary = VALUES(base_salary), net_salary = VALUES(net_salary), 
-        bonus = VALUES(bonus), deductions = VALUES(deductions), status = VALUES(status), payment_mode = VALUES(payment_mode)`,
-        [user_id, member_id, month, year, working_days, present_days, absent_days, half_days, lop_days, cl_used, sl_used, el_used, base_salary, net_salary, bonus, deductions, status || 'draft', payment_mode || 'Cash']
+        bonus = VALUES(bonus), deductions = VALUES(deductions), status = VALUES(status)`,
+        [user_id, member_id, month, year, working_days, present_days, absent_days, half_days, lop_days, cl_used, sl_used, el_used, base_salary, net_salary, bonus, deductions, status || 'pending_approval']
     );
     return { id: result.insertId || null, ...data };
 };
@@ -69,6 +69,14 @@ const updateStatus = async (id, userId, status, extras = {}) => {
     return result.affectedRows > 0;
 };
 
+const deleteByMonthYear = async (userId, month, year) => {
+    const [result] = await db.query(
+        `DELETE FROM ${TABLE_NAME} WHERE user_id = ? AND month = ? AND year = ? AND status != 'paid'`,
+        [userId, month, year]
+    );
+    return result.affectedRows;
+};
+
 const getSummary = async (userId, month, year) => {
     const [rows] = await db.query(
         `SELECT 
@@ -87,5 +95,6 @@ module.exports = {
     create,
     getAllByUserId,
     updateStatus,
-    getSummary
+    getSummary,
+    deleteByMonthYear
 };

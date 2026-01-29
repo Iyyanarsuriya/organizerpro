@@ -821,16 +821,37 @@ const EducationExpenses = () => {
                             {/* Buttons */}
                             <div className="pt-4 space-y-3">
                                 <button
-                                    onClick={() => {
-                                        setPeriodType('range');
-                                        setCustomRange({ start: customReportForm.startDate, end: customReportForm.endDate });
-                                        setFilterMember(customReportForm.memberId);
-                                        setFilterDepartment(customReportForm.departmentId || 'all');
-                                        setFilterCategory(customReportForm.categoryId || 'all');
-                                        setFilterType(customReportForm.type || 'all');
-                                        setShowCustomReportModal(false);
-                                        fetchData();
-                                        exportExpenseToPDF({ data: transactions, period: `${customReportForm.startDate} to ${customReportForm.endDate}`, filename: 'custom_report' });
+                                    onClick={async () => {
+                                        try {
+                                            const params = {
+                                                startDate: customReportForm.startDate,
+                                                endDate: customReportForm.endDate,
+                                                memberId: customReportForm.memberId || null,
+                                                categoryId: customReportForm.categoryId || null,
+                                                departmentId: customReportForm.departmentId || null,
+                                                type: customReportForm.type,
+                                                sector: 'education'
+                                            };
+                                            const res = await getTransactions(params);
+
+                                            // Update View State
+                                            setPeriodType('range');
+                                            setCustomRange({ start: customReportForm.startDate, end: customReportForm.endDate });
+                                            setFilterMember(customReportForm.memberId);
+                                            setFilterDepartment(customReportForm.departmentId || 'all');
+                                            setFilterCategory(customReportForm.categoryId || 'all');
+                                            setFilterType(customReportForm.type || 'all');
+                                            setShowCustomReportModal(false);
+                                            setTransactions(res.data);
+
+                                            exportExpenseToPDF({
+                                                data: res.data,
+                                                period: `${customReportForm.startDate} to ${customReportForm.endDate}`,
+                                                filename: 'custom_report'
+                                            });
+                                        } catch (error) {
+                                            toast.error("Failed to generate report");
+                                        }
                                     }}
                                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black h-[56px] flex items-center justify-center text-sm rounded-xl shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all gap-2"
                                 >
@@ -839,32 +860,48 @@ const EducationExpenses = () => {
 
                                 <div className="grid grid-cols-2 gap-3">
                                     <button
-                                        onClick={() => {
-                                            setPeriodType('range');
-                                            setCustomRange({ start: customReportForm.startDate, end: customReportForm.endDate });
-                                            setFilterMember(customReportForm.memberId);
-                                            setFilterDepartment(customReportForm.departmentId || 'all');
-                                            setFilterCategory(customReportForm.categoryId || 'all');
-                                            setFilterType(customReportForm.type || 'all');
-                                            setShowCustomReportModal(false);
-                                            fetchData();
-                                            exportExpenseToCSV(transactions, 'custom_report');
+                                        onClick={async () => {
+                                            try {
+                                                const params = {
+                                                    startDate: customReportForm.startDate,
+                                                    endDate: customReportForm.endDate,
+                                                    memberId: customReportForm.memberId || null,
+                                                    categoryId: customReportForm.categoryId || null,
+                                                    departmentId: customReportForm.departmentId || null,
+                                                    type: customReportForm.type,
+                                                    sector: 'education'
+                                                };
+                                                const res = await getTransactions(params);
+                                                exportExpenseToCSV(res.data, 'custom_report');
+                                            } catch (error) {
+                                                toast.error("Failed to export CSV");
+                                            }
                                         }}
                                         className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black h-[48px] flex items-center justify-center text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all gap-2"
                                     >
                                         <FaFileAlt /> CSV
                                     </button>
                                     <button
-                                        onClick={() => {
-                                            setPeriodType('range');
-                                            setCustomRange({ start: customReportForm.startDate, end: customReportForm.endDate });
-                                            setFilterMember(customReportForm.memberId);
-                                            setFilterDepartment(customReportForm.departmentId || 'all');
-                                            setFilterCategory(customReportForm.categoryId || 'all');
-                                            setFilterType(customReportForm.type || 'all');
-                                            setShowCustomReportModal(false);
-                                            fetchData();
-                                            exportExpenseToTXT({ data: transactions, period: `${customReportForm.startDate} to ${customReportForm.endDate}`, filename: 'custom_report' });
+                                        onClick={async () => {
+                                            try {
+                                                const params = {
+                                                    startDate: customReportForm.startDate,
+                                                    endDate: customReportForm.endDate,
+                                                    memberId: customReportForm.memberId || null,
+                                                    categoryId: customReportForm.categoryId || null,
+                                                    departmentId: customReportForm.departmentId || null,
+                                                    type: customReportForm.type,
+                                                    sector: 'education'
+                                                };
+                                                const res = await getTransactions(params);
+                                                exportExpenseToTXT({
+                                                    data: res.data,
+                                                    period: `${customReportForm.startDate} to ${customReportForm.endDate}`,
+                                                    filename: 'custom_report'
+                                                });
+                                            } catch (error) {
+                                                toast.error("Failed to export TXT");
+                                            }
                                         }}
                                         className="w-full bg-slate-700 hover:bg-slate-800 text-white font-black h-[48px] flex items-center justify-center text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-slate-700/20 active:scale-[0.98] transition-all gap-2"
                                     >

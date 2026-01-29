@@ -12,7 +12,9 @@ exports.getTransactions = async (req, res) => {
 };
 
 exports.createTransaction = async (req, res) => {
-    const { title, amount, type, category, category_id, date, project_id, member_id, sector, description } = req.body;
+    const { title, amount, type, category, category_id, date, project_id, member_id, sector, description,
+        guest_name, payment_status, quantity, unit_price, vendor_id, department_id, approval_status,
+        approved_by, payment_mode, bill_image, remarks } = req.body;
     try {
         const newTransaction = await Transaction.create({
             user_id: req.user.data_owner_id,
@@ -20,12 +22,23 @@ exports.createTransaction = async (req, res) => {
             amount,
             type,
             category,
-            category_id,
+            category_id: category_id === 'None' || category_id === '' ? null : category_id,
             date,
-            project_id,
-            member_id,
+            project_id: project_id === 'None' || project_id === '' ? null : project_id,
+            member_id: member_id === 'None' || member_id === '' ? null : member_id,
             sector,
-            description
+            description,
+            guest_name,
+            payment_status,
+            quantity,
+            unit_price,
+            vendor_id: vendor_id === 'None' || vendor_id === '' ? null : vendor_id,
+            department_id: department_id === 'None' || department_id === '' ? null : department_id,
+            approval_status,
+            approved_by,
+            payment_mode,
+            bill_image,
+            remarks
         });
         res.status(201).json(newTransaction);
     } catch (error) {
@@ -36,19 +49,32 @@ exports.createTransaction = async (req, res) => {
 
 exports.updateTransaction = async (req, res) => {
     const { id } = req.params;
-    const { title, amount, type, category, category_id, date, project_id, member_id, sector, description } = req.body;
+    const { title, amount, type, category, category_id, date, project_id, member_id, sector, description,
+        guest_name, payment_status, quantity, unit_price, vendor_id, department_id, approval_status,
+        approved_by, payment_mode, bill_image, remarks } = req.body;
     try {
         const success = await Transaction.update(id, req.user.data_owner_id, {
             title,
             amount,
             type,
             category,
-            category_id,
+            category_id: category_id === 'None' || category_id === '' ? null : category_id,
             date,
-            project_id,
-            member_id,
+            project_id: project_id === 'None' || project_id === '' ? null : project_id,
+            member_id: member_id === 'None' || member_id === '' ? null : member_id,
             sector,
-            description
+            description,
+            guest_name,
+            payment_status,
+            quantity,
+            unit_price,
+            vendor_id: vendor_id === 'None' || vendor_id === '' ? null : vendor_id,
+            department_id: department_id === 'None' || department_id === '' ? null : department_id,
+            approval_status,
+            approved_by,
+            payment_mode,
+            bill_image,
+            remarks
         });
         if (!success) return res.status(404).json({ error: 'Transaction not found' });
         res.json({ message: 'Transaction updated' });

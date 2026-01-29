@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql2/promise');
-require('dotenv').config({ path: path.resolve(__dirname, '../../server/.env') }); // Explicitly point to server/.env if needed or just ../.env
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const resetDatabase = async () => {
     let connection;

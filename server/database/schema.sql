@@ -1,8 +1,8 @@
 -- ==========================================
 -- OrganizerPro Database Schema V2
 -- ==========================================
--- Last Updated: January 28, 2026
--- Total Tables: 32 (2 Shared + 4 Personal + 11 Manufacturing + 8 IT + 7 Education)
+-- Last Updated: January 29, 2026
+-- Total Tables: 37 (2 Shared + 4 Personal + 11 Manufacturing + 8 IT + 12 Education)
 -- 
 -- ARCHITECTURE:
 -- - Sector-based isolation for data organization
@@ -10,8 +10,7 @@
 -- - Sector-specific tables for reminders, notes, transactions, attendance, etc.
 -- 
 -- LEGACY CLEANUP COMPLETED:
--- Removed 12 redundant generic tables (attendance, categories, members, notes, 
--- projects, reminders, transactions, etc.) - all replaced with sector-specific versions
+-- Removed 15+ redundant generic tables - all replaced with sector-specific versions
 -- ==========================================
 --
 -- TABLE OF CONTENTS:
@@ -50,7 +49,7 @@
 --  24. it_attendance - IT team attendance
 --  25. it_categories - IT expense/transaction categories
 --
--- EDUCATION SECTOR (7):
+-- EDUCATION SECTOR (12):
 --  26. education_transactions - Education sector financial transactions
 --  27. education_reminders - Education sector reminders
 --  28. education_notes - Education sector notes
@@ -59,10 +58,28 @@
 --  31. education_attendance - Education attendance tracking
 --  32. education_categories - Education expense categories
 --  33. education_departments - Education departments
+--  34. education_vendors - Education vendors
+--  35. education_payroll - Education payroll and salary tracking
+--  36. education_attendance_locks - Education attendance locking system
+--  37. education_audit_logs - Education sector audit trails
 -- ==========================================
 
 
 SET FOREIGN_KEY_CHECKS = 0;
+
+-- LEGACY TABLES CLEANUP (Pre-Sector Isolation)
+DROP TABLE IF EXISTS `attendance`;
+DROP TABLE IF EXISTS `categories`;
+DROP TABLE IF EXISTS `members`;
+DROP TABLE IF EXISTS `notes`;
+DROP TABLE IF EXISTS `projects`;
+DROP TABLE IF EXISTS `reminders`;
+DROP TABLE IF EXISTS `transactions`;
+DROP TABLE IF EXISTS `daily_work_logs`;
+DROP TABLE IF EXISTS `vehicle_logs`;
+DROP TABLE IF EXISTS `member_roles`;
+DROP TABLE IF EXISTS `work_types`;
+DROP TABLE IF EXISTS `audit_logs`;
 
 -- ==========================================
 -- SHARED TABLES
@@ -250,7 +267,7 @@ CREATE TABLE `manufacturing_attendance` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
   `member_id` int DEFAULT NULL,
-  `status` enum('present','absent','late','half-day','permission') NOT NULL,
+  `status` enum('present','absent','late','half-day','permission','week_off','holiday') NOT NULL,
   `subject` varchar(255) DEFAULT 'Daily Attendance',
   `date` date NOT NULL,
   `note` text,
@@ -339,7 +356,8 @@ CREATE TABLE `manufacturing_member_roles` (
   `name` varchar(255) NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_man_role` (`user_id`,`name`)
+  UNIQUE KEY `unique_man_role` (`user_id`,`name`),
+  CONSTRAINT `fk_man_role_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Manufacturing Work Types
@@ -497,7 +515,8 @@ CREATE TABLE `it_member_roles` (
   `name` varchar(255) NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_it_role` (`user_id`,`name`)
+  UNIQUE KEY `unique_it_role` (`user_id`,`name`),
+  CONSTRAINT `fk_it_role_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- IT Transactions
@@ -650,7 +669,8 @@ CREATE TABLE `education_member_roles` (
   `name` varchar(255) NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_edu_role` (`user_id`,`name`)
+  UNIQUE KEY `unique_edu_role` (`user_id`,`name`),
+  CONSTRAINT `fk_edu_role_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Education Transactions (Fees, Salaries, Expenses)
@@ -756,11 +776,16 @@ CREATE TABLE `education_payroll` (
   `deductions` decimal(15,2) DEFAULT 0,
   `status` enum('pending_approval', 'approved', 'paid') DEFAULT 'pending_approval',
   `generated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `paid_at` datetime DEFAULT NULL,
+  `transaction_id` int DEFAULT NULL,
+  `is_locked` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   KEY `member_id` (`member_id`),
+  KEY `fk_edu_pay_trans` (`transaction_id`),
   CONSTRAINT `fk_edu_pay_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_edu_pay_memb` FOREIGN KEY (`member_id`) REFERENCES `education_members` (`id`) ON DELETE CASCADE
+  CONSTRAINT `fk_edu_pay_memb` FOREIGN KEY (`member_id`) REFERENCES `education_members` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_edu_pay_trans` FOREIGN KEY (`transaction_id`) REFERENCES `education_transactions` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Education Attendance Locks
