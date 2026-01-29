@@ -8,7 +8,7 @@ import ConfirmModal from '../../components/modals/ConfirmModal';
 const EducationTeam = () => {
     const [team, setTeam] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [formData, setFormData] = useState({ username: '', email: '', password: '', role: 'teacher', department: '' });
+    const [formData, setFormData] = useState({ username: '', email: '', password: '', role: 'staff', department: '' });
     const [showModal, setShowModal] = useState(false);
     const [deleteModal, setDeleteModal] = useState({ show: false, id: null });
     const [selectedUser, setSelectedUser] = useState(null);
@@ -42,7 +42,7 @@ const EducationTeam = () => {
             await axios.post(API_URL, formData, { headers: { Authorization: `Bearer ${token}` } });
             toast.success("Staff member added successfully!");
             setShowModal(false);
-            setFormData({ username: '', email: '', password: '', role: 'teacher', department: '' });
+            setFormData({ username: '', email: '', password: '', role: 'staff', department: '' });
             fetchTeam();
         } catch (error) {
             toast.error(error.response?.data?.error || "Failed to add staff member");
@@ -369,7 +369,6 @@ const EducationTeam = () => {
                                         onChange={e => setFormData({ ...formData, role: e.target.value })}
                                         className="w-full h-12 px-4 rounded-xl bg-slate-50 border border-slate-200 focus:border-orange-600 focus:ring-2 focus:ring-orange-500/20 outline-none transition-all font-bold text-slate-700"
                                     >
-                                        <option value="teacher">Teacher</option>
                                         <option value="staff">Staff</option>
                                         <option value="manager">Manager</option>
                                         <option value="admin">Admin</option>
