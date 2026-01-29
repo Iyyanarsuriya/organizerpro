@@ -42,6 +42,38 @@ const EducationMemberManager = ({ onClose, onUpdate, sector = 'education' }) => 
     const [deleteModal, setDeleteModal] = useState({ show: false, id: null });
     const [deactivateModal, setDeactivateModal] = useState({ show: false, member: null });
 
+    // Multi-select state
+    const [selectedMembers, setSelectedMembers] = useState([]);
+    const [bulkDeleteModal, setBulkDeleteModal] = useState(false);
+
+    const toggleSelectMember = (id) => {
+        setSelectedMembers(prev => prev.includes(id) ? prev.filter(mid => mid !== id) : [...prev, id]);
+    };
+
+    const handleSelectAll = (e) => {
+        if (e.target.checked) {
+            setSelectedMembers(filteredMembers.map(m => m.id));
+        } else {
+            setSelectedMembers([]);
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        try {
+            // Sequential delete - ideally backend should support bulk delete
+            for (const id of selectedMembers) {
+                await deleteMember(id, { sector });
+            }
+            toast.success(`Deleted ${selectedMembers.length} staff members`);
+            setBulkDeleteModal(false);
+            setSelectedMembers([]);
+            fetchMembers();
+            if (onUpdate) onUpdate();
+        } catch (error) {
+            toast.error("Failed to delete selected members");
+        }
+    };
+
     const fetchMembers = async () => {
         try {
             const [memRes, roleRes, deptRes] = await Promise.all([
@@ -341,6 +373,27 @@ const EducationMemberManager = ({ onClose, onUpdate, sector = 'education' }) => 
                             <input type="text" placeholder="SEARCH..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-blue-50 hover:bg-blue-100 border border-transparent rounded-2xl py-3 pl-8 pr-4 text-xs font-black text-blue-600 text-center placeholder:text-blue-300 outline-none uppercase" />
                         </div>
                     </div>
+                    {isOwner && (
+                        <div className="flex items-center justify-between mt-4 px-2">
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    onChange={handleSelectAll}
+                                    checked={filteredMembers.length > 0 && selectedMembers.length === filteredMembers.length}
+                                    className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Select All</span>
+                            </div>
+                            {selectedMembers.length > 0 && (
+                                <button
+                                    onClick={() => setBulkDeleteModal(true)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-100 transition-colors shadow-sm"
+                                >
+                                    <FaTrash size={12} /> Delete Selected ({selectedMembers.length})
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 <div className="px-[4px] py-[4px] overflow-y-auto custom-scrollbar flex-1">
@@ -352,6 +405,14 @@ const EducationMemberManager = ({ onClose, onUpdate, sector = 'education' }) => 
                                         {/* Header: Name, Tags, Status, Actions */}
                                         <div className="flex items-start justify-between">
                                             <div className="flex items-center flex-wrap gap-2">
+                                                {isOwner && (
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedMembers.includes(member.id)}
+                                                        onChange={() => toggleSelectMember(member.id)}
+                                                        className="w-4 h-4 mr-2 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                                    />
+                                                )}
                                                 <h4 className="text-[16px] font-black text-slate-900">{member.name}</h4>
 
                                                 <div className="flex items-center gap-2">
@@ -402,6 +463,7 @@ const EducationMemberManager = ({ onClose, onUpdate, sector = 'education' }) => 
             </div>
             <ConfirmModal isOpen={deactivateModal.show} title="Deactivate Staff?" message={`Deactivate ${deactivateModal.member?.name}?`} onConfirm={confirmDeactivate} onCancel={() => setDeactivateModal({ show: false, member: null })} confirmText="Deactivate" cancelText="Cancel" type="warning" />
             <ConfirmModal isOpen={deleteModal.show} title="Delete Staff?" message="This action cannot be undone." onConfirm={confirmDelete} onCancel={() => setDeleteModal({ show: false, id: null })} confirmText="Delete" cancelText="Cancel" type="danger" />
+            <ConfirmModal isOpen={bulkDeleteModal} title="Delete Selected Staff?" message={`Are you sure you want to delete ${selectedMembers.length} staff members? This action cannot be undone.`} onConfirm={handleBulkDelete} onCancel={() => setBulkDeleteModal(false)} confirmText={`Delete ${selectedMembers.length} Staff`} cancelText="Cancel" type="danger" />
             {showRoleManager && <RoleManager roles={roles} onCreate={(data) => createMemberRole({ ...data, sector })} onDelete={(id) => deleteMemberRole(id, { sector })} onClose={() => { setShowRoleManager(false); fetchMembers(); }} onRefresh={() => getMemberRoles({ sector }).then(res => setRoles(res.data.data))} placeholder="Teacher, Clerk..." />}
             {showDeptManager && <DepartmentManager departments={departments} onCreate={(data) => createDepartment({ ...data, sector })} onDelete={(id) => deleteDepartment(id, { sector })} onClose={() => { setShowDeptManager(false); fetchMembers(); }} onRefresh={() => getDepartments({ sector }).then(res => setDepartments(res.data.data))} placeholder="Maths, Science, Admin..." />}
         </div>

@@ -261,6 +261,70 @@ const EducationAttendance = () => {
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2">
+                            {/* Export Buttons */}
+                            <ExportButtons
+                                onExportCSV={() => {
+                                    if (activeTab === 'summary') {
+                                        const headers = ['Staff Name', 'Present', 'Absent', 'Half Day', 'Leaves (CL/SL/EL)', 'Total %'];
+                                        const rows = memberSummary.map(m => {
+                                            const totalLeaves = (m.CL || 0) + (m.SL || 0) + (m.EL || 0) + (m.OD || 0);
+                                            const percentage = m.total > 0 ? ((m.present + (m.half_day * 0.5)) / m.total * 100).toFixed(0) : 0;
+                                            return [m.name, m.present, m.absent, m.half_day, totalLeaves > 0 ? totalLeaves : '-', percentage + '%'];
+                                        });
+                                        import('../../utils/exportUtils/base.js').then(({ generateCSV }) => {
+                                            generateCSV(headers, rows, `Attendance_Summary_${currentPeriod}`);
+                                        }).catch(err => toast.error("Export failed"));
+                                    } else {
+                                        const dataToExport = filteredAttendances.length > 0 ? filteredAttendances : attendances;
+                                        exportAttendanceToCSV(dataToExport, `Education_Attendance_${currentPeriod}`);
+                                    }
+                                }}
+                                onExportPDF={() => {
+                                    if (activeTab === 'summary') {
+                                        const headers = ['Staff Name', 'Present', 'Absent', 'Half Day', 'Leaves', 'Total %'];
+                                        const rows = memberSummary.map(m => {
+                                            const totalLeaves = (m.CL || 0) + (m.SL || 0) + (m.EL || 0) + (m.OD || 0);
+                                            const percentage = m.total > 0 ? ((m.present + (m.half_day * 0.5)) / m.total * 100).toFixed(0) : 0;
+                                            return [m.name, m.present, m.absent, m.half_day, totalLeaves > 0 ? totalLeaves : '-', percentage + '%'];
+                                        });
+                                        import('../../utils/exportUtils/base.js').then(({ generatePDF }) => {
+                                            generatePDF({
+                                                title: 'Attendance Summary',
+                                                period: currentPeriod,
+                                                tableHeaders: headers,
+                                                tableRows: rows,
+                                                filename: `Attendance_Summary_Report_${currentPeriod}`
+                                            });
+                                        }).catch(err => toast.error("Export failed"));
+                                    } else {
+                                        const dataToExport = filteredAttendances.length > 0 ? filteredAttendances : attendances;
+                                        exportAttendanceToPDF({
+                                            data: dataToExport,
+                                            period: currentPeriod,
+                                            filename: `Education_Attendance_${currentPeriod}`
+                                        });
+                                    }
+                                }}
+                                onExportTXT={() => {
+                                    if (activeTab === 'summary') {
+                                        const textContent = memberSummary.map(m =>
+                                            `${m.name}: Present=${m.present}, Absent=${m.absent}`
+                                        ).join('\n');
+                                        const blob = new Blob([textContent], { type: 'text/plain' });
+                                        const link = document.createElement('a');
+                                        link.href = URL.createObjectURL(blob);
+                                        link.download = `Attendance_Summary_${currentPeriod}.txt`;
+                                        link.click();
+                                    } else {
+                                        const dataToExport = filteredAttendances.length > 0 ? filteredAttendances : attendances;
+                                        exportAttendanceToTXT({
+                                            data: dataToExport,
+                                            period: currentPeriod,
+                                            filename: `Education_Attendance_${currentPeriod}`
+                                        });
+                                    }
+                                }}
+                            />
                             <div className="flex-1 min-w-[140px] sm:flex-none h-[38px] flex items-center p-1 bg-slate-50 border border-slate-200 rounded-xl shadow-sm overflow-x-auto custom-scrollbar no-scrollbar">
                                 {['day', 'month', 'year', 'range'].map((type) => (
                                     <button key={type} onClick={() => setPeriodType(type)} className={`flex-1 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${periodType === type ? 'bg-white text-blue-600 shadow-sm border border-blue-100' : 'text-slate-400 hover:text-slate-600'}`}>{type}</button>
