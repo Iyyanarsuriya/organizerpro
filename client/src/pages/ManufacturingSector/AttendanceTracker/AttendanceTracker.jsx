@@ -714,12 +714,15 @@ const AttendanceTracker = () => {
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* View Selector */}
-                <div className="flex bg-slate-100 p-1 rounded-xl shadow-inner border border-slate-200 w-full sm:w-fit mb-8 overflow-x-auto custom-scrollbar">
+                <div className="flex bg-slate-100 p-1 rounded-xl shadow-inner border border-slate-200 w-full mb-8 overflow-x-auto custom-scrollbar">
                     {[
                         { id: 'records', label: 'Records' },
                         { id: 'summary', label: 'Summary' },
                         { id: 'quick', label: 'Daily Sheet' },
-                        { id: 'members', label: 'Members' }
+                        { id: 'members', label: 'Members' },
+                        { id: 'shifts', label: 'Shifts & Rules' },
+                        { id: 'approvals', label: 'Approvals' },
+                        { id: 'calendar', label: 'Calendar' }
                     ].map(tab => (
                         <button
                             key={tab.id}
@@ -998,6 +1001,46 @@ const AttendanceTracker = () => {
                     </div>
                 ) : activeTab === 'members' ? (
                     <MemberManager onClose={() => setActiveTab('records')} onUpdate={fetchData} />
+                ) : activeTab === 'shifts' ? (
+                    <div className="bg-white rounded-3xl p-12 shadow-sm border border-slate-100 text-center">
+                        <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-blue-500 text-2xl">
+                            <FaBusinessTime />
+                        </div>
+                        <h3 className="text-xl font-black text-slate-900 mb-2">Shifts & Rules</h3>
+                        <p className="text-slate-500 max-w-md mx-auto">Configure working hours, break times, and attendance rules for your team.</p>
+                        <button className="mt-6 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all">
+                            Configure Shifts
+                        </button>
+                    </div>
+                ) : activeTab === 'approvals' ? (
+                    <div className="bg-white rounded-3xl p-12 shadow-sm border border-slate-100 text-center">
+                        <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-purple-500 text-2xl">
+                            <FaCheckCircle />
+                        </div>
+                        <h3 className="text-xl font-black text-slate-900 mb-2">Approvals & Exceptions</h3>
+                        <p className="text-slate-500 max-w-md mx-auto">Review and approve overtime requests, leave applications, and attendance corrections.</p>
+                        <div className="mt-8 flex justify-center gap-4">
+                            <div className="px-6 py-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                <p className="text-2xl font-black text-slate-900">0</p>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pending OT</p>
+                            </div>
+                            <div className="px-6 py-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                <p className="text-2xl font-black text-slate-900">0</p>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Leave Requests</p>
+                            </div>
+                        </div>
+                    </div>
+                ) : activeTab === 'calendar' ? (
+                    <div className="bg-white rounded-3xl p-12 shadow-sm border border-slate-100 text-center">
+                        <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-rose-500 text-2xl">
+                            <FaCalendarAlt />
+                        </div>
+                        <h3 className="text-xl font-black text-slate-900 mb-2">Calendar & Holidays</h3>
+                        <p className="text-slate-500 max-w-md mx-auto">Manage public holidays, company events, and non-working days.</p>
+                        <button className="mt-6 px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-slate-900/20 hover:bg-slate-800 transition-all">
+                            Manage Calendar
+                        </button>
+                    </div>
                 ) : (
                     /* Daily Sheet View */
                     <div className="bg-white rounded-[40px] shadow-xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
