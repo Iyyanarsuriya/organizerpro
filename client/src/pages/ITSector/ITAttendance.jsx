@@ -14,7 +14,7 @@ import {
     createProject,
     deleteProject
 } from '../../api/Attendance/itAttendance';
-import { getMembers, getMemberRoles } from '../../api/TeamManagement/itTeam';
+import { getMembers, getMemberRoles, createMemberRole, deleteMemberRole } from '../../api/TeamManagement/itTeam';
 import toast from 'react-hot-toast';
 import {
     FaCheckCircle, FaTimesCircle, FaClock, FaExclamationCircle,
@@ -33,6 +33,7 @@ import MemberManager from '../../components/IT/MemberManager';
 import TimesheetManager from '../../components/IT/TimesheetManager';
 import LeaveManager from '../../components/IT/LeaveManager';
 import AuditLogViewer from '../../components/IT/AuditLogViewer';
+import RoleManager from '../../components/IT/RoleManager';
 
 const SECTOR = 'it';
 
@@ -46,6 +47,7 @@ const ITAttendance = () => {
     const [projects, setProjects] = useState([]);
     const [members, setMembers] = useState([]);
     const [showProjectManager, setShowProjectManager] = useState(false);
+    const [showRoleManager, setShowRoleManager] = useState(false);
     const [filterProject, setFilterProject] = useState('');
     const [filterMember, setFilterMember] = useState('');
     const [periodType, setPeriodType] = useState('day'); // 'month', 'year', 'day', 'range'
@@ -753,6 +755,13 @@ const ITAttendance = () => {
                                         ))}
                                     </select>
                                 </div>
+                                <button
+                                    onClick={() => setShowRoleManager(true)}
+                                    className="w-[38px] h-[38px] bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center transition-all shadow-lg shadow-blue-500/20 active:scale-95 shrink-0"
+                                    title="Manage Categories"
+                                >
+                                    <FaPlus className="text-xs" />
+                                </button>
                                 <div className="flex-1 sm:w-[150px] relative">
                                     <FaFolderPlus className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]" />
                                     <select
@@ -1654,6 +1663,16 @@ const ITAttendance = () => {
                 />
             )
             }
+
+            {showRoleManager && (
+                <RoleManager
+                    roles={roles}
+                    onCreate={(data) => createMemberRole({ ...data, sector: SECTOR })}
+                    onDelete={(id) => deleteMemberRole(id, { sector: SECTOR })}
+                    onClose={() => { setShowRoleManager(false); fetchData(); }}
+                    onRefresh={() => getMemberRoles({ sector: SECTOR }).then(res => setRoles(res.data.data))}
+                />
+            )}
 
             {showOvertimeModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
