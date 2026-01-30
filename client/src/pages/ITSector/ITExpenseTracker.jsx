@@ -15,7 +15,7 @@ import { getMembers, getActiveMembers, getGuests, getMemberRoles } from '../../a
 import toast from 'react-hot-toast';
 import {
     FaWallet, FaPlus, FaTrash, FaChartBar, FaExchangeAlt, FaFileAlt, FaEdit, FaTimes,
-    FaPlusCircle, FaFolderPlus, FaBoxes, FaTruck,
+    FaPlusCircle, FaFolderPlus, FaBoxes, FaTruck, FaBuilding, FaFolder,
     FaCheck, FaQuestionCircle, FaCalculator, FaTag, FaUsers, FaFilePdf, FaFileCsv, FaChevronLeft
 } from 'react-icons/fa';
 import { exportExpenseToCSV, exportExpenseToTXT, exportExpenseToPDF, exportMemberPayslipToPDF } from '../../utils/exportUtils/index.js';
@@ -387,17 +387,25 @@ const ITExpenseTracker = () => {
                         <FaExchangeAlt className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Transactions' ? 'text-white' : 'text-slate-400'}`} />
                         <span className="font-black text-xs uppercase tracking-widest">Transactions</span>
                     </button>
-                    <button onClick={() => setActiveTab('Reports')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'Reports' ? 'bg-[#2d5bff] text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
-                        <FaFileAlt className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Reports' ? 'text-white' : 'text-slate-400'}`} />
-                        <span className="font-black text-xs uppercase tracking-widest">Reports</span>
-                    </button>
                     <button onClick={() => { setActiveTab('Salary'); setFilterMemberType('all') }} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'Salary' ? 'bg-[#2d5bff] text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
                         <FaCalculator className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Salary' ? 'text-white' : 'text-slate-400'}`} />
                         <span className="font-black text-xs uppercase tracking-widest">Salary</span>
                     </button>
+                    <button onClick={() => setActiveTab('Reports')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'Reports' ? 'bg-[#2d5bff] text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
+                        <FaFileAlt className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Reports' ? 'text-white' : 'text-slate-400'}`} />
+                        <span className="font-black text-xs uppercase tracking-widest">Reports</span>
+                    </button>
                     <button onClick={() => setActiveTab('Members')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'Members' ? 'bg-[#2d5bff] text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
                         <FaUsers className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Members' ? 'text-white' : 'text-slate-400'}`} />
                         <span className="font-black text-xs uppercase tracking-widest">Members</span>
+                    </button>
+                    <button onClick={() => setActiveTab('Projects')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'Projects' ? 'bg-[#2d5bff] text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
+                        <FaFolder className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Projects' ? 'text-white' : 'text-slate-400'}`} />
+                        <span className="font-black text-xs uppercase tracking-widest">Projects</span>
+                    </button>
+                    <button onClick={() => setActiveTab('Vendors')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'Vendors' ? 'bg-[#2d5bff] text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
+                        <FaBuilding className={`text-lg transition-transform group-hover:scale-110 ${activeTab === 'Vendors' ? 'text-white' : 'text-slate-400'}`} />
+                        <span className="font-black text-xs uppercase tracking-widest">Vendors</span>
                     </button>
                 </nav>
             </aside>
@@ -612,6 +620,32 @@ const ITExpenseTracker = () => {
                             onUpdate={fetchData}
                             projects={projects}
                         />
+                    )}
+
+                    {activeTab === 'Projects' && (
+                        <div className="w-full">
+                            <ProjectManager
+                                projects={projects}
+                                onCreate={(data) => createProject({ ...data, sector: 'it' })}
+                                onDelete={(id) => deleteProject(id, { sector: 'it' })}
+                                onClose={() => { }}
+                                onRefresh={() => getProjects({ sector: 'it' }).then(res => setProjects(res.data))}
+                                isModal={false}
+                            />
+                        </div>
+                    )}
+
+                    {activeTab === 'Vendors' && (
+                        <div className="flex flex-col items-center justify-center min-h-[400px] bg-white rounded-[40px] border border-slate-100 p-12 text-center animate-in fade-in zoom-in-95 duration-500">
+                            <div className="w-24 h-24 bg-blue-50 text-blue-500 rounded-3xl flex items-center justify-center mb-6 shadow-lg shadow-blue-500/10">
+                                <FaBuilding className="text-4xl" />
+                            </div>
+                            <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">Vendor Management</h3>
+                            <p className="text-slate-500 max-w-sm mx-auto text-sm font-medium leading-relaxed mb-8">
+                                A dedicated module for managing IT vendors, service providers, and software subscriptions is coming soon.
+                            </p>
+                            <span className="px-4 py-2 bg-slate-100 text-slate-500 rounded-lg text-xs font-black uppercase tracking-widest">Module In Development</span>
+                        </div>
                     )}
 
                 </div>
