@@ -3,9 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import ConfirmModal from '../../components/modals/ConfirmModal';
 import {
     getAttendances,
-    createAttendance,
-    updateAttendance,
-    deleteAttendance,
     getAttendanceStats,
     getMemberSummary,
     quickMarkAttendance as quickMarkITAttendance,
@@ -624,6 +621,25 @@ const ITAttendance = () => {
         h = h % 12;
         h = h ? h : 12;
         return `${h}:${m} ${ampm}`;
+    };
+
+    const onExport = (format) => {
+        let exportData = attendances;
+        if (activeTab === 'records' || activeTab === 'summary') {
+            exportData = filteredAttendances;
+        } else if (activeTab === 'quick') { // Daily Sheet
+            const targetDate = activeTargetDate;
+            exportData = attendances.filter(a => {
+                const d = new Date(a.date);
+                const aDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                return aDate === targetDate;
+            });
+        }
+
+        // Members and other tabs might need specific handling, but for attendance export, this is best.
+        if (format === 'CSV') handleExportCSV(exportData);
+        else if (format === 'PDF') handleExportPDF(exportData);
+        else if (format === 'TXT') handleExportTXT(exportData);
     };
 
     if (loading) return (
