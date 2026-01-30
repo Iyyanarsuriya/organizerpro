@@ -176,6 +176,48 @@ const bulkMarkAttendance = async (req, res) => {
     }
 };
 
+const getHolidays = async (req, res) => {
+    try {
+        const holidays = await Attendance.getHolidays(req.user.data_owner_id, req.query.sector);
+        res.status(200).json({ success: true, data: holidays });
+    } catch (error) { res.status(500).json({ success: false, message: error.message }); }
+};
+
+const createHoliday = async (req, res) => {
+    try {
+        const result = await Attendance.createHoliday({ ...req.body, user_id: req.user.data_owner_id });
+        res.status(201).json({ success: true, data: result });
+    } catch (error) { res.status(500).json({ success: false, message: error.message }); }
+};
+
+const deleteHoliday = async (req, res) => {
+    try {
+        await Attendance.deleteHoliday(req.params.id, req.user.data_owner_id, req.query.sector);
+        res.status(200).json({ success: true, message: "Deleted" });
+    } catch (error) { res.status(500).json({ success: false, message: error.message }); }
+};
+
+const getShifts = async (req, res) => {
+    try {
+        const shifts = await Attendance.getShifts(req.user.data_owner_id, req.query.sector);
+        res.status(200).json({ success: true, data: shifts });
+    } catch (error) { res.status(500).json({ success: false, message: error.message }); }
+};
+
+const createShift = async (req, res) => {
+    try {
+        const result = await Attendance.createShift({ ...req.body, user_id: req.user.data_owner_id });
+        res.status(201).json({ success: true, data: result });
+    } catch (error) { res.status(500).json({ success: false, message: error.message }); }
+};
+
+const deleteShift = async (req, res) => {
+    try {
+        await Attendance.deleteShift(req.params.id, req.user.data_owner_id, req.query.sector);
+        res.status(200).json({ success: true, message: "Deleted" });
+    } catch (error) { res.status(500).json({ success: false, message: error.message }); }
+};
+
 module.exports = {
     createAttendance,
     getAttendances,
@@ -184,5 +226,11 @@ module.exports = {
     getAttendanceStats,
     getMemberSummary,
     quickMarkAttendance,
-    bulkMarkAttendance
+    bulkMarkAttendance,
+    getHolidays,
+    createHoliday,
+    deleteHoliday,
+    getShifts,
+    createShift,
+    deleteShift
 };

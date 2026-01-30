@@ -20,6 +20,8 @@ router.post('/bulk', bulkMarkAttendance);
 router.get('/', getAttendances);
 router.get('/stats', getAttendanceStats);
 router.get('/summary', getMemberSummary);
+// Calendar & Shifts
+
 router.put('/:id', updateAttendance);
 router.delete('/:id', requireOwner, deleteAttendance);
 

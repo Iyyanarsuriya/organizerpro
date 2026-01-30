@@ -228,10 +228,12 @@ CREATE TABLE `manufacturing_members` (
   `daily_wage` decimal(15,2) DEFAULT '0.00',
   `member_type` enum('employee','worker') DEFAULT 'worker',
   `project_id` int DEFAULT NULL,
+  `shift_id` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   CONSTRAINT `fk_man_memb_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_man_memb_proj` FOREIGN KEY (`project_id`) REFERENCES `manufacturing_projects` (`id`) ON DELETE SET NULL
+  CONSTRAINT `fk_man_memb_proj` FOREIGN KEY (`project_id`) REFERENCES `manufacturing_projects` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_man_memb_shift` FOREIGN KEY (`shift_id`) REFERENCES `manufacturing_shifts` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Manufacturing Transactions
@@ -267,13 +269,17 @@ CREATE TABLE `manufacturing_attendance` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
   `member_id` int DEFAULT NULL,
-  `status` enum('present','absent','late','half-day','permission','week_off','holiday') NOT NULL,
+  `status` enum('present','absent','late','half-day','permission','week_off','holiday','CL','SL','EL','OD') NOT NULL,
   `subject` varchar(255) DEFAULT 'Daily Attendance',
   `date` date NOT NULL,
   `note` text,
   `project_id` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `check_in` time DEFAULT NULL,
+  `check_out` time DEFAULT NULL,
+  `total_hours` decimal(4,2) DEFAULT '0.00',
+  `work_mode` enum('Office','WFH','On-site') DEFAULT 'Office',
   `permission_duration` varchar(100) DEFAULT NULL,
   `permission_start_time` varchar(20) DEFAULT NULL,
   `permission_end_time` varchar(20) DEFAULT NULL,
@@ -404,6 +410,35 @@ CREATE TABLE `manufacturing_notes` (
   CONSTRAINT `fk_man_notes_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- Manufacturing Holidays
+DROP TABLE IF EXISTS `manufacturing_holidays`;
+CREATE TABLE `manufacturing_holidays` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `date` date NOT NULL,
+  `type` enum('National','Regional','Company','Other') DEFAULT 'National',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `fk_man_hol_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Manufacturing Shifts
+DROP TABLE IF EXISTS `manufacturing_shifts`;
+CREATE TABLE `manufacturing_shifts` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `start_time` time NOT NULL,
+  `end_time` time NOT NULL,
+  `break_duration` int DEFAULT '60',
+  `is_default` tinyint(1) DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `fk_man_shift_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- ==========================================

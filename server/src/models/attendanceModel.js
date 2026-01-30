@@ -352,6 +352,59 @@ const bulkMark = async (data) => {
     return { count: member_ids.length };
 };
 
+const getHolidays = async (userId, sector) => {
+    const table = sector === 'it' ? 'it_holidays' : 'manufacturing_holidays';
+    try {
+        const [rows] = await db.execute(`SELECT * FROM ${table} WHERE user_id = ? ORDER BY date`, [userId]);
+        return rows;
+    } catch (e) { return []; }
+};
+
+const createHoliday = async (data) => {
+    const table = data.sector === 'it' ? 'it_holidays' : 'manufacturing_holidays';
+    const { user_id, name, date, type } = data;
+    const [result] = await db.execute(
+        `INSERT INTO ${table} (user_id, name, date, type) VALUES (?, ?, ?, ?)`,
+        [user_id, name, date, type || 'National']
+    );
+    return { id: result.insertId, ...data };
+};
+
+const deleteHoliday = async (id, userId, sector) => {
+    const table = sector === 'it' ? 'it_holidays' : 'manufacturing_holidays';
+    const [result] = await db.execute(`DELETE FROM ${table} WHERE id = ? AND user_id = ?`, [id, userId]);
+    return result.affectedRows > 0;
+};
+
+const getShifts = async (userId, sector) => {
+    const table = sector === 'it' ? 'it_shifts' : 'manufacturing_shifts';
+    try {
+        const [rows] = await db.execute(`SELECT * FROM ${table} WHERE user_id = ?`, [userId]);
+        return rows;
+    } catch (e) { return []; }
+};
+
+const createShift = async (data) => {
+    const table = data.sector === 'it' ? 'it_shifts' : 'manufacturing_shifts';
+    const { user_id, name, start_time, end_time, break_duration, is_default } = data;
+
+    if (is_default) {
+        await db.execute(`UPDATE ${table} SET is_default = 0 WHERE user_id = ?`, [user_id]);
+    }
+
+    const [result] = await db.execute(
+        `INSERT INTO ${table} (user_id, name, start_time, end_time, break_duration, is_default) VALUES (?, ?, ?, ?, ?, ?)`,
+        [user_id, name, start_time, end_time, break_duration || 60, is_default || 0]
+    );
+    return { id: result.insertId, ...data };
+};
+
+const deleteShift = async (id, userId, sector) => {
+    const table = sector === 'it' ? 'it_shifts' : 'manufacturing_shifts';
+    const [result] = await db.execute(`DELETE FROM ${table} WHERE id = ? AND user_id = ?`, [id, userId]);
+    return result.affectedRows > 0;
+};
+
 module.exports = {
     create,
     findById,
@@ -361,5 +414,11 @@ module.exports = {
     getStats,
     getMemberSummary,
     quickMark,
-    bulkMark
+    bulkMark,
+    getHolidays,
+    createHoliday,
+    deleteHoliday,
+    getShifts,
+    createShift,
+    deleteShift
 };

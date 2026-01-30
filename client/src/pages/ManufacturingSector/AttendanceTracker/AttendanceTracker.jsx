@@ -10,6 +10,12 @@ import {
     getMemberSummary,
     quickMarkAttendance,
     bulkMarkAttendance,
+    getHolidays,
+    createHoliday,
+    deleteHoliday,
+    getShifts,
+    createShift,
+    deleteShift,
     getProjects,
     createProject,
     deleteProject
@@ -32,6 +38,8 @@ import ProjectManager from '../../../components/Manufacturing/ProjectManager';
 import MemberManager from '../../../components/Manufacturing/MemberManager';
 import RoleManager from '../../../components/Manufacturing/RoleManager';
 import { getMemberRoles, createMemberRole, deleteMemberRole } from '../../../api/TeamManagement/mfgTeam';
+import CalendarManager from './CalendarManager';
+import ShiftManager from './ShiftManager';
 
 const AttendanceTracker = () => {
     const navigate = useNavigate();
@@ -51,6 +59,8 @@ const AttendanceTracker = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [showBulkStatusModal, setShowBulkStatusModal] = useState(false);
     const [bulkStatusData, setBulkStatusData] = useState({ status: '', note: '' });
+    const [holidays, setHolidays] = useState([]);
+    const [shifts, setShifts] = useState([]);
     const [memberSummary, setMemberSummary] = useState([]);
     const [activeTab, setActiveTab] = useState('records'); // 'records', 'summary', 'quick'
     const [showCustomReportModal, setShowCustomReportModal] = useState(false);
@@ -165,7 +175,7 @@ const AttendanceTracker = () => {
 
             if (isRange && (!rangeStart || !rangeEnd)) return;
 
-            const [attRes, statsRes, summaryRes, projRes, membersRes, roleRes] = await Promise.all([
+            const [attRes, statsRes, summaryRes, projRes, membersRes, roleRes, holidaysRes, shiftsRes] = await Promise.all([
                 getAttendances({
                     projectId: filterProject,
                     memberId: filterMember,
@@ -188,7 +198,9 @@ const AttendanceTracker = () => {
                 }),
                 getProjects(),
                 getActiveMembers(),
-                getMemberRoles()
+                getMemberRoles(),
+                getHolidays({ sector: 'manufacturing' }),
+                getShifts({ sector: 'manufacturing' })
             ]);
             setAttendances(attRes.data.data);
             setStats(statsRes.data.data || []);
@@ -196,6 +208,8 @@ const AttendanceTracker = () => {
             setProjects(projRes.data);
             setMembers(membersRes.data.data);
             setRoles(roleRes.data.data);
+            setHolidays(holidaysRes.data.data);
+            setShifts(shiftsRes.data.data);
             setLoading(false);
         } catch (error) {
             toast.error("Failed to fetch attendance data");
@@ -1002,16 +1016,17 @@ const AttendanceTracker = () => {
                 ) : activeTab === 'members' ? (
                     <MemberManager onClose={() => setActiveTab('records')} onUpdate={fetchData} />
                 ) : activeTab === 'shifts' ? (
-                    <div className="bg-white rounded-3xl p-12 shadow-sm border border-slate-100 text-center">
-                        <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-blue-500 text-2xl">
-                            <FaBusinessTime />
-                        </div>
-                        <h3 className="text-xl font-black text-slate-900 mb-2">Shifts & Rules</h3>
-                        <p className="text-slate-500 max-w-md mx-auto">Configure working hours, break times, and attendance rules for your team.</p>
-                        <button className="mt-6 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all">
-                            Configure Shifts
-                        </button>
-                    </div>
+                    <ShiftManager
+                        shifts={shifts}
+                        onAdd={async (data) => {
+                            await createShift({ ...data, sector: 'manufacturing' });
+                            fetchData();
+                        }}
+                        onDelete={async (id) => {
+                            await deleteShift(id);
+                            fetchData();
+                        }}
+                    />
                 ) : activeTab === 'approvals' ? (
                     <div className="bg-white rounded-3xl p-12 shadow-sm border border-slate-100 text-center">
                         <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-purple-500 text-2xl">
@@ -1031,18 +1046,18 @@ const AttendanceTracker = () => {
                         </div>
                     </div>
                 ) : activeTab === 'calendar' ? (
-                    <div className="bg-white rounded-3xl p-12 shadow-sm border border-slate-100 text-center">
-                        <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-rose-500 text-2xl">
-                            <FaCalendarAlt />
-                        </div>
-                        <h3 className="text-xl font-black text-slate-900 mb-2">Calendar & Holidays</h3>
-                        <p className="text-slate-500 max-w-md mx-auto">Manage public holidays, company events, and non-working days.</p>
-                        <button className="mt-6 px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-slate-900/20 hover:bg-slate-800 transition-all">
-                            Manage Calendar
-                        </button>
-                    </div>
+                    <CalendarManager
+                        holidays={holidays}
+                        onAdd={async (data) => {
+                            await createHoliday({ ...data, sector: 'manufacturing' });
+                            fetchData();
+                        }}
+                        onDelete={async (id) => {
+                            await deleteHoliday(id);
+                            fetchData();
+                        }}
+                    />
                 ) : (
-                    /* Daily Sheet View */
                     <div className="bg-white rounded-[40px] shadow-xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="p-8 sm:p-12 border-b border-slate-100 bg-linear-to-br from-slate-900 to-slate-800 text-white">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
@@ -1371,11 +1386,9 @@ const AttendanceTracker = () => {
                             </div>
                         </div>
                     </div>
-                )}
+                )
+                }
             </main>
-
-
-
             {showProjectManager && (
                 <ProjectManager
                     projects={projects}
@@ -1397,212 +1410,220 @@ const AttendanceTracker = () => {
                     />
                 )
             }
-            {showOvertimeModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl p-6 relative animate-in zoom-in-95 duration-300">
-                        <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
-                            <FaBusinessTime className="text-orange-500" /> Overtime Details
-                        </h3>
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Start Time</label>
-                                    <div className="flex bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
-                                        <select value={overtimeModalData.start_hour} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, start_hour: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none"><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
-                                        <div className="w-px bg-slate-200"></div>
-                                        <select value={overtimeModalData.start_minute} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, start_minute: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none">
-                                            {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
-                                                <option key={m} value={m}>{m}</option>
-                                            ))}
-                                        </select>
-                                        <div className="w-px bg-slate-200"></div>
-                                        <select value={overtimeModalData.start_period} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, start_period: e.target.value })} className="w-full bg-transparent p-2 text-[10px] font-black uppercase text-slate-500 outline-none"><option value="AM">AM</option><option value="PM">PM</option></select>
+            {
+                showOvertimeModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+                        <div className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl p-6 relative animate-in zoom-in-95 duration-300">
+                            <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
+                                <FaBusinessTime className="text-orange-500" /> Overtime Details
+                            </h3>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Start Time</label>
+                                        <div className="flex bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                                            <select value={overtimeModalData.start_hour} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, start_hour: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none"><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
+                                            <div className="w-px bg-slate-200"></div>
+                                            <select value={overtimeModalData.start_minute} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, start_minute: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none">
+                                                {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
+                                                    <option key={m} value={m}>{m}</option>
+                                                ))}
+                                            </select>
+                                            <div className="w-px bg-slate-200"></div>
+                                            <select value={overtimeModalData.start_period} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, start_period: e.target.value })} className="w-full bg-transparent p-2 text-[10px] font-black uppercase text-slate-500 outline-none"><option value="AM">AM</option><option value="PM">PM</option></select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">End Time</label>
+                                        <div className="flex bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                                            <select value={overtimeModalData.end_hour} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, end_hour: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none"><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
+                                            <div className="w-px bg-slate-200"></div>
+                                            <select value={overtimeModalData.end_minute} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, end_minute: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none">
+                                                {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
+                                                    <option key={m} value={m}>{m}</option>
+                                                ))}
+                                            </select>
+                                            <div className="w-px bg-slate-200"></div>
+                                            <select value={overtimeModalData.end_period} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, end_period: e.target.value })} className="w-full bg-transparent p-2 text-[10px] font-black uppercase text-slate-500 outline-none"><option value="AM">AM</option><option value="PM">PM</option></select>
+                                        </div>
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">End Time</label>
-                                    <div className="flex bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
-                                        <select value={overtimeModalData.end_hour} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, end_hour: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none"><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
-                                        <div className="w-px bg-slate-200"></div>
-                                        <select value={overtimeModalData.end_minute} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, end_minute: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none">
-                                            {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
-                                                <option key={m} value={m}>{m}</option>
-                                            ))}
-                                        </select>
-                                        <div className="w-px bg-slate-200"></div>
-                                        <select value={overtimeModalData.end_period} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, end_period: e.target.value })} className="w-full bg-transparent p-2 text-[10px] font-black uppercase text-slate-500 outline-none"><option value="AM">AM</option><option value="PM">PM</option></select>
-                                    </div>
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Reason/Note</label>
+                                    <textarea
+                                        value={overtimeModalData.reason}
+                                        onChange={(e) => setOvertimeModalData({ ...overtimeModalData, reason: e.target.value })}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-700 resize-none outline-none focus:border-orange-500 transition-colors"
+                                        rows="3"
+                                        placeholder="Enter overtime details..."
+                                    ></textarea>
                                 </div>
-                            </div>
-                            <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Reason/Note</label>
-                                <textarea
-                                    value={overtimeModalData.reason}
-                                    onChange={(e) => setOvertimeModalData({ ...overtimeModalData, reason: e.target.value })}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-700 resize-none outline-none focus:border-orange-500 transition-colors"
-                                    rows="3"
-                                    placeholder="Enter overtime details..."
-                                ></textarea>
-                            </div>
-                            <div className="flex gap-3 mt-2">
-                                <button onClick={() => setShowOvertimeModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">Cancel</button>
-                                <button
-                                    onClick={() => {
-                                        const duration = `${overtimeModalData.start_hour}:${overtimeModalData.start_minute} ${overtimeModalData.start_period} - ${overtimeModalData.end_hour}:${overtimeModalData.end_minute} ${overtimeModalData.end_period}`;
-                                        handleQuickMark(overtimeModalData.member_id, null, null, null, null, null, null, { duration, reason: overtimeModalData.reason });
-                                        setShowOvertimeModal(false);
-                                    }}
-                                    className="flex-1 py-2.5 rounded-xl bg-orange-500 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-colors"
-                                >
-                                    Save OT
-                                </button>
+                                <div className="flex gap-3 mt-2">
+                                    <button onClick={() => setShowOvertimeModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">Cancel</button>
+                                    <button
+                                        onClick={() => {
+                                            const duration = `${overtimeModalData.start_hour}:${overtimeModalData.start_minute} ${overtimeModalData.start_period} - ${overtimeModalData.end_hour}:${overtimeModalData.end_minute} ${overtimeModalData.end_period}`;
+                                            handleQuickMark(overtimeModalData.member_id, null, null, null, null, null, null, { duration, reason: overtimeModalData.reason });
+                                            setShowOvertimeModal(false);
+                                        }}
+                                        className="flex-1 py-2.5 rounded-xl bg-orange-500 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-colors"
+                                    >
+                                        Save OT
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-            {showPermissionModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl p-6 relative animate-in zoom-in-95 duration-300">
-                        <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
-                            <FaClock className="text-purple-500" /> Permission Details
-                        </h3>
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Start Time</label>
-                                    <div className="flex bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
-                                        <select value={permissionModalData.start_hour} onChange={(e) => setPermissionModalData({ ...permissionModalData, start_hour: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none"><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
-                                        <div className="w-px bg-slate-200"></div>
-                                        <select value={permissionModalData.start_minute} onChange={(e) => setPermissionModalData({ ...permissionModalData, start_minute: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none">
-                                            {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
-                                                <option key={m} value={m}>{m}</option>
-                                            ))}
-                                        </select>
-                                        <div className="w-px bg-slate-200"></div>
-                                        <select value={permissionModalData.start_period} onChange={(e) => setPermissionModalData({ ...permissionModalData, start_period: e.target.value })} className="w-full bg-transparent p-2 text-[10px] font-black uppercase text-slate-500 outline-none"><option value="AM">AM</option><option value="PM">PM</option></select>
+            {
+                showPermissionModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+                        <div className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl p-6 relative animate-in zoom-in-95 duration-300">
+                            <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
+                                <FaClock className="text-purple-500" /> Permission Details
+                            </h3>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Start Time</label>
+                                        <div className="flex bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                                            <select value={permissionModalData.start_hour} onChange={(e) => setPermissionModalData({ ...permissionModalData, start_hour: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none"><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
+                                            <div className="w-px bg-slate-200"></div>
+                                            <select value={permissionModalData.start_minute} onChange={(e) => setPermissionModalData({ ...permissionModalData, start_minute: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none">
+                                                {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
+                                                    <option key={m} value={m}>{m}</option>
+                                                ))}
+                                            </select>
+                                            <div className="w-px bg-slate-200"></div>
+                                            <select value={permissionModalData.start_period} onChange={(e) => setPermissionModalData({ ...permissionModalData, start_period: e.target.value })} className="w-full bg-transparent p-2 text-[10px] font-black uppercase text-slate-500 outline-none"><option value="AM">AM</option><option value="PM">PM</option></select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">End Time</label>
+                                        <div className="flex bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                                            <select value={permissionModalData.end_hour} onChange={(e) => setPermissionModalData({ ...permissionModalData, end_hour: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none"><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
+                                            <div className="w-px bg-slate-200"></div>
+                                            <select value={permissionModalData.end_minute} onChange={(e) => setPermissionModalData({ ...permissionModalData, end_minute: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none">
+                                                {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
+                                                    <option key={m} value={m}>{m}</option>
+                                                ))}
+                                            </select>
+                                            <div className="w-px bg-slate-200"></div>
+                                            <select value={permissionModalData.end_period} onChange={(e) => setPermissionModalData({ ...permissionModalData, end_period: e.target.value })} className="w-full bg-transparent p-2 text-[10px] font-black uppercase text-slate-500 outline-none"><option value="AM">AM</option><option value="PM">PM</option></select>
+                                        </div>
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">End Time</label>
-                                    <div className="flex bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
-                                        <select value={permissionModalData.end_hour} onChange={(e) => setPermissionModalData({ ...permissionModalData, end_hour: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none"><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
-                                        <div className="w-px bg-slate-200"></div>
-                                        <select value={permissionModalData.end_minute} onChange={(e) => setPermissionModalData({ ...permissionModalData, end_minute: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none">
-                                            {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
-                                                <option key={m} value={m}>{m}</option>
-                                            ))}
-                                        </select>
-                                        <div className="w-px bg-slate-200"></div>
-                                        <select value={permissionModalData.end_period} onChange={(e) => setPermissionModalData({ ...permissionModalData, end_period: e.target.value })} className="w-full bg-transparent p-2 text-[10px] font-black uppercase text-slate-500 outline-none"><option value="AM">AM</option><option value="PM">PM</option></select>
-                                    </div>
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Reason</label>
+                                    <textarea
+                                        value={permissionModalData.reason}
+                                        onChange={(e) => setPermissionModalData({ ...permissionModalData, reason: e.target.value })}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-700 resize-none outline-none focus:border-purple-500 transition-colors"
+                                        rows="3"
+                                        placeholder="Enter permission reason..."
+                                    ></textarea>
+                                </div>
+                                <div className="flex gap-3 mt-2">
+                                    <button onClick={() => setShowPermissionModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">Cancel</button>
+                                    <button
+                                        onClick={() => {
+                                            const duration = `${permissionModalData.start_hour}:${permissionModalData.start_minute} ${permissionModalData.start_period} - ${permissionModalData.end_hour}:${permissionModalData.end_minute} ${permissionModalData.end_period}`;
+                                            const startTime = `${permissionModalData.start_hour}:${permissionModalData.start_minute} ${permissionModalData.start_period}`;
+                                            const endTime = `${permissionModalData.end_hour}:${permissionModalData.end_minute} ${permissionModalData.end_period}`;
+                                            handleQuickMark(permissionModalData.member_id, 'permission', duration, null, startTime, endTime, permissionModalData.reason);
+                                            setShowPermissionModal(false);
+                                        }}
+                                        className="flex-1 py-2.5 rounded-xl bg-purple-600 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-purple-500/20 hover:bg-purple-700 transition-colors"
+                                    >
+                                        Save
+                                    </button>
                                 </div>
                             </div>
-                            <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Reason</label>
-                                <textarea
-                                    value={permissionModalData.reason}
-                                    onChange={(e) => setPermissionModalData({ ...permissionModalData, reason: e.target.value })}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-700 resize-none outline-none focus:border-purple-500 transition-colors"
-                                    rows="3"
-                                    placeholder="Enter permission reason..."
-                                ></textarea>
-                            </div>
-                            <div className="flex gap-3 mt-2">
-                                <button onClick={() => setShowPermissionModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">Cancel</button>
-                                <button
-                                    onClick={() => {
-                                        const duration = `${permissionModalData.start_hour}:${permissionModalData.start_minute} ${permissionModalData.start_period} - ${permissionModalData.end_hour}:${permissionModalData.end_minute} ${permissionModalData.end_period}`;
-                                        const startTime = `${permissionModalData.start_hour}:${permissionModalData.start_minute} ${permissionModalData.start_period}`;
-                                        const endTime = `${permissionModalData.end_hour}:${permissionModalData.end_minute} ${permissionModalData.end_period}`;
-                                        handleQuickMark(permissionModalData.member_id, 'permission', duration, null, startTime, endTime, permissionModalData.reason);
-                                        setShowPermissionModal(false);
-                                    }}
-                                    className="flex-1 py-2.5 rounded-xl bg-purple-600 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-purple-500/20 hover:bg-purple-700 transition-colors"
-                                >
-                                    Save
-                                </button>
-                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-            {showWorkDoneModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl p-6 relative animate-in zoom-in-95 duration-300">
-                        <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
-                            <FaFileAlt className="text-blue-500" /> Work Details
-                        </h3>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Work Note</label>
-                                <textarea
-                                    value={workDoneModalData.note}
-                                    onChange={(e) => setWorkDoneModalData({ ...workDoneModalData, note: e.target.value })}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-700 resize-none outline-none focus:border-blue-500 transition-colors"
-                                    rows="4"
-                                    placeholder="Enter work details or subject..."
-                                ></textarea>
-                            </div>
-                            <div className="flex gap-3 mt-2">
-                                <button onClick={() => setShowWorkDoneModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">Cancel</button>
-                                <button
-                                    onClick={() => {
-                                        handleQuickMark(workDoneModalData.member_id, workDoneModalData.status, null, workDoneModalData.note);
-                                        setShowWorkDoneModal(false);
-                                    }}
-                                    className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-colors"
-                                >
-                                    Save Note
-                                </button>
+            {
+                showWorkDoneModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+                        <div className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl p-6 relative animate-in zoom-in-95 duration-300">
+                            <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
+                                <FaFileAlt className="text-blue-500" /> Work Details
+                            </h3>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Work Note</label>
+                                    <textarea
+                                        value={workDoneModalData.note}
+                                        onChange={(e) => setWorkDoneModalData({ ...workDoneModalData, note: e.target.value })}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-700 resize-none outline-none focus:border-blue-500 transition-colors"
+                                        rows="4"
+                                        placeholder="Enter work details or subject..."
+                                    ></textarea>
+                                </div>
+                                <div className="flex gap-3 mt-2">
+                                    <button onClick={() => setShowWorkDoneModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">Cancel</button>
+                                    <button
+                                        onClick={() => {
+                                            handleQuickMark(workDoneModalData.member_id, workDoneModalData.status, null, workDoneModalData.note);
+                                            setShowWorkDoneModal(false);
+                                        }}
+                                        className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-colors"
+                                    >
+                                        Save Note
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-            {showHalfDayModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl p-6 relative animate-in zoom-in-95 duration-300">
-                        <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
-                            <FaBusinessTime className="text-blue-500" /> Half Day Session
-                        </h3>
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-3">
-                                <button
-                                    onClick={() => setHalfDayModalData({ ...halfDayModalData, period: 'AM' })}
-                                    className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${halfDayModalData.period === 'AM' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-100 bg-slate-50 text-slate-400 hover:border-blue-200'}`}
-                                >
-                                    <span className="text-xl font-black">AM</span>
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Morning</span>
-                                </button>
-                                <button
-                                    onClick={() => setHalfDayModalData({ ...halfDayModalData, period: 'PM' })}
-                                    className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${halfDayModalData.period === 'PM' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-100 bg-slate-50 text-slate-400 hover:border-blue-200'}`}
-                                >
-                                    <span className="text-xl font-black">PM</span>
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Afternoon</span>
-                                </button>
-                            </div>
-                            <div className="flex gap-3 mt-2">
-                                <button onClick={() => setShowHalfDayModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">Cancel</button>
-                                <button
-                                    onClick={() => {
-                                        const note = halfDayModalData.period === 'AM' ? 'Morning Half Day' : 'Afternoon Half Day';
-                                        handleQuickMark(halfDayModalData.member_id, 'half-day', null, note);
-                                        setShowHalfDayModal(false);
-                                    }}
-                                    className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-colors"
-                                >
-                                    Confirm
-                                </button>
+            {
+                showHalfDayModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+                        <div className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl p-6 relative animate-in zoom-in-95 duration-300">
+                            <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
+                                <FaBusinessTime className="text-blue-500" /> Half Day Session
+                            </h3>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        onClick={() => setHalfDayModalData({ ...halfDayModalData, period: 'AM' })}
+                                        className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${halfDayModalData.period === 'AM' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-100 bg-slate-50 text-slate-400 hover:border-blue-200'}`}
+                                    >
+                                        <span className="text-xl font-black">AM</span>
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Morning</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setHalfDayModalData({ ...halfDayModalData, period: 'PM' })}
+                                        className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${halfDayModalData.period === 'PM' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-100 bg-slate-50 text-slate-400 hover:border-blue-200'}`}
+                                    >
+                                        <span className="text-xl font-black">PM</span>
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Afternoon</span>
+                                    </button>
+                                </div>
+                                <div className="flex gap-3 mt-2">
+                                    <button onClick={() => setShowHalfDayModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">Cancel</button>
+                                    <button
+                                        onClick={() => {
+                                            const note = halfDayModalData.period === 'AM' ? 'Morning Half Day' : 'Afternoon Half Day';
+                                            handleQuickMark(halfDayModalData.member_id, 'half-day', null, note);
+                                            setShowHalfDayModal(false);
+                                        }}
+                                        className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-colors"
+                                    >
+                                        Confirm
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             <ConfirmModal
                 isOpen={confirmModal.show}

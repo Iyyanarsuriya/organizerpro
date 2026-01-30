@@ -5,6 +5,12 @@ export const getAttendances = (params) => axiosInstance.get('/manufacturing-sect
 export const createAttendance = (data) => axiosInstance.post('/manufacturing-sector/attendance', data);
 export const quickMarkAttendance = (data) => axiosInstance.post('/manufacturing-sector/attendance/quick', data);
 export const bulkMarkAttendance = (data) => axiosInstance.post('/manufacturing-sector/attendance/bulk', data);
+export const getHolidays = (params) => axiosInstance.get('/manufacturing-sector/attendance/holidays', { params });
+export const createHoliday = (data) => axiosInstance.post('/manufacturing-sector/attendance/holidays', data);
+export const deleteHoliday = (id) => axiosInstance.delete(`/manufacturing-sector/attendance/holidays/${id}`);
+export const getShifts = (params) => axiosInstance.get('/manufacturing-sector/attendance/shifts', { params });
+export const createShift = (data) => axiosInstance.post('/manufacturing-sector/attendance/shifts', data);
+export const deleteShift = (id) => axiosInstance.delete(`/manufacturing-sector/attendance/shifts/${id}`);
 export const updateAttendance = (id, data) => axiosInstance.put(`/manufacturing-sector/attendance/${id}`, data);
 export const deleteAttendance = (id) => axiosInstance.delete(`/manufacturing-sector/attendance/${id}`);
 export const getAttendanceStats = (params) => axiosInstance.get('/manufacturing-sector/attendance/stats', { params });
