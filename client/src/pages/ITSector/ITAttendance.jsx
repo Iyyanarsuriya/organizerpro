@@ -1294,12 +1294,11 @@ const ITAttendance = () => {
                                 <table className="w-full text-left">
                                     <thead>
                                         <tr className="bg-slate-50/50">
-                                            <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Name</th>
-                                            <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Status</th>
-                                            <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Check-In / Out</th>
-                                            <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Work Details</th>
-                                            <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Hours</th>
-                                            <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Current</th>
+                                            <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Name</th>
+                                            <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Status</th>
+                                            <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Time Log</th>
+                                            <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Work Details</th>
+                                            <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Current</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
@@ -1319,7 +1318,7 @@ const ITAttendance = () => {
 
                                                 return (
                                                     <tr key={w.id} className="hover:bg-slate-50/50 transition-colors group">
-                                                        <td className="px-8 py-6">
+                                                        <td className="px-4 py-6">
                                                             <div className="flex items-center gap-4">
                                                                 <div className="w-10 h-10 bg-white rounded-xl border border-slate-100 items-center justify-center text-slate-400 group-hover:text-blue-500 shadow-sm transition-all shrink-0 flex">
                                                                     <FaUserCheck />
@@ -1330,8 +1329,8 @@ const ITAttendance = () => {
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td className="px-8 py-6 text-center">
-                                                            <div className="flex items-center justify-center gap-2">
+                                                        <td className="px-4 py-6 text-center">
+                                                            <div className="flex flex-col xl:flex-row items-center justify-center gap-3">
                                                                 <div className="flex bg-slate-50 p-1 rounded-2xl border border-slate-100">
                                                                     {[
                                                                         { id: 'present', label: 'PRE', color: 'bg-emerald-500 text-white shadow-emerald-500/30' },
@@ -1350,7 +1349,7 @@ const ITAttendance = () => {
                                                                                     handleQuickMark(w.id, opt.id);
                                                                                 }
                                                                             }}
-                                                                            className={`px-3 py-2 rounded-xl text-[10px] font-black transition-all ${currentStatus === opt.id
+                                                                            className={`px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl text-[9px] sm:text-[10px] font-black transition-all ${currentStatus === opt.id
                                                                                 ? `${opt.color} shadow-lg scale-105`
                                                                                 : 'text-slate-400 hover:text-slate-600 hover:bg-white'
                                                                                 } ${!canEdit ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -1360,7 +1359,7 @@ const ITAttendance = () => {
                                                                     ))}
                                                                 </div>
 
-                                                                <div className="w-px h-8 bg-slate-200"></div>
+                                                                <div className="hidden xl:block w-px h-8 bg-slate-200"></div>
 
                                                                 <div className="flex bg-slate-50 p-1 rounded-2xl border border-slate-100">
                                                                     {[
@@ -1373,7 +1372,7 @@ const ITAttendance = () => {
                                                                             key={opt.id}
                                                                             disabled={!canEdit}
                                                                             onClick={() => handleQuickMark(w.id, opt.id)}
-                                                                            className={`px-3 py-2 rounded-xl text-[10px] font-black transition-all ${currentStatus === opt.id
+                                                                            className={`px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl text-[9px] sm:text-[10px] font-black transition-all ${currentStatus === opt.id
                                                                                 ? `${opt.color} shadow-lg scale-105`
                                                                                 : 'text-slate-400 hover:text-slate-600 hover:bg-white'
                                                                                 } ${!canEdit ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -1384,68 +1383,68 @@ const ITAttendance = () => {
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td className="px-8 py-6">
-                                                            <div className="flex items-center justify-center gap-2">
-                                                                {/* Check In Button */}
-                                                                {!attendance?.check_in ? (
-                                                                    <button
-                                                                        disabled={!canEdit || (currentStatus !== 'present' && currentStatus !== 'late')}
-                                                                        onClick={() => {
-                                                                            const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
-                                                                            handleQuickMark(w.id, 'present', null, null, null, null, null, null, time, null, null, 'Office');
-                                                                        }}
-                                                                        className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1 ${(currentStatus !== 'present' && currentStatus !== 'late') ? 'opacity-30 cursor-not-allowed bg-slate-50' : 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 hover:bg-emerald-600'}`}
-                                                                    >
-                                                                        <FaCheckCircle /> IN
-                                                                    </button>
-                                                                ) : (
-                                                                    <div className="text-center">
-                                                                        <div className="text-[10px] font-bold text-slate-700 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200">
-                                                                            {attendance.check_in.slice(0, 5)}
-                                                                        </div>
+                                                        <td className="px-4 py-6">
+                                                            <div className="flex flex-col items-center justify-center gap-2">
+                                                                <div className="flex items-center gap-2">
+                                                                    {/* Check In */}
+                                                                    {!attendance?.check_in ? (
+                                                                        <button
+                                                                            disabled={!canEdit || (currentStatus !== 'present' && currentStatus !== 'late')}
+                                                                            onClick={() => {
+                                                                                const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+                                                                                handleQuickMark(w.id, 'present', null, null, null, null, null, null, time, null, null, 'Office');
+                                                                            }}
+                                                                            className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1 ${(currentStatus !== 'present' && currentStatus !== 'late') ? 'opacity-30 cursor-not-allowed bg-slate-50' : 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 hover:bg-emerald-600'}`}
+                                                                        >
+                                                                            <FaCheckCircle /> IN
+                                                                        </button>
+                                                                    ) : (
+                                                                        <span className="text-[11px] font-black text-slate-700 font-mono bg-slate-100 px-2 py-1 rounded-md">{attendance.check_in.slice(0, 5)}</span>
+                                                                    )}
+
+                                                                    <span className="text-slate-300 text-[10px]">➜</span>
+
+                                                                    {/* Check Out */}
+                                                                    {!attendance?.check_out ? (
+                                                                        <button
+                                                                            disabled={!canEdit || !attendance?.check_in}
+                                                                            onClick={() => {
+                                                                                const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+                                                                                const total = calculateDuration(attendance.check_in, time);
+                                                                                handleQuickMark(w.id, 'present', null, null, null, null, null, null, null, time, total, attendance.work_mode || 'Office');
+                                                                            }}
+                                                                            className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1 ${!attendance?.check_in ? 'opacity-30 cursor-not-allowed bg-slate-50' : 'bg-red-500 text-white shadow-lg shadow-red-500/30 hover:bg-red-600'}`}
+                                                                        >
+                                                                            <FaTimesCircle /> OUT
+                                                                        </button>
+                                                                    ) : (
+                                                                        <span className="text-[11px] font-black text-slate-700 font-mono bg-slate-100 px-2 py-1 rounded-md">{attendance.check_out.slice(0, 5)}</span>
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Total Hours Display inline */}
+                                                                {attendance?.total_hours > 0 && (
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Total:</span>
+                                                                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">{attendance.total_hours} Hrs</span>
                                                                     </div>
                                                                 )}
 
-                                                                {/* Arrow */}
-                                                                <span className="text-slate-300">→</span>
-
-                                                                {/* Check Out Button */}
-                                                                {!attendance?.check_out ? (
-                                                                    <button
-                                                                        disabled={!canEdit || !attendance?.check_in}
-                                                                        onClick={() => {
-                                                                            const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
-                                                                            const total = calculateDuration(attendance.check_in, time);
-                                                                            handleQuickMark(w.id, 'present', null, null, null, null, null, null, null, time, total, attendance.work_mode || 'Office');
-                                                                        }}
-                                                                        className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1 ${!attendance?.check_in ? 'opacity-30 cursor-not-allowed bg-slate-50' : 'bg-red-500 text-white shadow-lg shadow-red-500/30 hover:bg-red-600'}`}
-                                                                    >
-                                                                        <FaTimesCircle /> OUT
-                                                                    </button>
-                                                                ) : (
-                                                                    <div className="text-center">
-                                                                        <div className="text-[10px] font-bold text-slate-700 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200">
-                                                                            {attendance.check_out.slice(0, 5)}
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                            {/* Mode Selection */}
-                                                            {attendance?.check_in && !attendance?.check_out && (
-                                                                <div className="mt-2 flex justify-center">
+                                                                {/* Mode Selection */}
+                                                                {attendance?.check_in && !attendance?.check_out && (
                                                                     <select
                                                                         value={attendance?.work_mode || 'Office'}
                                                                         onChange={(e) => handleQuickMark(w.id, currentStatus, null, null, null, null, null, null, null, null, null, e.target.value)}
-                                                                        className="bg-transparent text-[9px] font-black uppercase text-blue-500 outline-none cursor-pointer text-center"
+                                                                        className="bg-transparent text-[9px] font-black uppercase text-blue-500 outline-none cursor-pointer text-center mt-1"
                                                                     >
                                                                         <option value="Office">Office</option>
                                                                         <option value="WFH">WFH</option>
                                                                         <option value="On-site">On-site</option>
                                                                     </select>
-                                                                </div>
-                                                            )}
+                                                                )}
+                                                            </div>
                                                         </td>
-                                                        <td className="px-8 py-6">
+                                                        <td className="px-4 py-6">
                                                             <div
                                                                 onClick={() => {
                                                                     if (!isPresentOrPerm || !canEdit) return;
@@ -1474,22 +1473,7 @@ const ITAttendance = () => {
                                                                 )}
                                                             </div>
                                                         </td>
-                                                        <td className="px-8 py-6">
-                                                            <div className={`text-xs font-bold text-slate-600 ${isPresentOrPerm ? 'opacity-100' : 'opacity-30'}`}>
-                                                                {attendance?.check_in ? (
-                                                                    <div className="flex flex-col">
-                                                                        <span>In: {attendance.check_in.slice(0, 5)}</span>
-                                                                        <span>Out: {attendance.check_out ? attendance.check_out.slice(0, 5) : '--:--'}</span>
-                                                                        {attendance?.total_hours > 0 && (
-                                                                            <span className="text-[10px] text-emerald-600 mt-1">{attendance.total_hours} Hrs</span>
-                                                                        )}
-                                                                    </div>
-                                                                ) : (
-                                                                    <span className="text-slate-300">--:--</span>
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-8 py-6 text-right">
+                                                        <td className="px-4 py-6 text-right">
                                                             {option && (
                                                                 <div className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${option.bg} ${option.color} border ${option.border}`}>
                                                                     <option.icon className="text-xs" />
@@ -1685,9 +1669,9 @@ const ITAttendance = () => {
                                     })}
                             </div>
                         </div>
-                    </div>
+                    </div >
                 )}
-            </main>
+            </main >
 
 
 
@@ -1702,360 +1686,369 @@ const ITAttendance = () => {
             )
             }
 
-            {showRoleManager && (
-                <RoleManager
-                    roles={roles}
-                    onCreate={(data) => createMemberRole({ ...data, sector: SECTOR })}
-                    onDelete={(id) => deleteMemberRole(id, { sector: SECTOR })}
-                    onClose={() => { setShowRoleManager(false); fetchData(); }}
-                    onRefresh={() => getMemberRoles({ sector: SECTOR }).then(res => setRoles(res.data.data))}
-                />
-            )}
+            {
+                showRoleManager && (
+                    <RoleManager
+                        roles={roles}
+                        onCreate={(data) => createMemberRole({ ...data, sector: SECTOR })}
+                        onDelete={(id) => deleteMemberRole(id, { sector: SECTOR })}
+                        onClose={() => { setShowRoleManager(false); fetchData(); }}
+                        onRefresh={() => getMemberRoles({ sector: SECTOR }).then(res => setRoles(res.data.data))}
+                    />
+                )
+            }
 
-            {showOvertimeModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl p-6 relative animate-in zoom-in-95 duration-300">
-                        <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
-                            <FaBusinessTime className="text-orange-500" /> Overtime Details
-                        </h3>
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Start Time</label>
-                                    <div className="flex bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
-                                        <select value={overtimeModalData.start_hour} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, start_hour: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none"><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
-                                        <div className="w-px bg-slate-200"></div>
-                                        <select value={overtimeModalData.start_minute} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, start_minute: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none">
-                                            {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
-                                                <option key={m} value={m}>{m}</option>
-                                            ))}
-                                        </select>
-                                        <div className="w-px bg-slate-200"></div>
-                                        <select value={overtimeModalData.start_period} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, start_period: e.target.value })} className="w-full bg-transparent p-2 text-[10px] font-black uppercase text-slate-500 outline-none"><option value="AM">AM</option><option value="PM">PM</option></select>
+            {
+                showOvertimeModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+                        <div className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl p-6 relative animate-in zoom-in-95 duration-300">
+                            <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
+                                <FaBusinessTime className="text-orange-500" /> Overtime Details
+                            </h3>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Start Time</label>
+                                        <div className="flex bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                                            <select value={overtimeModalData.start_hour} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, start_hour: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none"><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
+                                            <div className="w-px bg-slate-200"></div>
+                                            <select value={overtimeModalData.start_minute} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, start_minute: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none">
+                                                {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
+                                                    <option key={m} value={m}>{m}</option>
+                                                ))}
+                                            </select>
+                                            <div className="w-px bg-slate-200"></div>
+                                            <select value={overtimeModalData.start_period} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, start_period: e.target.value })} className="w-full bg-transparent p-2 text-[10px] font-black uppercase text-slate-500 outline-none"><option value="AM">AM</option><option value="PM">PM</option></select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">End Time</label>
+                                        <div className="flex bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                                            <select value={overtimeModalData.end_hour} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, end_hour: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none"><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
+                                            <div className="w-px bg-slate-200"></div>
+                                            <select value={overtimeModalData.end_minute} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, end_minute: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none">
+                                                {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
+                                                    <option key={m} value={m}>{m}</option>
+                                                ))}
+                                            </select>
+                                            <div className="w-px bg-slate-200"></div>
+                                            <select value={overtimeModalData.end_period} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, end_period: e.target.value })} className="w-full bg-transparent p-2 text-[10px] font-black uppercase text-slate-500 outline-none"><option value="AM">AM</option><option value="PM">PM</option></select>
+                                        </div>
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">End Time</label>
-                                    <div className="flex bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
-                                        <select value={overtimeModalData.end_hour} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, end_hour: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none"><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
-                                        <div className="w-px bg-slate-200"></div>
-                                        <select value={overtimeModalData.end_minute} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, end_minute: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none">
-                                            {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
-                                                <option key={m} value={m}>{m}</option>
-                                            ))}
-                                        </select>
-                                        <div className="w-px bg-slate-200"></div>
-                                        <select value={overtimeModalData.end_period} onChange={(e) => setOvertimeModalData({ ...overtimeModalData, end_period: e.target.value })} className="w-full bg-transparent p-2 text-[10px] font-black uppercase text-slate-500 outline-none"><option value="AM">AM</option><option value="PM">PM</option></select>
-                                    </div>
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Reason/Note</label>
+                                    <textarea
+                                        value={overtimeModalData.reason}
+                                        onChange={(e) => setOvertimeModalData({ ...overtimeModalData, reason: e.target.value })}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-700 resize-none outline-none focus:border-orange-500 transition-colors"
+                                        rows="3"
+                                        placeholder="Enter overtime details..."
+                                    ></textarea>
                                 </div>
-                            </div>
-                            <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Reason/Note</label>
-                                <textarea
-                                    value={overtimeModalData.reason}
-                                    onChange={(e) => setOvertimeModalData({ ...overtimeModalData, reason: e.target.value })}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-700 resize-none outline-none focus:border-orange-500 transition-colors"
-                                    rows="3"
-                                    placeholder="Enter overtime details..."
-                                ></textarea>
-                            </div>
-                            <div className="flex gap-3 mt-2">
-                                <button onClick={() => setShowOvertimeModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">Cancel</button>
-                                <button
-                                    onClick={() => {
-                                        const duration = `${overtimeModalData.start_hour}:${overtimeModalData.start_minute} ${overtimeModalData.start_period} - ${overtimeModalData.end_hour}:${overtimeModalData.end_minute} ${overtimeModalData.end_period}`;
-                                        handleQuickMark(overtimeModalData.member_id, null, null, null, null, null, null, { duration, reason: overtimeModalData.reason });
-                                        setShowOvertimeModal(false);
-                                    }}
-                                    className="flex-1 py-2.5 rounded-xl bg-orange-500 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-colors"
-                                >
-                                    Save OT
-                                </button>
+                                <div className="flex gap-3 mt-2">
+                                    <button onClick={() => setShowOvertimeModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">Cancel</button>
+                                    <button
+                                        onClick={() => {
+                                            const duration = `${overtimeModalData.start_hour}:${overtimeModalData.start_minute} ${overtimeModalData.start_period} - ${overtimeModalData.end_hour}:${overtimeModalData.end_minute} ${overtimeModalData.end_period}`;
+                                            handleQuickMark(overtimeModalData.member_id, null, null, null, null, null, null, { duration, reason: overtimeModalData.reason });
+                                            setShowOvertimeModal(false);
+                                        }}
+                                        className="flex-1 py-2.5 rounded-xl bg-orange-500 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-colors"
+                                    >
+                                        Save OT
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-            {showPermissionModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl p-6 relative animate-in zoom-in-95 duration-300">
-                        <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
-                            <FaClock className="text-purple-500" /> Permission Details
-                        </h3>
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Start Time</label>
-                                    <div className="flex bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
-                                        <select value={permissionModalData.start_hour} onChange={(e) => setPermissionModalData({ ...permissionModalData, start_hour: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none"><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
-                                        <div className="w-px bg-slate-200"></div>
-                                        <select value={permissionModalData.start_minute} onChange={(e) => setPermissionModalData({ ...permissionModalData, start_minute: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none">
-                                            {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
-                                                <option key={m} value={m}>{m}</option>
-                                            ))}
-                                        </select>
-                                        <div className="w-px bg-slate-200"></div>
-                                        <select value={permissionModalData.start_period} onChange={(e) => setPermissionModalData({ ...permissionModalData, start_period: e.target.value })} className="w-full bg-transparent p-2 text-[10px] font-black uppercase text-slate-500 outline-none"><option value="AM">AM</option><option value="PM">PM</option></select>
+            {
+                showPermissionModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+                        <div className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl p-6 relative animate-in zoom-in-95 duration-300">
+                            <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
+                                <FaClock className="text-purple-500" /> Permission Details
+                            </h3>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Start Time</label>
+                                        <div className="flex bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                                            <select value={permissionModalData.start_hour} onChange={(e) => setPermissionModalData({ ...permissionModalData, start_hour: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none"><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
+                                            <div className="w-px bg-slate-200"></div>
+                                            <select value={permissionModalData.start_minute} onChange={(e) => setPermissionModalData({ ...permissionModalData, start_minute: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none">
+                                                {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
+                                                    <option key={m} value={m}>{m}</option>
+                                                ))}
+                                            </select>
+                                            <div className="w-px bg-slate-200"></div>
+                                            <select value={permissionModalData.start_period} onChange={(e) => setPermissionModalData({ ...permissionModalData, start_period: e.target.value })} className="w-full bg-transparent p-2 text-[10px] font-black uppercase text-slate-500 outline-none"><option value="AM">AM</option><option value="PM">PM</option></select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">End Time</label>
+                                        <div className="flex bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                                            <select value={permissionModalData.end_hour} onChange={(e) => setPermissionModalData({ ...permissionModalData, end_hour: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none"><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
+                                            <div className="w-px bg-slate-200"></div>
+                                            <select value={permissionModalData.end_minute} onChange={(e) => setPermissionModalData({ ...permissionModalData, end_minute: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none">
+                                                {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
+                                                    <option key={m} value={m}>{m}</option>
+                                                ))}
+                                            </select>
+                                            <div className="w-px bg-slate-200"></div>
+                                            <select value={permissionModalData.end_period} onChange={(e) => setPermissionModalData({ ...permissionModalData, end_period: e.target.value })} className="w-full bg-transparent p-2 text-[10px] font-black uppercase text-slate-500 outline-none"><option value="AM">AM</option><option value="PM">PM</option></select>
+                                        </div>
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">End Time</label>
-                                    <div className="flex bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
-                                        <select value={permissionModalData.end_hour} onChange={(e) => setPermissionModalData({ ...permissionModalData, end_hour: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none"><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
-                                        <div className="w-px bg-slate-200"></div>
-                                        <select value={permissionModalData.end_minute} onChange={(e) => setPermissionModalData({ ...permissionModalData, end_minute: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none">
-                                            {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
-                                                <option key={m} value={m}>{m}</option>
-                                            ))}
-                                        </select>
-                                        <div className="w-px bg-slate-200"></div>
-                                        <select value={permissionModalData.end_period} onChange={(e) => setPermissionModalData({ ...permissionModalData, end_period: e.target.value })} className="w-full bg-transparent p-2 text-[10px] font-black uppercase text-slate-500 outline-none"><option value="AM">AM</option><option value="PM">PM</option></select>
-                                    </div>
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Reason</label>
+                                    <textarea
+                                        value={permissionModalData.reason}
+                                        onChange={(e) => setPermissionModalData({ ...permissionModalData, reason: e.target.value })}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-700 resize-none outline-none focus:border-purple-500 transition-colors"
+                                        rows="3"
+                                        placeholder="Enter permission reason..."
+                                    ></textarea>
                                 </div>
-                            </div>
-                            <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Reason</label>
-                                <textarea
-                                    value={permissionModalData.reason}
-                                    onChange={(e) => setPermissionModalData({ ...permissionModalData, reason: e.target.value })}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-700 resize-none outline-none focus:border-purple-500 transition-colors"
-                                    rows="3"
-                                    placeholder="Enter permission reason..."
-                                ></textarea>
-                            </div>
-                            <div className="flex gap-3 mt-2">
-                                <button onClick={() => setShowPermissionModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">Cancel</button>
-                                <button
-                                    onClick={() => {
-                                        const duration = `${permissionModalData.start_hour}:${permissionModalData.start_minute} ${permissionModalData.start_period} - ${permissionModalData.end_hour}:${permissionModalData.end_minute} ${permissionModalData.end_period}`;
-                                        const startTime = `${permissionModalData.start_hour}:${permissionModalData.start_minute} ${permissionModalData.start_period}`;
-                                        const endTime = `${permissionModalData.end_hour}:${permissionModalData.end_minute} ${permissionModalData.end_period}`;
-                                        handleQuickMark(permissionModalData.member_id, 'permission', duration, null, startTime, endTime, permissionModalData.reason);
-                                        setShowPermissionModal(false);
-                                    }}
-                                    className="flex-1 py-2.5 rounded-xl bg-purple-600 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-purple-500/20 hover:bg-purple-700 transition-colors"
-                                >
-                                    Save
-                                </button>
+                                <div className="flex gap-3 mt-2">
+                                    <button onClick={() => setShowPermissionModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">Cancel</button>
+                                    <button
+                                        onClick={() => {
+                                            const duration = `${permissionModalData.start_hour}:${permissionModalData.start_minute} ${permissionModalData.start_period} - ${permissionModalData.end_hour}:${permissionModalData.end_minute} ${permissionModalData.end_period}`;
+                                            const startTime = `${permissionModalData.start_hour}:${permissionModalData.start_minute} ${permissionModalData.start_period}`;
+                                            const endTime = `${permissionModalData.end_hour}:${permissionModalData.end_minute} ${permissionModalData.end_period}`;
+                                            handleQuickMark(permissionModalData.member_id, 'permission', duration, null, startTime, endTime, permissionModalData.reason);
+                                            setShowPermissionModal(false);
+                                        }}
+                                        className="flex-1 py-2.5 rounded-xl bg-purple-600 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-purple-500/20 hover:bg-purple-700 transition-colors"
+                                    >
+                                        Save
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-            {showBulkStatusModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl p-6 relative animate-in zoom-in-95 duration-300">
-                        <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
-                            <FaCalendarAlt className="text-pink-500" />
-                            {bulkStatusData.status === 'holiday' ? 'Mark Holiday' : 'Bulk Mark Status'}
-                        </h3>
+            {
+                showBulkStatusModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+                        <div className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl p-6 relative animate-in zoom-in-95 duration-300">
+                            <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
+                                <FaCalendarAlt className="text-pink-500" />
+                                {bulkStatusData.status === 'holiday' ? 'Mark Holiday' : 'Bulk Mark Status'}
+                            </h3>
 
-                        <div className="space-y-4">
-                            <p className="text-xs font-bold text-slate-500 leading-relaxed">
-                                You are about to mark <span className="text-slate-900">{members.length} active members</span> as <span className="uppercase text-blue-600">{bulkStatusData.status === 'custom' ? (bulkStatusData.selectedStatus ? bulkStatusData.selectedStatus.replace('_', ' ') : 'Present') : bulkStatusData.status.replace('_', ' ')}</span>.
-                            </p>
+                            <div className="space-y-4">
+                                <p className="text-xs font-bold text-slate-500 leading-relaxed">
+                                    You are about to mark <span className="text-slate-900">{members.length} active members</span> as <span className="uppercase text-blue-600">{bulkStatusData.status === 'custom' ? (bulkStatusData.selectedStatus ? bulkStatusData.selectedStatus.replace('_', ' ') : 'Present') : bulkStatusData.status.replace('_', ' ')}</span>.
+                                </p>
 
-                            {/* Date Selection Mode */}
-                            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Date Selection</span>
-                                    <div className="flex bg-white rounded-lg p-1 border border-slate-200">
-                                        <button
-                                            onClick={() => setBulkStatusData({ ...bulkStatusData, isRange: false })}
-                                            className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-wider transition-all ${!bulkStatusData.isRange ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                                        >
-                                            Single Day
-                                        </button>
-                                        <button
-                                            onClick={() => setBulkStatusData({ ...bulkStatusData, isRange: true })}
-                                            className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-wider transition-all ${bulkStatusData.isRange ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                                        >
-                                            Date Range
-                                        </button>
+                                {/* Date Selection Mode */}
+                                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Date Selection</span>
+                                        <div className="flex bg-white rounded-lg p-1 border border-slate-200">
+                                            <button
+                                                onClick={() => setBulkStatusData({ ...bulkStatusData, isRange: false })}
+                                                className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-wider transition-all ${!bulkStatusData.isRange ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                            >
+                                                Single Day
+                                            </button>
+                                            <button
+                                                onClick={() => setBulkStatusData({ ...bulkStatusData, isRange: true })}
+                                                className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-wider transition-all ${bulkStatusData.isRange ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                            >
+                                                Date Range
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex-1">
+                                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Start Date</label>
+                                            <input
+                                                type="date"
+                                                value={bulkStatusData.date}
+                                                onChange={(e) => setBulkStatusData({ ...bulkStatusData, date: e.target.value })}
+                                                className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold text-slate-700 outline-none focus:border-blue-500"
+                                            />
+                                        </div>
+                                        {bulkStatusData.isRange && (
+                                            <>
+                                                <span className="mt-6 text-slate-300">-</span>
+                                                <div className="flex-1">
+                                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">End Date</label>
+                                                    <input
+                                                        type="date"
+                                                        value={bulkStatusData.endDate}
+                                                        onChange={(e) => setBulkStatusData({ ...bulkStatusData, endDate: e.target.value })}
+                                                        className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold text-slate-700 outline-none focus:border-blue-500"
+                                                    />
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="flex-1">
-                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Start Date</label>
+
+                                {bulkStatusData.status === 'custom' && (
+                                    <div>
+                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Select Status</label>
+                                        <div className="grid grid-cols-2 gap-2 mb-3">
+                                            {statusOptions.filter(o => o.id !== 'all').map(option => (
+                                                <button
+                                                    key={option.id}
+                                                    onClick={() => setBulkStatusData({ ...bulkStatusData, selectedStatus: option.id })}
+                                                    className={`p-2 rounded-lg border text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${bulkStatusData.selectedStatus === option.id
+                                                        ? `${option.bg} ${option.color} ${option.border} ring-2 ring-offset-1 ring-blue-200`
+                                                        : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-50'
+                                                        }`}
+                                                >
+                                                    <option.icon /> {option.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Note (Optional)</label>
                                         <input
-                                            type="date"
-                                            value={bulkStatusData.date}
-                                            onChange={(e) => setBulkStatusData({ ...bulkStatusData, date: e.target.value })}
-                                            className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold text-slate-700 outline-none focus:border-blue-500"
+                                            type="text"
+                                            value={bulkStatusData.reason || ''}
+                                            onChange={(e) => setBulkStatusData({ ...bulkStatusData, reason: e.target.value })}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-colors"
+                                            placeholder="Add a note..."
                                         />
                                     </div>
-                                    {bulkStatusData.isRange && (
-                                        <>
-                                            <span className="mt-6 text-slate-300">-</span>
-                                            <div className="flex-1">
-                                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">End Date</label>
-                                                <input
-                                                    type="date"
-                                                    value={bulkStatusData.endDate}
-                                                    onChange={(e) => setBulkStatusData({ ...bulkStatusData, endDate: e.target.value })}
-                                                    className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold text-slate-700 outline-none focus:border-blue-500"
-                                                />
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
+                                )}
 
-                            {bulkStatusData.status === 'custom' && (
-                                <div>
-                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Select Status</label>
-                                    <div className="grid grid-cols-2 gap-2 mb-3">
-                                        {statusOptions.filter(o => o.id !== 'all').map(option => (
-                                            <button
-                                                key={option.id}
-                                                onClick={() => setBulkStatusData({ ...bulkStatusData, selectedStatus: option.id })}
-                                                className={`p-2 rounded-lg border text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${bulkStatusData.selectedStatus === option.id
-                                                    ? `${option.bg} ${option.color} ${option.border} ring-2 ring-offset-1 ring-blue-200`
-                                                    : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-50'
-                                                    }`}
-                                            >
-                                                <option.icon /> {option.label}
-                                            </button>
-                                        ))}
+                                {bulkStatusData.status === 'holiday' && (
+                                    <div>
+                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Holiday Reason</label>
+                                        <input
+                                            type="text"
+                                            value={bulkStatusData.reason}
+                                            onChange={(e) => setBulkStatusData({ ...bulkStatusData, reason: e.target.value })}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-700 outline-none focus:border-pink-500 transition-colors"
+                                            placeholder="e.g. Diwali, Independence Day..."
+                                            autoFocus
+                                        />
                                     </div>
-                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Note (Optional)</label>
-                                    <input
-                                        type="text"
-                                        value={bulkStatusData.reason || ''}
-                                        onChange={(e) => setBulkStatusData({ ...bulkStatusData, reason: e.target.value })}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-colors"
-                                        placeholder="Add a note..."
-                                    />
-                                </div>
-                            )}
+                                )}
 
-                            {bulkStatusData.status === 'holiday' && (
-                                <div>
-                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Holiday Reason</label>
-                                    <input
-                                        type="text"
-                                        value={bulkStatusData.reason}
-                                        onChange={(e) => setBulkStatusData({ ...bulkStatusData, reason: e.target.value })}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-700 outline-none focus:border-pink-500 transition-colors"
-                                        placeholder="e.g. Diwali, Independence Day..."
-                                        autoFocus
-                                    />
+                                <div className="flex gap-3 mt-4">
+                                    <button
+                                        onClick={() => setShowBulkStatusModal(false)}
+                                        className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={confirmBulkMark}
+                                        className={`flex-1 py-3 rounded-xl text-white text-xs font-black uppercase tracking-widest shadow-lg transition-colors ${bulkStatusData.status === 'holiday'
+                                            ? 'bg-pink-500 shadow-pink-500/20 hover:bg-pink-600'
+                                            : 'bg-blue-600 shadow-blue-500/20 hover:bg-blue-700'
+                                            }`}
+                                    >
+                                        Confirm
+                                    </button>
                                 </div>
-                            )}
-
-                            <div className="flex gap-3 mt-4">
-                                <button
-                                    onClick={() => setShowBulkStatusModal(false)}
-                                    className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={confirmBulkMark}
-                                    className={`flex-1 py-3 rounded-xl text-white text-xs font-black uppercase tracking-widest shadow-lg transition-colors ${bulkStatusData.status === 'holiday'
-                                        ? 'bg-pink-500 shadow-pink-500/20 hover:bg-pink-600'
-                                        : 'bg-blue-600 shadow-blue-500/20 hover:bg-blue-700'
-                                        }`}
-                                >
-                                    Confirm
-                                </button>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-            {showWorkDoneModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl p-6 relative animate-in zoom-in-95 duration-300">
-                        <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
-                            <FaFileAlt className="text-blue-500" /> Work Details
-                        </h3>
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-3 mb-2">
-                                <div>
-                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Check In</label>
-                                    <input
-                                        type="time"
-                                        value={workDoneModalData.check_in || ''}
-                                        onChange={(e) => setWorkDoneModalData({ ...workDoneModalData, check_in: e.target.value })}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700 outline-none focus:border-blue-500"
-                                    />
+            {
+                showWorkDoneModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+                        <div className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl p-6 relative animate-in zoom-in-95 duration-300">
+                            <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
+                                <FaFileAlt className="text-blue-500" /> Work Details
+                            </h3>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-3 mb-2">
+                                    <div>
+                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Check In</label>
+                                        <input
+                                            type="time"
+                                            value={workDoneModalData.check_in || ''}
+                                            onChange={(e) => setWorkDoneModalData({ ...workDoneModalData, check_in: e.target.value })}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700 outline-none focus:border-blue-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Check Out</label>
+                                        <input
+                                            type="time"
+                                            value={workDoneModalData.check_out || ''}
+                                            onChange={(e) => setWorkDoneModalData({ ...workDoneModalData, check_out: e.target.value })}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700 outline-none focus:border-blue-500"
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Check Out</label>
-                                    <input
-                                        type="time"
-                                        value={workDoneModalData.check_out || ''}
-                                        onChange={(e) => setWorkDoneModalData({ ...workDoneModalData, check_out: e.target.value })}
+
+                                <div className="mb-2">
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Work Mode</label>
+                                    <select
+                                        value={workDoneModalData.work_mode || 'Office'}
+                                        onChange={(e) => setWorkDoneModalData({ ...workDoneModalData, work_mode: e.target.value })}
                                         className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700 outline-none focus:border-blue-500"
-                                    />
+                                    >
+                                        <option value="Office">Office</option>
+                                        <option value="WFH">Work From Home</option>
+                                        <option value="On-site">On-site</option>
+                                    </select>
                                 </div>
-                            </div>
 
-                            <div className="mb-2">
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Work Mode</label>
-                                <select
-                                    value={workDoneModalData.work_mode || 'Office'}
-                                    onChange={(e) => setWorkDoneModalData({ ...workDoneModalData, work_mode: e.target.value })}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700 outline-none focus:border-blue-500"
-                                >
-                                    <option value="Office">Office</option>
-                                    <option value="WFH">Work From Home</option>
-                                    <option value="On-site">On-site</option>
-                                </select>
-                            </div>
+                                <div>
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Work Note</label>
+                                    <textarea
+                                        value={workDoneModalData.note}
+                                        onChange={(e) => setWorkDoneModalData({ ...workDoneModalData, note: e.target.value })}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-700 resize-none outline-none focus:border-blue-500 transition-colors"
+                                        rows="3"
+                                        placeholder="Enter work details or subject..."
+                                    ></textarea>
+                                </div>
+                                <div className="flex gap-3 mt-2">
+                                    <button onClick={() => setShowWorkDoneModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">Cancel</button>
+                                    <button
+                                        onClick={() => {
+                                            let total_hours = 0;
+                                            if (workDoneModalData.check_in && workDoneModalData.check_out) {
+                                                const start = new Date(`1970-01-01T${workDoneModalData.check_in}:00`);
+                                                const end = new Date(`1970-01-01T${workDoneModalData.check_out}:00`);
+                                                total_hours = (end - start) / 1000 / 60 / 60;
+                                                if (total_hours < 0) total_hours += 24; // Handle overnight
+                                                total_hours = total_hours.toFixed(2);
+                                            }
 
-                            <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Work Note</label>
-                                <textarea
-                                    value={workDoneModalData.note}
-                                    onChange={(e) => setWorkDoneModalData({ ...workDoneModalData, note: e.target.value })}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-700 resize-none outline-none focus:border-blue-500 transition-colors"
-                                    rows="3"
-                                    placeholder="Enter work details or subject..."
-                                ></textarea>
-                            </div>
-                            <div className="flex gap-3 mt-2">
-                                <button onClick={() => setShowWorkDoneModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">Cancel</button>
-                                <button
-                                    onClick={() => {
-                                        let total_hours = 0;
-                                        if (workDoneModalData.check_in && workDoneModalData.check_out) {
-                                            const start = new Date(`1970-01-01T${workDoneModalData.check_in}:00`);
-                                            const end = new Date(`1970-01-01T${workDoneModalData.check_out}:00`);
-                                            total_hours = (end - start) / 1000 / 60 / 60;
-                                            if (total_hours < 0) total_hours += 24; // Handle overnight
-                                            total_hours = total_hours.toFixed(2);
-                                        }
-
-                                        handleQuickMark(
-                                            workDoneModalData.member_id,
-                                            workDoneModalData.status,
-                                            null,
-                                            workDoneModalData.note,
-                                            null, // permission start
-                                            null, // permission end
-                                            null, // permission reason
-                                            null, // overtime data
-                                            workDoneModalData.check_in,
-                                            workDoneModalData.check_out,
-                                            total_hours,
-                                            workDoneModalData.work_mode
-                                        );
-                                        setShowWorkDoneModal(false);
-                                    }}
-                                    className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-colors"
-                                >
-                                    Save Note
-                                </button>
+                                            handleQuickMark(
+                                                workDoneModalData.member_id,
+                                                workDoneModalData.status,
+                                                null,
+                                                workDoneModalData.note,
+                                                null, // permission start
+                                                null, // permission end
+                                                null, // permission reason
+                                                null, // overtime data
+                                                workDoneModalData.check_in,
+                                                workDoneModalData.check_out,
+                                                total_hours,
+                                                workDoneModalData.work_mode
+                                            );
+                                            setShowWorkDoneModal(false);
+                                        }}
+                                        className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-colors"
+                                    >
+                                        Save Note
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )
+                )
             }
 
             {
