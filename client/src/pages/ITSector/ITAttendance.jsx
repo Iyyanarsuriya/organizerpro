@@ -16,9 +16,10 @@ import toast from 'react-hot-toast';
 import {
     FaCheckCircle, FaTimesCircle, FaClock, FaExclamationCircle,
     FaPlus, FaTrash, FaEdit, FaCalendarAlt, FaSearch,
-    FaFilter, FaChartBar, FaUserCheck, FaChevronLeft, FaChevronRight,
-    FaFolderPlus, FaTimes, FaInbox, FaUserEdit, FaCheck, FaQuestionCircle,
-    FaFileAlt, FaTag, FaBusinessTime, FaChevronDown, FaBriefcase
+    FaFilter, FaUserCheck, FaChevronLeft,
+    FaFolderPlus, FaTimes, FaUserEdit,
+    FaFileAlt, FaTag, FaBusinessTime, FaBriefcase,
+    FaChartBar, FaInbox
 } from 'react-icons/fa';
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend

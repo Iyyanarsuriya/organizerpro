@@ -15,8 +15,7 @@ import { getMembers, getActiveMembers, getGuests, getMemberRoles } from '../../a
 import toast from 'react-hot-toast';
 import {
     FaWallet, FaPlus, FaTrash, FaChartBar, FaExchangeAlt, FaFileAlt, FaEdit, FaTimes,
-    FaPlusCircle, FaFolderPlus, FaBoxes, FaTruck, FaBuilding, FaFolder,
-    FaCheck, FaQuestionCircle, FaCalculator, FaTag, FaUsers, FaFilePdf, FaFileCsv, FaChevronLeft
+    FaBuilding, FaFolder, FaCalculator, FaUsers, FaChevronLeft
 } from 'react-icons/fa';
 import { exportExpenseToCSV, exportExpenseToTXT, exportExpenseToPDF, exportMemberPayslipToPDF } from '../../utils/exportUtils/index.js';
 import { formatAmount } from '../../utils/formatUtils';
@@ -580,6 +579,7 @@ const ITExpenseTracker = () => {
                             setCurrentPeriod={setCurrentPeriod}
                             customRange={customRange}
                             setCustomRange={setCustomRange}
+                            filterProject={filterProject}
                         />
 
                     )}

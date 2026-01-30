@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { FaFileAlt, FaMoneyBillWave, FaUserCheck, FaArrowLeft, FaPlusCircle, FaPlus, FaHistory, FaHandHoldingUsd, FaReceipt, FaSearch, FaFilter, FaTag, FaUser } from 'react-icons/fa';
+import { FaFileAlt, FaMoneyBillWave, FaUserCheck, FaPlusCircle, FaHistory, FaHandHoldingUsd, FaReceipt, FaSearch, FaFilter, FaTag } from 'react-icons/fa';
 import { formatAmount } from '../../utils/formatUtils';
 import ExportButtons from '../../components/Common/ExportButtons';
 
@@ -40,7 +40,8 @@ const ITSalaryCalculator = ({
     setPeriodType,
     setCurrentPeriod,
     customRange,
-    setCustomRange
+    setCustomRange,
+    filterProject
 }) => {
     // Local Filter State
     const [searchQuery, setSearchQuery] = useState('');
@@ -531,6 +532,7 @@ const ITSalaryCalculator = ({
                                                 category: 'Salary Pot',
                                                 category_id: potCat ? potCat.id : '',
                                                 member_id: memberObj?.isGuest ? '' : filterMember,
+                                                project_id: filterProject || '',
                                                 guest_name: memberObj?.isGuest ? memberObj.name : '',
                                                 date: new Date().toISOString().split('T')[0]
                                             });
@@ -552,6 +554,7 @@ const ITSalaryCalculator = ({
                                                 category: 'Advance',
                                                 category_id: advCat ? advCat.id : '',
                                                 member_id: memberObj?.isGuest ? '' : filterMember,
+                                                project_id: filterProject || '',
                                                 guest_name: memberObj?.isGuest ? memberObj.name : '',
                                                 date: new Date().toISOString().split('T')[0]
                                             });
@@ -669,6 +672,7 @@ const ITSalaryCalculator = ({
                                             category: 'Salary',
                                             category_id: salCat ? salCat.id : '',
                                             member_id: memberObj?.isGuest ? '' : filterMember,
+                                            project_id: filterProject || '',
                                             guest_name: memberObj?.isGuest ? memberObj.name : '',
                                             date: new Date().toISOString().split('T')[0]
                                         });
