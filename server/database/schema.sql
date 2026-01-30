@@ -457,7 +457,7 @@ CREATE TABLE `it_attendance` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
   `member_id` int DEFAULT NULL,
-  `status` enum('present','absent','late','half-day','permission','week_off','holiday') NOT NULL,
+  `status` enum('present','absent','late','half-day','permission','week_off','holiday', 'CL', 'SL', 'EL', 'OD') NOT NULL,
   `subject` varchar(255) DEFAULT 'Daily Attendance',
   `date` date NOT NULL,
   `note` text,

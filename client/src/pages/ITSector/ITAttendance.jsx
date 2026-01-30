@@ -21,7 +21,7 @@ import {
     FaPlus, FaTrash, FaEdit, FaCalendarAlt, FaSearch,
     FaFilter, FaChartBar, FaUserCheck, FaChevronLeft, FaChevronRight,
     FaFolderPlus, FaTimes, FaInbox, FaUserEdit, FaCheck, FaQuestionCircle,
-    FaFileAlt, FaTag, FaBusinessTime, FaChevronDown
+    FaFileAlt, FaTag, FaBusinessTime, FaChevronDown, FaBriefcase
 } from 'react-icons/fa';
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend
@@ -147,7 +147,11 @@ const ITAttendance = () => {
         { id: 'half-day', label: 'Half Day', icon: FaExclamationCircle, color: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-100' },
         { id: 'permission', label: 'Permission', icon: FaBusinessTime, color: 'text-purple-500', bg: 'bg-purple-50', border: 'border-purple-100' },
         { id: 'week_off', label: 'Week Off', icon: FaCalendarAlt, color: 'text-slate-500', bg: 'bg-slate-50', border: 'border-slate-100' },
-        { id: 'holiday', label: 'Holiday', icon: FaCalendarAlt, color: 'text-pink-500', bg: 'bg-pink-50', border: 'border-pink-100' }
+        { id: 'holiday', label: 'Holiday', icon: FaCalendarAlt, color: 'text-pink-500', bg: 'bg-pink-50', border: 'border-pink-100' },
+        { id: 'CL', label: 'Casual Leave', icon: FaFileAlt, color: 'text-cyan-500', bg: 'bg-cyan-50', border: 'border-cyan-100' },
+        { id: 'SL', label: 'Sick Leave', icon: FaFileAlt, color: 'text-rose-500', bg: 'bg-rose-50', border: 'border-rose-100' },
+        { id: 'EL', label: 'Earned Leave', icon: FaFileAlt, color: 'text-indigo-500', bg: 'bg-indigo-50', border: 'border-indigo-100' },
+        { id: 'OD', label: 'On Duty', icon: FaBriefcase, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' }
     ];
 
     function getHexColor(status) {
@@ -159,6 +163,10 @@ const ITAttendance = () => {
             case 'permission': return '#a855f7';
             case 'week_off': return '#64748b';
             case 'holiday': return '#ec4899';
+            case 'CL': return '#06b6d4';
+            case 'SL': return '#f43f5e';
+            case 'EL': return '#6366f1';
+            case 'OD': return '#d97706';
             default: return '#94a3b8';
         }
     }
@@ -599,6 +607,10 @@ const ITAttendance = () => {
             case 'late': return '#f59e0b';
             case 'half-day': return '#3b82f6';
             case 'permission': return '#a855f7';
+            case 'CL': return '#06b6d4';
+            case 'SL': return '#f43f5e';
+            case 'EL': return '#6366f1';
+            case 'OD': return '#d97706';
             default: return '#94a3b8';
         }
     }
@@ -1319,31 +1331,57 @@ const ITAttendance = () => {
                                                             </div>
                                                         </td>
                                                         <td className="px-8 py-6 text-center">
-                                                            <div className="flex items-center justify-center gap-1">
-                                                                <button
-                                                                    disabled={!canEdit || currentStatus === 'present' || currentStatus === 'permission'}
-                                                                    onClick={() => handleQuickMark(w.id, 'present')}
-                                                                    className={`px-3 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${(!canEdit && (currentStatus !== 'present' && currentStatus !== 'permission')) ? 'opacity-50 cursor-not-allowed bg-slate-50' : (currentStatus === 'present' || currentStatus === 'permission') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 scale-105' : 'bg-slate-100/50 text-slate-400 border border-slate-100 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 cursor-pointer'}`}
-                                                                >
-                                                                    Pre
-                                                                </button>
-                                                                <button
-                                                                    disabled={!canEdit || currentStatus === 'absent'}
-                                                                    onClick={() => handleQuickMark(w.id, 'absent')}
-                                                                    className={`px-3 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${(!canEdit && currentStatus !== 'absent') ? 'opacity-50 cursor-not-allowed bg-slate-50' : currentStatus === 'absent' ? 'bg-red-500 text-white shadow-lg shadow-red-500/30 scale-105' : 'bg-slate-100/50 text-slate-400 border border-slate-100 hover:bg-red-500 hover:text-white hover:border-red-500 cursor-pointer'}`}
-                                                                >
-                                                                    Abs
-                                                                </button>
-                                                                <button
-                                                                    disabled={!canEdit || currentStatus === 'half-day'}
-                                                                    onClick={() => {
-                                                                        setHalfDayModalData({ member_id: w.id, member_name: w.name, period: 'AM' });
-                                                                        setShowHalfDayModal(true);
-                                                                    }}
-                                                                    className={`px-3 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${(!canEdit && currentStatus !== 'half-day') ? 'opacity-50 cursor-not-allowed bg-slate-50' : currentStatus === 'half-day' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30 scale-105' : 'bg-slate-100/50 text-slate-400 border border-slate-100 hover:bg-blue-500 hover:text-white hover:border-blue-500 cursor-pointer'}`}
-                                                                >
-                                                                    Half
-                                                                </button>
+                                                            <div className="flex items-center justify-center gap-2">
+                                                                <div className="flex bg-slate-50 p-1 rounded-2xl border border-slate-100">
+                                                                    {[
+                                                                        { id: 'present', label: 'PRE', color: 'bg-emerald-500 text-white shadow-emerald-500/30' },
+                                                                        { id: 'absent', label: 'ABS', color: 'bg-red-500 text-white shadow-red-500/30' },
+                                                                        { id: 'half-day', label: 'HALF', color: 'bg-blue-500 text-white shadow-blue-500/30' },
+                                                                        { id: 'late', label: 'LATE', color: 'bg-amber-500 text-white shadow-amber-500/30' }
+                                                                    ].map(opt => (
+                                                                        <button
+                                                                            key={opt.id}
+                                                                            disabled={!canEdit}
+                                                                            onClick={() => {
+                                                                                if (opt.id === 'half-day') {
+                                                                                    setHalfDayModalData({ member_id: w.id, member_name: w.name, period: 'AM' });
+                                                                                    setShowHalfDayModal(true);
+                                                                                } else {
+                                                                                    handleQuickMark(w.id, opt.id);
+                                                                                }
+                                                                            }}
+                                                                            className={`px-3 py-2 rounded-xl text-[10px] font-black transition-all ${currentStatus === opt.id
+                                                                                ? `${opt.color} shadow-lg scale-105`
+                                                                                : 'text-slate-400 hover:text-slate-600 hover:bg-white'
+                                                                                } ${!canEdit ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                        >
+                                                                            {opt.label}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+
+                                                                <div className="w-px h-8 bg-slate-200"></div>
+
+                                                                <div className="flex bg-slate-50 p-1 rounded-2xl border border-slate-100">
+                                                                    {[
+                                                                        { id: 'CL', label: 'CL', color: 'bg-cyan-500 text-white shadow-cyan-500/30' },
+                                                                        { id: 'SL', label: 'SL', color: 'bg-rose-500 text-white shadow-rose-500/30' },
+                                                                        { id: 'EL', label: 'EL', color: 'bg-indigo-500 text-white shadow-indigo-500/30' },
+                                                                        { id: 'OD', label: 'OD', color: 'bg-amber-600 text-white shadow-amber-600/30' }
+                                                                    ].map(opt => (
+                                                                        <button
+                                                                            key={opt.id}
+                                                                            disabled={!canEdit}
+                                                                            onClick={() => handleQuickMark(w.id, opt.id)}
+                                                                            className={`px-3 py-2 rounded-xl text-[10px] font-black transition-all ${currentStatus === opt.id
+                                                                                ? `${opt.color} shadow-lg scale-105`
+                                                                                : 'text-slate-400 hover:text-slate-600 hover:bg-white'
+                                                                                } ${!canEdit ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                        >
+                                                                            {opt.label}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
                                                             </div>
                                                         </td>
                                                         <td className="px-8 py-6">
