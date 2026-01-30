@@ -30,6 +30,9 @@ import { exportAttendanceToCSV, exportAttendanceToTXT, exportAttendanceToPDF, pr
 import ExportButtons from '../../components/Common/ExportButtons';
 import ProjectManager from '../../components/Manufacturing/ProjectManager';
 import MemberManager from '../../components/IT/MemberManager';
+import TimesheetManager from '../../components/IT/TimesheetManager';
+import LeaveManager from '../../components/IT/LeaveManager';
+import AuditLogViewer from '../../components/IT/AuditLogViewer';
 
 const SECTOR = 'it';
 
@@ -230,7 +233,18 @@ const ITAttendance = () => {
 
 
 
-    const handleQuickMark = async (memberId, status = null, permission_duration = null, note = null, permission_start_time = null, permission_end_time = null, permission_reason = null, overtimeData = null) => {
+    const calculateDuration = (start, end) => {
+        if (!start || !end) return 0;
+        const [h1, m1] = start.split(':').map(Number);
+        const [h2, m2] = end.split(':').map(Number);
+        const date1 = new Date(0, 0, 0, h1, m1, 0);
+        const date2 = new Date(0, 0, 0, h2, m2, 0);
+        let diff = date2 - date1;
+        if (diff < 0) diff += 24 * 60 * 60 * 1000;
+        return (diff / (1000 * 60 * 60)).toFixed(2);
+    };
+
+    const handleQuickMark = async (memberId, status = null, permission_duration = null, note = null, permission_start_time = null, permission_end_time = null, permission_reason = null, overtimeData = null, check_in = null, check_out = null, total_hours = null, work_mode = null) => {
         try {
             const date = periodType === 'day' ? currentPeriod : new Date().toISOString().split('T')[0];
             const payload = {
@@ -244,7 +258,11 @@ const ITAttendance = () => {
                 permission_start_time,
                 permission_end_time,
                 permission_reason,
-                sector: SECTOR
+                sector: SECTOR,
+                check_in,
+                check_out,
+                total_hours,
+                work_mode
             };
 
             if (overtimeData) {
@@ -538,6 +556,31 @@ const ITAttendance = () => {
         return map;
     }, [activeMembersAttendanceRecords]);
 
+    const projectSummary = useMemo(() => {
+        if (!attendances.length) return [];
+        const map = {};
+        projects.forEach(p => map[p.id] = { id: p.id, name: p.name, hours: 0, cost: 0, count: 0 });
+        map['null'] = { id: 'null', name: 'No Project', hours: 0, cost: 0, count: 0 };
+
+        attendances.forEach(a => {
+            const pid = a.project_id || 'null';
+            if (!map[pid]) map[pid] = { id: pid, name: a.project_name || 'Unknown', hours: 0, cost: 0, count: 0 };
+
+            if (a.total_hours) map[pid].hours += parseFloat(a.total_hours);
+            map[pid].count += 1;
+
+            // Calculate refined cost if possible
+            const member = members.find(m => m.id === a.member_id);
+            if (member) {
+                // Approximate cost: (wage / 8) * hours
+                const hourlyRate = (parseFloat(member.daily_wage) || 0) / 8; // Assuming 8hr day for wage calc
+                map[pid].cost += hourlyRate * (parseFloat(a.total_hours) || 0);
+            }
+        });
+
+        return Object.values(map).filter(p => p.hours > 0 || p.count > 0).sort((a, b) => b.hours - a.hours);
+    }, [attendances, projects, members]);
+
     const pieData = stats.map(s => {
         const option = statusOptions.find(o => o.id === s.status);
         return {
@@ -695,7 +738,7 @@ const ITAttendance = () => {
                                 </button>
                             </div>
 
-                            {/* Role Filter & Manager */}
+                            {/* Role Filter & Project Filter */}
                             <div className="w-full sm:w-auto flex items-center gap-2">
                                 <div className="flex-1 sm:w-[150px] relative">
                                     <FaTag className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]" />
@@ -710,7 +753,19 @@ const ITAttendance = () => {
                                         ))}
                                     </select>
                                 </div>
-
+                                <div className="flex-1 sm:w-[150px] relative">
+                                    <FaFolderPlus className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]" />
+                                    <select
+                                        value={filterProject}
+                                        onChange={(e) => setFilterProject(e.target.value)}
+                                        className="w-full h-[38px] pl-8 pr-3 bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-700 outline-none hover:border-blue-500 transition-all cursor-pointer appearance-none shadow-sm"
+                                    >
+                                        <option value="">All Projects</option>
+                                        {projects.map(p => (
+                                            <option key={p.id} value={p.id}>{p.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
 
                             {/* Global Search & Mark Button */}
@@ -758,6 +813,9 @@ const ITAttendance = () => {
                         { id: 'records', label: 'Records' },
                         { id: 'summary', label: 'Summary' },
                         { id: 'quick', label: 'Daily Sheet' },
+                        { id: 'timesheets', label: 'Timesheets' },
+                        { id: 'leaves', label: 'Leaves' },
+                        { id: 'audit', label: 'Audit Logs' },
                         { id: 'members', label: 'Members' }
                     ].map(tab => (
                         <button
@@ -769,6 +827,27 @@ const ITAttendance = () => {
                         </button>
                     ))}
                 </div>
+
+                {activeTab === 'timesheets' && (
+                    <TimesheetManager
+                        members={members}
+                        projects={projects}
+                        currentUser={currentUser}
+                    />
+                )}
+
+                {activeTab === 'leaves' && (
+                    <LeaveManager
+                        members={members}
+                        currentUser={currentUser}
+                    />
+                )}
+
+                {activeTab === 'audit' && (
+                    <AuditLogViewer
+                        sector={SECTOR}
+                    />
+                )}
 
                 {activeTab === 'records' ? (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -858,9 +937,31 @@ const ITAttendance = () => {
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center gap-1">
+                                                                <div className="flex flex-col items-end gap-1">
+                                                                    {item.check_in && (
+                                                                        <div className="text-[9px] font-bold text-slate-500 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100 flex items-center gap-1.5">
+                                                                            <span className="text-emerald-600">IN: {item.check_in.slice(0, 5)}</span>
+                                                                            {item.check_out && (
+                                                                                <>
+                                                                                    <span className="text-slate-300">|</span>
+                                                                                    <span className="text-red-500">OUT: {item.check_out.slice(0, 5)}</span>
+                                                                                </>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                    {item.total_hours > 0 && <span className="text-[8px] font-black text-blue-500 uppercase tracking-wide bg-blue-50 px-1.5 py-0.5 rounded-md">{item.total_hours} Hrs</span>}
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                        {item.note && <div className="mt-2 text-[10px] text-slate-500 italic border-l-2 border-slate-100 pl-2 line-clamp-1">"{item.note}"</div>}
+                                                        {item.work_mode && (
+                                                            <div className="mt-2 flex items-center gap-2">
+                                                                <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${item.work_mode === 'WFH' ? 'bg-purple-50 text-purple-600' : 'bg-slate-50 text-slate-500'}`}>
+                                                                    {item.work_mode}
+                                                                </span>
+                                                                {item.note && <div className="text-[10px] text-slate-500 italic line-clamp-1 border-l border-slate-200 pl-2">"{item.note}"</div>}
+                                                            </div>
+                                                        )}
+                                                        {!item.work_mode && item.note && <div className="mt-2 text-[10px] text-slate-500 italic border-l-2 border-slate-100 pl-2 line-clamp-1">"{item.note}"</div>}
                                                     </div>
                                                 );
                                             })}
@@ -913,6 +1014,7 @@ const ITAttendance = () => {
                                     <tr className="bg-slate-50/50">
                                         <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Member</th>
                                         <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-center">Stats (Days/P/A/L/H/Per)</th>
+                                        <th className="px-4 py-5 text-[10px] font-black uppercase tracking-widest text-center">Util. %</th>
                                         <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-right">Progress</th>
                                     </tr>
                                 </thead>
@@ -950,7 +1052,22 @@ const ITAttendance = () => {
                                                             <span className="w-8 h-8 flex items-center justify-center bg-amber-50 text-amber-600 rounded-lg font-black text-[10px] border border-amber-100" title="Late">{w.late}</span>
                                                             <span className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg font-black text-[10px] border border-blue-100" title="Half Day">{w.half_day}</span>
                                                             <span className="w-8 h-8 flex items-center justify-center bg-purple-50 text-purple-600 rounded-lg font-black text-[10px] border border-purple-100" title="Permission">{w.permission || 0}</span>
+                                                            {w.overtime_hours > 0 && <span className="w-auto px-2 h-8 flex items-center justify-center bg-orange-50 text-orange-600 rounded-lg font-black text-[10px] border border-orange-100" title="Overtime Hours">OT: {w.overtime_hours}h</span>}
+                                                            {w.undertime_days > 0 && <span className="w-auto px-2 h-8 flex items-center justify-center bg-pink-50 text-pink-600 rounded-lg font-black text-[10px] border border-pink-100" title="Undertime Days">UT: {w.undertime_days}</span>}
                                                         </div>
+                                                    </td>
+                                                    <td className="px-4 py-5 text-center">
+                                                        {(() => {
+                                                            const memberParam = members.find(m => m.id === w.id);
+                                                            const expectedH = memberParam?.expected_hours || 8;
+                                                            const totalExpected = w.working_days * expectedH;
+                                                            const util = totalExpected > 0 ? ((w.total_hours_worked || 0) / totalExpected) * 100 : 0;
+                                                            return (
+                                                                <span className={`text-xs font-black ${util >= 100 ? 'text-emerald-500' : util >= 80 ? 'text-blue-500' : 'text-amber-500'}`}>
+                                                                    {util.toFixed(0)}%
+                                                                </span>
+                                                            );
+                                                        })()}
                                                     </td>
                                                     <td className="px-8 py-5 text-right">
                                                         <div className="flex items-center justify-end gap-3">
@@ -1000,6 +1117,18 @@ const ITAttendance = () => {
                                             </div>
                                             <div className="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded-2xl mb-3">
                                                 <div className="flex-1 text-center">
+                                                    <p className="text-[8px] font-black text-slate-400 uppercase">Util %</p>
+                                                    <p className="text-xs font-black text-blue-600">
+                                                        {(() => {
+                                                            const memberParam = members.find(m => m.id === w.id);
+                                                            const expectedH = memberParam?.expected_hours || 8;
+                                                            const totalExpected = w.working_days * expectedH;
+                                                            return totalExpected > 0 ? (((w.total_hours_worked || 0) / totalExpected) * 100).toFixed(0) : '0';
+                                                        })()}%
+                                                    </p>
+                                                </div>
+                                                <div className="w-px h-4 bg-slate-200" />
+                                                <div className="flex-1 text-center">
                                                     <p className="text-[8px] font-black text-slate-500 uppercase">Days</p>
                                                     <p className="text-xs font-black text-slate-900">{w.working_days}</p>
                                                 </div>
@@ -1030,6 +1159,23 @@ const ITAttendance = () => {
                                                     <p className="text-xs font-black text-slate-900">{w.permission || 0}</p>
                                                 </div>
                                             </div>
+                                            {(w.overtime_hours > 0 || w.undertime_days > 0) && (
+                                                <div className="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded-2xl mt-1">
+                                                    {w.overtime_hours > 0 && (
+                                                        <div className="flex-1 text-center">
+                                                            <p className="text-[8px] font-black text-orange-500 uppercase">OT</p>
+                                                            <p className="text-xs font-black text-slate-900">{w.overtime_hours}h</p>
+                                                        </div>
+                                                    )}
+                                                    {w.overtime_hours > 0 && w.undertime_days > 0 && <div className="w-px h-4 bg-slate-200" />}
+                                                    {w.undertime_days > 0 && (
+                                                        <div className="flex-1 text-center">
+                                                            <p className="text-[8px] font-black text-pink-500 uppercase">UT</p>
+                                                            <p className="text-xs font-black text-slate-900">{w.undertime_days}</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                             <div className="mt-4 w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                                 <div className={`h-full rounded-full ${rate >= 90 ? 'bg-emerald-500' : rate >= 75 ? 'bg-blue-500' : 'bg-amber-500'}`} style={{ width: `${rate}%` }} />
                                             </div>
@@ -1043,6 +1189,30 @@ const ITAttendance = () => {
                                 </div>
                             )}
                         </div>
+
+                        {/* Project Summary Section */}
+                        {projectSummary.length > 0 && (
+                            <div className="border-t border-slate-100 p-8">
+                                <h4 className="text-md font-black text-slate-900 mb-6 flex items-center gap-2">
+                                    <FaFolderPlus className="text-indigo-500" /> Project Performance
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {projectSummary.map(p => (
+                                        <div key={p.id} className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h5 className="font-black text-slate-700 text-sm truncate pr-2">{p.name}</h5>
+                                                <span className="bg-white text-[10px] font-bold px-2 py-0.5 rounded border border-slate-200 text-slate-500">{p.hours.toFixed(1)}h</span>
+                                            </div>
+                                            <div className="flex items-center gap-4 text-[10px] text-slate-500 font-bold uppercase tracking-wide">
+                                                <span className="flex items-center gap-1"><FaUserCheck /> {p.count} Recs</span>
+                                                <span className="flex items-center gap-1 text-emerald-600"><FaTag /> ${p.cost.toFixed(0)} Est.</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                     </div>
                 ) : activeTab === 'members' ? (
                     <MemberManager sector={SECTOR} projects={projects} onClose={() => setActiveTab('records')} onUpdate={fetchData} />
@@ -1105,8 +1275,9 @@ const ITAttendance = () => {
                                         <tr className="bg-slate-50/50">
                                             <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Name</th>
                                             <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Status</th>
-                                            <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Permission</th>
+                                            <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Check-In / Out</th>
                                             <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Work Details</th>
+                                            <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Hours</th>
                                             <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Current</th>
                                         </tr>
                                     </thead>
@@ -1167,75 +1338,108 @@ const ITAttendance = () => {
                                                             </div>
                                                         </td>
                                                         <td className="px-8 py-6">
-                                                            <div className={`flex flex-col items-center gap-2 transition-all duration-300 ${isPresentOrPerm ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
-                                                                <div className="flex items-center gap-2">
+                                                            <div className="flex items-center justify-center gap-2">
+                                                                {/* Check In Button */}
+                                                                {!attendance?.check_in ? (
                                                                     <button
-                                                                        disabled={!canEdit || !isPresentOrPerm}
+                                                                        disabled={!canEdit || (currentStatus !== 'present' && currentStatus !== 'late')}
                                                                         onClick={() => {
-                                                                            const currentReason = attendance?.permission_reason || '';
-                                                                            const [startStr, endStr] = (attendance?.permission_duration || '09:00 AM - 10:00 AM').split(' - ');
-                                                                            const parseTime = (str) => {
-                                                                                const [time, period] = (str || '').split(' ');
-                                                                                const [h, m] = (time || '09:00').split(':');
-                                                                                return { h: h || '09', m: m || '00', p: period || 'AM' };
-                                                                            };
-                                                                            const start = parseTime(startStr);
-                                                                            const end = parseTime(endStr);
-                                                                            setPermissionModalData({
-                                                                                member_id: w.id, member_name: w.name, status: 'permission',
-                                                                                start_hour: start.h, start_minute: start.m, start_period: start.p,
-                                                                                end_hour: end.h, end_minute: end.m, end_period: end.p,
-                                                                                reason: currentReason, attendance_id: attendance?.id
-                                                                            });
-                                                                            setShowPermissionModal(true);
+                                                                            const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+                                                                            handleQuickMark(w.id, 'present', null, null, null, null, null, null, time, null, null, 'Office');
                                                                         }}
-                                                                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${currentStatus === 'permission' ? 'bg-purple-500 text-white shadow-xs' : 'bg-slate-50 text-slate-400 border border-slate-200 hover:bg-purple-50 hover:text-purple-600'}`}
+                                                                        className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1 ${(currentStatus !== 'present' && currentStatus !== 'late') ? 'opacity-30 cursor-not-allowed bg-slate-50' : 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 hover:bg-emerald-600'}`}
                                                                     >
-                                                                        <FaClock className="text-[10px]" /> Perm.
+                                                                        <FaCheckCircle /> IN
                                                                     </button>
-                                                                    <button
-                                                                        disabled={!canEdit || !isPresentOrPerm}
-                                                                        onClick={() => {
-                                                                            setOvertimeModalData({
-                                                                                member_id: w.id, member_name: w.name, status: 'overtime',
-                                                                                start_hour: '05', start_minute: '00', start_period: 'PM',
-                                                                                end_hour: '07', end_minute: '00', end_period: 'PM',
-                                                                                reason: attendance?.overtime_reason || '', attendance_id: attendance?.id
-                                                                            });
-                                                                            setShowOvertimeModal(true);
-                                                                        }}
-                                                                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${attendance?.overtime_duration ? 'bg-orange-500 text-white shadow-xs' : 'bg-slate-50 text-slate-400 border border-slate-200 hover:bg-orange-50 hover:text-orange-600'}`}
-                                                                    >
-                                                                        <FaBusinessTime className="text-[10px]" /> OT
-                                                                    </button>
-                                                                    {(currentStatus === 'permission' || attendance?.overtime_duration) && (
-                                                                        <div className="flex flex-col gap-1">
-                                                                            {currentStatus === 'permission' && (
-                                                                                <div className="bg-white border border-slate-100 rounded-lg px-2 py-1 text-[8px] font-bold text-slate-600 truncate max-w-[120px] shadow-sm">
-                                                                                    <div>Perm: {attendance?.permission_duration}</div>
-                                                                                    {attendance?.permission_reason && <div className="text-[7px] font-normal truncate max-w-[100px] border-t border-slate-100 mt-0.5 pt-0.5 opacity-70">{attendance.permission_reason}</div>}
-                                                                                </div>
-                                                                            )}
-                                                                            {attendance?.overtime_duration && (
-                                                                                <div className="bg-white border border-slate-100 rounded-lg px-2 py-1 text-[8px] font-bold text-orange-600 truncate max-w-[120px] shadow-sm">
-                                                                                    <div>OT: {attendance?.overtime_duration}</div>
-                                                                                    {attendance?.overtime_reason && <div className="text-[7px] font-normal truncate max-w-[100px] border-t mt-0.5 pt-0.5 opacity-70 border-orange-100">{attendance.overtime_reason}</div>}
-                                                                                </div>
-                                                                            )}
+                                                                ) : (
+                                                                    <div className="text-center">
+                                                                        <div className="text-[10px] font-bold text-slate-700 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200">
+                                                                            {attendance.check_in.slice(0, 5)}
                                                                         </div>
-                                                                    )}
-                                                                </div>
+                                                                    </div>
+                                                                )}
+
+                                                                {/* Arrow */}
+                                                                <span className="text-slate-300">→</span>
+
+                                                                {/* Check Out Button */}
+                                                                {!attendance?.check_out ? (
+                                                                    <button
+                                                                        disabled={!canEdit || !attendance?.check_in}
+                                                                        onClick={() => {
+                                                                            const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+                                                                            const total = calculateDuration(attendance.check_in, time);
+                                                                            handleQuickMark(w.id, 'present', null, null, null, null, null, null, null, time, total, attendance.work_mode || 'Office');
+                                                                        }}
+                                                                        className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1 ${!attendance?.check_in ? 'opacity-30 cursor-not-allowed bg-slate-50' : 'bg-red-500 text-white shadow-lg shadow-red-500/30 hover:bg-red-600'}`}
+                                                                    >
+                                                                        <FaTimesCircle /> OUT
+                                                                    </button>
+                                                                ) : (
+                                                                    <div className="text-center">
+                                                                        <div className="text-[10px] font-bold text-slate-700 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200">
+                                                                            {attendance.check_out.slice(0, 5)}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
                                                             </div>
+                                                            {/* Mode Selection */}
+                                                            {attendance?.check_in && !attendance?.check_out && (
+                                                                <div className="mt-2 flex justify-center">
+                                                                    <select
+                                                                        value={attendance?.work_mode || 'Office'}
+                                                                        onChange={(e) => handleQuickMark(w.id, currentStatus, null, null, null, null, null, null, null, null, null, e.target.value)}
+                                                                        className="bg-transparent text-[9px] font-black uppercase text-blue-500 outline-none cursor-pointer text-center"
+                                                                    >
+                                                                        <option value="Office">Office</option>
+                                                                        <option value="WFH">WFH</option>
+                                                                        <option value="On-site">On-site</option>
+                                                                    </select>
+                                                                </div>
+                                                            )}
                                                         </td>
                                                         <td className="px-8 py-6">
                                                             <div
-                                                                onClick={() => { if (!isPresentOrPerm || !canEdit) return; setWorkDoneModalData({ member_id: w.id, member_name: w.name, status: currentStatus || 'present', note: attendance?.note || '', attendance_id: attendance?.id }); setShowWorkDoneModal(true); }}
+                                                                onClick={() => {
+                                                                    if (!isPresentOrPerm || !canEdit) return;
+                                                                    setWorkDoneModalData({
+                                                                        member_id: w.id,
+                                                                        member_name: w.name,
+                                                                        status: currentStatus || 'present',
+                                                                        note: attendance?.note || '',
+                                                                        attendance_id: attendance?.id,
+                                                                        check_in: attendance?.check_in,
+                                                                        check_out: attendance?.check_out,
+                                                                        work_mode: attendance?.work_mode
+                                                                    });
+                                                                    setShowWorkDoneModal(true);
+                                                                }}
                                                                 className={`cursor-pointer transition-all duration-300 ${isPresentOrPerm ? (canEdit ? 'opacity-100' : 'opacity-70 cursor-not-allowed') : 'opacity-30 pointer-events-none'}`}
                                                             >
                                                                 <div className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-[10px] font-bold text-slate-500 flex items-center hover:border-blue-300">
-                                                                    <span className="truncate">{attendance?.note || "Work notes..."}</span>
+                                                                    <span className="truncate max-w-[150px]">{attendance?.note || "Work notes..."}</span>
                                                                     <FaEdit className="ml-auto text-[10px] text-slate-300" />
                                                                 </div>
+                                                                {attendance?.work_mode && (
+                                                                    <div className="mt-1 flex gap-1">
+                                                                        <span className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded text-[8px] font-bold">{attendance.work_mode}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-8 py-6">
+                                                            <div className={`text-xs font-bold text-slate-600 ${isPresentOrPerm ? 'opacity-100' : 'opacity-30'}`}>
+                                                                {attendance?.check_in ? (
+                                                                    <div className="flex flex-col">
+                                                                        <span>In: {attendance.check_in.slice(0, 5)}</span>
+                                                                        <span>Out: {attendance.check_out ? attendance.check_out.slice(0, 5) : '--:--'}</span>
+                                                                        {attendance?.total_hours > 0 && (
+                                                                            <span className="text-[10px] text-emerald-600 mt-1">{attendance.total_hours} Hrs</span>
+                                                                        )}
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className="text-slate-300">--:--</span>
+                                                                )}
                                                             </div>
                                                         </td>
                                                         <td className="px-8 py-6 text-right">
@@ -1288,32 +1492,77 @@ const ITAttendance = () => {
                                                     )}
                                                 </div>
 
-                                                <div className="grid grid-cols-3 gap-1 mb-3">
+                                                {/* Mobile Hours Display */}
+                                                {isPresentOrPerm && attendance?.check_in && (
+                                                    <div className="mb-3 flex items-center gap-3 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                                        <div className="text-[10px] font-bold text-slate-600">
+                                                            In: <span className="text-slate-900">{attendance.check_in.slice(0, 5)}</span>
+                                                        </div>
+                                                        <div className="w-px h-3 bg-slate-300"></div>
+                                                        <div className="text-[10px] font-bold text-slate-600">
+                                                            Out: <span className="text-slate-900">{attendance.check_out ? attendance.check_out.slice(0, 5) : '--:--'}</span>
+                                                        </div>
+                                                        {attendance?.total_hours > 0 && (
+                                                            <>
+                                                                <div className="w-px h-3 bg-slate-300"></div>
+                                                                <div className="text-[10px] font-black text-emerald-600">
+                                                                    {attendance.total_hours}h
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                        {attendance?.work_mode && (
+                                                            <div className="ml-auto bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded text-[8px] font-bold">
+                                                                {attendance.work_mode === 'WFH' ? 'WFH' : attendance.work_mode === 'On-site' ? 'Site' : 'Office'}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                <div className="grid grid-cols-4 gap-1 mb-3">
                                                     <button
                                                         disabled={!canEdit}
                                                         onClick={(e) => { e.stopPropagation(); handleQuickMark(w.id, 'present'); }}
                                                         className={`h-[42px] rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${!canEdit ? 'opacity-50 cursor-not-allowed bg-slate-50 border border-slate-100' : (currentStatus === 'present' || currentStatus === 'permission') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}
                                                     >
-                                                        <FaCheckCircle className="text-xs" /> Pre
+                                                        Pre
                                                     </button>
                                                     <button
                                                         disabled={!canEdit}
                                                         onClick={(e) => { e.stopPropagation(); handleQuickMark(w.id, 'absent'); }}
                                                         className={`h-[42px] rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${!canEdit ? 'opacity-50 cursor-not-allowed bg-slate-50 border border-slate-100' : currentStatus === 'absent' ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}
                                                     >
-                                                        <FaTimesCircle className="text-xs" /> Abs
+                                                        Abs
                                                     </button>
-                                                    <button
-                                                        disabled={!canEdit}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setHalfDayModalData({ member_id: w.id, member_name: w.name, period: 'AM' });
-                                                            setShowHalfDayModal(true);
-                                                        }}
-                                                        className={`h-[42px] rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${!canEdit ? 'opacity-50 cursor-not-allowed bg-slate-50 border border-slate-100' : currentStatus === 'half-day' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}
-                                                    >
-                                                        <FaBusinessTime className="text-xs" /> Half
-                                                    </button>
+                                                    {!attendance?.check_in ? (
+                                                        <button
+                                                            disabled={!canEdit}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+                                                                handleQuickMark(w.id, 'present', null, null, null, null, null, null, time, null, null, 'Office');
+                                                            }}
+                                                            className="h-[42px] col-span-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all bg-blue-500 text-white shadow-lg shadow-blue-500/20"
+                                                        >
+                                                            <FaCheckCircle /> Check In
+                                                        </button>
+                                                    ) : !attendance?.check_out ? (
+                                                        <button
+                                                            disabled={!canEdit}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+                                                                const total = calculateDuration(attendance.check_in, time);
+                                                                handleQuickMark(w.id, 'present', null, null, null, null, null, null, null, time, total, attendance.work_mode || 'Office');
+                                                            }}
+                                                            className="h-[42px] col-span-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all bg-slate-800 text-white shadow-lg shadow-slate-800/20"
+                                                        >
+                                                            <FaTimesCircle /> Check Out
+                                                        </button>
+                                                    ) : (
+                                                        <div className="h-[42px] col-span-2 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center gap-2 text-[10px] font-black text-slate-500 uppercase">
+                                                            Done
+                                                        </div>
+                                                    )}
                                                 </div>
 
                                                 <div className="flex flex-col gap-1">
@@ -1668,13 +1917,47 @@ const ITAttendance = () => {
                             <FaFileAlt className="text-blue-500" /> Work Details
                         </h3>
                         <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-3 mb-2">
+                                <div>
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Check In</label>
+                                    <input
+                                        type="time"
+                                        value={workDoneModalData.check_in || ''}
+                                        onChange={(e) => setWorkDoneModalData({ ...workDoneModalData, check_in: e.target.value })}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700 outline-none focus:border-blue-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Check Out</label>
+                                    <input
+                                        type="time"
+                                        value={workDoneModalData.check_out || ''}
+                                        onChange={(e) => setWorkDoneModalData({ ...workDoneModalData, check_out: e.target.value })}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700 outline-none focus:border-blue-500"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="mb-2">
+                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Work Mode</label>
+                                <select
+                                    value={workDoneModalData.work_mode || 'Office'}
+                                    onChange={(e) => setWorkDoneModalData({ ...workDoneModalData, work_mode: e.target.value })}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700 outline-none focus:border-blue-500"
+                                >
+                                    <option value="Office">Office</option>
+                                    <option value="WFH">Work From Home</option>
+                                    <option value="On-site">On-site</option>
+                                </select>
+                            </div>
+
                             <div>
                                 <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Work Note</label>
                                 <textarea
                                     value={workDoneModalData.note}
                                     onChange={(e) => setWorkDoneModalData({ ...workDoneModalData, note: e.target.value })}
                                     className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-700 resize-none outline-none focus:border-blue-500 transition-colors"
-                                    rows="4"
+                                    rows="3"
                                     placeholder="Enter work details or subject..."
                                 ></textarea>
                             </div>
@@ -1682,7 +1965,29 @@ const ITAttendance = () => {
                                 <button onClick={() => setShowWorkDoneModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">Cancel</button>
                                 <button
                                     onClick={() => {
-                                        handleQuickMark(workDoneModalData.member_id, workDoneModalData.status, null, workDoneModalData.note);
+                                        let total_hours = 0;
+                                        if (workDoneModalData.check_in && workDoneModalData.check_out) {
+                                            const start = new Date(`1970-01-01T${workDoneModalData.check_in}:00`);
+                                            const end = new Date(`1970-01-01T${workDoneModalData.check_out}:00`);
+                                            total_hours = (end - start) / 1000 / 60 / 60;
+                                            if (total_hours < 0) total_hours += 24; // Handle overnight
+                                            total_hours = total_hours.toFixed(2);
+                                        }
+
+                                        handleQuickMark(
+                                            workDoneModalData.member_id,
+                                            workDoneModalData.status,
+                                            null,
+                                            workDoneModalData.note,
+                                            null, // permission start
+                                            null, // permission end
+                                            null, // permission reason
+                                            null, // overtime data
+                                            workDoneModalData.check_in,
+                                            workDoneModalData.check_out,
+                                            total_hours,
+                                            workDoneModalData.work_mode
+                                        );
                                         setShowWorkDoneModal(false);
                                     }}
                                     className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-colors"
@@ -1693,48 +1998,51 @@ const ITAttendance = () => {
                         </div>
                     </div>
                 </div>
-            )}
+            )
+            }
 
-            {showHalfDayModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl p-6 relative animate-in zoom-in-95 duration-300">
-                        <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
-                            <FaBusinessTime className="text-blue-500" /> Half Day Session
-                        </h3>
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-3">
-                                <button
-                                    onClick={() => setHalfDayModalData({ ...halfDayModalData, period: 'AM' })}
-                                    className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${halfDayModalData.period === 'AM' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-100 bg-slate-50 text-slate-400 hover:border-blue-200'}`}
-                                >
-                                    <span className="text-xl font-black">AM</span>
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Morning</span>
-                                </button>
-                                <button
-                                    onClick={() => setHalfDayModalData({ ...halfDayModalData, period: 'PM' })}
-                                    className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${halfDayModalData.period === 'PM' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-100 bg-slate-50 text-slate-400 hover:border-blue-200'}`}
-                                >
-                                    <span className="text-xl font-black">PM</span>
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Afternoon</span>
-                                </button>
-                            </div>
-                            <div className="flex gap-3 mt-2">
-                                <button onClick={() => setShowHalfDayModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">Cancel</button>
-                                <button
-                                    onClick={() => {
-                                        const note = halfDayModalData.period === 'AM' ? 'Morning Half Day' : 'Afternoon Half Day';
-                                        handleQuickMark(halfDayModalData.member_id, 'half-day', null, note);
-                                        setShowHalfDayModal(false);
-                                    }}
-                                    className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-colors"
-                                >
-                                    Confirm
-                                </button>
+            {
+                showHalfDayModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+                        <div className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl p-6 relative animate-in zoom-in-95 duration-300">
+                            <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
+                                <FaBusinessTime className="text-blue-500" /> Half Day Session
+                            </h3>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        onClick={() => setHalfDayModalData({ ...halfDayModalData, period: 'AM' })}
+                                        className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${halfDayModalData.period === 'AM' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-100 bg-slate-50 text-slate-400 hover:border-blue-200'}`}
+                                    >
+                                        <span className="text-xl font-black">AM</span>
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Morning</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setHalfDayModalData({ ...halfDayModalData, period: 'PM' })}
+                                        className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${halfDayModalData.period === 'PM' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-100 bg-slate-50 text-slate-400 hover:border-blue-200'}`}
+                                    >
+                                        <span className="text-xl font-black">PM</span>
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Afternoon</span>
+                                    </button>
+                                </div>
+                                <div className="flex gap-3 mt-2">
+                                    <button onClick={() => setShowHalfDayModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">Cancel</button>
+                                    <button
+                                        onClick={() => {
+                                            const note = halfDayModalData.period === 'AM' ? 'Morning Half Day' : 'Afternoon Half Day';
+                                            handleQuickMark(halfDayModalData.member_id, 'half-day', null, note);
+                                            setShowHalfDayModal(false);
+                                        }}
+                                        className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-colors"
+                                    >
+                                        Confirm
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             <ConfirmModal
                 isOpen={confirmModal.show}
@@ -1745,7 +2053,7 @@ const ITAttendance = () => {
                 confirmText={confirmModal.type === 'DELETE' ? "Delete" : "Download"}
                 type={confirmModal.type === 'DELETE' ? 'danger' : 'success'}
             />
-        </div>
+        </div >
     );
 };
 

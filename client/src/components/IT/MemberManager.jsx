@@ -270,7 +270,6 @@ const MemberManager = ({ onClose, onUpdate, sector, projects: parentProjects }) 
             {/* Main Content */}
             <div className="flex-1">
 
-                {/* Add/Edit Form */}
                 <form onSubmit={handleSubmit} className="mb-6 p-6 bg-white rounded-[32px] border border-slate-100 shadow-sm font-['Outfit']">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                         <div className="col-span-1 lg:col-span-1">
@@ -389,6 +388,62 @@ const MemberManager = ({ onClose, onUpdate, sector, projects: parentProjects }) 
                                 />
                             </div>
                         </div>
+
+                        {sector === 'it' && (
+                            <>
+                                <div className="col-span-1 lg:col-span-1">
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                                        Employment Type
+                                    </label>
+                                    <select
+                                        value={formData.employment_type || 'Full-time'}
+                                        onChange={(e) => setFormData({ ...formData, employment_type: e.target.value })}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
+                                    >
+                                        <option value="Full-time">Full-time</option>
+                                        <option value="Contract">Contract</option>
+                                        <option value="Intern">Intern</option>
+                                    </select>
+                                </div>
+                                <div className="col-span-1 lg:col-span-1">
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                                        Work Location
+                                    </label>
+                                    <select
+                                        value={formData.work_location || 'Office'}
+                                        onChange={(e) => setFormData({ ...formData, work_location: e.target.value })}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
+                                    >
+                                        <option value="Office">Office</option>
+                                        <option value="Remote">Remote</option>
+                                        <option value="Hybrid">Hybrid</option>
+                                    </select>
+                                </div>
+                                <div className="col-span-1 lg:col-span-1">
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                                        Expected Hours
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.5"
+                                        value={formData.expected_hours || '8.00'}
+                                        onChange={(e) => setFormData({ ...formData, expected_hours: e.target.value })}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+                                    />
+                                </div>
+                                <div className="col-span-1 lg:col-span-1 flex items-center pt-6">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.is_billable !== false}
+                                            onChange={(e) => setFormData({ ...formData, is_billable: e.target.checked })}
+                                            className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                        />
+                                        <span className="text-xs font-bold text-slate-700">Billable Resource</span>
+                                    </label>
+                                </div>
+                            </>
+                        )}
 
                         <div className="col-span-1 lg:col-span-1">
                             <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">

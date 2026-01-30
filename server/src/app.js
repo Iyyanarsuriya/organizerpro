@@ -76,6 +76,9 @@ itRouter.use('/member-roles', require("./routes/Manufacturing/memberRoleRoutes")
 itRouter.use('/projects', require("./routes/Manufacturing/projectRoutes")); // Generic Project Controller
 itRouter.use('/attendance', require("./routes/IT/attendanceRoutes"));
 itRouter.use('/team', require("./routes/IT/teamRoutes"));
+itRouter.use('/timesheets', require("./routes/IT/timesheetRoutes"));
+itRouter.use('/leaves', require("./routes/IT/leaveRoutes"));
+itRouter.use('/audit', require("./routes/IT/auditRoutes"));
 app.use('/api/it-sector', itRouter);
 
 // Education Sector Header

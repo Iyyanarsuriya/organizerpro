@@ -438,10 +438,17 @@ CREATE TABLE `it_members` (
   `daily_wage` decimal(15,2) DEFAULT '0.00',
   `member_type` enum('employee','worker') DEFAULT 'worker',
   `project_id` int DEFAULT NULL,
+  `employment_type` enum('Full-time','Contract','Intern') DEFAULT 'Full-time',
+  `expected_hours` decimal(4,2) DEFAULT '8.00',
+  `work_location` enum('Office','Remote','Hybrid') DEFAULT 'Office',
+  `is_billable` tinyint(1) DEFAULT '1',
+  `reporting_manager_id` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
+  KEY `fk_it_memb_manager` (`reporting_manager_id`),
   CONSTRAINT `fk_it_memb_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_it_memb_proj` FOREIGN KEY (`project_id`) REFERENCES `it_projects` (`id`) ON DELETE SET NULL
+  CONSTRAINT `fk_it_memb_proj` FOREIGN KEY (`project_id`) REFERENCES `it_projects` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_it_memb_manager` FOREIGN KEY (`reporting_manager_id`) REFERENCES `it_members` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- IT Attendance
@@ -457,6 +464,10 @@ CREATE TABLE `it_attendance` (
   `project_id` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `check_in` time DEFAULT NULL,
+  `check_out` time DEFAULT NULL,
+  `total_hours` decimal(4,2) DEFAULT '0.00',
+  `work_mode` enum('Office','WFH','On-site') DEFAULT 'Office',
   `permission_duration` varchar(100) DEFAULT NULL,
   `permission_start_time` varchar(20) DEFAULT NULL,
   `permission_end_time` varchar(20) DEFAULT NULL,
@@ -517,6 +528,64 @@ CREATE TABLE `it_member_roles` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_it_role` (`user_id`,`name`),
   CONSTRAINT `fk_it_role_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- IT Timesheets
+DROP TABLE IF EXISTS `it_timesheets`;
+CREATE TABLE `it_timesheets` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `member_id` int NOT NULL,
+  `project_id` int DEFAULT NULL,
+  `date` date NOT NULL,
+  `task_description` text NOT NULL,
+  `hours_spent` decimal(4,2) DEFAULT '0.00',
+  `is_billable` tinyint(1) DEFAULT '1',
+  `status` enum('pending','approved','rejected') DEFAULT 'pending',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  KEY `member_id` (`member_id`),
+  KEY `project_id` (`project_id`),
+  CONSTRAINT `fk_it_ts_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_it_ts_memb` FOREIGN KEY (`member_id`) REFERENCES `it_members` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_it_ts_proj` FOREIGN KEY (`project_id`) REFERENCES `it_projects` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- IT Leaves
+DROP TABLE IF EXISTS `it_leaves`;
+CREATE TABLE `it_leaves` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `member_id` int NOT NULL,
+  `leave_type` enum('Sick','Casual','Emergency','Privilege','Other') DEFAULT 'Casual',
+  `start_date` date NOT NULL,
+  `end_date` date NOT NULL,
+  `reason` text,
+  `status` enum('pending','approved','rejected') DEFAULT 'pending',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  KEY `member_id` (`member_id`),
+  CONSTRAINT `fk_it_leave_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_it_leave_memb` FOREIGN KEY (`member_id`) REFERENCES `it_members` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- IT Audit Logs
+DROP TABLE IF EXISTS `it_audit_logs`;
+CREATE TABLE `it_audit_logs` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `action` varchar(100) NOT NULL,
+  `module` varchar(50) NOT NULL,
+  `details` text,
+  `performed_by` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `fk_it_audit_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- IT Transactions

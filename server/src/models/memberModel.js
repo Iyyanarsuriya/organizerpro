@@ -15,7 +15,7 @@ const create = async (data) => {
     const table = getTableName(data.sector);
     const { user_id, name, role, phone, email, status, wage_type, daily_wage, member_type, project_id, staff_id, department, subjects,
         gender, profile_image, employment_type, date_of_joining, reporting_manager_id, shift_start_time, shift_end_time,
-        cl_balance, sl_balance, el_balance } = data;
+        cl_balance, sl_balance, el_balance, expected_hours, work_location, is_billable } = data;
 
     let columns = ['user_id', 'name', 'role', 'phone', 'email', 'status', 'wage_type', 'daily_wage', 'member_type'];
     let values = [user_id, name, role || null, phone || null, email || null, status || 'active', wage_type || 'daily', daily_wage || 0, member_type || 'worker'];
@@ -25,6 +25,12 @@ const create = async (data) => {
         columns.push('project_id');
         values.push(project_id || null);
         placeholders.push('?');
+    }
+
+    if (data.sector === 'it') {
+        columns.push('employment_type', 'expected_hours', 'work_location', 'is_billable', 'reporting_manager_id');
+        values.push(employment_type || 'Full-time', expected_hours || 8.00, work_location || 'Office', is_billable ? 1 : 0, reporting_manager_id || null);
+        placeholders.push('?', '?', '?', '?', '?');
     }
 
     if (data.sector === 'education') {
@@ -59,9 +65,16 @@ const getAllByUserId = async (userId, memberType = null, sector) => {
 
     let query;
     if (sector === 'education') {
-        // Need to join self to get manager name if needed, but for now just fetching raw fields is fine.
-        // Or if we want reporting manager name, handled in frontend lookup.
         query = `SELECT m.* FROM ${table} m WHERE m.user_id = ?`;
+    } else if (sector === 'it') {
+        const projectTable = getProjectTableName(sector);
+        query = `
+            SELECT m.*, p.name as project_name, mgr.name as reporting_manager_name
+            FROM ${table} m 
+            LEFT JOIN ${projectTable} p ON m.project_id = p.id 
+            LEFT JOIN ${table} mgr ON m.reporting_manager_id = mgr.id
+            WHERE m.user_id = ?
+        `;
     } else {
         const projectTable = getProjectTableName(sector);
         query = `
@@ -97,7 +110,7 @@ const update = async (id, userId, data) => {
     const table = getTableName(data.sector);
     const { name, role, phone, email, status, wage_type, daily_wage, member_type, project_id, staff_id, department, subjects,
         gender, profile_image, employment_type, date_of_joining, reporting_manager_id, shift_start_time, shift_end_time,
-        cl_balance, sl_balance, el_balance } = data;
+        cl_balance, sl_balance, el_balance, expected_hours, work_location, is_billable } = data;
 
     let updates = ['name = ?', 'role = ?', 'phone = ?', 'email = ?', 'status = ?', 'wage_type = ?', 'daily_wage = ?', 'member_type = ?'];
     let values = [name, role || null, phone || null, email || null, status || 'active', wage_type || 'daily', daily_wage || 0, member_type || 'worker'];
@@ -105,6 +118,11 @@ const update = async (id, userId, data) => {
     if (data.sector !== 'education') {
         updates.push('project_id = ?');
         values.push(project_id || null);
+    }
+
+    if (data.sector === 'it') {
+        updates.push('employment_type = ?', 'expected_hours = ?', 'work_location = ?', 'is_billable = ?', 'reporting_manager_id = ?');
+        values.push(employment_type || 'Full-time', expected_hours || 8.00, work_location || 'Office', is_billable ? 1 : 0, reporting_manager_id || null);
     }
 
     if (data.sector === 'education') {

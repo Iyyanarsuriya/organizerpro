@@ -23,7 +23,7 @@ const getTables = (sector) => {
 
 const create = async (data) => {
     const { attendance: TABLE_NAME } = getTables(data.sector);
-    const { user_id, subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason, created_by } = data;
+    const { user_id, subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason, created_by, check_in, check_out, total_hours, work_mode } = data;
 
     let columns = ['user_id', 'subject', 'status', 'date', 'note', 'member_id', 'permission_duration', 'permission_start_time', 'permission_end_time', 'permission_reason', 'overtime_duration', 'overtime_reason', 'created_by', 'updated_by'];
     let values = [user_id, subject || null, status || null, date, note || null, member_id || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, created_by || null, null];
@@ -33,6 +33,12 @@ const create = async (data) => {
         columns.push('project_id');
         values.push(project_id || null);
         placeholders.push('?');
+    }
+
+    if (data.sector === 'it') {
+        columns.push('check_in', 'check_out', 'total_hours', 'work_mode');
+        values.push(check_in || null, check_out || null, total_hours || 0, work_mode || 'Office');
+        placeholders.push('?', '?', '?', '?');
     }
 
     const [result] = await db.query(
@@ -118,7 +124,7 @@ const getAllByUserId = async (userId, filters = {}) => {
 
 const update = async (id, userId, data) => {
     const { attendance: TABLE_NAME } = getTables(data.sector);
-    const { subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason, updated_by } = data;
+    const { subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason, updated_by, check_in, check_out, total_hours, work_mode } = data;
 
     let updateFields = 'subject = ?, status = ?, date = ?, note = ?, member_id = ?, permission_duration = ?, permission_start_time = ?, permission_end_time = ?, permission_reason = ?, overtime_duration = ?, overtime_reason = ?, updated_by = ?';
     let params = [subject, status, date, note, member_id || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, updated_by || null];
@@ -126,6 +132,11 @@ const update = async (id, userId, data) => {
     if (data.sector !== 'education') {
         updateFields += ', project_id = ?';
         params.push(project_id || null);
+    }
+
+    if (data.sector === 'it') {
+        updateFields += ', check_in = ?, check_out = ?, total_hours = ?, work_mode = ?';
+        params.push(check_in || null, check_out || null, total_hours || 0, work_mode || 'Office');
     }
 
     params.push(id, userId);
@@ -213,7 +224,10 @@ const getMemberSummary = async (userId, filters = {}) => {
             COUNT(CASE WHEN a.status = 'OD' THEN 1 END) as OD,
             COUNT(CASE WHEN a.status NOT IN ('week_off', 'holiday') THEN 1 END) as working_days,
             COUNT(a.id) as total,
-            w.daily_wage
+            SUM(CASE WHEN a.total_hours IS NOT NULL THEN a.total_hours ELSE 0 END) as total_hours_worked,
+            w.daily_wage${filters.sector === 'it' ? `,
+            SUM(CASE WHEN a.total_hours > COALESCE(w.expected_hours, 8) THEN a.total_hours - COALESCE(w.expected_hours, 8) ELSE 0 END) as overtime_hours,
+            COUNT(CASE WHEN a.status IN ('present', 'late', 'permission') AND a.total_hours < COALESCE(w.expected_hours, 8) AND a.total_hours > 0 THEN 1 END) as undertime_days` : ''}
         FROM ${MEMBERS_TABLE} w
         LEFT JOIN ${TABLE_NAME} a ON w.id = a.member_id
     `;
@@ -261,7 +275,7 @@ const getMemberSummary = async (userId, filters = {}) => {
 
 const quickMark = async (data) => {
     const { attendance: TABLE_NAME } = getTables(data.sector);
-    const { user_id, member_id, date, status, project_id, subject, note, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason, updated_by } = data;
+    const { user_id, member_id, date, status, project_id, subject, note, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason, updated_by, check_in, check_out, total_hours, work_mode } = data;
 
     // Find existing record for this member on this date
     let checkQuery = `SELECT id FROM ${TABLE_NAME} WHERE user_id = ? AND member_id = ? AND DATE(date) = ?`;
@@ -280,10 +294,18 @@ const quickMark = async (data) => {
 
     if (existing.length > 0) {
         // Update existing record
-        await db.query(
-            `UPDATE ${TABLE_NAME} SET status = COALESCE(?, status), note = COALESCE(?, note), permission_duration = COALESCE(?, permission_duration), permission_start_time = COALESCE(?, permission_start_time), permission_end_time = COALESCE(?, permission_end_time), permission_reason = COALESCE(?, permission_reason), overtime_duration = COALESCE(?, overtime_duration), overtime_reason = COALESCE(?, overtime_reason), updated_by = ? WHERE id = ?`,
-            [status || null, note || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, updated_by || null, existing[0].id]
-        );
+        let updateQuery = `UPDATE ${TABLE_NAME} SET status = COALESCE(?, status), note = COALESCE(?, note), permission_duration = COALESCE(?, permission_duration), permission_start_time = COALESCE(?, permission_start_time), permission_end_time = COALESCE(?, permission_end_time), permission_reason = COALESCE(?, permission_reason), overtime_duration = COALESCE(?, overtime_duration), overtime_reason = COALESCE(?, overtime_reason), updated_by = ?`;
+        let updateParams = [status || null, note || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, updated_by || null];
+
+        if (data.sector === 'it') {
+            updateQuery += `, check_in = COALESCE(?, check_in), check_out = COALESCE(?, check_out), total_hours = COALESCE(?, total_hours), work_mode = COALESCE(?, work_mode)`;
+            updateParams.push(check_in || null, check_out || null, total_hours || null, work_mode || null);
+        }
+
+        updateQuery += ` WHERE id = ?`;
+        updateParams.push(existing[0].id);
+
+        await db.query(updateQuery, updateParams);
         return { id: existing[0].id, ...data, updated: true };
     } else {
         // Re-building insert for clarity and safety
@@ -293,6 +315,11 @@ const quickMark = async (data) => {
         if (data.sector !== 'education') {
             fields.push('project_id');
             vals.push(project_id || null);
+        }
+
+        if (data.sector === 'it') {
+            fields.push('check_in', 'check_out', 'total_hours', 'work_mode');
+            vals.push(check_in || null, check_out || null, total_hours || 0, work_mode || 'Office');
         }
 
         const placeholders = fields.map(() => '?').join(', ');
