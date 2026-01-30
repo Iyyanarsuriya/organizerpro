@@ -7,7 +7,8 @@ const {
     deleteAttendance,
     getAttendanceStats,
     getMemberSummary,
-    quickMarkAttendance
+    quickMarkAttendance,
+    bulkMarkAttendance
 } = require('../../controllers/Manufacturing/attendanceController');
 const { authenticateToken, requireOwner } = require('../../middlewares/authMiddleware');
 
@@ -15,6 +16,7 @@ router.use(authenticateToken);
 
 router.post('/', createAttendance);
 router.post('/quick', quickMarkAttendance);
+router.post('/bulk', bulkMarkAttendance);
 router.get('/', getAttendances);
 router.get('/stats', getAttendanceStats);
 router.get('/summary', getMemberSummary);

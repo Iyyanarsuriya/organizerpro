@@ -35,7 +35,7 @@ const create = async (data) => {
         placeholders.push('?');
     }
 
-    if (data.sector === 'it') {
+    if (['it', 'manufacturing'].includes(data.sector)) {
         columns.push('check_in', 'check_out', 'total_hours', 'work_mode');
         values.push(check_in || null, check_out || null, total_hours || 0, work_mode || 'Office');
         placeholders.push('?', '?', '?', '?');
@@ -134,7 +134,7 @@ const update = async (id, userId, data) => {
         params.push(project_id || null);
     }
 
-    if (data.sector === 'it') {
+    if (['it', 'manufacturing'].includes(data.sector)) {
         updateFields += ', check_in = ?, check_out = ?, total_hours = ?, work_mode = ?';
         params.push(check_in || null, check_out || null, total_hours || 0, work_mode || 'Office');
     }
@@ -297,7 +297,7 @@ const quickMark = async (data) => {
         let updateQuery = `UPDATE ${TABLE_NAME} SET status = COALESCE(?, status), note = COALESCE(?, note), permission_duration = COALESCE(?, permission_duration), permission_start_time = COALESCE(?, permission_start_time), permission_end_time = COALESCE(?, permission_end_time), permission_reason = COALESCE(?, permission_reason), overtime_duration = COALESCE(?, overtime_duration), overtime_reason = COALESCE(?, overtime_reason), updated_by = ?`;
         let updateParams = [status || null, note || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, updated_by || null];
 
-        if (data.sector === 'it') {
+        if (['it', 'manufacturing'].includes(data.sector)) {
             updateQuery += `, check_in = COALESCE(?, check_in), check_out = COALESCE(?, check_out), total_hours = COALESCE(?, total_hours), work_mode = COALESCE(?, work_mode)`;
             updateParams.push(check_in || null, check_out || null, total_hours || null, work_mode || null);
         }
@@ -317,7 +317,7 @@ const quickMark = async (data) => {
             vals.push(project_id || null);
         }
 
-        if (data.sector === 'it') {
+        if (['it', 'manufacturing'].includes(data.sector)) {
             fields.push('check_in', 'check_out', 'total_hours', 'work_mode');
             vals.push(check_in || null, check_out || null, total_hours || 0, work_mode || 'Office');
         }

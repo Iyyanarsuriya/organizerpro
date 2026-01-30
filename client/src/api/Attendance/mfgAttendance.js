@@ -4,6 +4,7 @@ import axiosInstance from '../axiosInstance';
 export const getAttendances = (params) => axiosInstance.get('/manufacturing-sector/attendance', { params });
 export const createAttendance = (data) => axiosInstance.post('/manufacturing-sector/attendance', data);
 export const quickMarkAttendance = (data) => axiosInstance.post('/manufacturing-sector/attendance/quick', data);
+export const bulkMarkAttendance = (data) => axiosInstance.post('/manufacturing-sector/attendance/bulk', data);
 export const updateAttendance = (id, data) => axiosInstance.put(`/manufacturing-sector/attendance/${id}`, data);
 export const deleteAttendance = (id) => axiosInstance.delete(`/manufacturing-sector/attendance/${id}`);
 export const getAttendanceStats = (params) => axiosInstance.get('/manufacturing-sector/attendance/stats', { params });

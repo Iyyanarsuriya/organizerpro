@@ -9,6 +9,7 @@ import {
     getAttendanceStats,
     getMemberSummary,
     quickMarkAttendance,
+    bulkMarkAttendance,
     getProjects,
     createProject,
     deleteProject
@@ -48,6 +49,8 @@ const AttendanceTracker = () => {
     const [currentPeriod, setCurrentPeriod] = useState(new Date().toISOString().split('T')[0]); // YYYY-MM-DD
     const [customRange, setCustomRange] = useState({ start: '', end: '' });
     const [searchQuery, setSearchQuery] = useState('');
+    const [showBulkStatusModal, setShowBulkStatusModal] = useState(false);
+    const [bulkStatusData, setBulkStatusData] = useState({ status: '', note: '' });
     const [memberSummary, setMemberSummary] = useState([]);
     const [activeTab, setActiveTab] = useState('records'); // 'records', 'summary', 'quick'
     const [showCustomReportModal, setShowCustomReportModal] = useState(false);
@@ -129,11 +132,14 @@ const AttendanceTracker = () => {
     }, [members]);
 
     const statusOptions = [
-        { id: 'present', label: 'Present', icon: FaCheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-50', border: 'border-emerald-100' },
-        { id: 'absent', label: 'Absent', icon: FaTimesCircle, color: 'text-red-500', bg: 'bg-red-50', border: 'border-red-100' },
-        { id: 'late', label: 'Late', icon: FaClock, color: 'text-amber-500', bg: 'bg-amber-50', border: 'border-amber-100' },
-        { id: 'half-day', label: 'Half Day', icon: FaExclamationCircle, color: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-100' },
-        { id: 'permission', label: 'Permission', icon: FaBusinessTime, color: 'text-purple-500', bg: 'bg-purple-50', border: 'border-purple-100' }
+        { id: 'present', label: 'Present', icon: FaCheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+        { id: 'absent', label: 'Absent', icon: FaTimesCircle, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
+        { id: 'half-day', label: 'Half Day', icon: FaExclamationCircle, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
+        { id: 'late', label: 'Late', icon: FaClock, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
+        { id: 'CL', label: 'CL', icon: FaTag, color: 'text-cyan-600', bg: 'bg-cyan-50', border: 'border-cyan-200' },
+        { id: 'SL', label: 'SL', icon: FaTag, color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-200' },
+        { id: 'EL', label: 'EL', icon: FaTag, color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-200' },
+        { id: 'OD', label: 'OD', icon: FaTag, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200' }
     ];
 
     function getHexColor(status) {
@@ -142,7 +148,11 @@ const AttendanceTracker = () => {
             case 'absent': return '#ef4444';
             case 'late': return '#f59e0b';
             case 'half-day': return '#3b82f6';
-            case 'permission': return '#a855f7'; // Purple
+            case 'permission': return '#a855f7';
+            case 'CL': return '#06b6d4';
+            case 'SL': return '#f43f5e';
+            case 'EL': return '#8b5cf6';
+            case 'OD': return '#6366f1';
             default: return '#94a3b8';
         }
     }
@@ -216,7 +226,7 @@ const AttendanceTracker = () => {
 
 
 
-    const handleQuickMark = async (memberId, status = null, permission_duration = null, note = null, permission_start_time = null, permission_end_time = null, permission_reason = null, overtimeData = null) => {
+    const handleQuickMark = async (memberId, status = null, permission_duration = null, note = null, permission_start_time = null, permission_end_time = null, permission_reason = null, overtimeData = null, check_in = null, check_out = null, total_hours = null, work_mode = null) => {
         try {
             const date = periodType === 'day' ? currentPeriod : new Date().toISOString().split('T')[0];
             const payload = {
@@ -229,7 +239,12 @@ const AttendanceTracker = () => {
                 note,
                 permission_start_time,
                 permission_end_time,
-                permission_reason
+                permission_reason,
+                sector: 'manufacturing',
+                check_in,
+                check_out,
+                total_hours,
+                work_mode
             };
 
             if (overtimeData) {
@@ -242,6 +257,57 @@ const AttendanceTracker = () => {
         } catch (error) {
             toast.error("Failed to update");
         }
+    };
+
+    const handleBulkMark = (status) => {
+        const date = periodType === 'day' ? currentPeriod : new Date().toISOString().split('T')[0];
+        setConfirmModal({
+            show: true,
+            type: 'BULK_MARK',
+            label: status === 'present' ? 'MARK ALL PRESENT' : status === 'week_off' ? 'MARK WEEKEND' : status === 'holiday' ? 'MARK HOLIDAY' : 'BULK ACTION',
+            message: `Are you sure you want to mark ALL active members as ${status === 'week_off' ? 'Weekend' : status === 'holiday' ? 'Holiday' : 'Present'} for ${date}?`,
+            onConfirm: () => confirmBulkMark(status)
+        });
+    };
+
+    const confirmBulkMark = async (status) => {
+        try {
+            const date = periodType === 'day' ? currentPeriod : new Date().toISOString().split('T')[0];
+            const activeMemberIds = members.filter(m => m.status === 'active').map(m => m.id);
+
+            if (activeMemberIds.length === 0) {
+                toast.error("No active members found");
+                return;
+            }
+
+            await bulkMarkAttendance({
+                user_id: currentUser.id,
+                member_ids: activeMemberIds,
+                date,
+                status: status === 'week_off' ? 'week_off' : status === 'holiday' ? 'holiday' : 'present',
+                subject: status === 'week_off' ? 'Weekend' : status === 'holiday' ? 'Holiday' : 'Daily Attendance',
+                note: '',
+                sector: 'manufacturing'
+            });
+
+            toast.success("Bulk update successful");
+            fetchData();
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to update bulk attendance");
+        }
+    };
+
+    const calculateDuration = (inTime, outTime) => {
+        if (!inTime || !outTime) return null;
+        const [h1, m1] = inTime.split(':').map(Number);
+        const [h2, m2] = outTime.split(':').map(Number);
+        const date1 = new Date(0, 0, 0, h1, m1, 0);
+        const date2 = new Date(0, 0, 0, h2, m2, 0);
+        let diff = date2 - date1;
+        if (diff < 0) diff += 24 * 60 * 60 * 1000;
+        const hours = diff / 1000 / 60 / 60;
+        return hours.toFixed(2);
     };
 
 
@@ -960,16 +1026,39 @@ const AttendanceTracker = () => {
                         </div>
 
                         <div className="p-0">
+                            <div className="px-8 py-6 border-b border-slate-100 flex flex-wrap items-center gap-4 bg-slate-50/30">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Quick Actions:</label>
+                                <button
+                                    onClick={() => handleBulkMark('present')}
+                                    className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 shadow-sm transition-all flex items-center gap-2"
+                                >
+                                    <FaCheckCircle className="text-sm" /> MARK ALL PRESENT
+                                </button>
+                                <div className="w-px h-6 bg-slate-200 hidden sm:block" />
+                                <button
+                                    onClick={() => handleBulkMark('week_off')}
+                                    className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 hover:border-slate-300 shadow-sm transition-all flex items-center gap-2"
+                                >
+                                    <FaCalendarAlt className="text-sm" /> MARK WEEKEND
+                                </button>
+                                <button
+                                    onClick={() => handleBulkMark('holiday')}
+                                    className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-rose-500 hover:bg-rose-50 hover:border-rose-200 shadow-sm transition-all flex items-center gap-2"
+                                >
+                                    <FaTag className="text-sm" /> MARK HOLIDAY
+                                </button>
+                            </div>
+
                             {/* Desktop Table View */}
                             <div className="hidden md:block overflow-x-auto">
                                 <table className="w-full text-left">
                                     <thead>
-                                        <tr className="bg-slate-50/50">
-                                            <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Name</th>
-                                            <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Status</th>
-                                            <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Permission</th>
-                                            <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Work Details</th>
-                                            <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Current</th>
+                                        <tr className="bg-slate-50/50 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                            <th className="px-4 py-5 font-black uppercase tracking-widest text-slate-400">Name</th>
+                                            <th className="px-4 py-5 font-black uppercase tracking-widest text-slate-400 text-center">Status</th>
+                                            <th className="px-4 py-5 font-black uppercase tracking-widest text-slate-400 text-center">Time Log</th>
+                                            <th className="px-4 py-5 font-black uppercase tracking-widest text-slate-400">Work Details</th>
+                                            <th className="px-4 py-5 font-black uppercase tracking-widest text-slate-400 text-right">Current</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
@@ -999,94 +1088,83 @@ const AttendanceTracker = () => {
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td className="px-8 py-6 text-center">
-                                                            <div className="flex items-center justify-center gap-1">
-                                                                <button
-                                                                    disabled={!canEdit || currentStatus === 'present' || currentStatus === 'permission'}
-                                                                    onClick={() => handleQuickMark(w.id, 'present')}
-                                                                    className={`px-3 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${(!canEdit && (currentStatus !== 'present' && currentStatus !== 'permission')) ? 'opacity-50 cursor-not-allowed bg-slate-50' : (currentStatus === 'present' || currentStatus === 'permission') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 scale-105' : 'bg-slate-100/50 text-slate-400 border border-slate-100 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 cursor-pointer'}`}
-                                                                >
-                                                                    Pre
-                                                                </button>
-                                                                <button
-                                                                    disabled={!canEdit || currentStatus === 'absent'}
-                                                                    onClick={() => handleQuickMark(w.id, 'absent')}
-                                                                    className={`px-3 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${(!canEdit && currentStatus !== 'absent') ? 'opacity-50 cursor-not-allowed bg-slate-50' : currentStatus === 'absent' ? 'bg-red-500 text-white shadow-lg shadow-red-500/30 scale-105' : 'bg-slate-100/50 text-slate-400 border border-slate-100 hover:bg-red-500 hover:text-white hover:border-red-500 cursor-pointer'}`}
-                                                                >
-                                                                    Abs
-                                                                </button>
-                                                                <button
-                                                                    disabled={!canEdit || currentStatus === 'half-day'}
-                                                                    onClick={() => {
-                                                                        setHalfDayModalData({ member_id: w.id, member_name: w.name, period: 'AM' });
-                                                                        setShowHalfDayModal(true);
-                                                                    }}
-                                                                    className={`px-3 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${(!canEdit && currentStatus !== 'half-day') ? 'opacity-50 cursor-not-allowed bg-slate-50' : currentStatus === 'half-day' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30 scale-105' : 'bg-slate-100/50 text-slate-400 border border-slate-100 hover:bg-blue-500 hover:text-white hover:border-blue-500 cursor-pointer'}`}
-                                                                >
-                                                                    Half
-                                                                </button>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-8 py-6">
-                                                            <div className={`flex flex-col items-center gap-2 transition-all duration-300 ${isPresentOrPerm ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
-                                                                <div className="flex items-center gap-2">
-                                                                    <button
-                                                                        disabled={!canEdit || !isPresentOrPerm}
-                                                                        onClick={() => {
-                                                                            const currentReason = attendance?.permission_reason || '';
-                                                                            const [startStr, endStr] = (attendance?.permission_duration || '09:00 AM - 10:00 AM').split(' - ');
-                                                                            const parseTime = (str) => {
-                                                                                const [time, period] = (str || '').split(' ');
-                                                                                const [h, m] = (time || '09:00').split(':');
-                                                                                return { h: h || '09', m: m || '00', p: period || 'AM' };
-                                                                            };
-                                                                            const start = parseTime(startStr);
-                                                                            const end = parseTime(endStr);
-                                                                            setPermissionModalData({
-                                                                                member_id: w.id, member_name: w.name, status: 'permission',
-                                                                                start_hour: start.h, start_minute: start.m, start_period: start.p,
-                                                                                end_hour: end.h, end_minute: end.m, end_period: end.p,
-                                                                                reason: currentReason, attendance_id: attendance?.id
-                                                                            });
-                                                                            setShowPermissionModal(true);
-                                                                        }}
-                                                                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${currentStatus === 'permission' ? 'bg-purple-500 text-white shadow-xs' : 'bg-slate-50 text-slate-400 border border-slate-200 hover:bg-purple-50 hover:text-purple-600'}`}
-                                                                    >
-                                                                        <FaClock className="text-[10px]" /> Perm.
-                                                                    </button>
-                                                                    <button
-                                                                        disabled={!canEdit || !isPresentOrPerm}
-                                                                        onClick={() => {
-                                                                            setOvertimeModalData({
-                                                                                member_id: w.id, member_name: w.name, status: 'overtime',
-                                                                                start_hour: '05', start_minute: '00', start_period: 'PM',
-                                                                                end_hour: '07', end_minute: '00', end_period: 'PM',
-                                                                                reason: attendance?.overtime_reason || '', attendance_id: attendance?.id
-                                                                            });
-                                                                            setShowOvertimeModal(true);
-                                                                        }}
-                                                                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${attendance?.overtime_duration ? 'bg-orange-500 text-white shadow-xs' : 'bg-slate-50 text-slate-400 border border-slate-200 hover:bg-orange-50 hover:text-orange-600'}`}
-                                                                    >
-                                                                        <FaBusinessTime className="text-[10px]" /> OT
-                                                                    </button>
-                                                                    {(currentStatus === 'permission' || attendance?.overtime_duration) && (
-                                                                        <div className="flex flex-col gap-1">
-                                                                            {currentStatus === 'permission' && (
-                                                                                <div className="bg-white border border-slate-100 rounded-lg px-2 py-1 text-[8px] font-bold text-slate-600 truncate max-w-[120px] shadow-sm">
-                                                                                    <div>Perm: {attendance?.permission_duration}</div>
-                                                                                    {attendance?.permission_reason && <div className="text-[7px] font-normal truncate max-w-[100px] border-t border-slate-100 mt-0.5 pt-0.5 opacity-70">{attendance.permission_reason}</div>}
-                                                                                </div>
-                                                                            )}
-                                                                            {attendance?.overtime_duration && (
-                                                                                <div className="bg-white border border-slate-100 rounded-lg px-2 py-1 text-[8px] font-bold text-orange-600 truncate max-w-[120px] shadow-sm">
-                                                                                    <div>OT: {attendance?.overtime_duration}</div>
-                                                                                    {attendance?.overtime_reason && <div className="text-[7px] font-normal truncate max-w-[100px] border-t mt-0.5 pt-0.5 opacity-70 border-orange-100">{attendance.overtime_reason}</div>}
-                                                                                </div>
-                                                                            )}
-                                                                        </div>
-                                                                    )}
+                                                        <td className="px-4 py-6 text-center">
+                                                            <div className="flex flex-col gap-2">
+                                                                <div className="flex items-center justify-center gap-1">
+                                                                    {['present', 'absent', 'half-day', 'late'].map(status => {
+                                                                        const option = statusOptions.find(o => o.id === status);
+                                                                        return (
+                                                                            <button
+                                                                                key={status}
+                                                                                className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black uppercase transition-all ${currentStatus === status ? `${option.bg} ${option.color} ring-2 ring-offset-1 ring-${option.color.split('-')[1]}-200` : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
+                                                                                onClick={() => handleQuickMark(w.id, status)}
+                                                                            >
+                                                                                {status === 'present' ? 'P' : status === 'absent' ? 'A' : status === 'half-day' ? 'H' : 'L'}
+                                                                            </button>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                                <div className="flex items-center justify-center gap-1">
+                                                                    {['CL', 'SL', 'EL', 'OD'].map(status => {
+                                                                        const option = statusOptions.find(o => o.id === status);
+                                                                        return (
+                                                                            <button
+                                                                                key={status}
+                                                                                className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black uppercase transition-all ${currentStatus === status ? `${option.bg} ${option.color} ring-2 ring-offset-1 ring-${option.color.split('-')[1]}-200` : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
+                                                                                onClick={() => handleQuickMark(w.id, status)}
+                                                                            >
+                                                                                {status}
+                                                                            </button>
+                                                                        );
+                                                                    })}
                                                                 </div>
                                                             </div>
+                                                        </td>
+                                                        <td className="px-4 py-6 text-center">
+                                                            <div className="flex items-center justify-center gap-2">
+                                                                <div className="flex flex-col items-center gap-1">
+                                                                    <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg p-1.5 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+                                                                        <FaClock className="text-slate-300 text-[10px]" />
+                                                                        <input
+                                                                            type="time"
+                                                                            disabled={!isPresentOrPerm}
+                                                                            value={attendance?.check_in || ''}
+                                                                            onChange={(e) => {
+                                                                                const newIn = e.target.value;
+                                                                                const duration = calculateDuration(newIn, attendance?.check_out);
+                                                                                handleQuickMark(w.id, currentStatus, null, null, null, null, null, null, newIn, attendance?.check_out, duration);
+                                                                            }}
+                                                                            className="bg-transparent text-[10px] font-bold text-slate-600 outline-none w-[45px] disabled:opacity-50"
+                                                                        />
+                                                                    </div>
+                                                                    <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">IN</span>
+                                                                </div>
+                                                                <div className="text-slate-300 text-[10px]">→</div>
+                                                                <div className="flex flex-col items-center gap-1">
+                                                                    <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg p-1.5 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+                                                                        <input
+                                                                            type="time"
+                                                                            disabled={!isPresentOrPerm}
+                                                                            value={attendance?.check_out || ''}
+                                                                            onChange={(e) => {
+                                                                                const newOut = e.target.value;
+                                                                                const duration = calculateDuration(attendance?.check_in, newOut);
+                                                                                handleQuickMark(w.id, currentStatus, null, null, null, null, null, null, attendance?.check_in, newOut, duration);
+                                                                            }}
+                                                                            className="bg-transparent text-[10px] font-bold text-slate-600 outline-none w-[45px] text-right disabled:opacity-50"
+                                                                        />
+                                                                        <FaClock className="text-slate-300 text-[10px]" />
+                                                                    </div>
+                                                                    <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">OUT</span>
+                                                                </div>
+                                                            </div>
+                                                            {attendance?.total_hours && (
+                                                                <div className="mt-2 text-center">
+                                                                    <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${parseFloat(attendance.total_hours) >= 8 ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                                                                        TOTAL: {attendance.total_hours} Hrs
+                                                                    </span>
+                                                                </div>
+                                                            )}
                                                         </td>
                                                         <td className="px-8 py-6">
                                                             <div
