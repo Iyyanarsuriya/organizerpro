@@ -802,41 +802,72 @@ const AttendanceTracker = () => {
                                 </div>
                                 <div className="space-y-4">
                                     {filteredAttendances.length > 0 ? (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-3">
+                                        <div className="flex flex-col gap-3">
                                             {filteredAttendances.map((item, idx) => {
                                                 const option = statusOptions.find(o => o.id === item.status);
                                                 return (
                                                     <div
                                                         key={item.id}
-                                                        className="group p-3 sm:p-4 bg-white border border-slate-100 rounded-2xl hover:shadow-lg hover:border-blue-200 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2"
-                                                        style={{ animationDelay: `${idx * 30}ms` }}
+                                                        className="group bg-white p-4 rounded-3xl border border-slate-100 hover:shadow-lg hover:border-blue-200 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2"
+                                                        style={{ animationDelay: `${idx * 50}ms` }}
                                                     >
-                                                        <div className="flex items-center justify-between gap-3">
-                                                            <div className="flex items-center gap-3 min-w-0">
-                                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 ${option?.bg} rounded-xl flex items-center justify-center text-lg ${option?.color} transition-transform group-hover:scale-105 duration-300 shrink-0`}>
+                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                                            <div className="flex items-start gap-4">
+                                                                <div className={`w-12 h-12 ${option?.bg} rounded-2xl flex items-center justify-center text-xl ${option?.color} shrink-0`}>
                                                                     {option && <option.icon />}
                                                                 </div>
-                                                                <div className="min-w-0">
-                                                                    <div className="flex items-center gap-2 mb-0.5">
-                                                                        <h4 className="font-black text-slate-900 text-sm leading-tight truncate">{item.subject}</h4>
-                                                                        <div className={`py-0.5 px-2 rounded-full text-[8px] font-black uppercase tracking-wider whitespace-nowrap ${option?.bg} ${option?.color} border ${option?.border}`}>
+                                                                <div>
+                                                                    <div className="flex items-center gap-3 mb-1.5 align-middle h-full">
+                                                                        <h4 className="font-black text-slate-900 text-base">Daily Attendance</h4>
+                                                                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-widest ${option?.bg} ${option?.color} border ${option?.border}`}>
                                                                             {option?.label}
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] text-slate-400 font-bold uppercase tracking-tight">
-                                                                        <span className="flex items-center gap-1">
-                                                                            <FaCalendarAlt className="text-slate-300 text-[8px]" />
-                                                                            {new Date(item.date).toLocaleDateString('en-GB')}
                                                                         </span>
-                                                                        {item.project_name && <span className="text-blue-500 flex items-center gap-1 font-black"><div className="w-1 h-1 rounded-full bg-blue-400" /> {item.project_name}</span>}
-                                                                        {item.member_name && <span className="text-amber-500 flex items-center gap-1 font-black"><div className="w-1 h-1 rounded-full bg-amber-400" /> {item.member_name}</span>}
+                                                                    </div>
+                                                                    <div className="flex flex-wrap items-center gap-x-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                                                        <span className="flex items-center gap-1">
+                                                                            <FaCalendarAlt /> {new Date(item.date).toLocaleDateString('en-GB')}
+                                                                        </span>
+                                                                        <span className="w-1 h-1 rounded-full bg-slate-300" />
+                                                                        <span className="text-amber-500 font-black">{item.member_name}</span>
+                                                                        {item.created_by && (
+                                                                            <>
+                                                                                <span className="w-1 h-1 rounded-full bg-slate-300" />
+                                                                                <span className="text-purple-400">CREATED: {item.created_by}</span>
+                                                                            </>
+                                                                        )}
+                                                                    </div>
+
+                                                                    {/* Work Mode Badge */}
+                                                                    <div className="mt-3">
+                                                                        <span className="px-3 py-1 bg-slate-100 text-slate-500 text-[9px] font-black uppercase tracking-widest rounded-lg">
+                                                                            {item.work_mode || 'OFFICE'}
+                                                                        </span>
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                            <div className="flex items-center gap-1">
+
+                                                            <div className="flex flex-row sm:flex-col items-center sm:items-end gap-3 sm:gap-1">
+                                                                {/* Timings */}
+                                                                {(item.check_in || item.check_out) && (
+                                                                    <div className="px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-xl flex items-center gap-2">
+                                                                        <span className="text-[10px] font-black text-emerald-600 uppercase tracking-wider">
+                                                                            IN: {item.check_in?.substring(0, 5) || '--:--'}
+                                                                        </span>
+                                                                        <span className="text-slate-300">|</span>
+                                                                        <span className="text-[10px] font-black text-red-500 uppercase tracking-wider">
+                                                                            OUT: {item.check_out?.substring(0, 5) || '--:--'}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+
+                                                                {/* Duration */}
+                                                                {item.total_hours > 0 && (
+                                                                    <div className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                                                                        {item.total_hours} HRS
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </div>
-                                                        {item.note && <div className="mt-2 text-[10px] text-slate-500 italic border-l-2 border-slate-100 pl-2 line-clamp-1">"{item.note}"</div>}
                                                     </div>
                                                 );
                                             })}
@@ -865,19 +896,19 @@ const AttendanceTracker = () => {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <div className="flex-1 sm:flex-none flex bg-white p-1 rounded-xl border border-slate-200">
-                                        <div className="px-4 py-1 text-center border-r border-slate-100">
-                                            <p className="text-[8px] font-black text-slate-400 uppercase">Staff</p>
+                                    {/* Stats Badge */}
+                                    <div className="flex bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                                        <div className="px-4 py-2 border-r border-slate-100 flex flex-col items-center justify-center min-w-[70px]">
+                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider">STAFF</p>
                                             <p className="text-sm font-black text-slate-900">{memberSummary.length}</p>
                                         </div>
-                                        <div className="px-4 py-1 text-center">
-                                            <p className="text-[8px] font-black text-slate-400 uppercase">Avg</p>
+                                        <div className="px-4 py-2 flex flex-col items-center justify-center min-w-[70px]">
+                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider">AVG</p>
                                             <p className="text-sm font-black text-blue-600">
                                                 {(memberSummary.reduce((acc, curr) => acc + (curr.total > 0 ? ((curr.present + curr.half_day * 0.5) / curr.total) * 100 : 0), 0) / (memberSummary.length || 1)).toFixed(0)}%
                                             </p>
                                         </div>
                                     </div>
-
                                 </div>
                             </div>
                         </div>
@@ -887,9 +918,10 @@ const AttendanceTracker = () => {
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-slate-50/50">
-                                        <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Member</th>
-                                        <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-center">Stats (P/A/L/H/Per)</th>
-                                        <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-right">Progress</th>
+                                        <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">MEMBER</th>
+                                        <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-center">STATS (DAYS/P/A/L/H/PER)</th>
+                                        <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-center">UTIL. %</th>
+                                        <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-right">PROGRESS</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
@@ -906,20 +938,21 @@ const AttendanceTracker = () => {
                                                 <tr key={w.id} className="hover:bg-slate-50/80 transition-colors group">
                                                     <td className="px-8 py-5">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 font-black text-xs transition-all group-hover:bg-blue-600 group-hover:text-white">
+                                                            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xs shrink-0 shadow-md shadow-blue-500/20">
                                                                 {w.name.charAt(0)}
                                                             </div>
                                                             <div>
-                                                                <p className="font-black text-slate-900 leading-none">{w.name}</p>
-                                                                <div className="h-[8px] mt-1.5 flex gap-1">
-                                                                    <div className="px-1 bg-slate-100 text-[6px] font-black text-slate-400 rounded-full flex items-center uppercase tracking-tighter">ID: #{w.id}</div>
-                                                                    <div className="px-1 bg-blue-50 text-[6px] font-black text-blue-500 rounded-full flex items-center uppercase tracking-tighter">{memberIdToRoleMap[w.id]}</div>
+                                                                <p className="font-black text-slate-900 leading-none mb-1.5">{w.name}</p>
+                                                                <div className="flex gap-1.5">
+                                                                    <div className="px-1.5 py-0.5 bg-slate-100 text-[6px] font-black text-slate-400 rounded flex items-center uppercase tracking-tighter">ID: #{w.id}</div>
+                                                                    <div className="px-1.5 py-0.5 bg-blue-50 text-[6px] font-black text-blue-500 rounded flex items-center uppercase tracking-tighter">{memberIdToRoleMap[w.id]}</div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-5">
-                                                        <div className="flex items-center justify-center gap-1">
+                                                        <div className="flex items-center justify-center gap-1.5">
+                                                            <span className="w-8 h-8 flex items-center justify-center bg-slate-900 text-white rounded-lg font-black text-[10px]" title="Total Days">{w.total || 0}</span>
                                                             <span className="w-8 h-8 flex items-center justify-center bg-emerald-50 text-emerald-600 rounded-lg font-black text-[10px] border border-emerald-100" title="Present">{w.present}</span>
                                                             <span className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 rounded-lg font-black text-[10px] border border-red-100" title="Absent">{w.absent}</span>
                                                             <span className="w-8 h-8 flex items-center justify-center bg-amber-50 text-amber-600 rounded-lg font-black text-[10px] border border-amber-100" title="Late">{w.late}</span>
@@ -927,12 +960,17 @@ const AttendanceTracker = () => {
                                                             <span className="w-8 h-8 flex items-center justify-center bg-purple-50 text-purple-600 rounded-lg font-black text-[10px] border border-purple-100" title="Permission">{w.permission || 0}</span>
                                                         </div>
                                                     </td>
-                                                    <td className="px-8 py-5 text-right">
-                                                        <div className="flex items-center justify-end gap-3">
-                                                            <div className="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                                    <td className="px-6 py-5 text-center">
+                                                        <span className="font-black text-amber-500 text-xs">
+                                                            0%
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-8 py-5 text-right w-1/4">
+                                                        <div className="flex items-center justify-end gap-4">
+                                                            <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
                                                                 <div className={`h-full rounded-full transition-all duration-1000 ${rate >= 90 ? 'bg-emerald-500' : rate >= 75 ? 'bg-blue-500' : 'bg-amber-500'}`} style={{ width: `${rate}%` }} />
                                                             </div>
-                                                            <span className={`text-[11px] font-black min-w-[32px] ${rate >= 90 ? 'text-emerald-600' : rate >= 75 ? 'text-blue-600' : 'text-amber-600'}`}>{rate.toFixed(0)}%</span>
+                                                            <span className={`text-xs font-black min-w-[32px] ${rate >= 90 ? 'text-emerald-600' : rate >= 75 ? 'text-blue-600' : 'text-amber-600'}`}>{rate.toFixed(0)}%</span>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -954,53 +992,64 @@ const AttendanceTracker = () => {
                                 .map((w) => {
                                     const rate = w.total > 0 ? ((w.present + w.half_day * 0.5) / w.total * 100) : 0;
                                     return (
-                                        <div key={w.id} className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-900 font-black text-sm">
+                                        <div key={w.id} className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
+                                            <div className="flex items-center justify-between mb-5">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-sm shadow-md shadow-blue-500/20">
                                                         {w.name.charAt(0)}
                                                     </div>
                                                     <div>
-                                                        <h4 className="font-black text-slate-900 text-sm leading-tight">{w.name}</h4>
-                                                        <div className="h-[8px] mt-1 flex gap-1">
-                                                            <div className="px-1 bg-slate-100 text-[6px] font-black text-slate-400 rounded-full flex items-center uppercase">ID: #{w.id}</div>
-                                                            <div className="px-1 bg-blue-50 text-[6px] font-black text-blue-500 rounded-full flex items-center uppercase">{memberIdToRoleMap[w.id]}</div>
+                                                        <h4 className="font-black text-slate-900 text-base leading-tight mb-1">{w.name}</h4>
+                                                        <div className="flex gap-2">
+                                                            <div className="px-2 py-0.5 bg-slate-100 text-[10px] font-black text-slate-400 rounded flex items-center uppercase">ID: #{w.id}</div>
+                                                            <div className="px-2 py-0.5 bg-blue-50 text-[10px] font-black text-blue-500 rounded flex items-center uppercase">{memberIdToRoleMap[w.id]}</div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <p className={`text-base font-black ${rate >= 90 ? 'text-emerald-600' : rate >= 75 ? 'text-blue-600' : 'text-amber-600'}`}>{rate.toFixed(0)}%</p>
-                                                    <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest text-right">Performance</p>
+
+                                            </div>
+
+                                            <div className="grid grid-cols-6 gap-2 p-3 bg-slate-50 rounded-2xl mb-4">
+                                                <div className="text-center">
+                                                    <p className="text-[9px] font-black text-slate-900 uppercase mb-1">D</p>
+                                                    <div className="w-full aspect-square bg-slate-900 rounded-lg flex items-center justify-center text-white text-xs font-black">{w.total || 0}</div>
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-[9px] font-black text-emerald-500 uppercase mb-1">P</p>
+                                                    <div className="w-full aspect-square bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center text-xs font-black">{w.present}</div>
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-[9px] font-black text-red-500 uppercase mb-1">A</p>
+                                                    <div className="w-full aspect-square bg-red-100 text-red-600 rounded-lg flex items-center justify-center text-xs font-black">{w.absent}</div>
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-[9px] font-black text-amber-500 uppercase mb-1">L</p>
+                                                    <div className="w-full aspect-square bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center text-xs font-black">{w.late}</div>
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-[9px] font-black text-blue-500 uppercase mb-1">H</p>
+                                                    <div className="w-full aspect-square bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-xs font-black">{w.half_day}</div>
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-[9px] font-black text-purple-500 uppercase mb-1">Pr</p>
+                                                    <div className="w-full aspect-square bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-xs font-black">{w.permission || 0}</div>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded-2xl">
-                                                <div className="flex-1 text-center">
-                                                    <p className="text-[8px] font-black text-emerald-500 uppercase">P</p>
-                                                    <p className="text-xs font-black text-slate-900">{w.present}</p>
+
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex-1">
+                                                    <div className="flex justify-between items-end mb-2">
+                                                        <span className="text-[10px] font-black uppercase text-slate-400">Progress</span>
+                                                        <span className={`text-xs font-black ${rate >= 90 ? 'text-emerald-600' : rate >= 75 ? 'text-blue-600' : 'text-amber-600'}`}>{rate.toFixed(0)}%</span>
+                                                    </div>
+                                                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                                        <div className={`h-full rounded-full ${rate >= 90 ? 'bg-emerald-500' : rate >= 75 ? 'bg-blue-500' : 'bg-amber-500'}`} style={{ width: `${rate}%` }} />
+                                                    </div>
                                                 </div>
-                                                <div className="w-px h-4 bg-slate-200" />
-                                                <div className="flex-1 text-center">
-                                                    <p className="text-[8px] font-black text-red-500 uppercase">A</p>
-                                                    <p className="text-xs font-black text-slate-900">{w.absent}</p>
+                                                <div className="text-center px-4 border-l border-slate-100">
+                                                    <p className="text-[9px] font-black text-slate-400 uppercase mb-0.5">Util.</p>
+                                                    <p className="text-sm font-black text-amber-500">0%</p>
                                                 </div>
-                                                <div className="w-px h-4 bg-slate-200" />
-                                                <div className="flex-1 text-center">
-                                                    <p className="text-[8px] font-black text-amber-500 uppercase">L</p>
-                                                    <p className="text-xs font-black text-slate-900">{w.late}</p>
-                                                </div>
-                                                <div className="w-px h-4 bg-slate-200" />
-                                                <div className="flex-1 text-center">
-                                                    <p className="text-[8px] font-black text-blue-500 uppercase">H</p>
-                                                    <p className="text-xs font-black text-slate-900">{w.half_day}</p>
-                                                </div>
-                                                <div className="w-px h-4 bg-slate-200" />
-                                                <div className="flex-1 text-center">
-                                                    <p className="text-[8px] font-black text-purple-500 uppercase">Per</p>
-                                                    <p className="text-xs font-black text-slate-900">{w.permission || 0}</p>
-                                                </div>
-                                            </div>
-                                            <div className="mt-4 w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                <div className={`h-full rounded-full ${rate >= 90 ? 'bg-emerald-500' : rate >= 75 ? 'bg-blue-500' : 'bg-amber-500'}`} style={{ width: `${rate}%` }} />
                                             </div>
                                         </div>
                                     );
@@ -1388,7 +1437,7 @@ const AttendanceTracker = () => {
                     </div>
                 )
                 }
-            </main>
+            </main >
             {showProjectManager && (
                 <ProjectManager
                     projects={projects}
@@ -1634,7 +1683,7 @@ const AttendanceTracker = () => {
                 confirmText={confirmModal.type === 'DELETE' ? "Delete" : "Download"}
                 type={confirmModal.type === 'DELETE' ? 'danger' : 'success'}
             />
-        </div>
+        </div >
     );
 };
 
