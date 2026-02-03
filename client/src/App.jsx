@@ -23,8 +23,7 @@ const ITAttendance = lazy(() => import('./pages/ITSector/ITAttendance'));
 const ITTeamManagement = lazy(() => import('./pages/ITSector/Team/ITTeamManagement'));
 
 const Reminders = lazy(() => import('./pages/ManufacturingSector/ReminderTracker/Reminders'));
-const Profile = lazy(() => import('./pages/ManufacturingSector/ReminderTracker/ReminderDashboard'));
-const FinanceProfile = lazy(() => import('./pages/ManufacturingSector/ExpenseTracker/FinanceProfile'));
+
 const ExpenseTracker = lazy(() => import('./pages/ManufacturingSector/ExpenseTracker/ExpenseTrackerMain'));
 const AttendanceTracker = lazy(() => import('./pages/ManufacturingSector/AttendanceTracker/AttendanceTracker'));
 const TeamManagement = lazy(() => import('./pages/ManufacturingSector/Team/TeamManagement'));
@@ -249,9 +248,7 @@ const AppContent = () => {
             <Route path="/it-sector/team" element={<ProtectedRoute><ITTeamManagement /></ProtectedRoute>} />
             <Route path="/it-sector/expenses" element={<ProtectedRoute><ITExpenseTracker /></ProtectedRoute>} />
 
-            <Route path="/reminders" element={<ProtectedRoute><Reminders /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/finance" element={<ProtectedRoute><FinanceProfile /></ProtectedRoute>} />
+
             <Route path="/manufacturing" element={<ProtectedRoute><ManufacturingHome /></ProtectedRoute>} />
             <Route path="/manufacturing/reminders" element={<ProtectedRoute><Reminders /></ProtectedRoute>} />
             <Route path="/manufacturing/expenses" element={<ProtectedRoute><ExpenseTracker /></ProtectedRoute>} />
@@ -266,9 +263,7 @@ const AppContent = () => {
             <Route path="/education-sector/expenses" element={<ProtectedRoute><EducationExpenses /></ProtectedRoute>} />
             <Route path="/education-sector/team" element={<ProtectedRoute><EducationTeam /></ProtectedRoute>} />
 
-            <Route path="/expenses" element={<ProtectedRoute><ExpenseTracker /></ProtectedRoute>} />
-            <Route path="/attendance" element={<ProtectedRoute><AttendanceTracker /></ProtectedRoute>} />
-            <Route path="/team" element={<ProtectedRoute><TeamManagement /></ProtectedRoute>} />
+
             <Route path="/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="*" element={<Navigate to="/" replace />} />

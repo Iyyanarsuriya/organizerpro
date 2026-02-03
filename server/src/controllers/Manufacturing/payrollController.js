@@ -111,6 +111,22 @@ const getActiveAdvances = async (memberId, userId) => {
 };
 
 /**
+ * Get work log earnings for a member for a specific month
+ */
+const getWorkLogEarnings = async (memberId, month, year, userId) => {
+    const [result] = await db.query(`
+        SELECT SUM(total_amount) as total
+        FROM manufacturing_work_logs
+        WHERE member_id = ?
+        AND MONTH(date) = ?
+        AND YEAR(date) = ?
+        AND user_id = ?
+    `, [memberId, month, year, userId]);
+
+    return result[0].total || 0;
+};
+
+/**
  * Calculate wage for a member
  */
 const calculateWage = async (member, attendanceSummary, settings) => {
@@ -127,6 +143,21 @@ const calculateWage = async (member, attendanceSummary, settings) => {
         // Overtime: hourly rate × hours × multiplier
         const hourlyRate = daily_wage / settings.working_hours_per_day;
         overtimeAmount = overtime_hours * hourlyRate * settings.overtime_multiplier;
+
+    } else if (wage_type === 'piece_rate') {
+        // Piece Rate calculation (Sum of work logs)
+        // For piece_rate, baseAmount comes seamlessly from work logs
+        // We can pass the pre-calculated workLogTotal here
+        baseAmount = member.workLogTotal || 0;
+
+        // Overtime for piece rate? 
+        // Usually piece rate workers don't get OT hours, but if they do, 
+        // valid logic might be needed. For now, we assume 0 or standard calculation if specific rate provided.
+        // If daily_wage is set as a "base rate" for OT calc:
+        if (daily_wage > 0) {
+            const hourlyRate = daily_wage / settings.working_hours_per_day;
+            overtimeAmount = overtime_hours * hourlyRate * settings.overtime_multiplier;
+        }
 
     } else if (wage_type === 'monthly') {
         // Monthly salary calculation
@@ -211,9 +242,15 @@ const generateMonthlyPayroll = async (req, res) => {
                 member.id, month, year, userId
             );
 
+            // Get work log earnings (for piece_rate)
+            const workLogTotal = await getWorkLogEarnings(member.id, month, year, userId);
+
             // Calculate wage
+            // Pass workLogTotal to the member object temporarily for calculation
+            const memberForCalc = { ...member, workLogTotal };
+
             const { baseAmount, overtimeAmount, grossAmount } = await calculateWage(
-                member, attendanceSummary, settings
+                memberForCalc, attendanceSummary, settings
             );
 
             // Get active advances

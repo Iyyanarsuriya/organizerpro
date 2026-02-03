@@ -1,8 +1,8 @@
 -- ==========================================
--- OrganizerPro Database Schema V2
+-- OrganizerPro Database Schema V2.1
 -- ==========================================
--- Last Updated: January 29, 2026
--- Total Tables: 37 (2 Shared + 4 Personal + 11 Manufacturing + 8 IT + 12 Education)
+-- Last Updated: February 3, 2026
+-- Total Tables: 47 (2 Shared + 4 Personal + 18 Manufacturing + 11 IT + 12 Education)
 -- 
 -- ARCHITECTURE:
 -- - Sector-based isolation for data organization
@@ -10,7 +10,8 @@
 -- - Sector-specific tables for reminders, notes, transactions, attendance, etc.
 -- 
 -- LEGACY CLEANUP COMPLETED:
--- Removed 15+ redundant generic tables - all replaced with sector-specific versions
+-- Removed redundant generic tables.
+-- Removed unused sample data scripts.
 -- ==========================================
 --
 -- TABLE OF CONTENTS:
@@ -26,42 +27,52 @@
 --   5. personal_notes - Personal notes and memos
 --   6. personal_categories - Personal reminder categories
 --
--- MANUFACTURING SECTOR (11):
---   7. manufacturing_transactions - Manufacturing financial transactions
---   8. manufacturing_reminders - Manufacturing sector reminders
---   9. manufacturing_notes - Manufacturing sector notes
---  10. manufacturing_member_roles - Manufacturing employee roles
---  11. manufacturing_members - Manufacturing employees/workers
---  12. manufacturing_projects - Manufacturing projects
---  13. manufacturing_attendance - Manufacturing employee attendance
---  14. manufacturing_work_types - Manufacturing work type definitions
---  15. manufacturing_work_logs - Daily work logs for manufacturing
---  16. manufacturing_vehicle_logs - Vehicle tracking for manufacturing
---  17. manufacturing_expense_categories - Manufacturing expense categories
+-- MANUFACTURING SECTOR (18):
+--   7. manufacturing_projects - Manufacturing projects
+--   8. manufacturing_members - Manufacturing employees/workers
+--   9. manufacturing_transactions - Manufacturing financial transactions
+--  10. manufacturing_attendance - Manufacturing employee attendance
+--  11. manufacturing_work_logs - Daily work logs for manufacturing
+--  12. manufacturing_expense_categories - Manufacturing expense categories
+--  13. manufacturing_vehicle_logs - Vehicle tracking for manufacturing
+--  14. manufacturing_member_roles - Manufacturing employee roles
+--  15. manufacturing_work_types - Manufacturing work type definitions
+--  16. manufacturing_reminders - Manufacturing sector reminders
+--  17. manufacturing_notes - Manufacturing sector notes
+--  18. manufacturing_holidays - Manufacturing holidays
+--  19. manufacturing_shifts - Manufacturing shifts
+--  20. manufacturing_payroll - Manufacturing payroll
+--  21. manufacturing_approvals - Manufacturing approvals
+--  22. manufacturing_expense_locks - Manufacturing expense locks
+--  23. manufacturing_advances - Manufacturing advances
+--  24. manufacturing_payroll_settings - Manufacturing payroll settings
 --
--- IT SECTOR (8):
---  18. it_transactions - IT sector financial transactions
---  19. it_reminders - IT sector reminders
---  20. it_notes - IT sector notes
---  21. it_member_roles - IT team member roles
---  22. it_members - IT team members
---  23. it_projects - IT projects
---  24. it_attendance - IT team attendance
---  25. it_categories - IT expense/transaction categories
+-- IT SECTOR (11):
+--  25. it_projects - IT projects
+--  26. it_members - IT team members
+--  27. it_attendance - IT team attendance
+--  28. it_reminders - IT sector reminders
+--  29. it_notes - IT sector notes
+--  30. it_member_roles - IT team member roles
+--  31. it_timesheets - IT timesheets
+--  32. it_leaves - IT leave management
+--  33. it_audit_logs - IT audit logs
+--  34. it_transactions - IT sector financial transactions
+--  35. it_categories - IT expense/transaction categories
 --
 -- EDUCATION SECTOR (12):
---  26. education_transactions - Education sector financial transactions
---  27. education_reminders - Education sector reminders
---  28. education_notes - Education sector notes
---  29. education_member_roles - Education staff/student roles
---  30. education_members - Education staff and students
---  31. education_attendance - Education attendance tracking
---  32. education_categories - Education expense categories
---  33. education_departments - Education departments
---  34. education_vendors - Education vendors
---  35. education_payroll - Education payroll and salary tracking
---  36. education_attendance_locks - Education attendance locking system
---  37. education_audit_logs - Education sector audit trails
+--  36. education_members - Education staff and students
+--  37. education_attendance - Education attendance tracking
+--  38. education_reminders - Education sector reminders
+--  39. education_notes - Education sector notes
+--  40. education_member_roles - Education staff/student roles
+--  41. education_transactions - Education sector financial transactions
+--  42. education_categories - Education expense categories
+--  43. education_departments - Education departments
+--  44. education_vendors - Education vendors
+--  45. education_payroll - Education payroll and salary tracking
+--  46. education_attendance_locks - Education attendance locking system
+--  47. education_audit_logs - Education sector audit trails
 -- ==========================================
 
 
