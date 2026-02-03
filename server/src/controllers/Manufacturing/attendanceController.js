@@ -51,14 +51,24 @@ const getAttendances = async (req, res) => {
 
 const updateAttendance = async (req, res) => {
     try {
+        // Get existing record first
+        const existing = await Attendance.findById(req.params.id, req.query.sector || req.body.sector);
+        if (!existing) {
+            return res.status(404).json({ success: false, message: "Attendance not found" });
+        }
+
+        // Check if attendance is locked
+        const isLocked = await checkLock(req.user.data_owner_id, existing.date);
+        if (isLocked && req.user.owner_id) {
+            return res.status(403).json({
+                success: false,
+                message: 'Attendance is locked for this period. Only owner can unlock.'
+            });
+        }
+
         // For updates, we must check BOTH the existing record's date (cannot edit past record)
         // AND the new date (cannot move record to past)
         if (req.user.owner_id) {
-            const existing = await Attendance.findById(req.params.id, req.query.sector || req.body.sector);
-            if (!existing) {
-                return res.status(404).json({ success: false, message: "Attendance not found" });
-            }
-
             // Check 1: Cannot edit a record that belongs to the past
             const existingRestriction = checkPastDateRestriction(req, existing.date);
             if (existingRestriction) return res.status(403).json({ success: false, message: existingRestriction });
@@ -86,11 +96,22 @@ const updateAttendance = async (req, res) => {
 
 const deleteAttendance = async (req, res) => {
     try {
+        // Get existing record first
+        const existing = await Attendance.findById(req.params.id, req.query.sector);
+        if (!existing) {
+            return res.status(404).json({ success: false, message: "Attendance not found" });
+        }
+
+        // Check if attendance is locked
+        const isLocked = await checkLock(req.user.data_owner_id, existing.date);
+        if (isLocked && req.user.owner_id) {
+            return res.status(403).json({
+                success: false,
+                message: 'Attendance is locked for this period. Only owner can unlock.'
+            });
+        }
+
         if (req.user.owner_id) {
-            const existing = await Attendance.findById(req.params.id, req.query.sector);
-            if (!existing) {
-                return res.status(404).json({ success: false, message: "Attendance not found" });
-            }
             const restriction = checkPastDateRestriction(req, existing.date);
             if (restriction) return res.status(403).json({ success: false, message: restriction });
         }
@@ -146,8 +167,37 @@ const getMemberSummary = async (req, res) => {
 
 const quickMarkAttendance = async (req, res) => {
     try {
+        const db = require('../../config/db');
         const restriction = checkPastDateRestriction(req, req.body.date);
         if (restriction) return res.status(403).json({ success: false, message: restriction });
+
+        // Check leave balance if status is CL, SL, or EL
+        if (['CL', 'SL', 'EL'].includes(req.body.status)) {
+            const [member] = await db.query(
+                'SELECT cl_balance, sl_balance, el_balance FROM manufacturing_members WHERE id = ?',
+                [req.body.member_id]
+            );
+
+            if (member.length === 0) {
+                return res.status(404).json({ success: false, message: 'Member not found' });
+            }
+
+            const balanceField = `${req.body.status.toLowerCase()}_balance`;
+            const currentBalance = member[0][balanceField];
+
+            if (currentBalance <= 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Insufficient ${req.body.status} balance. Current balance: ${currentBalance} days`
+                });
+            }
+
+            // Deduct balance (will be restored if attendance is deleted)
+            await db.query(
+                `UPDATE manufacturing_members SET ${balanceField} = ${balanceField} - 1 WHERE id = ?`,
+                [req.body.member_id]
+            );
+        }
 
         const attendance = await Attendance.quickMark({
             ...req.body,
@@ -156,6 +206,7 @@ const quickMarkAttendance = async (req, res) => {
         });
         res.status(attendance.updated ? 200 : 201).json({ success: true, data: attendance });
     } catch (error) {
+        console.error('Quick mark attendance error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -218,6 +269,104 @@ const deleteShift = async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: error.message }); }
 };
 
+// Attendance Locking Functions
+const checkLock = async (userId, date) => {
+    const db = require('../../config/db');
+    const month = new Date(date).getMonth() + 1;
+    const year = new Date(date).getFullYear();
+
+    const [locks] = await db.query(
+        'SELECT * FROM manufacturing_attendance_locks WHERE user_id = ? AND month = ? AND year = ? AND unlocked_at IS NULL',
+        [userId, month, year]
+    );
+
+    return locks.length > 0;
+};
+
+const lockAttendance = async (req, res) => {
+    try {
+        const db = require('../../config/db');
+        const { month, year } = req.body;
+
+        // Check if already locked
+        const [existing] = await db.query(
+            'SELECT * FROM manufacturing_attendance_locks WHERE user_id = ? AND month = ? AND year = ?',
+            [req.user.data_owner_id, month, year]
+        );
+
+        if (existing.length > 0 && !existing[0].unlocked_at) {
+            return res.status(400).json({
+                success: false,
+                message: 'Attendance already locked for this period'
+            });
+        }
+
+        // Create lock
+        await db.query(
+            'INSERT INTO manufacturing_attendance_locks (user_id, month, year, locked_by) VALUES (?, ?, ?, ?)',
+            [req.user.data_owner_id, month, year, req.user.id]
+        );
+
+        res.status(200).json({
+            success: true,
+            message: `Attendance locked for ${month}/${year}`
+        });
+    } catch (error) {
+        console.error('Lock attendance error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const unlockAttendance = async (req, res) => {
+    try {
+        const db = require('../../config/db');
+
+        // Only owner can unlock
+        if (req.user.owner_id) {
+            return res.status(403).json({
+                success: false,
+                message: 'Only owner can unlock attendance'
+            });
+        }
+
+        const { month, year, reason } = req.body;
+
+        await db.query(
+            'UPDATE manufacturing_attendance_locks SET unlocked_by = ?, unlocked_at = NOW(), unlock_reason = ? WHERE user_id = ? AND month = ? AND year = ?',
+            [req.user.id, reason, req.user.data_owner_id, month, year]
+        );
+
+        res.status(200).json({
+            success: true,
+            message: `Attendance unlocked for ${month}/${year}`
+        });
+    } catch (error) {
+        console.error('Unlock attendance error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const getLockStatus = async (req, res) => {
+    try {
+        const db = require('../../config/db');
+        const { month, year } = req.query;
+
+        const [locks] = await db.query(
+            'SELECT * FROM manufacturing_attendance_locks WHERE user_id = ? AND month = ? AND year = ?',
+            [req.user.data_owner_id, month, year]
+        );
+
+        res.status(200).json({
+            success: true,
+            data: locks.length > 0 ? locks[0] : null,
+            isLocked: locks.length > 0 && !locks[0].unlocked_at
+        });
+    } catch (error) {
+        console.error('Get lock status error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     createAttendance,
     getAttendances,
@@ -232,5 +381,9 @@ module.exports = {
     deleteHoliday,
     getShifts,
     createShift,
-    deleteShift
+    deleteShift,
+    lockAttendance,
+    unlockAttendance,
+    getLockStatus,
+    checkLock
 };

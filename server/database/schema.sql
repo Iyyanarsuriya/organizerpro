@@ -254,13 +254,21 @@ CREATE TABLE `manufacturing_transactions` (
   `guest_name` varchar(255) DEFAULT NULL,
   `quantity` decimal(15,2) DEFAULT '1.00',
   `unit_price` decimal(15,2) DEFAULT '0.00',
+  `payroll_id` int DEFAULT NULL,
+  `approval_id` int DEFAULT NULL,
+  `payment_mode` varchar(50) DEFAULT 'Cash',
+  `auto_generated` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   KEY `fk_man_trans_proj` (`project_id`),
   KEY `fk_man_trans_memb` (`member_id`),
+  KEY `fk_man_trans_pay` (`payroll_id`),
+  KEY `fk_man_trans_appr` (`approval_id`),
   CONSTRAINT `fk_man_trans_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_man_trans_proj` FOREIGN KEY (`project_id`) REFERENCES `manufacturing_projects` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `fk_man_trans_memb` FOREIGN KEY (`member_id`) REFERENCES `manufacturing_members` (`id`) ON DELETE SET NULL
+  CONSTRAINT `fk_man_trans_memb` FOREIGN KEY (`member_id`) REFERENCES `manufacturing_members` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_man_trans_pay` FOREIGN KEY (`payroll_id`) REFERENCES `manufacturing_payroll` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_man_trans_appr` FOREIGN KEY (`approval_id`) REFERENCES `manufacturing_approvals` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Manufacturing Attendance
@@ -438,6 +446,141 @@ CREATE TABLE `manufacturing_shifts` (
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   CONSTRAINT `fk_man_shift_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+-- Manufacturing Payroll
+DROP TABLE IF EXISTS `manufacturing_payroll`;
+CREATE TABLE `manufacturing_payroll` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `member_id` int NOT NULL,
+    `month` int NOT NULL COMMENT '1-12',
+    `year` int NOT NULL COMMENT 'YYYY',
+    `days_present` int DEFAULT '0',
+    `days_absent` int DEFAULT '0',
+    `days_half` int DEFAULT '0',
+    `days_leave` int DEFAULT '0',
+    `days_holiday` int DEFAULT '0',
+    `days_weekend` int DEFAULT '0',
+    `overtime_hours` decimal(10,2) DEFAULT '0.00',
+    `base_amount` decimal(15,2) NOT NULL,
+    `overtime_amount` decimal(15,2) DEFAULT '0.00',
+    `gross_amount` decimal(15,2) NOT NULL,
+    `advance_deducted` decimal(15,2) DEFAULT '0.00',
+    `loan_deducted` decimal(15,2) DEFAULT '0.00',
+    `other_deductions` decimal(15,2) DEFAULT '0.00',
+    `total_deductions` decimal(15,2) DEFAULT '0.00',
+    `net_amount` decimal(15,2) NOT NULL,
+    `status` enum('draft','approved','paid','cancelled') DEFAULT 'draft',
+    `approved_by` varchar(100) DEFAULT NULL,
+    `approved_at` datetime DEFAULT NULL,
+    `paid_at` datetime DEFAULT NULL,
+    `payment_mode` enum('cash','bank','upi','cheque') DEFAULT 'bank',
+    `expense_id` int DEFAULT NULL,
+    `project_id` int DEFAULT NULL,
+    `notes` text,
+    `user_id` int NOT NULL,
+    `created_by` varchar(100) NOT NULL,
+    `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_by` varchar(100) DEFAULT NULL,
+    `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `unique_payroll` (`member_id`,`month`,`year`,`user_id`),
+    KEY `idx_status` (`status`),
+    KEY `idx_month_year` (`month`,`year`),
+    KEY `idx_member` (`member_id`),
+    CONSTRAINT `fk_man_pay_memb` FOREIGN KEY (`member_id`) REFERENCES `manufacturing_members` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_man_pay_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Manufacturing Approvals
+DROP TABLE IF EXISTS `manufacturing_approvals`;
+CREATE TABLE `manufacturing_approvals` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `entity_type` enum('expense','payroll','attendance') NOT NULL,
+    `entity_id` int NOT NULL,
+    `amount` decimal(15,2) DEFAULT '0.00',
+    `title` varchar(255) DEFAULT NULL,
+    `description` text,
+    `requested_by` varchar(100) NOT NULL,
+    `requested_at` datetime DEFAULT CURRENT_TIMESTAMP,
+    `approver_level` int DEFAULT '1',
+    `required_level` int DEFAULT '1',
+    `status` enum('pending','approved','rejected','cancelled') DEFAULT 'pending',
+    `approved_by` varchar(100) DEFAULT NULL,
+    `approved_at` datetime DEFAULT NULL,
+    `rejection_reason` text,
+    `approver_comments` text,
+    `user_id` int NOT NULL,
+    `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_entity` (`entity_type`,`entity_id`),
+    KEY `idx_status` (`status`),
+    CONSTRAINT `fk_man_appr_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Manufacturing Expense Locks
+DROP TABLE IF EXISTS `manufacturing_expense_locks`;
+CREATE TABLE `manufacturing_expense_locks` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `month` int NOT NULL,
+    `year` int NOT NULL,
+    `locked_by` varchar(100) NOT NULL,
+    `locked_at` datetime DEFAULT CURRENT_TIMESTAMP,
+    `lock_reason` varchar(255) DEFAULT 'Month-end closing',
+    `unlocked_by` varchar(100) DEFAULT NULL,
+    `unlocked_at` datetime DEFAULT NULL,
+    `unlock_reason` varchar(255) DEFAULT NULL,
+    `status` enum('locked','unlocked') DEFAULT 'locked',
+    `user_id` int NOT NULL,
+    `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `unique_lock` (`month`,`year`,`user_id`),
+    CONSTRAINT `fk_man_lock_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Manufacturing Advances
+DROP TABLE IF EXISTS `manufacturing_advances`;
+CREATE TABLE `manufacturing_advances` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `member_id` int NOT NULL,
+    `amount` decimal(15,2) NOT NULL,
+    `advance_date` date NOT NULL,
+    `reason` varchar(255) DEFAULT NULL,
+    `total_deducted` decimal(15,2) DEFAULT '0.00',
+    `balance` decimal(15,2) DEFAULT '0.00',
+    `monthly_deduction` decimal(15,2) DEFAULT '0.00',
+    `status` enum('active','fully_paid','cancelled') DEFAULT 'active',
+    `user_id` int NOT NULL,
+    `created_by` varchar(100) NOT NULL,
+    `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_member` (`member_id`),
+    CONSTRAINT `fk_man_adv_memb` FOREIGN KEY (`member_id`) REFERENCES `manufacturing_members` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_man_adv_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Manufacturing Payroll Settings
+DROP TABLE IF EXISTS `manufacturing_payroll_settings`;
+CREATE TABLE `manufacturing_payroll_settings` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `working_days_per_month` int DEFAULT '26',
+    `working_hours_per_day` int DEFAULT '8',
+    `working_hours_per_month` int DEFAULT '208',
+    `overtime_multiplier` decimal(5,2) DEFAULT '1.50',
+    `auto_deduct_advances` tinyint(1) DEFAULT '1',
+    `advance_deduction_percentage` int DEFAULT '100',
+    `expense_approval_threshold` decimal(15,2) DEFAULT '10000.00',
+    `payroll_requires_approval` tinyint(1) DEFAULT '1',
+    `user_id` int NOT NULL,
+    `updated_by` varchar(100) DEFAULT NULL,
+    `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `unique_settings` (`user_id`),
+    CONSTRAINT `fk_man_set_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 

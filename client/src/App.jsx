@@ -28,6 +28,7 @@ const FinanceProfile = lazy(() => import('./pages/ManufacturingSector/ExpenseTra
 const ExpenseTracker = lazy(() => import('./pages/ManufacturingSector/ExpenseTracker/ExpenseTrackerMain'));
 const AttendanceTracker = lazy(() => import('./pages/ManufacturingSector/AttendanceTracker/AttendanceTracker'));
 const TeamManagement = lazy(() => import('./pages/ManufacturingSector/Team/TeamManagement'));
+const ManufacturingPayroll = lazy(() => import('./pages/ManufacturingSector/Payroll/ManufacturingPayroll'));
 const ManufacturingHome = lazy(() => import('./pages/ManufacturingSector/ManufacturingHome'));
 const EducationHome = lazy(() => import('./pages/EducationSector/EducationHome'));
 const EducationReminders = lazy(() => import('./pages/EducationSector/EducationReminders'));
@@ -256,6 +257,7 @@ const AppContent = () => {
             <Route path="/manufacturing/expenses" element={<ProtectedRoute><ExpenseTracker /></ProtectedRoute>} />
             <Route path="/manufacturing/attendance" element={<ProtectedRoute><AttendanceTracker /></ProtectedRoute>} />
             <Route path="/manufacturing/team" element={<ProtectedRoute><TeamManagement /></ProtectedRoute>} />
+            <Route path="/manufacturing/payroll" element={<ProtectedRoute><ManufacturingPayroll /></ProtectedRoute>} />
 
             {/* Education Sector Routes */}
             <Route path="/education-sector" element={<ProtectedRoute><EducationHome /></ProtectedRoute>} />

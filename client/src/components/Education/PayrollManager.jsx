@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaSync, FaCheckCircle, FaMoneyBillWave, FaLock, FaCalendarAlt, FaUserTie, FaExclamationTriangle } from 'react-icons/fa';
-import { getPayrolls, generatePayroll, approvePayroll, payPayroll } from '../../api/Expense/eduPayroll';
+import { getPayrolls, generatePayroll, approvePayroll, payPayroll } from '../../api/Payroll/eduPayroll';
 import { getMembers } from '../../api/TeamManagement/eduTeam';
 import { formatAmount } from '../../utils/formatUtils';
 import toast from 'react-hot-toast';

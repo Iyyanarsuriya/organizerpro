@@ -14,7 +14,10 @@ const {
     deleteHoliday,
     getShifts,
     createShift,
-    deleteShift
+    deleteShift,
+    lockAttendance,
+    unlockAttendance,
+    getLockStatus
 } = require('../../controllers/Manufacturing/attendanceController');
 const { authenticateToken, requireOwner } = require('../../middlewares/authMiddleware');
 
@@ -34,6 +37,11 @@ router.delete('/holidays/:id', deleteHoliday);
 router.get('/shifts', getShifts);
 router.post('/shifts', createShift);
 router.delete('/shifts/:id', deleteShift);
+
+// Attendance Locking
+router.post('/lock', lockAttendance);
+router.post('/unlock', unlockAttendance);
+router.get('/lock-status', getLockStatus);
 
 router.put('/:id', updateAttendance);
 router.delete('/:id', requireOwner, deleteAttendance);

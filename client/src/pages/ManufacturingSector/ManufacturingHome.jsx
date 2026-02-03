@@ -3,7 +3,8 @@ import {
     Bell,
     Wallet,
     CalendarCheck,
-    Users
+    Users,
+    Banknote
 } from 'lucide-react';
 
 const ManufacturingHome = () => {
@@ -51,6 +52,14 @@ const ManufacturingHome = () => {
                             <Users className="w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] text-white" />
                         </div>
                         <h2 className="text-[20px] sm:text-[24px] font-black text-[#8b5cf6] tracking-tight group-hover:tracking-wide transition-all">Team</h2>
+                    </Link>
+
+                    {/* Payroll Management */}
+                    <Link to="/manufacturing/payroll" className="group flex flex-col items-center justify-center p-[32px] sm:p-[40px] rounded-[32px] sm:rounded-[40px] bg-rose-50/50 hover:bg-rose-50 border border-rose-100/50 hover:border-rose-200 transition-all duration-300 hover:-translate-y-[8px] hover:shadow-2xl hover:shadow-rose-500/20 active:scale-95">
+                        <div className="w-[72px] h-[72px] sm:w-[96px] sm:h-[96px] bg-[#f43f5e] rounded-[24px] sm:rounded-[32px] flex items-center justify-center shadow-lg shadow-rose-500/30 group-hover:scale-110 transition-transform duration-300 mb-[24px] sm:mb-[32px]">
+                            <Banknote className="w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] text-white" />
+                        </div>
+                        <h2 className="text-[20px] sm:text-[24px] font-black text-[#f43f5e] tracking-tight group-hover:tracking-wide transition-all">Payroll</h2>
                     </Link>
 
                 </div>

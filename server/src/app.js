@@ -62,6 +62,7 @@ mfgRouter.use('/projects', require("./routes/Manufacturing/projectRoutes"));
 mfgRouter.use('/work-logs', require("./routes/Manufacturing/dailyWorkLogRoutes"));
 mfgRouter.use('/work-types', require("./routes/Manufacturing/workTypeRoutes"));
 mfgRouter.use('/team', require("./routes/Manufacturing/teamRoutes"));
+mfgRouter.use('/payroll', require("./routes/Manufacturing/payrollRoutes"));
 app.use('/api/manufacturing-sector', mfgRouter);
 
 // IT Sector Header

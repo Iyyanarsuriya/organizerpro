@@ -140,8 +140,6 @@ const ExpenseTrackerMain = () => {
                 sector: 'manufacturing' // Add sector
             };
 
-            console.log('Fetching with params:', params); // Debug log
-
             const [transRes, statsRes, catRes, projRes, membersRes, roleRes, guestRes, vehicleRes] = await Promise.all([
                 getTransactions(params),
                 getTransactionStats(params),
