@@ -21,11 +21,12 @@
 --   1. users - User authentication and profiles
 --   2. push_subscriptions - Web push notification subscriptions
 --
--- PERSONAL SECTOR (4):
+-- PERSONAL SECTOR (5):
 --   3. personal_transactions - Personal income/expense tracking
 --   4. personal_reminders - Personal tasks and reminders
 --   5. personal_notes - Personal notes and memos
 --   6. personal_categories - Personal reminder categories
+--   7. personal_budgets - Personal monthly/yearly category budgets
 --
 -- MANUFACTURING SECTOR (18):
 --   7. manufacturing_projects - Manufacturing projects
@@ -204,6 +205,24 @@ CREATE TABLE `personal_categories` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_user_pcat` (`user_id`,`name`),
   CONSTRAINT `fk_personal_cat_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+-- Personal Budgets
+DROP TABLE IF EXISTS `personal_budgets`;
+CREATE TABLE `personal_budgets` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `category` varchar(50) NOT NULL,
+  `amount_limit` decimal(15,2) NOT NULL,
+  `period` enum('monthly','yearly') DEFAULT 'monthly',
+  `month` int DEFAULT NULL,
+  `year` int DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_user_budget` (`user_id`,`category`,`month`,`year`),
+  CONSTRAINT `fk_personal_budgets_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
@@ -818,6 +837,24 @@ CREATE TABLE `it_categories` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_user_itcat` (`user_id`,`name`),
   CONSTRAINT `fk_it_cat_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+
+-- Personal Budgets
+DROP TABLE IF EXISTS `personal_budgets`;
+CREATE TABLE `personal_budgets` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `category` varchar(50) NOT NULL,
+  `amount_limit` decimal(15,2) NOT NULL,
+  `period` enum('monthly','yearly') DEFAULT 'monthly',
+  `month` int DEFAULT NULL,
+  `year` int DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_user_cat_period` (`user_id`, `category`, `period`, `month`, `year`),
+  CONSTRAINT `fk_p_bud_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 

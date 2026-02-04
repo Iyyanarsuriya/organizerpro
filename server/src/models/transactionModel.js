@@ -166,6 +166,12 @@ const getAllByUserId = async (userId, filters = {}) => {
 
     query += ' ORDER BY t.date DESC, t.created_at DESC';
 
+    // Safety Limit: If no specific period/range filters AND no explicit limit logic (future), cap at 500 to prevent crash.
+    // This is a "MVP" scalability fix.
+    if (!filters.period && !filters.startDate && !filters.projectId) {
+        query += ' LIMIT 500';
+    }
+
     const [rows] = await db.query(query, params);
     return rows;
 };

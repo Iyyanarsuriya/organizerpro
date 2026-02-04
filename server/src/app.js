@@ -45,6 +45,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/expense-categories", expenseCategoryRoutes);
 app.use("/api/notes", require("./routes/Personal/noteRoutes"));
 app.use("/api/vehicle-logs", require("./routes/Personal/vehicleLogRoutes"));
+app.use("/api/budgets", require("./routes/Personal/budgetRoutes"));
 
 // ==========================================
 // SECTOR SPECIFIC ROUTES

@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, TrendingUp, TrendingDown, IndianRupee, Tag, Filter, LayoutDashboard, List, Calendar, X } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, TrendingUp, TrendingDown, IndianRupee, Tag, Filter, LayoutDashboard, List, Calendar, X, Wallet } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import toast from 'react-hot-toast';
 import { getTransactions, createTransaction, updateTransaction, deleteTransaction, getExpenseCategories, createExpenseCategory, deleteExpenseCategory } from '../../api/Expense/personalExpense';
+import { getBudgetStatus, createBudget, deleteBudget } from '../../api/Expense/budget';
 import { formatAmount } from '../../utils/formatUtils';
 import CategoryManager from '../../components/Common/CategoryManager';
 import ExportButtons from '../../components/Common/ExportButtons';
@@ -25,7 +26,9 @@ const PersonalExpenseTracker = () => {
     const [loading, setLoading] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showCategoryManager, setShowCategoryManager] = useState(false);
+    const [showBudgetModal, setShowBudgetModal] = useState(false);
     const [pendingExport, setPendingExport] = useState(null); // { type: 'CSV' | 'PDF' | 'TXT', action: () => void }
+    const [budgets, setBudgets] = useState([]);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -36,6 +39,14 @@ const PersonalExpenseTracker = () => {
         date: getTodayString(),
         description: ''
     });
+
+    // Budget Form
+    const [budgetForm, setBudgetForm] = useState({
+        category: 'General',
+        amount_limit: '',
+        period: 'monthly'
+    });
+
     const [editingId, setEditingId] = useState(null);
 
     // Filters
@@ -47,15 +58,18 @@ const PersonalExpenseTracker = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [transRes, catRes] = await Promise.all([
+            const d = new Date();
+            const [transRes, catRes, budgetRes] = await Promise.all([
                 getTransactions({ sector: 'personal' }), // Fetches only personal transactions
-                getExpenseCategories({ sector: 'personal' })
+                getExpenseCategories({ sector: 'personal' }),
+                getBudgetStatus({ month: d.getMonth() + 1, year: d.getFullYear() }) // Explicitly fetch for current month/year
             ]);
 
             // Filter out complex manufacturing transactions (optional: could rely on category or project_id being null)
             // For now, we'll just show all, but when creating we won't add project_id
             setTransactions(transRes.data || []);
             setCategories(catRes.data || []);
+            setBudgets(budgetRes.data || []);
         } catch (error) {
             console.error("Failed to fetch expenses", error);
             toast.error("Failed to load data");
@@ -68,8 +82,13 @@ const PersonalExpenseTracker = () => {
         fetchData();
     }, []);
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (isSubmitting) return;
+
+        setIsSubmitting(true);
         try {
             const payload = {
                 ...formData,
@@ -91,6 +110,8 @@ const PersonalExpenseTracker = () => {
             fetchData();
         } catch (error) {
             toast.error("Operation failed");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -104,6 +125,29 @@ const PersonalExpenseTracker = () => {
             toast.error("Delete failed");
         }
     };
+
+    const handleSaveBudget = async (e) => {
+        e.preventDefault();
+        try {
+            await createBudget({ ...budgetForm, month: undefined, year: undefined }); // Pass undefined for global recurring
+            toast.success("Budget set successfully");
+            setShowBudgetModal(false);
+            fetchData();
+        } catch (error) {
+            toast.error("Failed to set budget");
+        }
+    };
+
+    const handleDeleteBudget = async (id) => {
+        if (!window.confirm("Delete this budget limit?")) return;
+        try {
+            await deleteBudget(id);
+            toast.success("Budget deleted");
+            fetchData();
+        } catch (error) {
+            toast.error("Failed to delete budget");
+        }
+    }
 
     const resetForm = () => {
         setFormData({
@@ -280,6 +324,13 @@ const PersonalExpenseTracker = () => {
                             >
                                 <LayoutDashboard className="w-[18px] h-[18px] md:w-[20px] md:h-[20px]" />
                             </button>
+                            <button
+                                onClick={() => setActiveTab('budgets')}
+                                className={`p-[6px] md:p-[8px] rounded-[8px] transition-all ${activeTab === 'budgets' ? 'bg-slate-100 md:bg-white text-[#2d5bff] shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                title="Budgets"
+                            >
+                                <span className="font-bold text-[10px] uppercase">Budget</span>
+                            </button>
                         </div>
                         <button
                             onClick={() => setShowCategoryManager(true)}
@@ -287,120 +338,127 @@ const PersonalExpenseTracker = () => {
                         >
                             <Tag className="w-[16px] h-[16px]" /> <span className="hidden md:inline">Categories</span>
                         </button>
-                        <button
-                            onClick={() => { resetForm(); setShowAddModal(true); }}
-                            className="h-[40px] w-[40px] md:w-auto md:px-[32px] bg-[#2d5bff] hover:bg-blue-600 text-white rounded-[14px] md:rounded-[16px] font-black text-[12px] uppercase tracking-widest shadow-lg shadow-blue-500/30 flex items-center justify-center gap-[8px] transition-all active:scale-95 hover:translate-y-[-2px] cursor-pointer"
-                        >
-                            <Plus className="w-[20px] h-[20px]" /> <span className="hidden md:inline">Transaction</span>
-                        </button>
+                        {activeTab === 'budgets' ? (
+                            <button
+                                onClick={() => setShowBudgetModal(true)}
+                                className="h-[40px] w-[40px] md:w-auto md:px-[32px] bg-[#2d5bff] hover:bg-blue-600 text-white rounded-[14px] md:rounded-[16px] font-black text-[12px] uppercase tracking-widest shadow-lg shadow-blue-500/30 flex items-center justify-center gap-[8px] transition-all active:scale-95 hover:translate-y-[-2px] cursor-pointer"
+                            >
+                                <Plus className="w-[20px] h-[20px]" /> <span className="hidden md:inline">Set Budget</span>
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => { resetForm(); setShowAddModal(true); }}
+                                className="h-[40px] w-[40px] md:w-auto md:px-[32px] bg-[#2d5bff] hover:bg-blue-600 text-white rounded-[14px] md:rounded-[16px] font-black text-[12px] uppercase tracking-widest shadow-lg shadow-blue-500/30 flex items-center justify-center gap-[8px] transition-all active:scale-95 hover:translate-y-[-2px] cursor-pointer"
+                            >
+                                <Plus className="w-[20px] h-[20px]" /> <span className="hidden md:inline">Transaction</span>
+                            </button>
+                        )}
                     </div>
                 </div>
 
 
+                {/* Filters & Actions: Only show for List/Analytics */}
+                {activeTab !== 'budgets' && (
+                    <div className="bg-white rounded-[24px] border border-slate-200/60 p-[12px] md:p-[16px] shadow-sm mb-[24px]">
+                        <div className="flex flex-col gap-[16px]">
 
-                {/* Filters & Actions */}
-                {/* Filters & Actions */}
-                {/* Filters & Actions */}
-                {/* Filters & Actions */}
-                <div className="bg-white rounded-[24px] border border-slate-200/60 p-[12px] md:p-[16px] shadow-sm mb-[24px]">
-                    <div className="flex flex-col gap-[16px]">
+                            {/* Left Group: Time Controls */}
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-[12px] w-full lg:w-auto">
+                                {/* Time Period Pills */}
+                                <div className="bg-slate-100/80 p-[4px] md:p-[6px] rounded-[12px] md:rounded-[16px] flex items-center gap-[4px] w-full sm:w-auto overflow-x-auto custom-scrollbar">
+                                    {['day', 'month', 'year', 'range'].map(time => (
+                                        <button
+                                            key={time}
+                                            onClick={() => {
+                                                setFilterTime(time);
+                                                if (time === 'day' && !customRange.start) {
+                                                    setCustomRange(prev => ({ ...prev, start: getTodayString() }));
+                                                }
+                                            }}
+                                            className={`flex-1 sm:flex-none px-[12px] md:px-[16px] py-[8px] md:py-[12px] rounded-[10px] md:rounded-[12px] text-[10px] md:text-[11px] font-black uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap ${filterTime === time ? 'bg-white text-[#2d5bff] shadow-sm ring-[1px] ring-black/5' : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'}`}
+                                        >
+                                            {time}
+                                        </button>
+                                    ))}
+                                </div>
 
-                        {/* Left Group: Time Controls */}
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-[12px] w-full lg:w-auto">
-                            {/* Time Period Pills */}
-                            <div className="bg-slate-100/80 p-[4px] md:p-[6px] rounded-[12px] md:rounded-[16px] flex items-center gap-[4px] w-full sm:w-auto overflow-x-auto custom-scrollbar">
-                                {['day', 'month', 'year', 'range'].map(time => (
-                                    <button
-                                        key={time}
-                                        onClick={() => {
-                                            setFilterTime(time);
-                                            if (time === 'day' && !customRange.start) {
-                                                setCustomRange(prev => ({ ...prev, start: getTodayString() }));
-                                            }
-                                        }}
-                                        className={`flex-1 sm:flex-none px-[12px] md:px-[16px] py-[8px] md:py-[12px] rounded-[10px] md:rounded-[12px] text-[10px] md:text-[11px] font-black uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap ${filterTime === time ? 'bg-white text-[#2d5bff] shadow-sm ring-[1px] ring-black/5' : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'}`}
-                                    >
-                                        {time}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Date Inputs - Animate In */}
-                            {(filterTime === 'day' || filterTime === 'range') && (
-                                <div className="flex flex-row items-center gap-[8px] w-full sm:w-auto animate-in fade-in slide-in-from-left-[16px] duration-300">
-                                    <div className="relative flex-1 sm:flex-none group min-w-0">
-                                        <input
-                                            type="date"
-                                            value={customRange.start}
-                                            onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })}
-                                            className="w-full sm:w-auto bg-slate-50 border border-slate-200 text-slate-600 text-[10px] sm:text-[12px] font-bold rounded-[8px] md:rounded-[16px] px-[8px] md:px-[16px] py-[8px] md:py-[12px] pl-[32px] md:pl-[40px] focus:outline-none focus:border-[#2d5bff] focus:ring-4 focus:ring-blue-500/10 cursor-pointer transition-all hover:bg-white hover:border-slate-300 hover:shadow-sm"
-                                        />
-                                        <Calendar className="w-[12px] h-[12px] md:w-[16px] md:h-[16px] text-slate-400 absolute left-[10px] md:left-[16px] top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-[#2d5bff] transition-colors" />
+                                {/* Date Inputs - Animate In */}
+                                {(filterTime === 'day' || filterTime === 'range') && (
+                                    <div className="flex flex-row items-center gap-[8px] w-full sm:w-auto animate-in fade-in slide-in-from-left-[16px] duration-300">
+                                        <div className="relative flex-1 sm:flex-none group min-w-0">
+                                            <input
+                                                type="date"
+                                                value={customRange.start}
+                                                onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })}
+                                                className="w-full sm:w-auto bg-slate-50 border border-slate-200 text-slate-600 text-[10px] sm:text-[12px] font-bold rounded-[8px] md:rounded-[16px] px-[8px] md:px-[16px] py-[8px] md:py-[12px] pl-[32px] md:pl-[40px] focus:outline-none focus:border-[#2d5bff] focus:ring-4 focus:ring-blue-500/10 cursor-pointer transition-all hover:bg-white hover:border-slate-300 hover:shadow-sm"
+                                            />
+                                            <Calendar className="w-[12px] h-[12px] md:w-[16px] md:h-[16px] text-slate-400 absolute left-[10px] md:left-[16px] top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-[#2d5bff] transition-colors" />
+                                        </div>
+                                        {filterTime === 'range' && (
+                                            <>
+                                                <span className="text-slate-400 font-bold shrink-0">-</span>
+                                                <div className="relative flex-1 sm:flex-none group min-w-0">
+                                                    <input
+                                                        type="date"
+                                                        value={customRange.end}
+                                                        onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })}
+                                                        className="w-full sm:w-auto bg-slate-50 border border-slate-200 text-slate-600 text-[10px] sm:text-[12px] font-bold rounded-[8px] md:rounded-[16px] px-[8px] md:px-[16px] py-[8px] md:py-[12px] pl-[32px] md:pl-[40px] focus:outline-none focus:border-[#2d5bff] focus:ring-4 focus:ring-blue-500/10 cursor-pointer transition-all hover:bg-white hover:border-slate-300 hover:shadow-sm"
+                                                    />
+                                                    <Calendar className="w-[12px] h-[12px] md:w-[16px] md:h-[16px] text-slate-400 absolute left-[10px] md:left-[16px] top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-[#2d5bff] transition-colors" />
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
-                                    {filterTime === 'range' && (
-                                        <>
-                                            <span className="text-slate-400 font-bold shrink-0">-</span>
-                                            <div className="relative flex-1 sm:flex-none group min-w-0">
-                                                <input
-                                                    type="date"
-                                                    value={customRange.end}
-                                                    onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })}
-                                                    className="w-full sm:w-auto bg-slate-50 border border-slate-200 text-slate-600 text-[10px] sm:text-[12px] font-bold rounded-[8px] md:rounded-[16px] px-[8px] md:px-[16px] py-[8px] md:py-[12px] pl-[32px] md:pl-[40px] focus:outline-none focus:border-[#2d5bff] focus:ring-4 focus:ring-blue-500/10 cursor-pointer transition-all hover:bg-white hover:border-slate-300 hover:shadow-sm"
-                                                />
-                                                <Calendar className="w-[12px] h-[12px] md:w-[16px] md:h-[16px] text-slate-400 absolute left-[10px] md:left-[16px] top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-[#2d5bff] transition-colors" />
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Right Group: Filters & Exports */}
-                        <div className="flex flex-col sm:flex-row items-center gap-[12px] w-full shrink-0">
-                            {/* Filters Dropdowns */}
-                            <div className="grid grid-cols-2 sm:flex sm:items-center gap-[8px] w-full sm:w-auto shrink-0">
-                                <div className="relative group shrink-0">
-                                    <select
-                                        value={filterType}
-                                        onChange={(e) => setFilterType(e.target.value)}
-                                        className="appearance-none w-full bg-slate-50 md:bg-white border border-slate-200 text-slate-600 text-[12px] font-bold rounded-[12px] md:rounded-[16px] px-[12px] md:px-[16px] py-[10px] md:py-[12px] pl-[36px] md:pl-[40px] pr-[32px] focus:outline-none focus:border-[#2d5bff] focus:ring-4 focus:ring-blue-500/10 cursor-pointer transition-all hover:border-slate-300 hover:shadow-sm"
-                                    >
-                                        <option value="all">All Types</option>
-                                        <option value="income">Income</option>
-                                        <option value="expense">Expense</option>
-                                    </select>
-                                    <Filter className="w-[14px] h-[14px] md:w-[16px] md:h-[16px] text-slate-400 absolute left-[12px] md:left-[16px] top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-[#2d5bff] transition-colors" />
-                                </div>
-
-                                <div className="relative group shrink-0">
-                                    <select
-                                        value={filterCategory}
-                                        onChange={(e) => setFilterCategory(e.target.value)}
-                                        className="appearance-none w-full bg-slate-50 md:bg-white border border-slate-200 text-slate-600 text-[12px] font-bold rounded-[12px] md:rounded-[16px] px-[12px] md:px-[16px] py-[10px] md:py-[12px] pl-[36px] md:pl-[40px] pr-[32px] focus:outline-none focus:border-[#2d5bff] focus:ring-4 focus:ring-blue-500/10 cursor-pointer transition-all hover:border-slate-300 hover:shadow-sm"
-                                    >
-                                        <option value="all">All Categories</option>
-                                        {categories.map(c => (
-                                            <option key={c.id} value={c.name}>{c.name}</option>
-                                        ))}
-                                    </select>
-                                    <Tag className="w-[14px] h-[14px] md:w-[16px] md:h-[16px] text-slate-400 absolute left-[12px] md:left-[16px] top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-[#2d5bff] transition-colors" />
-                                </div>
+                                )}
                             </div>
 
-                            {/* Export Actions (Hidden on Mobile) */}
-                            <div className="hidden sm:block ml-auto">
-                                <ExportButtons
-                                    onExportCSV={() => setPendingExport({ type: 'CSV', action: () => exportPersonalExpenseToCSV(filteredTransactions, `personal_expenses_${new Date().toISOString().split('T')[0]}`) })}
-                                    onExportPDF={() => setPendingExport({ type: 'PDF', action: () => exportPersonalExpenseToPDF({ data: filteredTransactions, period: filterTime === 'range' ? `${customRange.start || 'Start'} to ${customRange.end || 'End'}` : (filterTime === 'all' ? 'All Time' : filterTime), filename: `personal_expenses_${new Date().toISOString().split('T')[0]}` }) })}
-                                    onExportTXT={() => setPendingExport({ type: 'TXT', action: () => exportPersonalExpenseToTXT({ data: filteredTransactions, period: filterTime === 'range' ? `${customRange.start || 'Start'} to ${customRange.end || 'End'}` : (filterTime === 'all' ? 'All Time' : filterTime), filename: `personal_expenses_${new Date().toISOString().split('T')[0]}` }) })}
-                                />
+                            {/* Right Group: Filters & Exports */}
+                            <div className="flex flex-col sm:flex-row items-center gap-[12px] w-full shrink-0">
+                                {/* Filters Dropdowns */}
+                                <div className="grid grid-cols-2 sm:flex sm:items-center gap-[8px] w-full sm:w-auto shrink-0">
+                                    <div className="relative group shrink-0">
+                                        <select
+                                            value={filterType}
+                                            onChange={(e) => setFilterType(e.target.value)}
+                                            className="appearance-none w-full bg-slate-50 md:bg-white border border-slate-200 text-slate-600 text-[12px] font-bold rounded-[12px] md:rounded-[16px] px-[12px] md:px-[16px] py-[10px] md:py-[12px] pl-[36px] md:pl-[40px] pr-[32px] focus:outline-none focus:border-[#2d5bff] focus:ring-4 focus:ring-blue-500/10 cursor-pointer transition-all hover:border-slate-300 hover:shadow-sm"
+                                        >
+                                            <option value="all">All Types</option>
+                                            <option value="income">Income</option>
+                                            <option value="expense">Expense</option>
+                                        </select>
+                                        <Filter className="w-[14px] h-[14px] md:w-[16px] md:h-[16px] text-slate-400 absolute left-[12px] md:left-[16px] top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-[#2d5bff] transition-colors" />
+                                    </div>
+
+                                    <div className="relative group shrink-0">
+                                        <select
+                                            value={filterCategory}
+                                            onChange={(e) => setFilterCategory(e.target.value)}
+                                            className="appearance-none w-full bg-slate-50 md:bg-white border border-slate-200 text-slate-600 text-[12px] font-bold rounded-[12px] md:rounded-[16px] px-[12px] md:px-[16px] py-[10px] md:py-[12px] pl-[36px] md:pl-[40px] pr-[32px] focus:outline-none focus:border-[#2d5bff] focus:ring-4 focus:ring-blue-500/10 cursor-pointer transition-all hover:border-slate-300 hover:shadow-sm"
+                                        >
+                                            <option value="all">All Categories</option>
+                                            {categories.map(c => (
+                                                <option key={c.id} value={c.name}>{c.name}</option>
+                                            ))}
+                                        </select>
+                                        <Tag className="w-[14px] h-[14px] md:w-[16px] md:h-[16px] text-slate-400 absolute left-[12px] md:left-[16px] top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-[#2d5bff] transition-colors" />
+                                    </div>
+                                </div>
+
+                                {/* Export Actions (Hidden on Mobile) */}
+                                <div className="hidden sm:block ml-auto">
+                                    <ExportButtons
+                                        onExportCSV={() => setPendingExport({ type: 'CSV', action: () => exportPersonalExpenseToCSV(filteredTransactions, `personal_expenses_${new Date().toISOString().split('T')[0]}`) })}
+                                        onExportPDF={() => setPendingExport({ type: 'PDF', action: () => exportPersonalExpenseToPDF({ data: filteredTransactions, period: filterTime === 'range' ? `${customRange.start || 'Start'} to ${customRange.end || 'End'}` : (filterTime === 'all' ? 'All Time' : filterTime), filename: `personal_expenses_${new Date().toISOString().split('T')[0]}` }) })}
+                                        onExportTXT={() => setPendingExport({ type: 'TXT', action: () => exportPersonalExpenseToTXT({ data: filteredTransactions, period: filterTime === 'range' ? `${customRange.start || 'Start'} to ${customRange.end || 'End'}` : (filterTime === 'all' ? 'All Time' : filterTime), filename: `personal_expenses_${new Date().toISOString().split('T')[0]}` }) })}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 {/* Content Area */}
-                {activeTab === 'analytics' ? (
+                {activeTab === 'analytics' && (
                     <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
                         {/* Stats Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-[24px]">
@@ -540,7 +598,9 @@ const PersonalExpenseTracker = () => {
                             </div>
                         </div>
                     </div>
-                ) : (
+                )}
+
+                {activeTab === 'list' && (
                     <div className="bg-white rounded-[24px] border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden min-h-[400px]">
                         <div className="p-[16px] md:p-[24px] border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
                             <h2 className="text-[16px] md:text-[18px] font-black text-slate-800 tracking-tight flex items-center gap-[8px]">
@@ -597,6 +657,58 @@ const PersonalExpenseTracker = () => {
                     </div>
                 )}
 
+
+
+                {/* Budget Tab Content */}
+                {activeTab === 'budgets' && (
+                    <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[24px]">
+                            {budgets.map((b) => (
+                                <div key={b.id} className="bg-white p-[24px] rounded-[24px] border border-slate-100 shadow-xl shadow-slate-200/50 relative overflow-hidden">
+                                    <div className="flex justify-between items-start mb-[16px]">
+                                        <div>
+                                            <h3 className="text-[18px] font-black text-slate-800 tracking-tight">{b.category}</h3>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{b.period}</p>
+                                        </div>
+                                        <button onClick={() => handleDeleteBudget(b.id)} className="text-slate-300 hover:text-rose-500 transition-colors"><Trash2 className="w-[16px] h-[16px]" /></button>
+                                    </div>
+
+                                    <div className="mb-[8px] flex justify-between items-end">
+                                        <span className={`text-[24px] font-black tracking-tight ${b.spent > b.amount_limit ? 'text-rose-500' : 'text-slate-800'}`}>₹{formatAmount(b.spent)}</span>
+                                        <span className="text-[12px] font-bold text-slate-400 mb-[4px]">of ₹{formatAmount(b.amount_limit)}</span>
+                                    </div>
+
+                                    <div className="w-full bg-slate-100 h-[6px] rounded-full overflow-hidden">
+                                        <div
+                                            className={`h-full rounded-full transition-all duration-500 ${b.spent > b.amount_limit ? 'bg-rose-500' : (b.percentage > 80 ? 'bg-amber-500' : 'bg-emerald-500')}`}
+                                            style={{ width: `${Math.min(b.percentage, 100)}%` }}
+                                        ></div>
+                                    </div>
+
+                                    <div className="mt-[12px] flex items-center gap-[4px]">
+                                        {b.spent > b.amount_limit ? (
+                                            <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> Over budget by ₹{formatAmount(b.spent - b.amount_limit)}</span>
+                                        ) : (
+                                            <span className="text-[10px] font-bold text-emerald-500">₹{formatAmount(b.remaining)} remaining</span>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+
+                            {budgets.length === 0 && (
+                                <div className="col-span-full flex flex-col items-center justify-center py-[60px] opacity-50">
+                                    <div className="w-[60px] h-[60px] bg-slate-100 rounded-full flex items-center justify-center mb-[12px]">
+                                        <Wallet className="w-[24px] h-[24px] text-slate-400" />
+                                    </div>
+                                    <p className="text-slate-500 font-bold">No budgets set</p>
+                                    <p className="text-[12px] text-slate-400 mt-[4px]">Set limits to track your spending</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+
                 {/* Add/Edit Modal */}
                 {showAddModal && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
@@ -649,7 +761,9 @@ const PersonalExpenseTracker = () => {
 
                                 <div className="flex gap-[12px] md:gap-[16px] pt-[12px] md:pt-[16px]">
                                     <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 py-[12px] md:py-[16px] rounded-[12px] md:rounded-[16px] border border-slate-200 text-slate-500 font-bold text-[11px] md:text-[12px] uppercase tracking-widest hover:bg-slate-50 cursor-pointer transition-colors">Cancel</button>
-                                    <button type="submit" className="flex-1 py-[12px] md:py-[16px] rounded-[12px] md:rounded-[16px] bg-[#2d5bff] text-white font-bold text-[11px] md:text-[12px] uppercase tracking-widest shadow-lg shadow-blue-500/30 hover:bg-blue-600 hover:shadow-xl hover:translate-y-[-2px] transition-all cursor-pointer">Save Transaction</button>
+                                    <button type="submit" disabled={isSubmitting} className={`flex-1 py-[12px] md:py-[16px] rounded-[12px] md:rounded-[16px] bg-[#2d5bff] text-white font-bold text-[11px] md:text-[12px] uppercase tracking-widest shadow-lg shadow-blue-500/30 hover:bg-blue-600 hover:shadow-xl hover:translate-y-[-2px] transition-all cursor-pointer ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}>
+                                        {isSubmitting ? 'Saving...' : 'Save Transaction'}
+                                    </button>
                                 </div>
                             </form>
                         </div>
@@ -682,6 +796,52 @@ const PersonalExpenseTracker = () => {
                                     Export
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Budget Modal */}
+                {showBudgetModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+                        <div className="bg-white rounded-[24px] md:rounded-[32px] w-full max-w-md p-[20px] md:p-[32px] shadow-2xl animate-in zoom-in-95 duration-200 scale-100 border border-slate-100 relative">
+                            <button
+                                onClick={() => setShowBudgetModal(false)}
+                                className="absolute top-[16px] right-[16px] md:top-[24px] md:right-[24px] w-[32px] h-[32px] rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-rose-100 hover:text-rose-500 transition-colors cursor-pointer"
+                            >
+                                <X className="w-[16px] h-[16px]" />
+                            </button>
+
+                            <div className="mb-[20px] md:mb-[32px]">
+                                <h2 className="text-[20px] md:text-[24px] font-black text-slate-800 tracking-tight">Set Budget Limit</h2>
+                            </div>
+
+                            <form onSubmit={handleSaveBudget} className="space-y-[16px] md:space-y-[24px]">
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] md:mb-[12px] block">Category</label>
+                                    <div className="relative group">
+                                        <select
+                                            value={budgetForm.category}
+                                            onChange={(e) => setBudgetForm({ ...budgetForm, category: e.target.value })}
+                                            className="appearance-none w-full bg-slate-50 border-none rounded-[12px] md:rounded-[16px] px-[16px] md:px-[20px] py-[12px] md:py-[16px] text-[13px] md:text-[14px] font-bold text-slate-800 focus:ring-2 focus:ring-[#2d5bff] transition-all cursor-pointer hover:bg-slate-100"
+                                        >
+                                            <option value="General">General</option>
+                                            {categories.map(c => (
+                                                <option key={c.id} value={c.name}>{c.name}</option>
+                                            ))}
+                                        </select>
+                                        <Tag className="w-[14px] h-[14px] md:w-[16px] md:h-[16px] text-slate-400 absolute right-[16px] top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-[#2d5bff] transition-colors" />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[6px] md:mb-[8px] block">Monthly Limit</label>
+                                    <input required type="number" value={budgetForm.amount_limit} onChange={e => setBudgetForm({ ...budgetForm, amount_limit: e.target.value })} className="w-full bg-slate-50 border-none rounded-[12px] md:rounded-[16px] px-[16px] md:px-[20px] py-[12px] md:py-[16px] text-[13px] md:text-[14px] font-bold text-slate-800 placeholder:text-slate-300 focus:ring-2 focus:ring-[#2d5bff] transition-all" placeholder="₹0.00" />
+                                </div>
+
+                                <button type="submit" className="w-full py-[14px] md:py-[18px] rounded-[14px] md:rounded-[20px] bg-[#2d5bff] text-white font-black text-[12px] md:text-[13px] uppercase tracking-widest shadow-lg shadow-blue-500/30 hover:bg-blue-600 hover:shadow-xl hover:translate-y-[-2px] transition-all cursor-pointer flex items-center justify-center gap-[8px]">
+                                    Set Limit
+                                </button>
+                            </form>
                         </div>
                     </div>
                 )}
