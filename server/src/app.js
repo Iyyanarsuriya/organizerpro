@@ -38,14 +38,18 @@ const withSector = (sector) => (req, res, next) => {
     next();
 };
 
-app.use("/api/reminders", require("./routes/Personal/reminderRoutes"));
+// Personal Sector Header - DEFAULT
+const personalRouter = express.Router();
+personalRouter.use(withSector('personal'));
+personalRouter.use('/reminders', require("./routes/Personal/reminderRoutes"));
+personalRouter.use('/transactions', transactionRoutes);
+personalRouter.use('/categories', categoryRoutes);
+personalRouter.use('/expense-categories', expenseCategoryRoutes);
+personalRouter.use('/notes', require("./routes/Personal/noteRoutes"));
+personalRouter.use('/vehicle-logs', require("./routes/Personal/vehicleLogRoutes"));
+personalRouter.use('/budgets', require("./routes/Personal/budgetRoutes"));
+app.use('/api', personalRouter);
 app.use("/api/push", pushRoutes);
-app.use("/api/transactions", transactionRoutes);
-app.use("/api/categories", categoryRoutes);
-app.use("/api/expense-categories", expenseCategoryRoutes);
-app.use("/api/notes", require("./routes/Personal/noteRoutes"));
-app.use("/api/vehicle-logs", require("./routes/Personal/vehicleLogRoutes"));
-app.use("/api/budgets", require("./routes/Personal/budgetRoutes"));
 
 // ==========================================
 // SECTOR SPECIFIC ROUTES
