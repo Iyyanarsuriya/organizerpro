@@ -5,6 +5,7 @@ const getTableName = (sector) => {
     if (!sector) return 'personal_transactions';
     if (sector === 'it') return 'it_transactions';
     if (sector === 'education') return 'education_transactions';
+    if (sector === 'hotel') return 'manufacturing_transactions';
     return sector === 'manufacturing' ? 'manufacturing_transactions' : 'personal_transactions';
 };
 

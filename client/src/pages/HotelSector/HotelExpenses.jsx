@@ -12,9 +12,9 @@ import {
     createExpenseCategory,
     deleteExpenseCategory,
     getVehicleLogs
-} from '../../api/Expense/personalExpense';
-import { getProjects, createProject, deleteProject, getAttendanceStats } from '../../api/Attendance/attendanceApi';
-import { getMembers, getActiveMembers, getGuests, getMemberRoles } from '../../api/TeamManagement/teamApi';
+} from '../../api/Expense/hotelExpense';
+import { getProjects, createProject, deleteProject, getAttendanceStats } from '../../api/Attendance/hotelAttendance';
+import { getMembers, getActiveMembers, getGuests, getMemberRoles } from '../../api/TeamManagement/hotelTeam';
 import toast from 'react-hot-toast';
 import {
     FaWallet, FaPlus, FaTrash, FaChartBar, FaExchangeAlt, FaFileAlt, FaEdit, FaTimes,

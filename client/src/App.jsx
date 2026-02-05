@@ -34,6 +34,11 @@ const EducationReminders = lazy(() => import('./pages/EducationSector/EducationR
 const EducationAttendance = lazy(() => import('./pages/EducationSector/EducationAttendance'));
 const EducationExpenses = lazy(() => import('./pages/EducationSector/EducationExpenses'));
 const EducationTeam = lazy(() => import('./pages/EducationSector/EducationTeam'));
+const HotelHome = lazy(() => import('./pages/HotelSector/HotelHome'));
+const HotelExpenses = lazy(() => import('./pages/HotelSector/HotelExpenses'));
+const HotelReminders = lazy(() => import('./pages/HotelSector/HotelReminders'));
+const HotelAttendance = lazy(() => import('./pages/HotelSector/HotelAttendance'));
+const HotelTeam = lazy(() => import('./pages/HotelSector/HotelTeam'));
 const Notes = lazy(() => import('./pages/Notes/Notes'));
 const ForgotPassword = lazy(() => import('./pages/Authentication/ForgotPassword'));
 
@@ -262,6 +267,13 @@ const AppContent = () => {
             <Route path="/education-sector/attendance" element={<ProtectedRoute><EducationAttendance /></ProtectedRoute>} />
             <Route path="/education-sector/expenses" element={<ProtectedRoute><EducationExpenses /></ProtectedRoute>} />
             <Route path="/education-sector/team" element={<ProtectedRoute><EducationTeam /></ProtectedRoute>} />
+
+            {/* Hotel Sector Routes */}
+            <Route path="/hotel-sector" element={<ProtectedRoute><HotelHome /></ProtectedRoute>} />
+            <Route path="/hotel-sector/expenses" element={<ProtectedRoute><HotelExpenses /></ProtectedRoute>} />
+            <Route path="/hotel-sector/reminders" element={<ProtectedRoute><HotelReminders /></ProtectedRoute>} />
+            <Route path="/hotel-sector/attendance" element={<ProtectedRoute><HotelAttendance /></ProtectedRoute>} />
+            <Route path="/hotel-sector/team" element={<ProtectedRoute><HotelTeam /></ProtectedRoute>} />
 
 
             <Route path="/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />

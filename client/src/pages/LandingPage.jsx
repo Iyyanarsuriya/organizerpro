@@ -70,10 +70,10 @@ const LandingPage = ({ token, user, onProfileClick, onSignupClick }) => {
                                         </Link>
 
                                         <Link
-                                            to="/reminders"
+                                            to="/it-sector"
                                             className="p-4 rounded-2xl border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all group text-left"
                                         >
-                                            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                            <div className="w-8 h-8 rounded-full bg-linear-to-br from-indigo-100 to-indigo-200 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                                                 <Laptop className="w-4 h-4 text-indigo-500" />
                                             </div>
                                             <div className="font-bold text-slate-700 text-sm">IT Sector</div>
@@ -90,13 +90,13 @@ const LandingPage = ({ token, user, onProfileClick, onSignupClick }) => {
                                         </Link>
 
                                         <Link
-                                            to="/expenses"
+                                            to="/hotel-sector"
                                             className="p-4 rounded-2xl border border-slate-200 hover:border-rose-500 hover:bg-rose-50 transition-all group text-left col-span-2 lg:col-span-1"
                                         >
-                                            <div className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                            <div className="w-8 h-8 rounded-full bg-linear-to-br from-rose-100 to-rose-200 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                                                 <Utensils className="w-4 h-4 text-rose-500" />
                                             </div>
-                                            <div className="font-bold text-slate-700 text-sm">Hotel/Food</div>
+                                            <div className="font-bold text-slate-700 text-sm">Hotel Sector</div>
                                         </Link>
                                     </div>
                                 </div>

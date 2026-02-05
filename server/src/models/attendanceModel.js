@@ -13,6 +13,12 @@ const getTables = (sector) => {
             members: 'education_members'
 
         };
+    } else if (sector === 'hotel') {
+        return {
+            attendance: 'manufacturing_attendance',
+            members: 'manufacturing_members',
+            projects: 'manufacturing_projects'
+        };
     }
     return {
         attendance: 'manufacturing_attendance',
