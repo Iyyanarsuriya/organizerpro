@@ -27,9 +27,61 @@ const getTables = (sector) => {
     };
 };
 
+const calculateDuration = (checkIn, checkOut) => {
+    if (!checkIn || !checkOut) return 0;
+    const [h1, m1] = checkIn.split(':').map(Number);
+    const [h2, m2] = checkOut.split(':').map(Number);
+    let start = h1 * 60 + m1;
+    let end = h2 * 60 + m2;
+    if (end < start) end += 24 * 60; // Crosses midnight
+    return Number(((end - start) / 60).toFixed(2));
+};
+
+const checkConflict = async (db, table, userId, memberId, date, startTime, endTime) => {
+    // If no time provided, check if ANY record exists for that day (simple duplication check)
+    if (!startTime || !endTime) {
+        const [rows] = await db.query(`SELECT id FROM ${table} WHERE user_id = ? AND member_id = ? AND DATE(date) = ?`, [userId, memberId, date]);
+        return rows.length > 0;
+    }
+    // Time Overlap Check: (StartA < EndB) AND (EndA > StartB)
+    // Note: This simple logic fails for midnight crossing.
+    // For Hotel sector, assuming shift overlaps check on SAME DATE for now.
+    const [rows] = await db.query(`SELECT id, check_in, check_out FROM ${table} WHERE user_id = ? AND member_id = ? AND DATE(date) = ?`, [userId, memberId, date]);
+    for (const row of rows) {
+        if (!row.check_in || !row.check_out) return true; // Existing is full day? Conflict.
+        // Compare Minutes
+        const [h1, m1] = row.check_in.split(':').map(Number);
+        const [h2, m2] = row.check_out.split(':').map(Number);
+        const [n1, nm1] = startTime.split(':').map(Number);
+        const [n2, nm2] = endTime.split(':').map(Number);
+
+        let s1 = h1 * 60 + m1, e1 = h2 * 60 + m2;
+        let s2 = n1 * 60 + nm1, e2 = n2 * 60 + nm2;
+        if (e1 < s1) e1 += 1440;
+        if (e2 < s2) e2 += 1440;
+
+        if (s1 < e2 && e1 > s2) return true;
+    }
+    return false;
+};
+
 const create = async (data) => {
     const { attendance: TABLE_NAME } = getTables(data.sector);
     const { user_id, subject, status, date, note, project_id, member_id, permission_duration, permission_start_time, permission_end_time, permission_reason, overtime_duration, overtime_reason, created_by, check_in, check_out, total_hours, work_mode } = data;
+
+    // 1. Calculate Duration/Total Hours if inputs exist
+    let calculatedHours = total_hours || 0;
+    if (check_in && check_out && !total_hours) {
+        calculatedHours = calculateDuration(check_in, check_out);
+    }
+
+    // 2. Conflict Check (Hotel Only for now to avoid breaking others)
+    if (data.sector === 'hotel' && member_id) {
+        const isConflict = await checkConflict(db, TABLE_NAME, user_id, member_id, date, check_in, check_out);
+        if (isConflict) {
+            throw new Error("Attendance overlap detected for this member on this date.");
+        }
+    }
 
     let columns = ['user_id', 'subject', 'status', 'date', 'note', 'member_id', 'permission_duration', 'permission_start_time', 'permission_end_time', 'permission_reason', 'overtime_duration', 'overtime_reason', 'created_by', 'updated_by'];
     let values = [user_id, subject || null, status || null, date, note || null, member_id || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, created_by || null, null];
@@ -43,7 +95,7 @@ const create = async (data) => {
 
     if (['it', 'manufacturing', 'hotel'].includes(data.sector)) {
         columns.push('check_in', 'check_out', 'total_hours', 'work_mode');
-        values.push(check_in || null, check_out || null, total_hours || 0, work_mode || 'Office');
+        values.push(check_in || null, check_out || null, calculatedHours, work_mode || 'Office');
         placeholders.push('?', '?', '?', '?');
     }
 
@@ -359,7 +411,7 @@ const bulkMark = async (data) => {
 };
 
 const getHolidays = async (userId, sector) => {
-    const table = sector === 'it' ? 'it_holidays' : 'manufacturing_holidays';
+    const table = sector === 'it' ? 'it_holidays' : (sector === 'hotel' ? 'hotel_holidays' : 'manufacturing_holidays');
     try {
         const [rows] = await db.execute(`SELECT * FROM ${table} WHERE user_id = ? ORDER BY date`, [userId]);
         return rows;
@@ -367,7 +419,7 @@ const getHolidays = async (userId, sector) => {
 };
 
 const createHoliday = async (data) => {
-    const table = data.sector === 'it' ? 'it_holidays' : 'manufacturing_holidays';
+    const table = data.sector === 'it' ? 'it_holidays' : (data.sector === 'hotel' ? 'hotel_holidays' : 'manufacturing_holidays');
     const { user_id, name, date, type } = data;
     const [result] = await db.execute(
         `INSERT INTO ${table} (user_id, name, date, type) VALUES (?, ?, ?, ?)`,
@@ -377,13 +429,13 @@ const createHoliday = async (data) => {
 };
 
 const deleteHoliday = async (id, userId, sector) => {
-    const table = sector === 'it' ? 'it_holidays' : 'manufacturing_holidays';
+    const table = sector === 'it' ? 'it_holidays' : (sector === 'hotel' ? 'hotel_holidays' : 'manufacturing_holidays');
     const [result] = await db.execute(`DELETE FROM ${table} WHERE id = ? AND user_id = ?`, [id, userId]);
     return result.affectedRows > 0;
 };
 
 const getShifts = async (userId, sector) => {
-    const table = sector === 'it' ? 'it_shifts' : 'manufacturing_shifts';
+    const table = sector === 'it' ? 'it_shifts' : (sector === 'hotel' ? 'hotel_shifts' : 'manufacturing_shifts');
     try {
         const [rows] = await db.execute(`SELECT * FROM ${table} WHERE user_id = ?`, [userId]);
         return rows;
@@ -391,7 +443,7 @@ const getShifts = async (userId, sector) => {
 };
 
 const createShift = async (data) => {
-    const table = data.sector === 'it' ? 'it_shifts' : 'manufacturing_shifts';
+    const table = data.sector === 'it' ? 'it_shifts' : (data.sector === 'hotel' ? 'hotel_shifts' : 'manufacturing_shifts');
     const { user_id, name, start_time, end_time, break_duration, is_default } = data;
 
     if (is_default) {
@@ -406,7 +458,7 @@ const createShift = async (data) => {
 };
 
 const deleteShift = async (id, userId, sector) => {
-    const table = sector === 'it' ? 'it_shifts' : 'manufacturing_shifts';
+    const table = sector === 'it' ? 'it_shifts' : (sector === 'hotel' ? 'hotel_shifts' : 'manufacturing_shifts');
     const [result] = await db.execute(`DELETE FROM ${table} WHERE id = ? AND user_id = ?`, [id, userId]);
     return result.affectedRows > 0;
 };

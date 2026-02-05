@@ -116,7 +116,11 @@ hotelRouter.use('/member-roles', require("./routes/Manufacturing/memberRoleRoute
 hotelRouter.use('/projects', require("./routes/Manufacturing/projectRoutes")); // Generic Project Controller
 hotelRouter.use('/attendance', require("./routes/Manufacturing/attendanceRoutes")); // Generic Attendance Controller
 hotelRouter.use('/team', require("./routes/Hotel/teamRoutes"));
+hotelRouter.use('/core', require("./routes/Hotel/hotelRoutes"));
 app.use('/api/hotel-sector', hotelRouter);
+
+// Direct hotel API access (for bookings module)
+app.use('/api/hotel', require("./routes/Hotel/hotelRoutes"));
 
 
 

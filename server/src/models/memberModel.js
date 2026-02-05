@@ -17,7 +17,7 @@ const create = async (data) => {
     const table = getTableName(data.sector);
     const { user_id, name, role, phone, email, status, wage_type, daily_wage, member_type, project_id, staff_id, department, subjects,
         gender, profile_image, employment_type, date_of_joining, reporting_manager_id, shift_start_time, shift_end_time,
-        cl_balance, sl_balance, el_balance, expected_hours, work_location, is_billable } = data;
+        cl_balance, sl_balance, el_balance, expected_hours, work_location, is_billable, default_shift_id } = data;
 
     let columns = ['user_id', 'name', 'role', 'phone', 'email', 'status', 'wage_type', 'daily_wage', 'member_type'];
     let values = [user_id, name, role || null, phone || null, email || null, status || 'active', wage_type || 'daily', daily_wage || 0, member_type || (data.sector === 'hotel' ? 'staff' : 'worker')];
@@ -26,6 +26,12 @@ const create = async (data) => {
     if (data.sector !== 'education') {
         columns.push('project_id');
         values.push(project_id || null);
+        placeholders.push('?');
+    }
+
+    if (data.sector === 'hotel') {
+        columns.push('default_shift_id');
+        values.push(default_shift_id || null);
         placeholders.push('?');
     }
 
@@ -112,7 +118,7 @@ const update = async (id, userId, data) => {
     const table = getTableName(data.sector);
     const { name, role, phone, email, status, wage_type, daily_wage, member_type, project_id, staff_id, department, subjects,
         gender, profile_image, employment_type, date_of_joining, reporting_manager_id, shift_start_time, shift_end_time,
-        cl_balance, sl_balance, el_balance, expected_hours, work_location, is_billable } = data;
+        cl_balance, sl_balance, el_balance, expected_hours, work_location, is_billable, default_shift_id } = data;
 
     let updates = ['name = ?', 'role = ?', 'phone = ?', 'email = ?', 'status = ?', 'wage_type = ?', 'daily_wage = ?', 'member_type = ?'];
     let values = [name, role || null, phone || null, email || null, status || 'active', wage_type || 'daily', daily_wage || 0, member_type || (data.sector === 'hotel' ? 'staff' : 'worker')];
@@ -120,6 +126,11 @@ const update = async (id, userId, data) => {
     if (data.sector !== 'education') {
         updates.push('project_id = ?');
         values.push(project_id || null);
+    }
+
+    if (data.sector === 'hotel') {
+        updates.push('default_shift_id = ?');
+        values.push(default_shift_id || null);
     }
 
     if (data.sector === 'it') {
