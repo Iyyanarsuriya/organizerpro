@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getBookings, createBooking, updateBookingStatus, getUnits, getGuests, createGuest } from '../../api/Hotel/hotelApi';
 import toast from 'react-hot-toast';
-import { FaCalendarAlt, FaPlus, FaSearch, FaCheck, FaTimes, FaBed, FaUser, FaMoneyBillWave, FaClock, FaCalendarCheck, FaFilter } from 'react-icons/fa';
+import { FaCalendarAlt, FaPlus, FaSearch, FaCheck, FaTimes, FaBed, FaUser, FaMoneyBillWave, FaClock, FaCalendarCheck, FaFilter, FaFileDownload, FaFileCsv, FaFileAlt, FaFilePdf } from 'react-icons/fa';
 
 const HotelBookings = () => {
     const navigate = useNavigate();
@@ -12,6 +12,12 @@ const HotelBookings = () => {
     const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
+    const [showExportMenu, setShowExportMenu] = useState(false);
+
+    // Date filter states
+    const [dateFilterType, setDateFilterType] = useState('day'); // 'day', 'month', 'year', 'range'
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({
@@ -45,6 +51,17 @@ const HotelBookings = () => {
     useEffect(() => {
         fetchAll();
     }, []);
+
+    // Close export menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (showExportMenu && !event.target.closest('.export-menu-container')) {
+                setShowExportMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showExportMenu]);
 
     const handleCreateBooking = async (e) => {
         e.preventDefault();
@@ -112,7 +129,28 @@ const HotelBookings = () => {
         const matchesStatus = filterStatus === 'all' || b.status === filterStatus;
         const matchesSearch = b.guest_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             b.unit_number.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesStatus && matchesSearch;
+
+        // Date filtering
+        let matchesDate = true;
+        const checkInDate = new Date(b.check_in);
+
+        if (dateFilterType === 'day' && selectedDate) {
+            const selected = new Date(selectedDate);
+            matchesDate = checkInDate.toDateString() === selected.toDateString();
+        } else if (dateFilterType === 'month' && selectedDate) {
+            const selected = new Date(selectedDate);
+            matchesDate = checkInDate.getMonth() === selected.getMonth() &&
+                checkInDate.getFullYear() === selected.getFullYear();
+        } else if (dateFilterType === 'year' && selectedDate) {
+            const selected = new Date(selectedDate);
+            matchesDate = checkInDate.getFullYear() === selected.getFullYear();
+        } else if (dateFilterType === 'range' && dateRange.start && dateRange.end) {
+            const start = new Date(dateRange.start);
+            const end = new Date(dateRange.end);
+            matchesDate = checkInDate >= start && checkInDate <= end;
+        }
+
+        return matchesStatus && matchesSearch && matchesDate;
     });
 
     const getStatusColor = (status) => {
@@ -123,6 +161,143 @@ const HotelBookings = () => {
             case 'cancelled': return 'bg-red-100 text-red-700';
             default: return 'bg-yellow-100 text-yellow-700';
         }
+    };
+
+    // Export Functions
+    const exportToCSV = () => {
+        const headers = ['Booking ID', 'Guest Name', 'Unit', 'Check-In', 'Check-Out', 'Total Amount', 'Advance Paid', 'Balance', 'Status', 'Source', 'Notes'];
+        const rows = filteredBookings.map(b => [
+            b.id,
+            b.guest_name,
+            `${b.unit_number} - ${b.category}`,
+            new Date(b.check_in).toLocaleDateString(),
+            new Date(b.check_out).toLocaleDateString(),
+            `₹${parseFloat(b.total_amount).toFixed(2)}`,
+            `₹${parseFloat(b.advance_paid).toFixed(2)}`,
+            `₹${(parseFloat(b.total_amount) - parseFloat(b.advance_paid)).toFixed(2)}`,
+            b.status,
+            b.booking_source,
+            b.notes || ''
+        ]);
+
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `hotel_bookings_${filterStatus}_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        toast.success('Exported to CSV!');
+        setShowExportMenu(false);
+    };
+
+    const exportToTXT = () => {
+        let content = `HOTEL BOOKINGS REPORT\n`;
+        content += `Generated: ${new Date().toLocaleString()}\n`;
+        content += `Filter: ${filterStatus.toUpperCase()}\n`;
+        content += `Total Records: ${filteredBookings.length}\n`;
+        content += `${'='.repeat(100)}\n\n`;
+
+        filteredBookings.forEach((b, idx) => {
+            content += `${idx + 1}. BOOKING #${b.id}\n`;
+            content += `   Guest: ${b.guest_name}\n`;
+            content += `   Unit: ${b.unit_number} - ${b.category}\n`;
+            content += `   Check-In: ${new Date(b.check_in).toLocaleDateString()} | Check-Out: ${new Date(b.check_out).toLocaleDateString()}\n`;
+            content += `   Amount: ₹${parseFloat(b.total_amount).toFixed(2)} | Advance: ₹${parseFloat(b.advance_paid).toFixed(2)} | Balance: ₹${(parseFloat(b.total_amount) - parseFloat(b.advance_paid)).toFixed(2)}\n`;
+            content += `   Status: ${b.status.toUpperCase()} | Source: ${b.booking_source}\n`;
+            if (b.notes) content += `   Notes: ${b.notes}\n`;
+            content += `${'-'.repeat(100)}\n`;
+        });
+
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `hotel_bookings_${filterStatus}_${new Date().toISOString().split('T')[0]}.txt`;
+        link.click();
+        toast.success('Exported to TXT!');
+        setShowExportMenu(false);
+    };
+
+    const exportToPDF = () => {
+        // Create a simple HTML-based PDF export
+        const printWindow = window.open('', '', 'width=800,height=600');
+        let html = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Hotel Bookings Report</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; }
+                    h1 { color: #4F46E5; border-bottom: 3px solid #4F46E5; padding-bottom: 10px; }
+                    .meta { color: #64748b; margin-bottom: 20px; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    th { background: #4F46E5; color: white; padding: 12px; text-align: left; font-weight: bold; }
+                    td { padding: 10px; border-bottom: 1px solid #e2e8f0; }
+                    tr:hover { background: #f8fafc; }
+                    .status { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+                    .confirmed { background: #DBEAFE; color: #1E40AF; }
+                    .checked_in { background: #D1FAE5; color: #065F46; }
+                    .checked_out { background: #F1F5F9; color: #475569; }
+                    .cancelled { background: #FEE2E2; color: #991B1B; }
+                    @media print { button { display: none; } }
+                </style>
+            </head>
+            <body>
+                <h1>🏨 Hotel Bookings Report</h1>
+                <div class="meta">
+                    <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+                    <p><strong>Filter:</strong> ${filterStatus.toUpperCase()}</p>
+                    <p><strong>Total Records:</strong> ${filteredBookings.length}</p>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Guest</th>
+                            <th>Unit</th>
+                            <th>Check-In</th>
+                            <th>Check-Out</th>
+                            <th>Amount</th>
+                            <th>Advance</th>
+                            <th>Balance</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        filteredBookings.forEach(b => {
+            const balance = (parseFloat(b.total_amount) - parseFloat(b.advance_paid)).toFixed(2);
+            html += `
+                <tr>
+                    <td>#${b.id}</td>
+                    <td>${b.guest_name}</td>
+                    <td>${b.unit_number} - ${b.category}</td>
+                    <td>${new Date(b.check_in).toLocaleDateString()}</td>
+                    <td>${new Date(b.check_out).toLocaleDateString()}</td>
+                    <td>₹${parseFloat(b.total_amount).toFixed(2)}</td>
+                    <td>₹${parseFloat(b.advance_paid).toFixed(2)}</td>
+                    <td>₹${balance}</td>
+                    <td><span class="status ${b.status}">${b.status.toUpperCase()}</span></td>
+                </tr>
+            `;
+        });
+
+        html += `
+                    </tbody>
+                </table>
+                <button onclick="window.print()" style="margin-top: 20px; background: #4F46E5; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Print / Save as PDF</button>
+            </body>
+            </html>
+        `;
+
+        printWindow.document.write(html);
+        printWindow.document.close();
+        toast.success('PDF preview opened!');
+        setShowExportMenu(false);
     };
 
     return (
@@ -143,6 +318,40 @@ const HotelBookings = () => {
                     >
                         <FaPlus /> New Booking
                     </button>
+
+                    {/* Export Button */}
+                    <div className="relative export-menu-container">
+                        <button
+                            onClick={() => setShowExportMenu(!showExportMenu)}
+                            className="bg-emerald-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-emerald-500/30 hover:bg-emerald-700 transition-all active:scale-95 flex items-center gap-2"
+                        >
+                            <FaFileDownload /> Export
+                        </button>
+
+                        {/* Export Dropdown */}
+                        {showExportMenu && (
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50">
+                                <button
+                                    onClick={exportToCSV}
+                                    className="w-full px-4 py-3 text-left hover:bg-emerald-50 transition-colors flex items-center gap-3 text-slate-700 font-semibold"
+                                >
+                                    <FaFileCsv className="text-emerald-600" /> Export as CSV
+                                </button>
+                                <button
+                                    onClick={exportToTXT}
+                                    className="w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors flex items-center gap-3 text-slate-700 font-semibold"
+                                >
+                                    <FaFileAlt className="text-blue-600" /> Export as TXT
+                                </button>
+                                <button
+                                    onClick={exportToPDF}
+                                    className="w-full px-4 py-3 text-left hover:bg-red-50 transition-colors flex items-center gap-3 text-slate-700 font-semibold"
+                                >
+                                    <FaFilePdf className="text-red-600" /> Export as PDF
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Filters */}
@@ -167,6 +376,80 @@ const HotelBookings = () => {
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-100 placeholder:font-medium"
                         />
+                    </div>
+                </div>
+
+                {/* Date Filters */}
+                <div className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 mb-8">
+                    <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+                        {/* Date Filter Type Tabs */}
+                        <div className="flex gap-2 overflow-x-auto w-full lg:w-auto pb-2 lg:pb-0">
+                            {['day', 'month', 'year', 'range'].map(type => (
+                                <button
+                                    key={type}
+                                    onClick={() => {
+                                        setDateFilterType(type);
+                                        if (type !== 'range') {
+                                            setDateRange({ start: '', end: '' });
+                                        }
+                                    }}
+                                    className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all ${dateFilterType === type
+                                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                                        : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                                        }`}
+                                >
+                                    {type}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Date Input */}
+                        <div className="flex gap-3 items-center w-full lg:w-auto">
+                            {dateFilterType === 'range' ? (
+                                <>
+                                    <input
+                                        type="date"
+                                        value={dateRange.start}
+                                        onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                                        className="flex-1 lg:w-44 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-100"
+                                    />
+                                    <span className="text-slate-400 font-bold">to</span>
+                                    <input
+                                        type="date"
+                                        value={dateRange.end}
+                                        onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                                        className="flex-1 lg:w-44 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-100"
+                                    />
+                                </>
+                            ) : (
+                                <input
+                                    type={dateFilterType === 'day' ? 'date' : dateFilterType === 'month' ? 'month' : dateFilterType === 'year' ? 'number' : 'date'}
+                                    value={dateFilterType === 'year' ? (selectedDate ? new Date(selectedDate).getFullYear() : new Date().getFullYear()) : selectedDate}
+                                    onChange={(e) => {
+                                        if (dateFilterType === 'year') {
+                                            setSelectedDate(`${e.target.value}-01-01`);
+                                        } else {
+                                            setSelectedDate(e.target.value);
+                                        }
+                                    }}
+                                    placeholder={dateFilterType === 'year' ? 'YYYY' : ''}
+                                    min={dateFilterType === 'year' ? '2020' : undefined}
+                                    max={dateFilterType === 'year' ? '2030' : undefined}
+                                    className="flex-1 lg:w-64 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-100"
+                                />
+                            )}
+
+                            {/* Clear Date Filter */}
+                            <button
+                                onClick={() => {
+                                    setSelectedDate(new Date().toISOString().split('T')[0]);
+                                    setDateRange({ start: '', end: '' });
+                                }}
+                                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold text-xs transition-all"
+                            >
+                                Clear
+                            </button>
+                        </div>
                     </div>
                 </div>
 
