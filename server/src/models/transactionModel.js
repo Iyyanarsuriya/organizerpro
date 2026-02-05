@@ -5,7 +5,7 @@ const getTableName = (sector) => {
     if (!sector) return 'personal_transactions';
     if (sector === 'it') return 'it_transactions';
     if (sector === 'education') return 'education_transactions';
-    if (sector === 'hotel') return 'manufacturing_transactions';
+    if (sector === 'hotel') return 'hotel_transactions';
     return sector === 'manufacturing' ? 'manufacturing_transactions' : 'personal_transactions';
 };
 
@@ -22,7 +22,7 @@ const create = async (data) => {
 
     let query, params;
 
-    if (table === 'manufacturing_transactions' || table === 'it_transactions' || table === 'education_transactions') {
+    if (table === 'manufacturing_transactions' || table === 'it_transactions' || table === 'education_transactions' || table === 'hotel_transactions') {
         const columns = ['user_id', 'title', 'amount', 'type', 'date', 'member_id', 'guest_name', 'payment_status', 'quantity', 'unit_price'];
         const values = [user_id, title, amount, type, finalDate, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0];
 
@@ -31,7 +31,7 @@ const create = async (data) => {
             values.push(project_id || null);
         }
 
-        if (table === 'it_transactions' || table === 'education_transactions') {
+        if (table === 'it_transactions' || table === 'education_transactions' || table === 'hotel_transactions') {
             columns.push('category_id', 'description');
             values.push(category_id || null, description || null);
         } else {
@@ -61,10 +61,10 @@ const getAllByUserId = async (userId, filters = {}) => {
     let query;
     const params = [userId];
 
-    if (table === 'manufacturing_transactions' || table === 'it_transactions' || table === 'education_transactions') {
-        const projectTable = table === 'manufacturing_transactions' ? 'manufacturing_projects' : (table === 'it_transactions' ? 'it_projects' : null);
-        const memberTable = table === 'manufacturing_transactions' ? 'manufacturing_members' : (table === 'it_transactions' ? 'it_members' : 'education_members');
-        const categoryTable = table === 'it_transactions' ? 'it_categories' : (table === 'education_transactions' ? 'education_categories' : null);
+    if (table === 'manufacturing_transactions' || table === 'it_transactions' || table === 'education_transactions' || table === 'hotel_transactions') {
+        const projectTable = table === 'manufacturing_transactions' ? 'manufacturing_projects' : (table === 'it_transactions' ? 'it_projects' : (table === 'hotel_transactions' ? 'hotel_projects' : null));
+        const memberTable = table === 'manufacturing_transactions' ? 'manufacturing_members' : (table === 'it_transactions' ? 'it_members' : (table === 'education_transactions' ? 'education_members' : 'hotel_members'));
+        const categoryTable = table === 'it_transactions' ? 'it_categories' : (table === 'education_transactions' ? 'education_categories' : (table === 'hotel_transactions' ? 'hotel_categories' : null));
 
         let selectFields = `t.*, 
                 CASE 
@@ -192,7 +192,7 @@ const update = async (id, userId, data) => {
     if (table === 'manufacturing_transactions') {
         query = `UPDATE ${table} SET title = ?, amount = ?, type = ?, category = ?, date = ?, project_id = ?, member_id = ?, guest_name = ?, payment_status = ?, quantity = ?, unit_price = ? WHERE id = ? AND user_id = ?`;
         params = [title, amount, type, category, finalDate, project_id || null, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0, id, userId];
-    } else if (table === 'it_transactions') {
+    } else if (table === 'it_transactions' || table === 'hotel_transactions') {
         query = `UPDATE ${table} SET title = ?, amount = ?, type = ?, category_id = ?, date = ?, project_id = ?, member_id = ?, guest_name = ?, payment_status = ?, quantity = ?, unit_price = ?, description = ? WHERE id = ? AND user_id = ?`;
         params = [title, amount, type, category_id || null, finalDate, project_id || null, member_id || null, guest_name || null, payment_status || 'completed', quantity || 1, unit_price || 0, description || null, id, userId];
     } else if (table === 'education_transactions') {
@@ -249,8 +249,8 @@ const getStats = async (userId, period, projectId, startDate, endDate, memberId,
         params.push(startDate, endDate);
     }
 
-    if (table === 'manufacturing_transactions' || table === 'it_transactions' || table === 'education_transactions') {
-        const memberTable = table === 'manufacturing_transactions' ? 'manufacturing_members' : (table === 'it_transactions' ? 'it_members' : 'education_members');
+    if (table === 'manufacturing_transactions' || table === 'it_transactions' || table === 'education_transactions' || table === 'hotel_transactions') {
+        const memberTable = table === 'manufacturing_transactions' ? 'manufacturing_members' : (table === 'it_transactions' ? 'it_members' : (table === 'education_transactions' ? 'education_members' : 'hotel_members'));
 
         if (projectId && table !== 'education_transactions') {
             query += ` AND t.project_id = ?`;
@@ -275,7 +275,7 @@ const getStats = async (userId, period, projectId, startDate, endDate, memberId,
 
 const getLifetimeStats = async (userId, projectId, memberId, filters = {}) => {
     const table = getTableName(filters.sector);
-    if (table !== 'manufacturing_transactions' && table !== 'it_transactions' && table !== 'education_transactions') return { total_income: 0, total_expense: 0 };
+    if (table !== 'manufacturing_transactions' && table !== 'it_transactions' && table !== 'education_transactions' && table !== 'hotel_transactions') return { total_income: 0, total_expense: 0 };
 
     let query = `SELECT 
         SUM(CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END) as total_income,
@@ -294,7 +294,7 @@ const getLifetimeStats = async (userId, projectId, memberId, filters = {}) => {
     }
 
     if (filters && filters.memberType && filters.memberType !== 'all') {
-        const memberTable = table === 'manufacturing_transactions' ? 'manufacturing_members' : (table === 'it_transactions' ? 'it_members' : 'education_members');
+        const memberTable = table === 'manufacturing_transactions' ? 'manufacturing_members' : (table === 'it_transactions' ? 'it_members' : (table === 'education_transactions' ? 'education_members' : 'hotel_members'));
         query = query.replace(`FROM ${table} t`, `FROM ${table} t INNER JOIN ${memberTable} m ON t.member_id = m.id`);
         query += ' AND m.member_type = ?';
         params.push(filters.memberType);
@@ -319,8 +319,8 @@ const getCategoryStats = async (userId, period, projectId, startDate, endDate, m
     let query;
     const params = [userId];
 
-    if (table === 'it_transactions' || table === 'education_transactions') {
-        const catTable = table === 'it_transactions' ? 'it_categories' : 'education_categories';
+    if (table === 'it_transactions' || table === 'education_transactions' || table === 'hotel_transactions') {
+        const catTable = table === 'it_transactions' ? 'it_categories' : (table === 'education_transactions' ? 'education_categories' : 'hotel_categories');
         query = `SELECT c.name as category, t.type, SUM(t.amount) as total 
                  FROM ${table} t 
                  LEFT JOIN ${catTable} c ON t.category_id = c.id 
@@ -351,8 +351,8 @@ const getCategoryStats = async (userId, period, projectId, startDate, endDate, m
         params.push(startDate, endDate);
     }
 
-    if (table === 'manufacturing_transactions' || table === 'it_transactions' || table === 'education_transactions') {
-        const memberTable = table === 'manufacturing_transactions' ? 'manufacturing_members' : (table === 'it_transactions' ? 'it_members' : 'education_members');
+    if (table === 'manufacturing_transactions' || table === 'it_transactions' || table === 'education_transactions' || table === 'hotel_transactions') {
+        const memberTable = table === 'manufacturing_transactions' ? 'manufacturing_members' : (table === 'it_transactions' ? 'it_members' : (table === 'education_transactions' ? 'education_members' : 'hotel_members'));
 
         if (projectId && table !== 'education_transactions') {
             query += ` AND t.project_id = ?`;
@@ -383,7 +383,7 @@ const getCategoryStats = async (userId, period, projectId, startDate, endDate, m
 
 const getMemberExpenseSummary = async (userId, period, projectId, startDate, endDate, filters = {}) => {
     const table = getTableName(filters.sector);
-    const memberTable = table === 'manufacturing_transactions' ? 'manufacturing_members' : (table === 'it_transactions' ? 'it_members' : 'education_members');
+    const memberTable = table === 'manufacturing_transactions' ? 'manufacturing_members' : (table === 'it_transactions' ? 'it_members' : (table === 'education_transactions' ? 'education_members' : 'hotel_members'));
 
     let query = `SELECT m.name as member_name, SUM(t.amount) as total 
                 FROM ${table} t

@@ -15,9 +15,9 @@ const getTables = (sector) => {
         };
     } else if (sector === 'hotel') {
         return {
-            attendance: 'manufacturing_attendance',
-            members: 'manufacturing_members',
-            projects: 'manufacturing_projects'
+            attendance: 'hotel_attendance',
+            members: 'hotel_members',
+            projects: 'hotel_projects'
         };
     }
     return {
@@ -41,7 +41,7 @@ const create = async (data) => {
         placeholders.push('?');
     }
 
-    if (['it', 'manufacturing'].includes(data.sector)) {
+    if (['it', 'manufacturing', 'hotel'].includes(data.sector)) {
         columns.push('check_in', 'check_out', 'total_hours', 'work_mode');
         values.push(check_in || null, check_out || null, total_hours || 0, work_mode || 'Office');
         placeholders.push('?', '?', '?', '?');
@@ -140,7 +140,7 @@ const update = async (id, userId, data) => {
         params.push(project_id || null);
     }
 
-    if (['it', 'manufacturing'].includes(data.sector)) {
+    if (['it', 'manufacturing', 'hotel'].includes(data.sector)) {
         updateFields += ', check_in = ?, check_out = ?, total_hours = ?, work_mode = ?';
         params.push(check_in || null, check_out || null, total_hours || 0, work_mode || 'Office');
     }
@@ -230,8 +230,8 @@ const getMemberSummary = async (userId, filters = {}) => {
             COUNT(CASE WHEN a.status = 'OD' THEN 1 END) as OD,
             COUNT(CASE WHEN a.status NOT IN ('week_off', 'holiday') THEN 1 END) as working_days,
             COUNT(a.id) as total,
-            ${filters.sector === 'it' ? 'SUM(CASE WHEN a.total_hours IS NOT NULL THEN a.total_hours ELSE 0 END)' : '0'} as total_hours_worked,
-            w.daily_wage${filters.sector === 'it' ? `,
+            ${['it', 'hotel'].includes(filters.sector) ? 'SUM(CASE WHEN a.total_hours IS NOT NULL THEN a.total_hours ELSE 0 END)' : '0'} as total_hours_worked,
+            w.daily_wage${['it', 'hotel'].includes(filters.sector) ? `,
             SUM(CASE WHEN a.total_hours > COALESCE(w.expected_hours, 8) THEN a.total_hours - COALESCE(w.expected_hours, 8) ELSE 0 END) as overtime_hours,
             COUNT(CASE WHEN a.status IN ('present', 'late', 'permission') AND a.total_hours < COALESCE(w.expected_hours, 8) AND a.total_hours > 0 THEN 1 END) as undertime_days` : ''}
         FROM ${MEMBERS_TABLE} w
@@ -303,7 +303,7 @@ const quickMark = async (data) => {
         let updateQuery = `UPDATE ${TABLE_NAME} SET status = COALESCE(?, status), note = COALESCE(?, note), permission_duration = COALESCE(?, permission_duration), permission_start_time = COALESCE(?, permission_start_time), permission_end_time = COALESCE(?, permission_end_time), permission_reason = COALESCE(?, permission_reason), overtime_duration = COALESCE(?, overtime_duration), overtime_reason = COALESCE(?, overtime_reason), updated_by = ?`;
         let updateParams = [status || null, note || null, permission_duration || null, permission_start_time || null, permission_end_time || null, permission_reason || null, overtime_duration || null, overtime_reason || null, updated_by || null];
 
-        if (['it', 'manufacturing'].includes(data.sector)) {
+        if (['it', 'manufacturing', 'hotel'].includes(data.sector)) {
             updateQuery += `, check_in = COALESCE(?, check_in), check_out = COALESCE(?, check_out), total_hours = COALESCE(?, total_hours), work_mode = COALESCE(?, work_mode)`;
             updateParams.push(check_in || null, check_out || null, total_hours || null, work_mode || null);
         }
@@ -323,7 +323,7 @@ const quickMark = async (data) => {
             vals.push(project_id || null);
         }
 
-        if (['it', 'manufacturing'].includes(data.sector)) {
+        if (['it', 'manufacturing', 'hotel'].includes(data.sector)) {
             fields.push('check_in', 'check_out', 'total_hours', 'work_mode');
             vals.push(check_in || null, check_out || null, total_hours || 0, work_mode || 'Office');
         }

@@ -1,8 +1,8 @@
 -- ==========================================
 -- OrganizerPro Database Schema V2.1
 -- ==========================================
--- Last Updated: February 3, 2026
--- Total Tables: 47 (2 Shared + 4 Personal + 18 Manufacturing + 11 IT + 12 Education)
+-- Last Updated: February 5, 2026
+-- Total Tables: 55 (2 Shared + 5 Personal + 18 Manufacturing + 11 IT + 12 Education + 8 Hotel)
 -- 
 -- ARCHITECTURE:
 -- - Sector-based isolation for data organization
@@ -74,6 +74,16 @@
 --  45. education_payroll - Education payroll and salary tracking
 --  46. education_attendance_locks - Education attendance locking system
 --  47. education_audit_logs - Education sector audit trails
+--
+-- HOTEL SECTOR (8):
+--  48. hotel_projects - Hotel projects
+--  49. hotel_members - Hotel staff members
+--  50. hotel_transactions - Hotel sector financial transactions
+--  51. hotel_attendance - Hotel staff attendance
+--  52. hotel_reminders - Hotel sector reminders
+--  53. hotel_notes - Hotel sector notes
+--  54. hotel_member_roles - Hotel staff roles
+--  55. hotel_categories - Hotel expense categories
 -- ==========================================
 
 
@@ -1111,6 +1121,168 @@ CREATE TABLE `education_audit_logs` (
   KEY `user_id` (`user_id`),
   KEY `performed_by` (`performed_by`),
   CONSTRAINT `fk_edu_audit_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- ==========================================
+-- HOTEL SECTOR TABLES
+-- ==========================================
+
+-- Hotel Projects
+DROP TABLE IF EXISTS `hotel_projects`;
+CREATE TABLE `hotel_projects` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `description` text,
+  `status` enum('ongoing','completed','on-hold') DEFAULT 'ongoing',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `fk_hotel_proj_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Hotel Members
+DROP TABLE IF EXISTS `hotel_members`;
+CREATE TABLE `hotel_members` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `role` varchar(100) DEFAULT NULL,
+  `phone` varchar(20) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `status` enum('active','inactive') DEFAULT 'active',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `wage_type` enum('daily','monthly','piece_rate') DEFAULT 'daily',
+  `daily_wage` decimal(15,2) DEFAULT '0.00',
+  `member_type` enum('staff','contractor','guest','other') DEFAULT 'staff',
+  `project_id` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  KEY `fk_hotel_memb_proj` (`project_id`),
+  CONSTRAINT `fk_hotel_memb_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_hotel_memb_proj` FOREIGN KEY (`project_id`) REFERENCES `hotel_projects` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Hotel Holidays
+DROP TABLE IF EXISTS `hotel_holidays`;
+CREATE TABLE `hotel_holidays` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `date` date NOT NULL,
+  `type` enum('National','Regional','Other') DEFAULT 'National',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `fk_hotel_hol_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Hotel Transactions
+DROP TABLE IF EXISTS `hotel_transactions`;
+CREATE TABLE `hotel_transactions` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `amount` decimal(15,2) NOT NULL,
+  `type` enum('income','expense') NOT NULL,
+  `category_id` int DEFAULT NULL,
+  `category` varchar(50) DEFAULT 'Other',
+  `date` datetime NOT NULL,
+  `project_id` int DEFAULT NULL,
+  `member_id` int DEFAULT NULL,
+  `guest_name` varchar(255) DEFAULT NULL,
+  `payment_status` enum('pending','completed','cancelled') DEFAULT 'completed',
+  `quantity` decimal(15,2) DEFAULT '1.00',
+  `unit_price` decimal(15,2) DEFAULT '0.00',
+  `description` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  KEY `fk_hotel_trans_proj` (`project_id`),
+  KEY `fk_hotel_trans_memb` (`member_id`),
+  KEY `fk_hotel_trans_cat` (`category_id`),
+  CONSTRAINT `fk_hotel_trans_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_hotel_trans_proj` FOREIGN KEY (`project_id`) REFERENCES `hotel_projects` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_hotel_trans_memb` FOREIGN KEY (`member_id`) REFERENCES `hotel_members` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_hotel_trans_cat` FOREIGN KEY (`category_id`) REFERENCES `hotel_categories` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Hotel Attendance
+DROP TABLE IF EXISTS `hotel_attendance`;
+CREATE TABLE `hotel_attendance` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `member_id` int DEFAULT NULL,
+  `status` enum('present','absent','late','half-day','week_off','holiday') NOT NULL,
+  `date` date NOT NULL,
+  `note` text,
+  `project_id` int DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  KEY `fk_hotel_att_memb` (`member_id`),
+  KEY `fk_hotel_att_proj` (`project_id`),
+  CONSTRAINT `fk_hotel_att_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_hotel_att_memb` FOREIGN KEY (`member_id`) REFERENCES `hotel_members` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_hotel_att_proj` FOREIGN KEY (`project_id`) REFERENCES `hotel_projects` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Hotel Reminders
+DROP TABLE IF EXISTS `hotel_reminders`;
+CREATE TABLE `hotel_reminders` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text,
+  `due_date` datetime DEFAULT NULL,
+  `priority` enum('low','medium','high') DEFAULT 'medium',
+  `is_completed` tinyint(1) DEFAULT '0',
+  `status` varchar(50) DEFAULT 'pending',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `fk_hotel_remind_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Hotel Notes
+DROP TABLE IF EXISTS `hotel_notes`;
+CREATE TABLE `hotel_notes` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `content` text,
+  `color` varchar(20) DEFAULT 'yellow',
+  `is_pinned` tinyint(1) DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `fk_hotel_notes_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Hotel Member Roles
+DROP TABLE IF EXISTS `hotel_member_roles`;
+CREATE TABLE `hotel_member_roles` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_hotel_role` (`user_id`,`name`),
+  CONSTRAINT `fk_hotel_role_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Hotel Categories
+DROP TABLE IF EXISTS `hotel_categories`;
+CREATE TABLE `hotel_categories` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `type` enum('income','expense') DEFAULT 'expense',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_hotel_cat` (`user_id`,`name`,`type`),
+  CONSTRAINT `fk_hotel_cat_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;

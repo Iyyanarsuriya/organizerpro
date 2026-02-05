@@ -4,6 +4,7 @@ const getTableName = (sector) => {
     if (sector === 'manufacturing') return 'manufacturing_notes';
     if (sector === 'it') return 'it_notes';
     if (sector === 'education') return 'education_notes';
+    if (sector === 'hotel') return 'hotel_notes';
     return 'personal_notes';
 };
 

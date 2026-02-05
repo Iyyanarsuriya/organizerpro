@@ -3,6 +3,7 @@ const db = require('../config/db');
 const getTableName = (sector) => {
     if (sector === 'it') return 'it_member_roles';
     if (sector === 'education') return 'education_member_roles';
+    if (sector === 'hotel') return 'hotel_member_roles';
     return 'manufacturing_member_roles';
 };
 

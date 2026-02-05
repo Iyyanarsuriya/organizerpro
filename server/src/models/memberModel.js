@@ -3,13 +3,13 @@ const db = require('../config/db');
 const getTableName = (sector) => {
     if (sector === 'it') return 'it_members';
     if (sector === 'education') return 'education_members';
-    if (sector === 'hotel') return 'manufacturing_members';
+    if (sector === 'hotel') return 'hotel_members';
     return 'manufacturing_members';
 };
 const getProjectTableName = (sector) => {
     if (sector === 'it') return 'it_projects';
     if (sector === 'education') return 'education_projects';
-    if (sector === 'hotel') return 'manufacturing_projects';
+    if (sector === 'hotel') return 'hotel_projects';
     return 'manufacturing_projects';
 };
 
@@ -20,7 +20,7 @@ const create = async (data) => {
         cl_balance, sl_balance, el_balance, expected_hours, work_location, is_billable } = data;
 
     let columns = ['user_id', 'name', 'role', 'phone', 'email', 'status', 'wage_type', 'daily_wage', 'member_type'];
-    let values = [user_id, name, role || null, phone || null, email || null, status || 'active', wage_type || 'daily', daily_wage || 0, member_type || 'worker'];
+    let values = [user_id, name, role || null, phone || null, email || null, status || 'active', wage_type || 'daily', daily_wage || 0, member_type || (data.sector === 'hotel' ? 'staff' : 'worker')];
     let placeholders = ['?', '?', '?', '?', '?', '?', '?', '?', '?'];
 
     if (data.sector !== 'education') {
@@ -115,7 +115,7 @@ const update = async (id, userId, data) => {
         cl_balance, sl_balance, el_balance, expected_hours, work_location, is_billable } = data;
 
     let updates = ['name = ?', 'role = ?', 'phone = ?', 'email = ?', 'status = ?', 'wage_type = ?', 'daily_wage = ?', 'member_type = ?'];
-    let values = [name, role || null, phone || null, email || null, status || 'active', wage_type || 'daily', daily_wage || 0, member_type || 'worker'];
+    let values = [name, role || null, phone || null, email || null, status || 'active', wage_type || 'daily', daily_wage || 0, member_type || (data.sector === 'hotel' ? 'staff' : 'worker')];
 
     if (data.sector !== 'education') {
         updates.push('project_id = ?');
@@ -185,21 +185,26 @@ const getActiveMembers = async (userId, memberType = null, sector) => {
 const getGuests = async (userId, sector) => {
     if (sector === 'it' || sector === 'education') return [];
 
-    // Default manufacturing logic
+    let transTable = (sector === 'hotel') ? 'hotel_transactions' : 'manufacturing_transactions';
+    let workTable = (sector === 'manufacturing') ? 'manufacturing_work_logs' : null;
     const query = `
         SELECT DISTINCT guest_name, 'guest' as member_type, 'active' as status, 0 as id 
-        FROM manufacturing_transactions 
+        FROM ${transTable} 
         WHERE user_id = ? AND member_id IS NULL AND guest_name IS NOT NULL AND guest_name != ''
+        ${workTable ? `
         UNION
         SELECT DISTINCT guest_name, 'guest' as member_type, 'active' as status, 0 as id 
-        FROM manufacturing_work_logs 
+        FROM ${workTable} 
         WHERE user_id = ? AND member_id IS NULL AND guest_name IS NOT NULL AND guest_name != ''
+        ` : ''
+        }
         ORDER BY guest_name ASC
     `;
-    const [rows] = await db.query(query, [userId, userId]);
+    const params = workTable ? [userId, userId] : [userId];
+    const [rows] = await db.query(query, params);
     return rows.map((row, index) => ({
         ...row,
-        id: `guest-${index}`,
+        id: `guest - ${index} `,
         name: row.guest_name,
         role: 'Guest / Temp',
         phone: '-',

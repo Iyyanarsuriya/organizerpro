@@ -4,6 +4,7 @@ const getTableName = (sector) => {
     if (sector === 'manufacturing') return 'manufacturing_reminders';
     if (sector === 'it') return 'it_reminders';
     if (sector === 'education') return 'education_reminders';
+    if (sector === 'hotel') return 'hotel_reminders';
     return 'personal_reminders';
 };
 
@@ -28,7 +29,7 @@ const create = async (reminderData) => {
 
     let query, params;
 
-    if (table === 'manufacturing_reminders') {
+    if (table === 'manufacturing_reminders' || table === 'hotel_reminders') {
         query = `INSERT INTO ${table} (user_id, title, description, due_date, priority, status) VALUES (?, ?, ?, ?, ?, ?)`;
         params = [user_id, title, description, finalDate, priority || 'medium', 'pending'];
     } else if (table === 'it_reminders' || table === 'education_reminders') {
@@ -64,7 +65,7 @@ const updateStatus = async (id, userId, is_completed, sector) => {
         } else {
             query += ', completed_at = NULL';
         }
-    } else if (table === 'manufacturing_reminders') {
+    } else if (table === 'manufacturing_reminders' || table === 'hotel_reminders') {
         if (is_completed) {
             query += ', status = "completed"';
         } else {

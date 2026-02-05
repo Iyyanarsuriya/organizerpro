@@ -108,12 +108,14 @@ app.use('/api/education-sector', eduRouter);
 const hotelRouter = express.Router();
 hotelRouter.use(withSector('hotel'));
 hotelRouter.use('/reminders', require("./routes/Personal/reminderRoutes"));
+hotelRouter.use('/notes', require("./routes/Personal/noteRoutes"));
 hotelRouter.use('/transactions', transactionRoutes);
 hotelRouter.use('/categories', categoryRoutes);
 hotelRouter.use('/members', require("./routes/Manufacturing/memberRoutes")); // Generic Member Controller
 hotelRouter.use('/member-roles', require("./routes/Manufacturing/memberRoleRoutes")); // Generic Role Controller
 hotelRouter.use('/projects', require("./routes/Manufacturing/projectRoutes")); // Generic Project Controller
 hotelRouter.use('/attendance', require("./routes/Manufacturing/attendanceRoutes")); // Generic Attendance Controller
+hotelRouter.use('/team', require("./routes/Hotel/teamRoutes"));
 app.use('/api/hotel-sector', hotelRouter);
 
 

@@ -3,6 +3,7 @@ import * as personalApi from '../../api/Reminder/personalReminder';
 import * as itApi from '../../api/Reminder/itReminder';
 import * as mfgApi from '../../api/Reminder/mfgReminder';
 import * as eduApi from '../../api/Reminder/eduReminder';
+import * as hotelApi from '../../api/Reminder/hotelReminder';
 import { FaPlus, FaTrash, FaPen, FaThumbtack, FaArrowLeft, FaSearch, FaTimes } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -16,7 +17,8 @@ const Notes = ({ isEmbedded = false, sector = 'personal' }) => {
         manufacturing: mfgApi,
         mfg: mfgApi, // Compatibility
         education: eduApi,
-        edu: eduApi // Compatibility
+        edu: eduApi, // Compatibility
+        hotel: hotelApi
     };
 
     const api = apiMap[sector] || personalApi;
