@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { getBookings, createBooking, updateBookingStatus, getUnits, getGuests, createGuest } from '../../api/Hotel/hotelApi';
 import { exportBookingsToCSV, exportBookingsToTXT, exportBookingsToPDF } from '../../utils/exportUtils';
 import toast from 'react-hot-toast';
-import { FaCalendarAlt, FaPlus, FaSearch, FaCheck, FaTimes, FaBed, FaUser, FaMoneyBillWave, FaClock, FaCalendarCheck, FaFilter, FaFileDownload, FaFileCsv, FaFileAlt, FaFilePdf } from 'react-icons/fa';
+import { FaCalendarAlt, FaPlus, FaSearch, FaCheck, FaTimes, FaBed, FaUser, FaMoneyBillWave, FaClock, FaCalendarCheck, FaFilter, FaFileDownload, FaFileCsv, FaFileAlt, FaFilePdf, FaChevronLeft } from 'react-icons/fa';
 
 const HotelBookings = () => {
     const navigate = useNavigate();
@@ -168,14 +168,14 @@ const HotelBookings = () => {
     const getFilterDescription = () => {
         const statusStr = filterStatus === 'all' ? 'ALL STATUSES' : filterStatus.toUpperCase().replace('_', ' ');
         let dateStr = '';
-        
+
         if (dateFilterType === 'day') dateStr = `Date: ${selectedDate}`;
         else if (dateFilterType === 'month') dateStr = `Month: ${selectedDate.substring(0, 7)}`;
         else if (dateFilterType === 'year') dateStr = `Year: ${selectedDate.substring(0, 4)}`;
         else if (dateFilterType === 'range' && dateRange.start && dateRange.end) {
             dateStr = `Range: ${dateRange.start} to ${dateRange.end}`;
         }
-        
+
         return `${statusStr} | ${dateStr}`;
     };
 
@@ -186,14 +186,14 @@ const HotelBookings = () => {
         else if (dateFilterType === 'year') datePart = selectedDate.substring(0, 4);
         else if (dateFilterType === 'range') datePart = `${dateRange.start}_to_${dateRange.end}`;
         else datePart = new Date().toISOString().split('T')[0];
-        
+
         return `hotel_bookings_${filterStatus}_${datePart}`;
     };
 
     const exportToCSV = () => {
-        exportBookingsToCSV({ 
-            data: filteredBookings, 
-            filterDescription: getFilterDescription(), 
+        exportBookingsToCSV({
+            data: filteredBookings,
+            filterDescription: getFilterDescription(),
             filename: getExportFilename()
         });
         toast.success('Exported to CSV!');
@@ -201,9 +201,9 @@ const HotelBookings = () => {
     };
 
     const exportToTXT = () => {
-        exportBookingsToTXT({ 
-            data: filteredBookings, 
-            filterDescription: getFilterDescription(), 
+        exportBookingsToTXT({
+            data: filteredBookings,
+            filterDescription: getFilterDescription(),
             filename: getExportFilename()
         });
         toast.success('Exported to TXT!');
@@ -211,9 +211,9 @@ const HotelBookings = () => {
     };
 
     const exportToPDF = () => {
-        exportBookingsToPDF({ 
-            data: filteredBookings, 
-            filterDescription: getFilterDescription(), 
+        exportBookingsToPDF({
+            data: filteredBookings,
+            filterDescription: getFilterDescription(),
             filename: getExportFilename()
         });
         toast.success('PDF Generated!');
@@ -227,11 +227,16 @@ const HotelBookings = () => {
                 {/* Header with Filters */}
                 <div className="flex flex-col gap-4 mb-8">
                     {/* Title */}
-                    <div>
-                        <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-                            <FaCalendarAlt className="text-indigo-600" /> Bookings
-                        </h1>
-                        <p className="text-slate-500 font-medium mt-1">Manage reservations, check-ins, and check-outs.</p>
+                    <div className="flex items-center gap-4">
+                        <Link to="/hotel-sector" className="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:text-blue-600 transition-all shadow-sm">
+                            <FaChevronLeft />
+                        </Link>
+                        <div>
+                            <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                                <FaCalendarAlt className="text-indigo-600" /> Bookings
+                            </h1>
+                            <p className="text-slate-500 font-medium mt-1">Manage reservations, check-ins, and check-outs.</p>
+                        </div>
                     </div>
 
                     {/* Filters & Actions Row */}

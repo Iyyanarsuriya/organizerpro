@@ -107,7 +107,10 @@ const HotelAttendance = () => {
             const rangeStart = isRange ? customRange.start : null;
             const rangeEnd = isRange ? customRange.end : null;
 
-            if (isRange && (!rangeStart || !rangeEnd)) return;
+            if (isRange && (!rangeStart || !rangeEnd)) {
+                setLoading(false);
+                return;
+            }
 
             const [attRes, statsRes, summaryRes, projRes, membersRes, roleRes, holRes, shiftRes] = await Promise.all([
                 getAttendances({ projectId: filterProject, memberId: filterMember, period: isRange ? null : currentPeriod, startDate: rangeStart, endDate: rangeEnd, sector: SECTOR }),
@@ -133,6 +136,12 @@ const HotelAttendance = () => {
             setLoading(false);
         }
     };
+
+    const pieData = useMemo(() => stats.map(s => ({
+        name: statusOptions.find(o => o.id === s.status)?.label || s.status,
+        value: s.count,
+        color: getHexColor(s.status)
+    })), [stats]);
 
     useEffect(() => {
         fetchData();
@@ -188,11 +197,20 @@ const HotelAttendance = () => {
         });
     }, [attendances, searchQuery, filterRole, memberIdToRoleMap]);
 
-    const pieData = stats.map(s => ({
-        name: statusOptions.find(o => o.id === s.status)?.label || s.status,
-        value: s.count,
-        color: getHexColor(s.status)
-    }));
+    const handleExportCSV = () => {
+        const enrichedData = processAttendanceExportData(attendances, members, { periodType, currentPeriod, filterRole, filterMember, searchQuery });
+        exportAttendanceToCSV(enrichedData, `Hotel_Attendance_${currentPeriod}`);
+    };
+
+    const handleExportPDF = () => {
+        const enrichedData = processAttendanceExportData(attendances, members, { periodType, currentPeriod, filterRole, filterMember, searchQuery });
+        exportAttendanceToPDF({ data: enrichedData, period: currentPeriod, filename: `Hotel_Attendance_${currentPeriod}` });
+    };
+
+    const handleExportTXT = () => {
+        const enrichedData = processAttendanceExportData(attendances, members, { periodType, currentPeriod, filterRole, filterMember, searchQuery });
+        exportAttendanceToTXT({ data: enrichedData, period: currentPeriod, filename: `Hotel_Attendance_${currentPeriod}` });
+    };
 
     if (loading) return <div className="h-screen flex items-center justify-center bg-slate-50"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500"></div></div>;
 
@@ -205,7 +223,7 @@ const HotelAttendance = () => {
                 <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                         <div className="flex items-center gap-4">
-                            <button onClick={() => navigate('/hotel-sector')} className="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:text-blue-600 transition-all shadow-sm"><FaChevronLeft /></button>
+                            <Link to="/hotel-sector" className="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:text-blue-600 transition-all shadow-sm"><FaChevronLeft /></Link>
                             <div className="w-12 h-12 bg-linear-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20 text-white"><FaUserCheck size={20} /></div>
                             <div>
                                 <h1 className="text-2xl font-black tracking-tight">Attendance & Shifts</h1>
@@ -259,9 +277,9 @@ const HotelAttendance = () => {
 
 
                             <ExportButtons
-                                onExportCSV={() => exportAttendanceToCSV(filteredAttendances, `Hotel_Attendance`)}
-                                onExportPDF={() => exportAttendanceToPDF({ data: filteredAttendances, period: currentPeriod, filename: 'Hotel_Attendance' })}
-                                onExportTXT={() => exportAttendanceToTXT({ data: filteredAttendances, period: currentPeriod, filename: 'Hotel_Attendance' })}
+                                onExportCSV={handleExportCSV}
+                                onExportPDF={handleExportPDF}
+                                onExportTXT={handleExportTXT}
                             />
                         </div>
                     </div>

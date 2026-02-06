@@ -1,14 +1,36 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { getGuests, createGuest } from '../../api/Hotel/hotelApi';
 import toast from 'react-hot-toast';
-import { FaUserCircle, FaPlus, FaSearch, FaIdCard, FaPhone } from 'react-icons/fa';
+import { FaUserCircle, FaPlus, FaSearch, FaIdCard, FaPhone, FaChevronLeft } from 'react-icons/fa';
+import ExportButtons from '../../components/Common/ExportButtons';
+import { exportToCSV, exportToPDF, exportToTXT } from '../../utils/exportUtils/index.js';
 
 const HotelGuests = () => {
+    const navigate = useNavigate();
     const [guests, setGuests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [form, setForm] = useState({ name: '', phone: '', email: '', id_proof_type: 'Aadhar', id_proof_number: '', address: '' });
+
+    const handleExportCSV = () => {
+        const headers = ['Guest Name', 'Phone', 'Email', 'ID Type', 'ID Number', 'Address'];
+        const rows = filteredGuests.map(g => [g.name, g.phone, g.email, g.id_proof_type, g.id_proof_number, g.address || '']);
+        exportToCSV(headers, rows, `Hotel_Guests_Report`);
+    };
+
+    const handleExportPDF = () => {
+        const tableHeaders = ['Name', 'Phone', 'Email', 'ID Type', 'ID Number'];
+        const tableRows = filteredGuests.map(g => [g.name, g.phone, g.email, g.id_proof_type, g.id_proof_number]);
+        exportToPDF({ title: 'Hotel Guest Directory Report', tableHeaders, tableRows, filename: 'Hotel_Guests_Report' });
+    };
+
+    const handleExportTXT = () => {
+        const logHeaders = ['Name', 'Phone', 'Email', 'ID Type'];
+        const logRows = filteredGuests.map(g => [g.name, g.phone, g.email, g.id_proof_type]);
+        exportToTXT({ title: 'Hotel Guest Directory Report', logHeaders, logRows, filename: 'Hotel_Guests_Report' });
+    };
 
     const fetchGuests = async () => {
         try {
@@ -41,14 +63,36 @@ const HotelGuests = () => {
     return (
         <div className="min-h-screen bg-[#f8fafc] p-6 md:p-12 font-['Outfit']">
             <div className="max-w-6xl mx-auto">
-                <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3"><FaUserCircle className="text-emerald-600" /> Guest Directory</h1>
-                    <button onClick={() => setShowModal(true)} className="bg-emerald-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg hover:bg-emerald-700 transition-all flex items-center gap-2"><FaPlus /> Add Guest</button>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
+                    <div className="flex items-center gap-4">
+                        <Link to="/hotel-sector" className="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:text-blue-600 transition-all shadow-sm">
+                            <FaChevronLeft />
+                        </Link>
+                        <div>
+                            <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                                <FaUserCircle className="text-emerald-600" /> Guest Directory
+                            </h1>
+                            <p className="text-slate-500 font-medium mt-1">Manage guest records and identification data.</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <ExportButtons
+                            onExportCSV={handleExportCSV}
+                            onExportPDF={handleExportPDF}
+                            onExportTXT={handleExportTXT}
+                        />
+                        <button
+                            onClick={() => { setForm({ name: '', phone: '', email: '', id_proof_type: 'Aadhar', id_proof_number: '', address: '' }); setShowModal(true); }}
+                            className="bg-emerald-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-emerald-500/30 hover:bg-emerald-700 transition-all active:scale-95 flex items-center gap-2"
+                        >
+                            <FaPlus /> Add Guest
+                        </button>
+                    </div>
                 </div>
 
-                <div className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 mb-8 flex items-center gap-4">
+                <div className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 mb-8 flex items-center gap-4 hover:border-emerald-500 transition-colors">
                     <FaSearch className="text-slate-400 ml-2" />
-                    <input className="w-full outline-none font-bold text-slate-700" placeholder="Search guests..." value={search} onChange={e => setSearch(e.target.value)} />
+                    <input className="w-full outline-none font-bold text-slate-700 bg-transparent" placeholder="Search guests by name or phone..." value={search} onChange={e => setSearch(e.target.value)} />
                 </div>
 
                 <div className="bg-white rounded-[32px] shadow-sm border border-slate-100 overflow-hidden">

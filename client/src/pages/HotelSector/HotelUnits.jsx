@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { getUnits, createUnit, updateUnit } from '../../api/Hotel/hotelApi';
 import toast from 'react-hot-toast';
-import { FaHome, FaPlus, FaBed, FaBroom, FaTools, FaCheckCircle, FaDoorOpen } from 'react-icons/fa';
+import { FaHome, FaPlus, FaBed, FaBroom, FaTools, FaCheckCircle, FaDoorOpen, FaChevronLeft } from 'react-icons/fa';
+import ExportButtons from '../../components/Common/ExportButtons';
+import { exportToCSV, exportToPDF, exportToTXT } from '../../utils/exportUtils/index.js';
 
 const HotelUnits = () => {
+    const navigate = useNavigate();
     const [units, setUnits] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -11,6 +15,24 @@ const HotelUnits = () => {
 
     // Status filter
     const [filter, setFilter] = useState('all');
+
+    const handleExportCSV = () => {
+        const headers = ['Unit Number', 'Type', 'Category', 'Base Price', 'Capacity', 'Status', 'Description'];
+        const rows = filteredUnits.map(u => [u.unit_number, u.unit_type, u.category, u.base_price, u.capacity, u.status, u.description || '']);
+        exportToCSV(headers, rows, `Hotel_Units_${filter}_Report`);
+    };
+
+    const handleExportPDF = () => {
+        const tableHeaders = ['Unit', 'Type', 'Category', 'Price', 'Cap.', 'Status'];
+        const tableRows = filteredUnits.map(u => [u.unit_number, u.unit_type, u.category, `Rs. ${u.base_price}`, u.capacity, u.status.toUpperCase()]);
+        exportToPDF({ title: `Hotel Units & Rooms (${filter.toUpperCase()}) Report`, tableHeaders, tableRows, filename: `Hotel_Units_${filter}_Report` });
+    };
+
+    const handleExportTXT = () => {
+        const logHeaders = ['Unit', 'Type', 'Category', 'Price', 'Status'];
+        const logRows = filteredUnits.map(u => [u.unit_number, u.unit_type, u.category, u.base_price, u.status]);
+        exportToTXT({ title: `Hotel Units & Rooms (${filter.toUpperCase()}) Report`, logHeaders, logRows, filename: `Hotel_Units_${filter}_Report` });
+    };
 
     const [form, setForm] = useState({
         id: null,
@@ -92,18 +114,30 @@ const HotelUnits = () => {
             <div className="max-w-7xl mx-auto">
 
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
-                    <div>
-                        <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-                            <FaHome className="text-blue-600" /> Units & Rooms
-                        </h1>
-                        <p className="text-slate-500 font-medium mt-1">Manage inventory, pricing, and housekeeping status.</p>
+                    <div className="flex items-center gap-4">
+                        <Link to="/hotel-sector" className="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:text-blue-600 transition-all shadow-sm">
+                            <FaChevronLeft />
+                        </Link>
+                        <div>
+                            <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                                <FaHome className="text-blue-600" /> Units & Rooms
+                            </h1>
+                            <p className="text-slate-500 font-medium mt-1">Manage inventory, pricing, and housekeeping status.</p>
+                        </div>
                     </div>
-                    <button
-                        onClick={() => { setIsEditing(false); setForm({ unit_number: '', unit_type: 'room', category: 'Standard', base_price: '', capacity: 2, status: 'available', description: '' }); setShowModal(true); }}
-                        className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-all active:scale-95 flex items-center gap-2"
-                    >
-                        <FaPlus /> Add Unit
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <ExportButtons
+                            onExportCSV={handleExportCSV}
+                            onExportPDF={handleExportPDF}
+                            onExportTXT={handleExportTXT}
+                        />
+                        <button
+                            onClick={() => { setIsEditing(false); setForm({ unit_number: '', unit_type: 'room', category: 'Standard', base_price: '', capacity: 2, status: 'available', description: '' }); setShowModal(true); }}
+                            className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-all active:scale-95 flex items-center gap-2"
+                        >
+                            <FaPlus /> Add Unit
+                        </button>
+                    </div>
                 </div>
 
                 {/* Status Tabs */}
