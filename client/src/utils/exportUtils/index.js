@@ -9,3 +9,4 @@ export * from '../reminderExportUtils/reminder.js';
 export * from '../expenseExportUtils/vehicle.js';
 export * from '../expenseExportUtils/workLog.js';
 export * from '../expenseExportUtils/personalExpense.js';
+export * from '../hotelExportUtils/bookings.js';
