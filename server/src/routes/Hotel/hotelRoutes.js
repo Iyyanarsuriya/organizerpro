@@ -25,6 +25,9 @@ router.post('/payments', hotelController.addPayment);
 
 // Ops
 router.get('/maintenance', hotelController.getMaintenance);
+router.post('/maintenance', hotelController.createMaintenance);
+router.put('/maintenance/:id', hotelController.updateMaintenance);
+router.delete('/maintenance/:id', hotelController.deleteMaintenance);
 
 // Settings
 router.get('/settings', hotelController.getSettings);

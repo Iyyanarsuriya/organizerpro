@@ -31,6 +31,8 @@ import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend
 } from 'recharts';
 import { exportAttendanceToCSV, exportAttendanceToTXT, exportAttendanceToPDF, processAttendanceExportData } from '../../utils/exportUtils/index.js';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import ExportButtons from '../../components/Common/ExportButtons';
 import ProjectManager from '../../components/Manufacturing/ProjectManager';
 import MemberManager from '../../components/Hotel/MemberManager'; // Using Hotel specific Member Manager
@@ -39,6 +41,9 @@ import CalendarManager from '../../pages/ManufacturingSector/AttendanceTracker/C
 import ShiftManager from '../../pages/ManufacturingSector/AttendanceTracker/ShiftManager';
 
 const SECTOR = 'hotel';
+// Hotel sector theme color for PDF exports (Warm Orange/Amber - hospitality theme)
+const HOTEL_THEME_COLOR = [255, 138, 0]; // RGB for orange (#FF8A00)
+
 
 const HotelAttendance = () => {
     const navigate = useNavigate();
@@ -198,18 +203,526 @@ const HotelAttendance = () => {
     }, [attendances, searchQuery, filterRole, memberIdToRoleMap]);
 
     const handleExportCSV = () => {
-        const enrichedData = processAttendanceExportData(attendances, members, { periodType, currentPeriod, filterRole, filterMember, searchQuery });
-        exportAttendanceToCSV(enrichedData, `Hotel_Attendance_${currentPeriod}`);
+        switch (activeTab) {
+            case 'records': {
+                const enrichedData = processAttendanceExportData(attendances, members, { periodType, currentPeriod, filterRole, filterMember, searchQuery, filterProject });
+                exportAttendanceToCSV(enrichedData, `Hotel_Attendance_Records_${currentPeriod}`);
+                break;
+            }
+            case 'summary': {
+                // Apply filters to summary
+                let filteredSummary = memberSummary;
+                if (filterRole) filteredSummary = filteredSummary.filter(m => m.role === filterRole);
+                if (filterProject) filteredSummary = filteredSummary.filter(m => m.project_id && m.project_id.toString() === filterProject.toString());
+                if (searchQuery) filteredSummary = filteredSummary.filter(m => m.member_name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+                const headers = ['Member Name', 'Role', 'Department', 'Total Days', 'Present', 'Absent', 'Late', 'Half Day', 'Week Off', 'Holiday', 'Overtime'];
+                const rows = filteredSummary.map(m => [
+                    m.member_name || 'N/A',
+                    m.role || 'N/A',
+                    projects.find(p => p.id === m.project_id)?.name || 'N/A',
+                    m.total_days || 0,
+                    m.present || 0,
+                    m.absent || 0,
+                    m.late || 0,
+                    m.half_day || 0,
+                    m.week_off || 0,
+                    m.holiday || 0,
+                    m.overtime || 0
+                ]);
+                const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Hotel_Attendance_Summary_${currentPeriod}.csv`;
+                a.click();
+                toast.success('Summary exported to CSV');
+                break;
+            }
+            case 'quick': {
+                // Export daily sheet - only members with their status for the selected date
+                // Apply filters
+                let filteredMembers = members;
+                if (filterRole) filteredMembers = filteredMembers.filter(m => m.role === filterRole);
+                if (filterProject) filteredMembers = filteredMembers.filter(m => m.project_id && m.project_id.toString() === filterProject.toString());
+                if (searchQuery) filteredMembers = filteredMembers.filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+                const headers = ['Member Name', 'Role', 'Department', 'Status', 'Check In', 'Check Out', 'Total Hours', 'Notes'];
+                const rows = filteredMembers.map(m => {
+                    const todayAttendance = attendances.find(a => a.member_id === m.id && a.date.startsWith(currentPeriod));
+                    return [
+                        m.name || 'N/A',
+                        m.role || 'N/A',
+                        projects.find(p => p.id === m.project_id)?.name || 'N/A',
+                        todayAttendance?.status || 'Not Marked',
+                        todayAttendance?.check_in || '-',
+                        todayAttendance?.check_out || '-',
+                        todayAttendance?.total_hours || '-',
+                        todayAttendance?.note || '-'
+                    ];
+                });
+                const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Hotel_Daily_Sheet_${currentPeriod}.csv`;
+                a.click();
+                toast.success('Daily Sheet exported to CSV');
+                break;
+            }
+            case 'members': {
+                // Apply filters to members
+                let filteredMembers = members;
+                if (filterRole) filteredMembers = filteredMembers.filter(m => m.role === filterRole);
+                if (filterProject) filteredMembers = filteredMembers.filter(m => m.project_id && m.project_id.toString() === filterProject.toString());
+                if (searchQuery) filteredMembers = filteredMembers.filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+                const headers = ['Name', 'Role', 'Department', 'Phone', 'Email', 'Employment Nature', 'Work Area', 'Shift', 'Wage Type', 'Salary/Wage', 'Status'];
+                const rows = filteredMembers.map(m => [
+                    m.name || 'N/A',
+                    m.role || 'N/A',
+                    projects.find(p => p.id === m.project_id)?.name || 'N/A',
+                    m.phone || 'N/A',
+                    m.email || 'N/A',
+                    m.employment_nature || 'N/A',
+                    m.primary_work_area || 'N/A',
+                    shifts.find(s => s.id === m.default_shift_id)?.name || 'N/A',
+                    m.wage_type || 'daily',
+                    m.wage_type === 'monthly' ? (m.monthly_salary || 0) : (m.wage_type === 'hourly' ? (m.hourly_rate || 0) : (m.daily_wage || 0)),
+                    m.status || 'active'
+                ]);
+                const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Hotel_Members_${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                toast.success('Members exported to CSV');
+                break;
+            }
+            case 'shifts': {
+                const headers = ['Shift Name', 'Start Time', 'End Time', 'Total Hours', 'Break Duration', 'Status'];
+                const rows = shifts.map(s => [
+                    s.name || 'N/A',
+                    s.start_time || 'N/A',
+                    s.end_time || 'N/A',
+                    s.total_hours || 'N/A',
+                    s.break_duration || 0,
+                    s.status || 'active'
+                ]);
+                const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Hotel_Shifts_${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                toast.success('Shifts exported to CSV');
+                break;
+            }
+            case 'calendar': {
+                const headers = ['Holiday Name', 'Date', 'Type'];
+                const rows = holidays.map(h => [
+                    h.name || 'N/A',
+                    h.date || 'N/A',
+                    h.type || 'National'
+                ]);
+                const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Hotel_Holidays_${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                toast.success('Holidays exported to CSV');
+                break;
+            }
+            default:
+                toast.error('No data to export');
+        }
     };
 
     const handleExportPDF = () => {
-        const enrichedData = processAttendanceExportData(attendances, members, { periodType, currentPeriod, filterRole, filterMember, searchQuery });
-        exportAttendanceToPDF({ data: enrichedData, period: currentPeriod, filename: `Hotel_Attendance_${currentPeriod}` });
+        switch (activeTab) {
+            case 'records': {
+                const enrichedData = processAttendanceExportData(attendances, members, { periodType, currentPeriod, filterRole, filterMember, searchQuery, filterProject });
+                exportAttendanceToPDF({ data: enrichedData, period: currentPeriod, filename: `Hotel_Attendance_Records_${currentPeriod}`, themeColor: HOTEL_THEME_COLOR });
+                break;
+            }
+            case 'summary': {
+                // Apply filters to summary
+                let filteredSummary = memberSummary;
+                if (filterRole) filteredSummary = filteredSummary.filter(m => m.role === filterRole);
+                if (filterProject) filteredSummary = filteredSummary.filter(m => m.project_id && m.project_id.toString() === filterProject.toString());
+                if (searchQuery) filteredSummary = filteredSummary.filter(m => m.member_name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+                const doc = new jsPDF();
+                const pageWidth = doc.internal.pageSize.getWidth();
+
+                // Hotel theme header
+                doc.setFillColor(HOTEL_THEME_COLOR[0], HOTEL_THEME_COLOR[1], HOTEL_THEME_COLOR[2]);
+                doc.rect(0, 0, pageWidth, 35, 'F');
+
+                doc.setFontSize(18);
+                doc.setTextColor(255, 255, 255);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Hotel Attendance Summary', 14, 15);
+                doc.setFontSize(10);
+                doc.setTextColor(255, 255, 255, 0.9);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Period: ${currentPeriod}  |  Generated: ${new Date().toLocaleString('en-GB')}`, 14, 25);
+
+                const tableData = filteredSummary.map(m => [
+                    m.member_name || 'N/A',
+                    m.role || 'N/A',
+                    projects.find(p => p.id === m.project_id)?.name || 'N/A',
+                    m.total_days || 0,
+                    m.present || 0,
+                    m.absent || 0,
+                    m.late || 0,
+                    m.half_day || 0,
+                    m.week_off || 0,
+                    m.holiday || 0,
+                    m.overtime || 0
+                ]);
+
+                autoTable(doc, {
+                    head: [['Member', 'Role', 'Dept', 'Total', 'Present', 'Absent', 'Late', 'Half', 'Week Off', 'Holiday', 'OT']],
+                    body: tableData,
+                    startY: 40,
+                    styles: { fontSize: 8 },
+                    headStyles: { fillColor: HOTEL_THEME_COLOR }
+                });
+
+                doc.save(`Hotel_Attendance_Summary_${currentPeriod}.pdf`);
+                toast.success('Summary exported to PDF');
+                break;
+            }
+            case 'quick': {
+                // Apply filters
+                let filteredMembers = members;
+                if (filterRole) filteredMembers = filteredMembers.filter(m => m.role === filterRole);
+                if (filterProject) filteredMembers = filteredMembers.filter(m => m.project_id && m.project_id.toString() === filterProject.toString());
+                if (searchQuery) filteredMembers = filteredMembers.filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+                const doc = new jsPDF();
+                const pageWidth = doc.internal.pageSize.getWidth();
+
+                // Hotel theme header
+                doc.setFillColor(HOTEL_THEME_COLOR[0], HOTEL_THEME_COLOR[1], HOTEL_THEME_COLOR[2]);
+                doc.rect(0, 0, pageWidth, 35, 'F');
+
+                doc.setFontSize(18);
+                doc.setTextColor(255, 255, 255);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Hotel Daily Attendance Sheet', 14, 15);
+                doc.setFontSize(10);
+                doc.setTextColor(255, 255, 255, 0.9);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Date: ${currentPeriod}  |  Generated: ${new Date().toLocaleString('en-GB')}`, 14, 25);
+
+                const tableData = filteredMembers.map(m => {
+                    const todayAttendance = attendances.find(a => a.member_id === m.id && a.date.startsWith(currentPeriod));
+                    return [
+                        m.name || 'N/A',
+                        m.role || 'N/A',
+                        projects.find(p => p.id === m.project_id)?.name || 'N/A',
+                        todayAttendance?.status || 'Not Marked',
+                        todayAttendance?.check_in || '-',
+                        todayAttendance?.check_out || '-',
+                        todayAttendance?.total_hours || '-'
+                    ];
+                });
+
+                autoTable(doc, {
+                    head: [['Member', 'Role', 'Dept', 'Status', 'Check In', 'Check Out', 'Hours']],
+                    body: tableData,
+                    startY: 40,
+                    styles: { fontSize: 8 },
+                    headStyles: { fillColor: HOTEL_THEME_COLOR }
+                });
+
+                doc.save(`Hotel_Daily_Sheet_${currentPeriod}.pdf`);
+                toast.success('Daily Sheet exported to PDF');
+                break;
+            }
+            case 'members': {
+                // Apply filters to members
+                let filteredMembers = members;
+                if (filterRole) filteredMembers = filteredMembers.filter(m => m.role === filterRole);
+                if (filterProject) filteredMembers = filteredMembers.filter(m => m.project_id && m.project_id.toString() === filterProject.toString());
+                if (searchQuery) filteredMembers = filteredMembers.filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+                const doc = new jsPDF();
+                const pageWidth = doc.internal.pageSize.getWidth();
+
+                // Hotel theme header
+                doc.setFillColor(HOTEL_THEME_COLOR[0], HOTEL_THEME_COLOR[1], HOTEL_THEME_COLOR[2]);
+                doc.rect(0, 0, pageWidth, 35, 'F');
+
+                doc.setFontSize(18);
+                doc.setTextColor(255, 255, 255);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Hotel Staff Members', 14, 15);
+                doc.setFontSize(10);
+                doc.setTextColor(255, 255, 255, 0.9);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Generated: ${new Date().toLocaleString('en-GB')}`, 14, 25);
+
+                const tableData = filteredMembers.map(m => [
+                    m.name || 'N/A',
+                    m.role || 'N/A',
+                    projects.find(p => p.id === m.project_id)?.name || 'N/A',
+                    m.phone || 'N/A',
+                    m.employment_nature || 'N/A',
+                    m.primary_work_area || 'N/A',
+                    m.status || 'active'
+                ]);
+
+                autoTable(doc, {
+                    head: [['Name', 'Role', 'Department', 'Phone', 'Employment', 'Work Area', 'Status']],
+                    body: tableData,
+                    startY: 40,
+                    styles: { fontSize: 8 },
+                    headStyles: { fillColor: HOTEL_THEME_COLOR }
+                });
+
+                doc.save(`Hotel_Members_${new Date().toISOString().split('T')[0]}.pdf`);
+                toast.success('Members exported to PDF');
+                break;
+            }
+            case 'shifts': {
+                const doc = new jsPDF();
+                const pageWidth = doc.internal.pageSize.getWidth();
+
+                // Hotel theme header
+                doc.setFillColor(HOTEL_THEME_COLOR[0], HOTEL_THEME_COLOR[1], HOTEL_THEME_COLOR[2]);
+                doc.rect(0, 0, pageWidth, 35, 'F');
+
+                doc.setFontSize(18);
+                doc.setTextColor(255, 255, 255);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Hotel Shift Configurations', 14, 15);
+                doc.setFontSize(10);
+                doc.setTextColor(255, 255, 255, 0.9);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Generated: ${new Date().toLocaleString('en-GB')}`, 14, 25);
+
+                const tableData = shifts.map(s => [
+                    s.name || 'N/A',
+                    s.start_time || 'N/A',
+                    s.end_time || 'N/A',
+                    s.total_hours || 'N/A',
+                    s.break_duration || 0,
+                    s.status || 'active'
+                ]);
+
+                autoTable(doc, {
+                    head: [['Shift Name', 'Start Time', 'End Time', 'Total Hours', 'Break (mins)', 'Status']],
+                    body: tableData,
+                    startY: 40,
+                    styles: { fontSize: 8 },
+                    headStyles: { fillColor: HOTEL_THEME_COLOR }
+                });
+
+                doc.save(`Hotel_Shifts_${new Date().toISOString().split('T')[0]}.pdf`);
+                toast.success('Shifts exported to PDF');
+                break;
+            }
+            case 'calendar': {
+                const doc = new jsPDF();
+                const pageWidth = doc.internal.pageSize.getWidth();
+
+                // Hotel theme header
+                doc.setFillColor(HOTEL_THEME_COLOR[0], HOTEL_THEME_COLOR[1], HOTEL_THEME_COLOR[2]);
+                doc.rect(0, 0, pageWidth, 35, 'F');
+
+                doc.setFontSize(18);
+                doc.setTextColor(255, 255, 255);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Hotel Holidays Calendar', 14, 15);
+                doc.setFontSize(10);
+                doc.setTextColor(255, 255, 255, 0.9);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Generated: ${new Date().toLocaleString('en-GB')}`, 14, 25);
+
+                const tableData = holidays.map(h => [
+                    h.name || 'N/A',
+                    h.date || 'N/A',
+                    h.type || 'National'
+                ]);
+
+                autoTable(doc, {
+                    head: [['Holiday Name', 'Date', 'Type']],
+                    body: tableData,
+                    startY: 40,
+                    styles: { fontSize: 8 },
+                    headStyles: { fillColor: HOTEL_THEME_COLOR }
+                });
+
+                doc.save(`Hotel_Holidays_${new Date().toISOString().split('T')[0]}.pdf`);
+                toast.success('Holidays exported to PDF');
+                break;
+            }
+            default: {
+                const enrichedData = processAttendanceExportData(attendances, members, { periodType, currentPeriod, filterRole, filterMember, searchQuery, filterProject });
+                exportAttendanceToPDF({ data: enrichedData, period: currentPeriod, filename: `Hotel_Attendance_${currentPeriod}`, themeColor: HOTEL_THEME_COLOR });
+            }
+        }
     };
 
     const handleExportTXT = () => {
-        const enrichedData = processAttendanceExportData(attendances, members, { periodType, currentPeriod, filterRole, filterMember, searchQuery });
-        exportAttendanceToTXT({ data: enrichedData, period: currentPeriod, filename: `Hotel_Attendance_${currentPeriod}` });
+        switch (activeTab) {
+            case 'records': {
+                const enrichedData = processAttendanceExportData(attendances, members, { periodType, currentPeriod, filterRole, filterMember, searchQuery, filterProject });
+                exportAttendanceToTXT({ data: enrichedData, period: currentPeriod, filename: `Hotel_Attendance_Records_${currentPeriod}` });
+                break;
+            }
+            case 'summary': {
+                // Apply filters to summary
+                let filteredSummary = memberSummary;
+                if (filterRole) filteredSummary = filteredSummary.filter(m => m.role === filterRole);
+                if (filterProject) filteredSummary = filteredSummary.filter(m => m.project_id && m.project_id.toString() === filterProject.toString());
+                if (searchQuery) filteredSummary = filteredSummary.filter(m => m.member_name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+                let txtContent = `HOTEL ATTENDANCE SUMMARY\n`;
+                txtContent += `Period: ${currentPeriod}\n`;
+                txtContent += `Generated: ${new Date().toLocaleString()}\n`;
+                txtContent += `${'='.repeat(100)}\n\n`;
+
+                filteredSummary.forEach(m => {
+                    txtContent += `Member: ${m.member_name || 'N/A'}\n`;
+                    txtContent += `Role: ${m.role || 'N/A'}\n`;
+                    txtContent += `Department: ${projects.find(p => p.id === m.project_id)?.name || 'N/A'}\n`;
+                    txtContent += `Total Days: ${m.total_days || 0} | Present: ${m.present || 0} | Absent: ${m.absent || 0} | Late: ${m.late || 0}\n`;
+                    txtContent += `Half Day: ${m.half_day || 0} | Week Off: ${m.week_off || 0} | Holiday: ${m.holiday || 0} | Overtime: ${m.overtime || 0}\n`;
+                    txtContent += `${'-'.repeat(100)}\n`;
+                });
+
+                const blob = new Blob([txtContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Hotel_Attendance_Summary_${currentPeriod}.txt`;
+                a.click();
+                toast.success('Summary exported to TXT');
+                break;
+            }
+            case 'quick': {
+                // Apply filters
+                let filteredMembers = members;
+                if (filterRole) filteredMembers = filteredMembers.filter(m => m.role === filterRole);
+                if (filterProject) filteredMembers = filteredMembers.filter(m => m.project_id && m.project_id.toString() === filterProject.toString());
+                if (searchQuery) filteredMembers = filteredMembers.filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+                let txtContent = `HOTEL DAILY ATTENDANCE SHEET\n`;
+                txtContent += `Date: ${currentPeriod}\n`;
+                txtContent += `Generated: ${new Date().toLocaleString()}\n`;
+                txtContent += `${'='.repeat(100)}\n\n`;
+
+                filteredMembers.forEach(m => {
+                    const todayAttendance = attendances.find(a => a.member_id === m.id && a.date.startsWith(currentPeriod));
+                    txtContent += `Member: ${m.name || 'N/A'}\n`;
+                    txtContent += `Role: ${m.role || 'N/A'} | Department: ${projects.find(p => p.id === m.project_id)?.name || 'N/A'}\n`;
+                    txtContent += `Status: ${todayAttendance?.status || 'Not Marked'}\n`;
+                    txtContent += `Check In: ${todayAttendance?.check_in || '-'} | Check Out: ${todayAttendance?.check_out || '-'}\n`;
+                    txtContent += `Total Hours: ${todayAttendance?.total_hours || '-'}\n`;
+                    if (todayAttendance?.note) {
+                        txtContent += `Notes: ${todayAttendance.note}\n`;
+                    }
+                    txtContent += `${'-'.repeat(100)}\n`;
+                });
+
+                const blob = new Blob([txtContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Hotel_Daily_Sheet_${currentPeriod}.txt`;
+                a.click();
+                toast.success('Daily Sheet exported to TXT');
+                break;
+            }
+            case 'members': {
+                // Apply filters to members
+                let filteredMembers = members;
+                if (filterRole) filteredMembers = filteredMembers.filter(m => m.role === filterRole);
+                if (filterProject) filteredMembers = filteredMembers.filter(m => m.project_id && m.project_id.toString() === filterProject.toString());
+                if (searchQuery) filteredMembers = filteredMembers.filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+                let txtContent = `HOTEL STAFF MEMBERS\n`;
+                txtContent += `Generated: ${new Date().toLocaleString()}\n`;
+                txtContent += `${'='.repeat(100)}\n\n`;
+
+                filteredMembers.forEach(m => {
+                    txtContent += `Name: ${m.name || 'N/A'}\n`;
+                    txtContent += `Role: ${m.role || 'N/A'} | Department: ${projects.find(p => p.id === m.project_id)?.name || 'N/A'}\n`;
+                    txtContent += `Phone: ${m.phone || 'N/A'} | Email: ${m.email || 'N/A'}\n`;
+                    txtContent += `Employment: ${m.employment_nature || 'N/A'} | Work Area: ${m.primary_work_area || 'N/A'}\n`;
+                    txtContent += `Wage: ${m.wage_type || 'daily'} - ₹${m.wage_type === 'monthly' ? (m.monthly_salary || 0) : (m.wage_type === 'hourly' ? (m.hourly_rate || 0) : (m.daily_wage || 0))}\n`;
+                    txtContent += `Status: ${m.status || 'active'}\n`;
+                    txtContent += `${'-'.repeat(100)}\n`;
+                });
+
+                const blob = new Blob([txtContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Hotel_Members_${new Date().toISOString().split('T')[0]}.txt`;
+                a.click();
+                toast.success('Members exported to TXT');
+                break;
+            }
+            case 'shifts': {
+                let txtContent = `HOTEL SHIFTS CONFIGURATION\n`;
+                txtContent += `Generated: ${new Date().toLocaleString()}\n`;
+                txtContent += `${'='.repeat(100)}\n\n`;
+
+                shifts.forEach(s => {
+                    txtContent += `Shift: ${s.name || 'N/A'}\n`;
+                    txtContent += `Time: ${s.start_time || 'N/A'} - ${s.end_time || 'N/A'}\n`;
+                    txtContent += `Total Hours: ${s.total_hours || 'N/A'} | Break: ${s.break_duration || 0} mins\n`;
+                    txtContent += `Status: ${s.status || 'active'}\n`;
+                    txtContent += `${'-'.repeat(100)}\n`;
+                });
+
+                const blob = new Blob([txtContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Hotel_Shifts_${new Date().toISOString().split('T')[0]}.txt`;
+                a.click();
+                toast.success('Shifts exported to TXT');
+                break;
+            }
+            case 'calendar': {
+                let txtContent = `HOTEL HOLIDAYS CALENDAR\n`;
+                txtContent += `Generated: ${new Date().toLocaleString()}\n`;
+                txtContent += `${'='.repeat(100)}\n\n`;
+
+                holidays.forEach(h => {
+                    txtContent += `Holiday: ${h.name || 'N/A'}\n`;
+                    txtContent += `Date: ${h.date || 'N/A'}\n`;
+                    txtContent += `Type: ${h.type || 'National'}\n`;
+                    txtContent += `${'-'.repeat(100)}\n`;
+                });
+
+                const blob = new Blob([txtContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Hotel_Holidays_${new Date().toISOString().split('T')[0]}.txt`;
+                a.click();
+                toast.success('Holidays exported to TXT');
+                break;
+            }
+            default: {
+                const enrichedData = processAttendanceExportData(attendances, members, { periodType, currentPeriod, filterRole, filterMember, searchQuery });
+                exportAttendanceToTXT({ data: enrichedData, period: currentPeriod, filename: `Hotel_Attendance_${currentPeriod}` });
+            }
+        }
     };
 
     const handleDelete = (id) => {

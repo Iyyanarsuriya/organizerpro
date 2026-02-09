@@ -76,9 +76,15 @@ const MemberManager = ({ onClose, onUpdate, sector = 'hotel', projects: parentPr
             }
 
             const results = await Promise.all(promises);
-            const memRes = results[0];
-            const roleRes = results[1];
-            const guestRes = results[2];
+
+            // Safely extract data with fallbacks
+            const membersData = results[0]?.data?.data || [];
+            const rolesData = results[1]?.data?.data || [];
+            const guestsData = results[2]?.data?.data || [];
+
+            console.log('Members response:', results[0]);
+            console.log('Roles response:', results[1]);
+            console.log('Guests response:', results[2]);
 
             // Handle dynamic promises results
             let fetchedProjects = parentProjects || [];
@@ -86,14 +92,16 @@ const MemberManager = ({ onClose, onUpdate, sector = 'hotel', projects: parentPr
 
             let extraIndex = 3;
             if (!parentProjects || parentProjects.length === 0) {
-                fetchedProjects = results[extraIndex++].data;
+                const projectsRes = results[extraIndex++];
+                fetchedProjects = projectsRes?.data?.data || projectsRes?.data || [];
             }
             if (!parentShifts || parentShifts.length === 0) {
-                fetchedShifts = results[extraIndex]?.data?.data || [];
+                const shiftsRes = results[extraIndex];
+                fetchedShifts = shiftsRes?.data?.data || shiftsRes?.data || [];
             }
 
-            setMembers([...memRes.data.data, ...guestRes.data]);
-            setRoles(roleRes.data.data);
+            setMembers([...membersData, ...guestsData]);
+            setRoles(rolesData);
             setProjects(fetchedProjects);
             setShifts(fetchedShifts);
             setLoading(false);
@@ -110,7 +118,9 @@ const MemberManager = ({ onClose, onUpdate, sector = 'hotel', projects: parentPr
 
     // Filter Logic
     const filteredMembers = members.filter(m => {
-        const matchesSearch = m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        if (!m) return false;
+
+        const matchesSearch = (m.name && m.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
             (m.phone && m.phone.includes(searchQuery)) ||
             (m.email && m.email.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -509,16 +519,16 @@ const MemberManager = ({ onClose, onUpdate, sector = 'hotel', projects: parentPr
                                     <div className="flex-1">
                                         <div className="flex items-center gap-3 mb-2">
                                             <h4 className="text-lg font-black text-slate-900">{member.name}</h4>
-                                            <span className="bg-blue-50 text-blue-600 text-[10px] font-black px-2 py-1 rounded-full uppercase">{member.employment_nature}</span>
+                                            {member.employment_nature && <span className="bg-blue-50 text-blue-600 text-[10px] font-black px-2 py-1 rounded-full uppercase">{member.employment_nature}</span>}
                                             <span className={`text-[10px] font-black px-2 py-1 rounded-full uppercase ${member.status === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>{member.status}</span>
                                         </div>
                                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-3 gap-x-6 text-[11px] font-bold text-slate-500">
                                             <div className="flex items-center gap-2"><div className="w-5 h-5 rounded-lg bg-slate-100 flex items-center justify-center"><FaBriefcase className="text-[10px]" /></div> {member.role || 'No Role'}</div>
-                                            <div className="flex items-center gap-2"><div className="w-5 h-5 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600"><FaTag className="text-[10px]" /></div> {member.primary_work_area}</div>
+                                            <div className="flex items-center gap-2"><div className="w-5 h-5 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600"><FaTag className="text-[10px]" /></div> {member.primary_work_area || 'N/A'}</div>
                                             <div className="flex items-center gap-2"><div className="w-5 h-5 rounded-lg bg-orange-50 flex items-center justify-center text-orange-600"><FaHistory className="text-[10px]" /></div> {shifts.find(s => s.id === member.default_shift_id)?.name || 'No Shift'}</div>
                                             <div className="flex items-center gap-2">
                                                 <div className="w-5 h-5 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600"><FaMoneyBillWave className="text-[10px]" /></div>
-                                                ₹{member.wage_type === 'monthly' ? member.monthly_salary : (member.wage_type === 'hourly' ? member.hourly_rate : member.daily_wage)} / {member.wage_type}
+                                                ₹{member.wage_type === 'monthly' ? (member.monthly_salary || 0) : (member.wage_type === 'hourly' ? (member.hourly_rate || 0) : (member.daily_wage || 0))} / {member.wage_type || 'daily'}
                                             </div>
                                         </div>
                                     </div>

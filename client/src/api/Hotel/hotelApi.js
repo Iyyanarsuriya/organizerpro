@@ -1,6 +1,6 @@
 import axiosInstance from '../axiosInstance';
 
-const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/api/hotel`;
+const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/api/hotel-sector`;
 
 // Units
 export const getUnits = () => axiosInstance.get(`${BASE_URL}/units`);
@@ -21,6 +21,9 @@ export const getPaymentsByBooking = (bookingId) => axiosInstance.get(`${BASE_URL
 
 // Ops
 export const getMaintenance = () => axiosInstance.get(`${BASE_URL}/maintenance`);
+export const createMaintenance = (data) => axiosInstance.post(`${BASE_URL}/maintenance`, data);
+export const updateMaintenance = (id, data) => axiosInstance.put(`${BASE_URL}/maintenance/${id}`, data);
+export const deleteMaintenance = (id) => axiosInstance.delete(`${BASE_URL}/maintenance/${id}`);
 
 // Settings
 export const getSettings = () => axiosInstance.get(`${BASE_URL}/settings`);

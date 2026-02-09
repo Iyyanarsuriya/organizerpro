@@ -116,10 +116,8 @@ hotelRouter.use('/member-roles', require("./routes/Common/memberRoleRoutes"));
 hotelRouter.use('/projects', require("./routes/Common/projectRoutes"));
 hotelRouter.use('/attendance', require("./routes/Hotel/attendanceRoutes"));
 hotelRouter.use('/team', require("./routes/Hotel/teamRoutes"));
+hotelRouter.use('/', require("./routes/Hotel/hotelRoutes"));
 app.use('/api/hotel-sector', hotelRouter);
-
-// Direct hotel API access (for bookings module)
-app.use('/api/hotel', require("./routes/Hotel/hotelRoutes"));
 
 
 

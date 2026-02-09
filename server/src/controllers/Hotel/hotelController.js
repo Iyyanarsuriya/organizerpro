@@ -234,6 +234,60 @@ const getMaintenance = async (req, res) => {
     }
 };
 
+const createMaintenance = async (req, res) => {
+    try {
+        const { unit_id, task_type, priority, scheduled_date, assigned_to } = req.body;
+        const [result] = await db.query(
+            'INSERT INTO hotel_maintenance (user_id, unit_id, task_type, priority, scheduled_date, assigned_to) VALUES (?, ?, ?, ?, ?, ?)',
+            [req.user.data_owner_id, unit_id, task_type, priority, scheduled_date, assigned_to || null]
+        );
+        res.status(201).json({ success: true, id: result.insertId });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const updateMaintenance = async (req, res) => {
+    try {
+        const { status, scheduled_date, priority, assigned_to } = req.body;
+        const updates = [];
+        const params = [];
+
+        if (status) { updates.push('status = ?'); params.push(status); }
+        if (scheduled_date) { updates.push('scheduled_date = ?'); params.push(scheduled_date); }
+        if (priority) { updates.push('priority = ?'); params.push(priority); }
+        if (assigned_to !== undefined) { updates.push('assigned_to = ?'); params.push(assigned_to); }
+
+        if (status === 'completed') {
+            updates.push('completed_at = NOW()');
+        }
+
+        if (updates.length === 0) return res.status(400).json({ success: false, message: 'No fields to update' });
+
+        params.push(req.params.id, req.user.data_owner_id);
+        const [result] = await db.query(
+            `UPDATE hotel_maintenance SET ${updates.join(', ')} WHERE id = ? AND user_id = ?`,
+            params
+        );
+
+        if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Maintenance task not found' });
+
+        res.status(200).json({ success: true, message: 'Maintenance task updated' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const deleteMaintenance = async (req, res) => {
+    try {
+        const [result] = await db.query('DELETE FROM hotel_maintenance WHERE id = ? AND user_id = ?', [req.params.id, req.user.data_owner_id]);
+        if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Maintenance task not found' });
+        res.status(200).json({ success: true, message: 'Maintenance task deleted' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // --- Settings ---
 const getSettings = async (req, res) => {
     try {
@@ -273,6 +327,6 @@ module.exports = {
     getGuests, createGuest,
     getBookings, createBooking, updateBookingStatus,
     getPaymentsByBooking, addPayment,
-    getMaintenance,
+    getMaintenance, createMaintenance, updateMaintenance, deleteMaintenance,
     getSettings, updateSettings
 };

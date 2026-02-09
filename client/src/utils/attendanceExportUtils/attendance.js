@@ -170,7 +170,7 @@ const getRowPermHrs = (a, type = 'permission') => {
     return durationString;
 };
 
-export const processAttendanceExportData = (attendances, members, { periodType, currentPeriod, filterRole, filterMember, searchQuery }) => {
+export const processAttendanceExportData = (attendances, members, { periodType, currentPeriod, filterRole, filterMember, searchQuery, filterProject }) => {
     let data = Array.isArray(attendances) ? attendances : [];
 
     // Create a map for quick member lookup
@@ -190,6 +190,7 @@ export const processAttendanceExportData = (attendances, members, { periodType, 
         let targetMembers = members;
         if (filterMember) targetMembers = targetMembers.filter(m => m.id == filterMember);
         if (filterRole) targetMembers = targetMembers.filter(m => m.role === filterRole);
+        if (filterProject) targetMembers = targetMembers.filter(m => m.project_id && m.project_id.toString() === filterProject.toString());
         if (searchQuery) targetMembers = targetMembers.filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
         data = targetMembers.map(m => {
@@ -210,6 +211,10 @@ export const processAttendanceExportData = (attendances, members, { periodType, 
         // Apply filters first
         if (filterRole) {
             data = data.filter(a => (memberMap[a.member_id] && memberMap[a.member_id].role === filterRole));
+        }
+
+        if (filterProject) {
+            data = data.filter(a => (memberMap[a.member_id] && memberMap[a.member_id].project_id && memberMap[a.member_id].project_id.toString() === filterProject.toString()));
         }
 
         if (searchQuery) {
@@ -298,13 +303,13 @@ export const exportAttendanceToTXT = ({ data, period, filename }) => {
     });
 };
 
-export const exportAttendanceToPDF = ({ data, period, subHeader, filename }) => {
+export const exportAttendanceToPDF = ({ data, period, subHeader, filename, themeColor = [37, 99, 235] }) => {
     const { globalStats, memberStatsRows } = calculateAttendanceSummary(data);
 
     const doc = new jsPDF('landscape');
     const pageWidth = doc.internal.pageSize.getWidth();
 
-    doc.setFillColor(37, 99, 235);
+    doc.setFillColor(themeColor[0], themeColor[1], themeColor[2]);
     doc.rect(0, 0, pageWidth, 40, 'F');
     doc.setFontSize(22);
     doc.setTextColor(255, 255, 255);
@@ -320,7 +325,7 @@ export const exportAttendanceToPDF = ({ data, period, subHeader, filename }) => 
     doc.setFontSize(9);
     doc.text(subHeader || '', 15, 48);
 
-    doc.setTextColor(37, 99, 235);
+    doc.setTextColor(themeColor[0], themeColor[1], themeColor[2]);
     doc.setFontSize(11);
     doc.text('MEMBER PERFORMANCE SUMMARY', 15, 60);
 
@@ -329,12 +334,12 @@ export const exportAttendanceToPDF = ({ data, period, subHeader, filename }) => 
         head: [['Member Name', 'Total Presents', 'Total Absents', 'Half Days', 'No. permissions', 'Working Days', 'Total Perm. Hours', 'Overtime', 'Total OT Hours', 'Total Records']],
         body: memberStatsRows,
         theme: 'grid',
-        headStyles: { fillColor: [248, 250, 252], textColor: [37, 99, 235], fontSize: 9, halign: 'center' },
+        headStyles: { fillColor: [248, 250, 252], textColor: themeColor, fontSize: 9, halign: 'center' },
         bodyStyles: { fontSize: 8, halign: 'center' },
         margin: { left: 15, right: 15 }
     });
 
-    doc.setTextColor(37, 99, 235);
+    doc.setTextColor(themeColor[0], themeColor[1], themeColor[2]);
     doc.setFontSize(11);
     doc.text('DETAILED ATTENDANCE LOGS', 15, doc.lastAutoTable.finalY + 15);
 
@@ -358,7 +363,7 @@ export const exportAttendanceToPDF = ({ data, period, subHeader, filename }) => 
         head: [tableHeaders],
         body: tableRows,
         theme: 'striped',
-        headStyles: { fillColor: [37, 99, 235], fontSize: 9, halign: 'center' },
+        headStyles: { fillColor: themeColor, fontSize: 9, halign: 'center' },
         bodyStyles: { fontSize: 8, halign: 'center' },
         columnStyles: {
             0: { cellWidth: 22 }, 2: { cellWidth: 15 }, 3: { cellWidth: 25 }, 4: { cellWidth: 25 }
