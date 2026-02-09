@@ -202,17 +202,29 @@ const AttendanceTracker = () => {
                 getHolidays({ sector: 'manufacturing' }),
                 getShifts({ sector: 'manufacturing' })
             ]);
-            setAttendances(attRes.data.data);
-            setStats(statsRes.data.data || []);
-            setMemberSummary(summaryRes.data.data);
-            setProjects(projRes.data);
-            setMembers(membersRes.data.data);
-            setRoles(roleRes.data.data);
-            setHolidays(holidaysRes.data.data);
-            setShifts(shiftsRes.data.data);
+
+            // Safe data access with fallbacks
+            setAttendances(attRes?.data?.data || []);
+            setStats(statsRes?.data?.data || []);
+            setMemberSummary(summaryRes?.data?.data || []);
+            setProjects(projRes?.data || []);
+            setMembers(membersRes?.data?.data || []);
+            setRoles(roleRes?.data?.data || []);
+            setHolidays(holidaysRes?.data?.data || []);
+            setShifts(shiftsRes?.data?.data || []);
             setLoading(false);
         } catch (error) {
+            console.error("Fetch error:", error);
             toast.error("Failed to fetch attendance data");
+            // Set empty arrays to prevent crashes
+            setAttendances([]);
+            setStats([]);
+            setMemberSummary([]);
+            setProjects([]);
+            setMembers([]);
+            setRoles([]);
+            setHolidays([]);
+            setShifts([]);
             setLoading(false);
         }
     };

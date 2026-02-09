@@ -266,6 +266,9 @@ const getStats = async (userId, filters = {}) => {
 const getMemberSummary = async (userId, filters = {}) => {
     const { attendance: TABLE_NAME, members: MEMBERS_TABLE } = getTables(filters.sector);
 
+    // Hotel uses 'overtime_hours', others (Mfg, IT) use 'overtime_duration'
+    const overtimeCol = filters.sector === 'hotel' ? 'overtime_hours' : 'overtime_duration';
+
     let query = `
         SELECT 
             w.id,
@@ -287,7 +290,7 @@ const getMemberSummary = async (userId, filters = {}) => {
             COUNT(CASE WHEN a.status NOT IN ('week_off', 'holiday') THEN 1 END) as working_days,
             COUNT(a.id) as total_records,
             COALESCE(SUM(a.total_hours), 0) as total_hours_worked,
-            COALESCE(SUM(a.overtime_hours), 0) as total_overtime_hours
+            COALESCE(SUM(a.${overtimeCol}), 0) as total_overtime_hours
         FROM ${MEMBERS_TABLE} w
         LEFT JOIN ${TABLE_NAME} a ON w.id = a.member_id
     `;
