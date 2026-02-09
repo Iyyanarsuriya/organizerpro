@@ -1,4 +1,4 @@
-const Reminder = require('../../models/remindermodel');
+const Reminder = require('../../models/reminderModel');
 const User = require('../../models/userModel');
 const googleService = require('../../services/googleCalendarService');
 

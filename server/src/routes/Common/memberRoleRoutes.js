@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const memberRoleController = require('../../controllers/Manufacturing/memberRoleController');
+const memberRoleController = require('../../controllers/Common/memberRoleController');
 const { authenticateToken, requireOwner } = require('../../middlewares/authMiddleware');
 
 router.use(authenticateToken);

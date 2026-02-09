@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { FaUserPlus, FaTrash, FaUserTie, FaTimes, FaEnvelope, FaCalendar, FaChevronLeft, FaFolder, FaUsers, FaUserShield, FaIdCard } from 'react-icons/fa';
+import { FaUserPlus, FaTrash, FaUserTie, FaTimes, FaEnvelope, FaCalendar, FaChevronLeft, FaFolder, FaUsers, FaUserShield, FaIdCard, FaSearch, FaDownload, FaFileCsv, FaFilePdf } from 'react-icons/fa';
 import { getProjects } from '../../api/Attendance/hotelAttendance';
 import ConfirmModal from '../../components/modals/ConfirmModal';
+import { exportToCSV, exportToPDF } from '../../utils/exportUtils';
 
 const HotelTeam = () => {
     const navigate = useNavigate();
@@ -13,6 +14,7 @@ const HotelTeam = () => {
     const [staff, setStaff] = useState([]);
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const [showUserModal, setShowUserModal] = useState(false);
     const [showStaffModal, setShowStaffModal] = useState(false);
@@ -39,7 +41,7 @@ const HotelTeam = () => {
             ]);
             setSubUsers(teamRes.data);
             setStaff(staffRes.data.data || staffRes.data);
-            setProjects(projRes.data);
+            setProjects(projRes.data.data || projRes.data);
         } catch (error) {
             console.error("Fetch data error", error);
             toast.error("Failed to load team data");
@@ -95,6 +97,65 @@ const HotelTeam = () => {
         }
     };
 
+    const filteredSubUsers = subUsers.filter(user =>
+        user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.project_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const filteredStaff = staff.filter(m =>
+        m.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.phone?.includes(searchTerm) ||
+        m.project_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const handleExport = (format) => {
+        const isUser = activeTab === 'sub-users';
+        const data = isUser ? filteredSubUsers : filteredStaff;
+        const filename = `hotel_${activeTab}_report_${new Date().toISOString().split('T')[0]}`;
+
+        let headers, rows;
+        if (isUser) {
+            headers = ['ID', 'Username', 'Email', 'Role', 'Department', 'Created At'];
+            rows = data.map(u => [
+                u.local_id || u.id,
+                u.username,
+                u.email || 'N/A',
+                u.role || 'user',
+                u.project_name || 'General',
+                new Date(u.created_at).toLocaleDateString()
+            ]);
+        } else {
+            headers = ['Name', 'Role/Designation', 'Phone', 'Email', 'Department', 'Wage Type', 'Wage Amount', 'Status'];
+            rows = data.map(m => [
+                m.name,
+                m.role || 'Staff',
+                m.phone || '-',
+                m.email || '-',
+                m.project_name || 'General',
+                m.wage_type,
+                m.daily_wage,
+                m.status
+            ]);
+        }
+
+        if (format === 'csv') {
+            exportToCSV(headers, rows, filename);
+        } else if (format === 'pdf') {
+            exportToPDF({
+                title: isUser ? 'Hotel Management Access Report' : 'Hotel Staff Records Report',
+                period: 'Current Date',
+                tableHeaders: headers,
+                tableRows: rows,
+                filename: filename,
+                themeColor: isUser ? [59, 130, 246] : [16, 185, 129]
+            });
+        }
+    };
+
     return (
         <div className="min-h-screen bg-[#f8fafc] font-['Outfit']">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -128,17 +189,50 @@ const HotelTeam = () => {
                     </div>
                 </div>
 
-                <div className="flex justify-between items-center mb-6">
-                    <div className="flex items-center gap-2">
+                <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+                    <div className="flex items-center gap-3 w-full md:w-auto">
                         <div className={`w-2 h-2 rounded-full ${activeTab === 'sub-users' ? 'bg-blue-500' : 'bg-emerald-500'}`}></div>
                         <h2 className="text-sm font-black text-slate-700 uppercase tracking-wider">{activeTab === 'sub-users' ? 'Management Access' : 'Employee Records'}</h2>
                     </div>
-                    <button
-                        onClick={() => activeTab === 'sub-users' ? setShowUserModal(true) : setShowStaffModal(true)}
-                        className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white transition-all shadow-lg text-xs ${activeTab === 'sub-users' ? 'bg-blue-600 shadow-blue-500/20' : 'bg-emerald-600 shadow-emerald-500/20'}`}
-                    >
-                        <FaUserPlus /> {activeTab === 'sub-users' ? 'Add Sub-User' : 'Add Staff Member'}
-                    </button>
+
+                    <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+                        {/* Search Bar */}
+                        <div className="relative w-full sm:w-64 group">
+                            <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                            <input
+                                type="text"
+                                placeholder={`Search ${activeTab}...`}
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full h-11 pl-11 pr-4 rounded-xl bg-white border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 outline-none font-medium text-sm transition-all shadow-sm"
+                            />
+                        </div>
+
+                        {/* Export Options */}
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => handleExport('csv')}
+                                title="Export to CSV"
+                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-600 hover:text-white transition-all shadow-sm active:scale-90 cursor-pointer"
+                            >
+                                <FaFileCsv size={16} />
+                            </button>
+                            <button
+                                onClick={() => handleExport('pdf')}
+                                title="Export to PDF"
+                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-600 hover:text-white transition-all shadow-sm active:scale-90 cursor-pointer"
+                            >
+                                <FaFilePdf size={16} />
+                            </button>
+                        </div>
+
+                        <button
+                            onClick={() => activeTab === 'sub-users' ? setShowUserModal(true) : setShowStaffModal(true)}
+                            className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-white transition-all shadow-lg text-xs w-full sm:w-auto ${activeTab === 'sub-users' ? 'bg-blue-600 shadow-blue-500/20 hover:bg-blue-700' : 'bg-emerald-600 shadow-emerald-500/20 hover:bg-emerald-700'}`}
+                        >
+                            <FaUserPlus /> {activeTab === 'sub-users' ? 'Add User' : 'Add Staff'}
+                        </button>
+                    </div>
                 </div>
 
                 {loading ? (
@@ -165,7 +259,7 @@ const HotelTeam = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
-                                        {(activeTab === 'sub-users' ? subUsers : staff).map(item => (
+                                        {(activeTab === 'sub-users' ? filteredSubUsers : filteredStaff).map(item => (
                                             <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                                                 <td className="px-8 py-5">
                                                     <div className="flex items-center gap-4">
@@ -223,7 +317,12 @@ const HotelTeam = () => {
                         <div className="space-y-4">
                             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4"><FaEnvelope className="text-blue-500" /><div><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Email Access</p><p className="text-sm font-bold text-slate-800">{selectedItem.email || 'N/A'}</p></div></div>
                             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4"><FaCalendar className="text-indigo-500" /><div><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Managed Since</p><p className="text-sm font-bold text-slate-800">{new Date(selectedItem.created_at).toLocaleDateString()}</p></div></div>
-                            {activeTab === 'staff' && <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4"><FaUsers className="text-emerald-500" /><div><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Staff Type</p><p className="text-sm font-bold text-slate-800">{selectedItem.member_type}</p></div></div>}
+                            {activeTab === 'staff' && (
+                                <>
+                                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4"><FaUsers className="text-emerald-500" /><div><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Employment</p><p className="text-sm font-bold text-slate-800">{selectedItem.employment_nature || 'Permanent'}</p></div></div>
+                                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4"><FaUserShield className="text-emerald-500" /><div><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Phone</p><p className="text-sm font-bold text-slate-800">{selectedItem.phone || '-'}</p></div></div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

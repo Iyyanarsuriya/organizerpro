@@ -6,7 +6,7 @@ const {
     getActiveMembers,
     updateMember,
     deleteMember
-} = require('../../controllers/Manufacturing/memberController');
+} = require('../../controllers/Common/memberController');
 const { authenticateToken, requireOwner } = require('../../middlewares/authMiddleware');
 
 router.use(authenticateToken);
@@ -16,6 +16,6 @@ router.get('/', getMembers);
 router.get('/active', getActiveMembers);
 router.put('/:id', updateMember);
 router.delete('/:id', requireOwner, deleteMember);
-router.get('/guests/all', require('../../controllers/Manufacturing/memberController').getGuests);
+router.get('/guests/all', require('../../controllers/Common/memberController').getGuests);
 
 module.exports = router;

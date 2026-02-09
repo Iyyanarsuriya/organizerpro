@@ -125,7 +125,7 @@ const HotelAttendance = () => {
             setAttendances(attRes.data.data);
             setStats(statsRes.data.data || []);
             setMemberSummary(summaryRes.data.data);
-            setProjects(projRes.data);
+            setProjects(projRes.data.data || projRes.data);
             setMembers(membersRes.data.data);
             setRoles(roleRes.data.data);
             setHolidays(holRes.data.data);
@@ -210,6 +210,24 @@ const HotelAttendance = () => {
     const handleExportTXT = () => {
         const enrichedData = processAttendanceExportData(attendances, members, { periodType, currentPeriod, filterRole, filterMember, searchQuery });
         exportAttendanceToTXT({ data: enrichedData, period: currentPeriod, filename: `Hotel_Attendance_${currentPeriod}` });
+    };
+
+    const handleDelete = (id) => {
+        setConfirmModal({
+            show: true,
+            type: 'DELETE',
+            label: 'Delete Attendance Record',
+            message: 'Are you sure you want to permanently delete this attendance record?',
+            onConfirm: async () => {
+                try {
+                    await deleteAttendance(id);
+                    toast.success("Record deleted");
+                    fetchData();
+                } catch (error) {
+                    toast.error("Failed to delete record");
+                }
+            }
+        });
     };
 
     if (loading) return <div className="h-screen flex items-center justify-center bg-slate-50"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500"></div></div>;
@@ -351,7 +369,7 @@ const HotelAttendance = () => {
                                                 <td className="py-4">
                                                     <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase ${statusOptions.find(o => o.id === a.status)?.bg} ${statusOptions.find(o => o.id === a.status)?.color}`}>{a.status}</span>
                                                 </td>
-                                                <td className="py-4 text-center"><button onClick={() => deleteAttendance(a.id).then(fetchData)} className="p-2 text-slate-300 hover:text-red-500 transition-colors"><FaTrash /></button></td>
+                                                <td className="py-4 text-center"><button onClick={() => handleDelete(a.id)} className="p-2 text-slate-300 hover:text-red-500 transition-colors"><FaTrash /></button></td>
                                             </tr>
                                         ))}</tbody>
                                     </table></div>
@@ -403,34 +421,79 @@ const HotelAttendance = () => {
                 )}
 
                 {activeTab === 'summary' && (
-                    <div className="bg-white rounded-[32px] p-8 shadow-xl border border-slate-100">
-                        <div className="overflow-x-auto"><table className="w-full text-left border-separate border-spacing-y-3">
-                            <thead><tr className="text-slate-400 text-[10px] font-black uppercase tracking-widest">
-                                <th className="pb-4 pl-4">Member</th>
-                                <th className="pb-4 text-emerald-600">Present</th>
-                                <th className="pb-4 text-red-600">Absent</th>
-                                <th className="pb-4 text-blue-600">Hours</th>
-                                <th className="pb-4 text-slate-600">Est. Pay</th>
-                                <th className="pb-4 text-blue-600">Performance</th>
-                            </tr></thead>
-                            <tbody>{memberSummary.map(s => {
-                                const pay = s.wage_type === 'monthly' ? parseFloat(s.daily_wage || 0) :
-                                    s.wage_type === 'hourly' ? (parseFloat(s.total_hours_worked || 0) * parseFloat(s.daily_wage || 0)) :
-                                        (s.present * parseFloat(s.daily_wage || 0));
-                                return (
-                                    <tr key={s.id} className="bg-slate-50/50 rounded-2xl">
-                                        <td className="py-4 pl-4 font-black text-xs text-slate-700">
-                                            {s.name} <span className="text-[9px] text-slate-400 font-bold uppercase">({s.role})</span>
-                                        </td>
-                                        <td className="py-4 font-black text-emerald-600 text-xs">{s.present}</td>
-                                        <td className="py-4 font-black text-red-600 text-xs">{s.absent}</td>
-                                        <td className="py-4 font-bold text-slate-600 text-xs">{s.total_hours_worked ? parseFloat(s.total_hours_worked).toFixed(1) : '-'}</td>
-                                        <td className="py-4 font-black text-slate-700 text-xs">₹{pay.toLocaleString()} <span className="text-[8px] text-slate-400 uppercase font-bold">{s.wage_type}</span></td>
-                                        <td className="py-4 pr-4"><div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden"><div className="h-full bg-blue-500" style={{ width: `${(s.present / ((s.present + s.absent) || 1)) * 100}%` }}></div></div></td>
+                    <div className="bg-white rounded-[32px] p-8 shadow-xl border border-slate-100 overflow-hidden">
+                        <div className="flex justify-between items-center mb-6 px-2">
+                            <div>
+                                <h3 className="text-lg font-black tracking-tight">Financial Summary</h3>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Estimated wages based on attendance rules</p>
+                            </div>
+                            <div className="flex items-center gap-6">
+                                <div className="text-right">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase">Grand Total</p>
+                                    <p className="text-xl font-black text-blue-600">₹{memberSummary.reduce((acc, s) => acc + parseFloat(s.estimated_total_wage || 0), 0).toLocaleString()}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-separate border-spacing-y-2">
+                                <thead>
+                                    <tr className="text-slate-400 text-[9px] font-black uppercase tracking-widest">
+                                        <th className="pb-4 pl-6">Staff Member</th>
+                                        <th className="pb-4 text-center">Nature</th>
+                                        <th className="pb-4 text-center">Present</th>
+                                        <th className="pb-4 text-center">Hours</th>
+                                        <th className="pb-4 text-center">OT Pay</th>
+                                        <th className="pb-4 text-right pr-6">Est. Total Wage</th>
                                     </tr>
-                                )
-                            })}</tbody>
-                        </table></div>
+                                </thead>
+                                <tbody>
+                                    {memberSummary.map(s => (
+                                        <tr key={s.id} className="group hover:bg-slate-50 transition-all">
+                                            <td className="py-4 pl-6 bg-slate-50/50 rounded-l-2xl group-hover:bg-white transition-all">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-linear-to-br from-slate-100 to-slate-200 flex items-center justify-center font-black text-slate-500 text-[10px] uppercase">
+                                                        {s.name.charAt(0)}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-black text-xs text-slate-800 flex items-center gap-2">
+                                                            {s.name}
+                                                            {!members.find(m => m.id === s.id)?.default_shift_id && (
+                                                                <FaExclamationCircle className="text-orange-500 animate-pulse" title="No default shift assigned!" />
+                                                            )}
+                                                        </p>
+                                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">{s.role || 'Staff'}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="py-4 text-center">
+                                                <span className="text-[9px] font-black uppercase px-2 py-1 bg-blue-50 text-blue-600 rounded-full tracking-tighter">{s.employment_nature}</span>
+                                            </td>
+                                            <td className="py-4 text-center">
+                                                <p className="text-xs font-black text-emerald-600">{s.present}</p>
+                                                <p className="text-[8px] font-bold text-slate-400 uppercase">{s.absent} Absent</p>
+                                            </td>
+                                            <td className="py-4 text-center">
+                                                <p className="text-xs font-black text-slate-700">{parseFloat(s.total_hours_worked).toFixed(1)}h</p>
+                                                <p className="text-[8px] font-bold text-purple-400 uppercase">{parseFloat(s.total_overtime_hours).toFixed(1)}h OT</p>
+                                            </td>
+                                            <td className="py-4 text-center">
+                                                <p className="text-xs font-black text-purple-600">₹{parseFloat(s.ot_wage || 0).toLocaleString()}</p>
+                                            </td>
+                                            <td className="py-4 pr-6 text-right rounded-r-2xl bg-slate-50/50 group-hover:bg-white transition-all">
+                                                <p className="text-sm font-black text-slate-900 leading-none">₹{parseFloat(s.estimated_total_wage || 0).toLocaleString()}</p>
+                                                <p className="text-[8px] font-bold text-slate-400 uppercase mt-1 tracking-tighter">Base: ₹{parseFloat(s.base_wage || 0).toLocaleString()}</p>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        {memberSummary.length === 0 && (
+                            <div className="py-20 text-center text-slate-300">
+                                <FaFileAlt size={48} className="mx-auto mb-4 opacity-20" />
+                                <p className="text-sm font-black uppercase tracking-widest">No summary data available</p>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -477,7 +540,7 @@ const HotelAttendance = () => {
             )}
 
             <ConfirmModal
-                show={confirmModal.show}
+                isOpen={confirmModal.show}
                 title={confirmModal.label}
                 message={confirmModal.message || "Are you sure?"}
                 onConfirm={() => {

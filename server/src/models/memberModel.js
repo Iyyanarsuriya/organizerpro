@@ -17,7 +17,8 @@ const create = async (data) => {
     const table = getTableName(data.sector);
     const { user_id, name, role, phone, email, status, wage_type, daily_wage, member_type, project_id, staff_id, department, subjects,
         gender, profile_image, employment_type, date_of_joining, reporting_manager_id, shift_start_time, shift_end_time,
-        cl_balance, sl_balance, el_balance, expected_hours, work_location, is_billable, default_shift_id } = data;
+        cl_balance, sl_balance, el_balance, expected_hours, work_location, is_billable, default_shift_id,
+        employment_nature, primary_work_area, monthly_salary, hourly_rate, overtime_rate, allow_overtime, allow_late, max_hours_per_day, auto_mark_absent } = data;
 
     let columns = ['user_id', 'name', 'role', 'phone', 'email', 'status', 'wage_type', 'daily_wage', 'member_type'];
     let values = [user_id, name, role || null, phone || null, email || null, status || 'active', wage_type || 'daily', daily_wage || 0, member_type || (data.sector === 'hotel' ? 'staff' : 'worker')];
@@ -30,9 +31,17 @@ const create = async (data) => {
     }
 
     if (data.sector === 'hotel') {
-        columns.push('default_shift_id');
-        values.push(default_shift_id || null);
-        placeholders.push('?');
+        columns.push(
+            'default_shift_id', 'employment_nature', 'primary_work_area', 'monthly_salary',
+            'hourly_rate', 'overtime_rate', 'allow_overtime', 'allow_late',
+            'max_hours_per_day', 'auto_mark_absent'
+        );
+        values.push(
+            default_shift_id || null, employment_nature || 'Permanent', primary_work_area || 'Rooms',
+            monthly_salary || 0, hourly_rate || 0, overtime_rate || 0,
+            allow_overtime ? 1 : 0, allow_late ? 1 : 0, max_hours_per_day || 12, auto_mark_absent ? 1 : 0
+        );
+        placeholders.push('?', '?', '?', '?', '?', '?', '?', '?', '?', '?');
     }
 
     if (data.sector === 'it') {
@@ -85,12 +94,22 @@ const getAllByUserId = async (userId, memberType = null, sector) => {
         `;
     } else {
         const projectTable = getProjectTableName(sector);
-        query = `
-            SELECT m.*, p.name as project_name 
-            FROM ${table} m 
-            LEFT JOIN ${projectTable} p ON m.project_id = p.id 
-            WHERE m.user_id = ?
-        `;
+        if (sector === 'hotel') {
+            query = `
+                SELECT m.*, p.name as project_name, s.name as shift_name 
+                FROM ${table} m 
+                LEFT JOIN ${projectTable} p ON m.project_id = p.id 
+                LEFT JOIN hotel_shifts s ON m.default_shift_id = s.id
+                WHERE m.user_id = ?
+            `;
+        } else {
+            query = `
+                SELECT m.*, p.name as project_name 
+                FROM ${table} m 
+                LEFT JOIN ${projectTable} p ON m.project_id = p.id 
+                WHERE m.user_id = ?
+            `;
+        }
     }
 
     let params = [userId];
@@ -118,7 +137,8 @@ const update = async (id, userId, data) => {
     const table = getTableName(data.sector);
     const { name, role, phone, email, status, wage_type, daily_wage, member_type, project_id, staff_id, department, subjects,
         gender, profile_image, employment_type, date_of_joining, reporting_manager_id, shift_start_time, shift_end_time,
-        cl_balance, sl_balance, el_balance, expected_hours, work_location, is_billable, default_shift_id } = data;
+        cl_balance, sl_balance, el_balance, expected_hours, work_location, is_billable, default_shift_id,
+        employment_nature, primary_work_area, monthly_salary, hourly_rate, overtime_rate, allow_overtime, allow_late, max_hours_per_day, auto_mark_absent } = data;
 
     let updates = ['name = ?', 'role = ?', 'phone = ?', 'email = ?', 'status = ?', 'wage_type = ?', 'daily_wage = ?', 'member_type = ?'];
     let values = [name, role || null, phone || null, email || null, status || 'active', wage_type || 'daily', daily_wage || 0, member_type || (data.sector === 'hotel' ? 'staff' : 'worker')];
@@ -129,8 +149,16 @@ const update = async (id, userId, data) => {
     }
 
     if (data.sector === 'hotel') {
-        updates.push('default_shift_id = ?');
-        values.push(default_shift_id || null);
+        updates.push(
+            'default_shift_id = ?', 'employment_nature = ?', 'primary_work_area = ?',
+            'monthly_salary = ?', 'hourly_rate = ?', 'overtime_rate = ?',
+            'allow_overtime = ?', 'allow_late = ?', 'max_hours_per_day = ?', 'auto_mark_absent = ?'
+        );
+        values.push(
+            default_shift_id || null, employment_nature || 'Permanent', primary_work_area || 'Rooms',
+            monthly_salary || 0, hourly_rate || 0, overtime_rate || 0,
+            allow_overtime ? 1 : 0, allow_late ? 1 : 0, max_hours_per_day || 12, auto_mark_absent ? 1 : 0
+        );
     }
 
     if (data.sector === 'it') {

@@ -1152,15 +1152,26 @@ CREATE TABLE `hotel_members` (
   `email` varchar(255) DEFAULT NULL,
   `status` enum('active','inactive') DEFAULT 'active',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `wage_type` enum('daily','monthly','piece_rate') DEFAULT 'daily',
+  `employment_nature` enum('Permanent', 'Contract', 'Seasonal') DEFAULT 'Permanent',
+  `primary_work_area` enum('Rooms', 'Reception', 'Kitchen', 'Security', 'Maintenance') DEFAULT 'Rooms',
+  `wage_type` enum('daily','monthly','hourly') DEFAULT 'daily',
+  `monthly_salary` decimal(15,2) DEFAULT '0.00',
   `daily_wage` decimal(15,2) DEFAULT '0.00',
-  `member_type` enum('staff','contractor','guest','other') DEFAULT 'staff',
+  `hourly_rate` decimal(15,2) DEFAULT '0.00',
+  `overtime_rate` decimal(15,2) DEFAULT '0.00',
+  `allow_overtime` tinyint(1) DEFAULT '1',
+  `allow_late` tinyint(1) DEFAULT '1',
+  `max_hours_per_day` decimal(4,2) DEFAULT '12.00',
+  `auto_mark_absent` tinyint(1) DEFAULT '0',
+  `default_shift_id` int DEFAULT NULL,
   `project_id` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   KEY `fk_hotel_memb_proj` (`project_id`),
+  KEY `fk_hotel_memb_shift` (`default_shift_id`),
   CONSTRAINT `fk_hotel_memb_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_hotel_memb_proj` FOREIGN KEY (`project_id`) REFERENCES `hotel_projects` (`id`) ON DELETE SET NULL
+  CONSTRAINT `fk_hotel_memb_proj` FOREIGN KEY (`project_id`) REFERENCES `hotel_projects` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_hotel_memb_shift` FOREIGN KEY (`default_shift_id`) REFERENCES `hotel_shifts` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Hotel Holidays
@@ -1213,18 +1224,26 @@ CREATE TABLE `hotel_attendance` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
   `member_id` int DEFAULT NULL,
-  `status` enum('present','absent','late','half-day','week_off','holiday') NOT NULL,
+  `status` enum('present','absent','late','half-day','week_off','holiday','permission') NOT NULL,
   `date` date NOT NULL,
+  `check_in` time DEFAULT NULL,
+  `check_out` time DEFAULT NULL,
+  `total_hours` decimal(5,2) DEFAULT '0.00',
+  `overtime_hours` decimal(5,2) DEFAULT '0.00',
   `note` text,
   `project_id` int DEFAULT NULL,
+  `shift_id` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   KEY `fk_hotel_att_memb` (`member_id`),
   KEY `fk_hotel_att_proj` (`project_id`),
+  KEY `fk_hotel_att_shift` (`shift_id`),
+  UNIQUE KEY `unique_hotel_att` (`member_id`, `date`),
   CONSTRAINT `fk_hotel_att_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_hotel_att_memb` FOREIGN KEY (`member_id`) REFERENCES `hotel_members` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `fk_hotel_att_proj` FOREIGN KEY (`project_id`) REFERENCES `hotel_projects` (`id`) ON DELETE SET NULL
+  CONSTRAINT `fk_hotel_att_proj` FOREIGN KEY (`project_id`) REFERENCES `hotel_projects` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_hotel_att_shift` FOREIGN KEY (`shift_id`) REFERENCES `hotel_shifts` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Hotel Reminders
@@ -1404,6 +1423,22 @@ CREATE TABLE `hotel_maintenance` (
   KEY `idx_maintenance_status` (`status`),
   CONSTRAINT `fk_hotel_maintenance_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_hotel_maintenance_unit` FOREIGN KEY (`unit_id`) REFERENCES `hotel_units` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Hotel Shifts
+DROP TABLE IF EXISTS `hotel_shifts`;
+CREATE TABLE `hotel_shifts` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `start_time` time NOT NULL,
+  `end_time` time NOT NULL,
+  `break_duration` int DEFAULT '60',
+  `is_default` tinyint(1) DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `fk_hotel_shifts_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -28,14 +28,23 @@ const MemberManager = ({ onClose, onUpdate, sector = 'hotel', projects: parentPr
         phone: '',
         email: '',
         project_id: '',
-        member_type: 'employee',
+        member_type: 'staff',
+        employment_nature: 'Permanent',
+        primary_work_area: 'Rooms',
         wage_type: 'monthly',
+        monthly_salary: '',
         daily_wage: '',
+        hourly_rate: '',
+        overtime_rate: '',
+        allow_overtime: true,
+        allow_late: true,
+        max_hours_per_day: 12,
+        auto_mark_absent: false,
         default_shift_id: '',
         status: 'active'
     });
 
-    // Filter State
+    // ... existing filter state and other states ...
     const [searchQuery, setSearchQuery] = useState('');
     const [filterRole, setFilterRole] = useState('');
     const [filterProject, setFilterProject] = useState('');
@@ -83,7 +92,7 @@ const MemberManager = ({ onClose, onUpdate, sector = 'hotel', projects: parentPr
                 fetchedShifts = results[extraIndex]?.data?.data || [];
             }
 
-            setMembers([...memRes.data.data, ...guests]);
+            setMembers([...memRes.data.data, ...guestRes.data]);
             setRoles(roleRes.data.data);
             setProjects(fetchedProjects);
             setShifts(fetchedShifts);
@@ -116,7 +125,7 @@ const MemberManager = ({ onClose, onUpdate, sector = 'hotel', projects: parentPr
 
     // Export Handlers
     const handleExportCSV = () => {
-        const headers = ['Name', 'Role', 'Type', 'Status', 'Phone', 'Email', 'Wage'];
+        const headers = ['Name', 'Role', 'Type', 'Status', 'Phone', 'Email', 'Wage Calculation'];
         const rows = filteredMembers.map(m => [
             m.name,
             m.role,
@@ -124,7 +133,7 @@ const MemberManager = ({ onClose, onUpdate, sector = 'hotel', projects: parentPr
             m.status,
             m.phone,
             m.email,
-            `${m.wage_type === 'monthly' ? 'Monthly' : 'Daily'}: ${parseFloat(m.daily_wage)}`
+            `${m.wage_type === 'monthly' ? 'Monthly' : (m.wage_type === 'hourly' ? 'Hourly' : 'Daily')}: ₹${m.wage_type === 'monthly' ? m.monthly_salary : (m.wage_type === 'hourly' ? m.hourly_rate : m.daily_wage)}`
         ]);
         generateCSV(headers, rows, 'Members_Export');
     };
@@ -138,7 +147,7 @@ const MemberManager = ({ onClose, onUpdate, sector = 'hotel', projects: parentPr
             m.status,
             m.phone || '-',
             m.email || '-',
-            `${m.wage_type === 'monthly' ? 'Monthly' : 'Daily'}: ${parseFloat(m.daily_wage)}`
+            `${m.wage_type === 'monthly' ? 'Monthly' : (m.wage_type === 'hourly' ? 'Hourly' : 'Daily')}: ₹${m.wage_type === 'monthly' ? m.monthly_salary : (m.wage_type === 'hourly' ? m.hourly_rate : m.daily_wage)}`
         ]);
 
         generatePDF({
@@ -165,7 +174,7 @@ const MemberManager = ({ onClose, onUpdate, sector = 'hotel', projects: parentPr
             m.status,
             m.phone,
             m.email || '-',
-            `${m.wage_type === 'monthly' ? 'Monthly' : 'Daily'}: ${parseFloat(m.daily_wage)}`
+            `${m.wage_type === 'monthly' ? 'Monthly' : (m.wage_type === 'hourly' ? 'Hourly' : 'Daily')}: ₹${m.wage_type === 'monthly' ? m.monthly_salary : (m.wage_type === 'hourly' ? m.hourly_rate : m.daily_wage)}`
         ]);
         generateTXT({
             title: 'Member List Report',
@@ -177,14 +186,52 @@ const MemberManager = ({ onClose, onUpdate, sector = 'hotel', projects: parentPr
         });
     };
 
+    // Handle Edit
+    const handleEdit = (member) => {
+        setFormData({
+            name: member.name,
+            role: member.role || '',
+            phone: member.phone || '',
+            email: member.email || '',
+            member_type: member.member_type || 'staff',
+            employment_nature: member.employment_nature || 'Permanent',
+            primary_work_area: member.primary_work_area || 'Rooms',
+            wage_type: member.wage_type || 'monthly',
+            monthly_salary: member.monthly_salary || '',
+            daily_wage: member.daily_wage || '',
+            hourly_rate: member.hourly_rate || '',
+            overtime_rate: member.overtime_rate || '',
+            allow_overtime: !!member.allow_overtime,
+            allow_late: !!member.allow_late,
+            max_hours_per_day: member.max_hours_per_day || 12,
+            auto_mark_absent: !!member.auto_mark_absent,
+            default_shift_id: member.default_shift_id || '',
+            status: member.status,
+            project_id: member.project_id || ''
+        });
+        setEditingId(member.id);
+    };
+
+    const resetForm = () => {
+        setFormData({
+            name: '', role: '', phone: '', email: '', project_id: '',
+            member_type: 'staff', employment_nature: 'Permanent', primary_work_area: 'Rooms',
+            wage_type: 'monthly', monthly_salary: '', daily_wage: '', hourly_rate: '', overtime_rate: '',
+            allow_overtime: true, allow_late: true, max_hours_per_day: 12, auto_mark_absent: false,
+            default_shift_id: '', status: 'active'
+        });
+        setEditingId(null);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            const payload = { ...formData, sector };
             if (editingId) {
-                await updateMember(editingId, { ...formData, sector });
+                await updateMember(editingId, payload);
                 toast.success("Member updated!");
             } else {
-                await createMember({ ...formData, sector });
+                await createMember(payload);
                 toast.success("Member added!");
             }
             resetForm();
@@ -193,30 +240,6 @@ const MemberManager = ({ onClose, onUpdate, sector = 'hotel', projects: parentPr
         } catch (error) {
             toast.error(editingId ? "Failed to update member" : "Failed to add member");
         }
-    };
-
-    const handleEdit = (member) => {
-        setFormData({
-            name: member.name,
-            role: member.role || '',
-            phone: member.phone || '',
-            email: member.email || '',
-            member_type: member.member_type || 'worker',
-            wage_type: member.wage_type || 'daily',
-            daily_wage: member.daily_wage || '',
-            default_shift_id: member.default_shift_id || '',
-            status: member.status,
-            project_id: member.project_id || ''
-        });
-        setEditingId(member.id);
-    };
-
-    const handleDeleteClick = (id) => {
-        setDeleteModal({ show: true, id });
-    };
-
-    const handleDeactivateClick = (member) => {
-        setDeactivateModal({ show: true, member });
     };
 
     const confirmDeactivate = async () => {
@@ -245,413 +268,326 @@ const MemberManager = ({ onClose, onUpdate, sector = 'hotel', projects: parentPr
         }
     };
 
-    const resetForm = () => {
-        setFormData({ name: '', role: '', phone: '', email: '', project_id: '', member_type: 'employee', wage_type: 'monthly', daily_wage: '', default_shift_id: '', status: 'active' });
-        setEditingId(null);
+    const handleDeleteClick = (id) => {
+        setDeleteModal({ show: true, id });
     };
 
-    const handleViewPayments = async (member) => {
-        setViewingPayments(member);
-        setPaymentsLoading(true);
-        try {
-            const params = member.isGuest ? { guestName: member.name, sector } : { memberId: member.id, sector };
-            const res = await getTransactions(params);
-            setPayments(res.data);
-        } catch (error) {
-            toast.error("Failed to fetch history");
-        } finally {
-            setPaymentsLoading(false);
-        }
+    const handleDeactivateClick = (member) => {
+        setDeactivateModal({ show: true, member });
     };
 
     return (
         <div className="animate-in slide-in-from-right-10 duration-500 pb-20 w-full font-['Outfit']">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
                         <FaUsers className="text-blue-600" /> Manage Staff
                     </h2>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Add and manage staff members</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Staff Roster & Attendance Configuration</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <ExportButtons onExportCSV={handleExportCSV} onExportPDF={handleExportPDF} onExportTXT={handleExportTXT} />
-
                 </div>
             </div>
 
-            {/* Main Content */}
-            <div className="flex-1">
-
-                <form onSubmit={handleSubmit} className="mb-6 p-6 bg-white rounded-[32px] border border-slate-100 shadow-sm font-['Outfit']">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                        <div className="col-span-1 lg:col-span-1">
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
-                                <FaUser className="inline mr-1 text-[8px]" /> Name *
-                            </label>
-                            <input
-                                required
-                                type="text"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                placeholder="Full name"
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
-                            />
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="mb-6 bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+                <div className="p-6">
+                    {/* Basic Info */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <div>
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Full Name *</label>
+                            <input required type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold" />
                         </div>
-                        <div className="col-span-1 lg:col-span-1">
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
-                                <FaBriefcase className="inline mr-1 text-[8px]" /> Category / Role
-                            </label>
+                        <div>
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Designation</label>
                             <div className="flex gap-2">
-                                <select
-                                    value={formData.role}
-                                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
-                                >
-                                    <option value="">Select Category</option>
-                                    {[...new Set([...roles.map(r => r.name), ...members.map(m => m.role).filter(Boolean)])].sort().map(role => (
-                                        <option key={role} value={role}>{role}</option>
-                                    ))}
+                                <select value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold">
+                                    <option value="">Select Role</option>
+                                    {[...new Set([...roles.map(r => r.name), ...members.map(m => m.role).filter(Boolean)])].sort().map(role => <option key={role} value={role}>{role}</option>)}
                                 </select>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowRoleManager(true)}
-                                    className="w-10 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center hover:bg-purple-50 hover:text-purple-600 transition-all border border-slate-200"
-                                    title="Manage Categories"
-                                >
-                                    <FaPlus size={10} />
-                                </button>
+                                <button type="button" onClick={() => setShowRoleManager(true)} className="w-10 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:text-blue-600 transition-all"><FaPlus /></button>
                             </div>
                         </div>
-
-                        <div className="col-span-1 lg:col-span-1">
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
-                                <FaFolder className="inline mr-1 text-[8px]" /> Department
-                            </label>
-                            <select
-                                value={formData.project_id}
-                                onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
-                            >
+                        <div>
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Department</label>
+                            <select value={formData.project_id} onChange={(e) => setFormData({ ...formData, project_id: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold">
                                 <option value="">No Department</option>
-                                {projects.map(p => (
-                                    <option key={p.id} value={p.id}>{p.name}</option>
-                                ))}
+                                {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                             </select>
                         </div>
-                        <div className="col-span-1 lg:col-span-1">
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
-                                <FaPhone className="inline mr-1 text-[8px]" /> Phone
-                            </label>
-                            <input
-                                type="tel"
-                                value={formData.phone}
-                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                placeholder="Contact number"
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
-                            />
+                        <div>
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Contact Phone</label>
+                            <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold" />
                         </div>
+                    </div>
 
-                        <div className="col-span-1 lg:col-span-1">
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
-                                <FaEnvelope className="inline mr-1 text-[8px]" /> Email
-                            </label>
-                            <input
-                                type="email"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                placeholder="Email address"
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
-                            />
-                        </div>
-
-                        <div className="col-span-1 lg:col-span-1">
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
-                                Member Type
-                            </label>
-                            <select
-                                value={formData.member_type}
-                                onChange={(e) => {
-                                    const type = e.target.value;
-                                    setFormData({ ...formData, member_type: type });
-                                }}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
-                            >
-                                <option value="staff">Staff</option>
-                                <option value="contractor">Contractor</option>
-                                <option value="employee">Employee</option>
-                                <option value="worker">Worker</option>
+                    {/* Pro Info */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <div>
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Employment Nature</label>
+                            <select value={formData.employment_nature} onChange={(e) => setFormData({ ...formData, employment_nature: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold">
+                                <option value="Permanent">Permanent</option>
+                                <option value="Contract">Contract</option>
+                                <option value="Seasonal">Seasonal</option>
                             </select>
                         </div>
-
-                        <div className="col-span-1 lg:col-span-1">
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
-                                Wage Type
-                            </label>
-                            <select
-                                value={formData.wage_type}
-                                onChange={(e) => setFormData({ ...formData, wage_type: e.target.value })}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
-                            >
-                                <option value="monthly">Monthly Salary</option>
-                                <option value="daily">Daily Wage</option>
-                                <option value="hourly">Hourly Pay</option>
+                        <div>
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Primary Work Area</label>
+                            <select value={formData.primary_work_area} onChange={(e) => setFormData({ ...formData, primary_work_area: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold">
+                                <option value="Rooms">Rooms / Housekeeping</option>
+                                <option value="Reception">Reception / Front Desk</option>
+                                <option value="Kitchen">Kitchen / F&B</option>
+                                <option value="Security">Security</option>
+                                <option value="Maintenance">Maintenance</option>
                             </select>
                         </div>
+                        <div>
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Default Shift *</label>
+                            <select required value={formData.default_shift_id} onChange={(e) => setFormData({ ...formData, default_shift_id: e.target.value })} className="w-full bg-blue-50 border border-blue-100 rounded-xl px-3 h-10 text-xs font-bold text-blue-700">
+                                <option value="">Assign Shift</option>
+                                {shifts.map(s => <option key={s.id} value={s.id}>{s.name} ({s.start_time?.slice(0, 5)})</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Staff Status</label>
+                            <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold">
+                                <option value="active">Active (On Roster)</option>
+                                <option value="inactive">Inactive (Relieved)</option>
+                            </select>
+                        </div>
+                    </div>
 
-                        <div className="col-span-1 lg:col-span-1">
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
-                                {formData.wage_type === 'monthly' ? 'Monthly Salary' : (formData.wage_type === 'hourly' ? 'Hourly Rate' : 'Daily Wage')}
-                            </label>
-                            <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">₹</span>
-                                <input
-                                    type="number"
-                                    value={formData.daily_wage}
-                                    onChange={(e) => setFormData({ ...formData, daily_wage: e.target.value })}
-                                    placeholder="0.00"
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-6 pr-3 h-10 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
-                                />
+                    {/* Wage Configuration */}
+                    <div className="bg-slate-50/50 p-4 rounded-2xl border border-dashed border-slate-200 mb-6">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Wage Calculation</label>
+                                <select value={formData.wage_type} onChange={(e) => setFormData({ ...formData, wage_type: e.target.value })} className="w-full bg-white border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold">
+                                    <option value="monthly">Monthly Salary</option>
+                                    <option value="daily">Daily Wage</option>
+                                    <option value="hourly">Hourly Pay</option>
+                                </select>
                             </div>
-                        </div>
-
-                        <div className="col-span-1 lg:col-span-1">
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
-                                Status
-                            </label>
-                            <select
-                                value={formData.status}
-                                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
-                            >
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
-                        </div>
-
-                        <div className="col-span-1 lg:col-span-1">
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
-                                Default Shift
-                            </label>
-                            <select
-                                value={formData.default_shift_id}
-                                onChange={(e) => setFormData({ ...formData, default_shift_id: e.target.value })}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
-                            >
-                                <option value="">Select Shift</option>
-                                {shifts.map(s => (
-                                    <option key={s.id} value={s.id}>{s.name} ({s.start_time?.slice(0, 5)} - {s.end_time?.slice(0, 5)})</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="col-span-1 md:col-span-2 lg:col-span-4 flex items-end gap-2 mt-2">
-                            <button
-                                type="submit"
-                                className="bg-blue-600 hover:bg-blue-700 text-white h-10 px-8 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
-                            >
-                                <FaPlus className="text-[10px]" />
-                                {editingId ? 'Update' : 'Add Member'}
-                            </button>
-                            {editingId && (
-                                <button
-                                    type="button"
-                                    onClick={resetForm}
-                                    className="px-6 bg-slate-100 hover:bg-slate-200 text-slate-600 h-10 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
-                                >
-                                    Cancel
-                                </button>
+                            <div>
+                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                                    {formData.wage_type === 'monthly' ? 'Base Salary' : (formData.wage_type === 'hourly' ? 'Rate per Hour' : 'Rate per Day')}
+                                </label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">₹</span>
+                                    <input
+                                        type="number"
+                                        value={formData.wage_type === 'monthly' ? formData.monthly_salary : (formData.wage_type === 'hourly' ? formData.hourly_rate : formData.daily_wage)}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (formData.wage_type === 'monthly') setFormData({ ...formData, monthly_salary: val });
+                                            else if (formData.wage_type === 'hourly') setFormData({ ...formData, hourly_rate: val });
+                                            else setFormData({ ...formData, daily_wage: val });
+                                        }}
+                                        className="w-full bg-white border border-slate-200 rounded-xl pl-6 h-10 text-xs font-bold"
+                                    />
+                                </div>
+                            </div>
+                            {formData.allow_overtime && (
+                                <div>
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">OT Rate (per hour)</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">₹</span>
+                                        <input type="number" value={formData.overtime_rate} onChange={(e) => setFormData({ ...formData, overtime_rate: e.target.value })} className="w-full bg-white border border-slate-200 rounded-xl pl-6 h-10 text-xs font-bold text-blue-600" />
+                                    </div>
+                                </div>
                             )}
                         </div>
                     </div>
-                </form>
 
-                {/* Filter Bar - Modern Design */}
-                <div className="bg-white/80 backdrop-blur-xl p-4 rounded-[24px] border border-white/20 shadow-xl shadow-slate-200/50 mb-6 sticky top-2 z-10">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {/* Category Filter - Indigo */}
-                        <div className="relative group">
-                            <FaTag className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400 group-hover:text-indigo-500 transition-colors" size={12} />
-                            <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} className="w-full bg-indigo-50 hover:bg-indigo-100 border border-transparent rounded-2xl py-3 pl-10 pr-10 text-xs font-black text-indigo-600 text-center outline-none focus:ring-2 focus:ring-indigo-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
-                                <option value="">All Categories</option>
-                                {[...new Set(members.map(m => m.role).filter(Boolean))].map(role => (
-                                    <option key={role} value={role}>{role}</option>
-                                ))}
-                            </select>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-indigo-400 text-[10px]">▼</div>
-                        </div>
-
-                        {/* Project Filter - Orange */}
-                        <div className="relative group">
-                            <FaFolder className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-400 group-hover:text-orange-500 transition-colors" size={12} />
-                            <select value={filterProject} onChange={(e) => setFilterProject(e.target.value)} className="w-full bg-orange-50 hover:bg-orange-100 border border-transparent rounded-2xl py-3 pl-10 pr-10 text-xs font-black text-orange-600 text-center outline-none focus:ring-2 focus:ring-orange-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
-                                <option value="">All Departments</option>
-                                {projects.map(p => (
-                                    <option key={p.id} value={p.id}>{p.name}</option>
-                                ))}
-                            </select>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-orange-400 text-[10px]">▼</div>
-                        </div>
-
-                        {/* Status Filter - Purple */}
-                        <div className="relative group">
-                            <FaFilter className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-purple-400 group-hover:text-purple-500 transition-colors" size={12} />
-                            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="w-full bg-purple-50 hover:bg-purple-100 border border-transparent rounded-2xl py-2 md:py-3 pl-8 md:pl-10 pr-6 md:pr-10 text-[10px] md:text-xs font-black text-purple-600 text-center outline-none focus:ring-2 focus:ring-purple-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
-                                <option value="all">All Status</option>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
-                            <div className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 pointer-events-none text-purple-400 text-[10px]">▼</div>
-                        </div>
-
-                        {/* Search - Blue */}
-                        <div className="relative group">
-                            <FaSearch className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-blue-400 group-hover:text-blue-500 transition-colors" size={12} />
-                            <input
-                                type="text"
-                                placeholder="SEARCH..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-blue-50 hover:bg-blue-100 border border-transparent rounded-2xl py-2 md:py-3 pl-8 md:pl-10 pr-4 text-[10px] md:text-xs font-black text-blue-600 text-center placeholder:text-blue-300 outline-none focus:ring-2 focus:ring-blue-200 transition-all uppercase tracking-wide"
-                            />
+                    {/* Rules */}
+                    <div className="flex flex-wrap items-center gap-6 px-2">
+                        <label className="flex items-center gap-2 cursor-pointer group">
+                            <input type="checkbox" checked={formData.allow_overtime} onChange={(e) => setFormData({ ...formData, allow_overtime: e.target.checked })} className="hidden" />
+                            <div className={`w-10 h-5 rounded-full relative transition-all ${formData.allow_overtime ? 'bg-blue-600' : 'bg-slate-200'}`}>
+                                <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${formData.allow_overtime ? 'left-6' : 'left-1'}`} />
+                            </div>
+                            <span className="text-[10px] font-black text-slate-600 uppercase tracking-wider">Allow OT</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer group">
+                            <input type="checkbox" checked={formData.allow_late} onChange={(e) => setFormData({ ...formData, allow_late: e.target.checked })} className="hidden" />
+                            <div className={`w-10 h-5 rounded-full relative transition-all ${formData.allow_late ? 'bg-blue-600' : 'bg-slate-200'}`}>
+                                <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${formData.allow_late ? 'left-6' : 'left-1'}`} />
+                            </div>
+                            <span className="text-[10px] font-black text-slate-600 uppercase tracking-wider">Allow Late</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer group">
+                            <input type="checkbox" checked={formData.auto_mark_absent} onChange={(e) => setFormData({ ...formData, auto_mark_absent: e.target.checked })} className="hidden" />
+                            <div className={`w-10 h-5 rounded-full relative transition-all ${formData.auto_mark_absent ? 'bg-orange-600' : 'bg-slate-200'}`}>
+                                <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${formData.auto_mark_absent ? 'left-6' : 'left-1'}`} />
+                            </div>
+                            <span className="text-[10px] font-black text-slate-600 uppercase tracking-wider">Auto Absent</span>
+                        </label>
+                        <div className="flex items-center gap-3 ml-auto">
+                            <span className="text-[10px] font-black text-slate-400 uppercase">Max Hrs/Day</span>
+                            <input type="number" step="0.5" value={formData.max_hours_per_day} onChange={(e) => setFormData({ ...formData, max_hours_per_day: e.target.value })} className="w-16 bg-slate-100 border-none rounded-lg h-8 text-center text-xs font-bold" />
                         </div>
                     </div>
                 </div>
 
-                {/* Scrollable Content */}
-                <div className="px-[4px] py-[4px] overflow-y-auto custom-scrollbar flex-1">
-                    <div className="space-y-3 font-['Outfit']">
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 px-2">
-                            All Members ({filteredMembers.length})
-                        </h3>
-                        {loading ? (
-                            <div className="text-center py-8">
-                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-                            </div>
-                        ) : filteredMembers.length > 0 ? (
-                            filteredMembers.map(member => (
-                                <div
-                                    key={member.id}
-                                    className="bg-white border border-slate-100 rounded-xl p-4 hover:border-blue-200 transition-all group"
-                                >
-                                    <div className="flex items-start justify-between gap-[16px]">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <h4 className="text-[18px] font-black text-slate-900">{member.name}</h4>
-                                                <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${member.wage_type === 'monthly'
-                                                    ? 'bg-purple-50 text-purple-600'
-                                                    : 'bg-amber-50 text-amber-600'
-                                                    }`}>
-                                                    {member.member_type || 'worker'} <span className="opacity-50">|</span> {member.wage_type === 'monthly' ? 'Monthly' : 'Daily'}
-                                                </span>
-                                                <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${member.status === 'active'
-                                                    ? 'bg-emerald-50 text-emerald-600'
-                                                    : 'bg-slate-100 text-slate-500'
-                                                    }`}>
-                                                    {member.status}
-                                                </span>
-                                            </div>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[14px] text-slate-500">
-                                                {member.role && (
-                                                    <div className="flex items-center gap-2">
-                                                        <FaBriefcase className="text-slate-400 text-[12px]" />
-                                                        <span className="font-medium">{member.role}</span>
-                                                    </div>
-                                                )}
-                                                {member.phone && (
-                                                    <div className="flex items-center gap-2">
-                                                        <FaPhone className="text-slate-400 text-[12px]" />
-                                                        <span className="font-medium">{member.phone}</span>
-                                                    </div>
-                                                )}
-                                                {member.email && (
-                                                    <div className="flex items-center gap-2">
-                                                        <FaEnvelope className="text-slate-400 text-[12px]" />
-                                                        <span className="font-medium">{member.email}</span>
-                                                    </div>
-                                                )}
-                                                {member.project_name && (
-                                                    <div className="flex items-center gap-2">
-                                                        <FaFolder className="text-slate-400 text-[12px]" />
-                                                        <span className="font-medium">{member.project_name}</span>
-                                                    </div>
-                                                )}
-                                                <div className="flex items-center gap-2">
-                                                    <FaMoneyBillWave className="text-slate-400 text-[12px]" />
-                                                    <span className="font-medium">
-                                                        {member.wage_type === 'monthly' ? 'Monthly' : 'Daily'}:
-                                                        ₹{parseFloat(member.daily_wage || 0)}
-                                                    </span>
-                                                </div>
-                                            </div>
+                {/* Footer Actions */}
+                <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 font-['Outfit']">
+                    {editingId && <button type="button" onClick={resetForm} className="px-6 py-2 text-xs font-black uppercase text-slate-500 hover:text-slate-700 transition-all">Cancel Edit</button>}
+                    <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-2 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 transition-all active:scale-95 flex items-center gap-2">
+                        {editingId ? <><FaEdit /> Update Staff</> : <><FaPlus /> Add to Roster</>}
+                    </button>
+                </div>
+            </form>
+
+            {/* Filter Bar - Modern Design */}
+            <div className="bg-white/80 backdrop-blur-xl p-4 rounded-[24px] border border-white/20 shadow-xl shadow-slate-200/50 mb-6 sticky top-2 z-10">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {/* Category Filter - Indigo */}
+                    <div className="relative group">
+                        <FaTag className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400 group-hover:text-indigo-500 transition-colors" size={12} />
+                        <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} className="w-full bg-indigo-50 hover:bg-indigo-100 border border-transparent rounded-2xl py-3 pl-10 pr-10 text-xs font-black text-indigo-600 text-center outline-none focus:ring-2 focus:ring-indigo-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
+                            <option value="">All Categories</option>
+                            {[...new Set(members.map(m => m.role).filter(Boolean))].map(role => (
+                                <option key={role} value={role}>{role}</option>
+                            ))}
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-indigo-400 text-[10px]">▼</div>
+                    </div>
+
+                    {/* Project Filter - Orange */}
+                    <div className="relative group">
+                        <FaFolder className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-400 group-hover:text-orange-500 transition-colors" size={12} />
+                        <select value={filterProject} onChange={(e) => setFilterProject(e.target.value)} className="w-full bg-orange-50 hover:bg-orange-100 border border-transparent rounded-2xl py-3 pl-10 pr-10 text-xs font-black text-orange-600 text-center outline-none focus:ring-2 focus:ring-orange-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
+                            <option value="">All Departments</option>
+                            {projects.map(p => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-orange-400 text-[10px]">▼</div>
+                    </div>
+
+                    {/* Status Filter - Purple */}
+                    <div className="relative group">
+                        <FaFilter className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-purple-400 group-hover:text-purple-500 transition-colors" size={12} />
+                        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="w-full bg-purple-50 hover:bg-purple-100 border border-transparent rounded-2xl py-2 md:py-3 pl-8 md:pl-10 pr-6 md:pr-10 text-[10px] md:text-xs font-black text-purple-600 text-center outline-none focus:ring-2 focus:ring-purple-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
+                            <option value="all">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                        <div className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 pointer-events-none text-purple-400 text-[10px]">▼</div>
+                    </div>
+
+                    {/* Search - Blue */}
+                    <div className="relative group">
+                        <FaSearch className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-blue-400 group-hover:text-blue-500 transition-colors" size={12} />
+                        <input
+                            type="text"
+                            placeholder="SEARCH..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-blue-50 hover:bg-blue-100 border border-transparent rounded-2xl py-2 md:py-3 pl-8 md:pl-10 pr-4 text-[10px] md:text-xs font-black text-blue-600 text-center placeholder:text-blue-300 outline-none focus:ring-2 focus:ring-blue-200 transition-all uppercase tracking-wide"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="px-[4px] py-[4px] overflow-y-auto custom-scrollbar flex-1">
+                <div className="space-y-3 font-['Outfit']">
+                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 px-2">
+                        All Members ({filteredMembers.length})
+                    </h3>
+                    {loading ? (
+                        <div className="text-center py-8">
+                            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+                        </div>
+                    ) : filteredMembers.length > 0 ? (
+                        filteredMembers.map(member => (
+                            <div key={member.id} className="bg-white border border-slate-100 rounded-2xl p-5 hover:border-blue-200 transition-all group shadow-sm">
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <h4 className="text-lg font-black text-slate-900">{member.name}</h4>
+                                            <span className="bg-blue-50 text-blue-600 text-[10px] font-black px-2 py-1 rounded-full uppercase">{member.employment_nature}</span>
+                                            <span className={`text-[10px] font-black px-2 py-1 rounded-full uppercase ${member.status === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>{member.status}</span>
                                         </div>
-                                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-
-                                            {!member.isGuest && (
-                                                <>
-                                                    <button
-                                                        onClick={() => handleEdit(member)}
-                                                        className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-                                                        title="Edit Member"
-                                                    >
-                                                        <FaEdit />
-                                                    </button>
-
-                                                    {member.status === 'active' ? (
-                                                        <button
-                                                            onClick={() => handleDeactivateClick(member)}
-                                                            className="p-3 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all"
-                                                            title="Deactivate (Hide from Daily Attendance)"
-                                                        >
-                                                            <FaBan />
-                                                        </button>
-                                                    ) : (
-                                                        <button
-                                                            onClick={async () => {
-                                                                try {
-                                                                    await updateMember(member.id, { ...member, status: 'active', sector });
-                                                                    toast.success("Member reactivated");
-                                                                    fetchMembers();
-                                                                    if (onUpdate) onUpdate();
-                                                                } catch (error) {
-                                                                    toast.error("Failed to reactivate");
-                                                                }
-                                                            }}
-                                                            className="p-3 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
-                                                            title="Reactivate Member"
-                                                        >
-                                                            <FaCheck />
-                                                        </button>
-                                                    )}
-
-                                                    {isOwner && (
-                                                        <button
-                                                            onClick={() => handleDeleteClick(member.id)}
-                                                            className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                                                            title="Delete Permanently"
-                                                        >
-                                                            <FaTrash />
-                                                        </button>
-                                                    )}
-                                                </>
-                                            )}
+                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-3 gap-x-6 text-[11px] font-bold text-slate-500">
+                                            <div className="flex items-center gap-2"><div className="w-5 h-5 rounded-lg bg-slate-100 flex items-center justify-center"><FaBriefcase className="text-[10px]" /></div> {member.role || 'No Role'}</div>
+                                            <div className="flex items-center gap-2"><div className="w-5 h-5 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600"><FaTag className="text-[10px]" /></div> {member.primary_work_area}</div>
+                                            <div className="flex items-center gap-2"><div className="w-5 h-5 rounded-lg bg-orange-50 flex items-center justify-center text-orange-600"><FaHistory className="text-[10px]" /></div> {shifts.find(s => s.id === member.default_shift_id)?.name || 'No Shift'}</div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-5 h-5 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600"><FaMoneyBillWave className="text-[10px]" /></div>
+                                                ₹{member.wage_type === 'monthly' ? member.monthly_salary : (member.wage_type === 'hourly' ? member.hourly_rate : member.daily_wage)} / {member.wage_type}
+                                            </div>
                                         </div>
                                     </div>
+                                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+
+                                        {!member.isGuest && (
+                                            <>
+                                                <button
+                                                    onClick={() => handleEdit(member)}
+                                                    className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                                                    title="Edit Member"
+                                                >
+                                                    <FaEdit />
+                                                </button>
+
+                                                {member.status === 'active' ? (
+                                                    <button
+                                                        onClick={() => handleDeactivateClick(member)}
+                                                        className="p-3 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all"
+                                                        title="Deactivate (Hide from Daily Attendance)"
+                                                    >
+                                                        <FaBan />
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        onClick={async () => {
+                                                            try {
+                                                                await updateMember(member.id, { ...member, status: 'active', sector });
+                                                                toast.success("Member reactivated");
+                                                                fetchMembers();
+                                                                if (onUpdate) onUpdate();
+                                                            } catch (error) {
+                                                                toast.error("Failed to reactivate");
+                                                            }
+                                                        }}
+                                                        className="p-3 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
+                                                        title="Reactivate Member"
+                                                    >
+                                                        <FaCheck />
+                                                    </button>
+                                                )}
+
+                                                {isOwner && (
+                                                    <button
+                                                        onClick={() => handleDeleteClick(member.id)}
+                                                        className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                                                        title="Delete Permanently"
+                                                    >
+                                                        <FaTrash />
+                                                    </button>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
-                            ))
-                        ) : (
-                            <div className="text-center py-[48px] text-slate-400">
-                                <FaUser className="text-[36px] mx-auto mb-3 opacity-20" />
-                                <p className="text-[14px] font-bold uppercase tracking-widest">No members yet</p>
-                                <p className="text-[12px] mt-1">Add your first member above</p>
                             </div>
-                        )}
-                    </div>
+                        ))
+                    ) : (
+                        <div className="text-center py-[48px] text-slate-400">
+                            <FaUser className="text-[36px] mx-auto mb-3 opacity-20" />
+                            <p className="text-[14px] font-bold uppercase tracking-widest">No members yet</p>
+                            <p className="text-[12px] mt-1">Add your first member above</p>
+                        </div>
+                    )}
                 </div>
-            </div >
+            </div>
 
             {/* Deactivate Confirm Modal */}
-            < ConfirmModal
+            <ConfirmModal
                 isOpen={deactivateModal.show}
                 title="Deactivate Member?"
                 message={`Are you sure you want to deactivate ${deactivateModal.member?.name}? They will be marked as inactive.`}
@@ -663,18 +599,16 @@ const MemberManager = ({ onClose, onUpdate, sector = 'hotel', projects: parentPr
             />
 
             {/* Role Manager Modal */}
-            {
-                showRoleManager && (
-                    <RoleManager
-                        roles={roles}
-                        onCreate={(data) => createMemberRole({ ...data, sector })}
-                        onDelete={(id) => deleteMemberRole(id, { sector })}
-                        onClose={() => { setShowRoleManager(false); fetchMembers(); }}
-                        onRefresh={() => getMemberRoles({ sector }).then(res => setRoles(res.data.data))}
-                        placeholder="Developer, Tester, Manager..."
-                    />
-                )
-            }
+            {showRoleManager && (
+                <RoleManager
+                    roles={roles}
+                    onCreate={(data) => createMemberRole({ ...data, sector })}
+                    onDelete={(id) => deleteMemberRole(id, { sector })}
+                    onClose={() => { setShowRoleManager(false); fetchMembers(); }}
+                    onRefresh={() => getMemberRoles({ sector }).then(res => setRoles(res.data.data))}
+                    placeholder="Developer, Tester, Manager..."
+                />
+            )}
 
             {/* Custom Delete Confirmation Modal */}
             <ConfirmModal
@@ -687,7 +621,7 @@ const MemberManager = ({ onClose, onUpdate, sector = 'hotel', projects: parentPr
                 cancelText="Cancel"
                 type="danger"
             />
-        </div >
+        </div>
     );
 };
 

@@ -60,10 +60,10 @@ const mfgRouter = express.Router();
 mfgRouter.use(withSector('manufacturing'));
 mfgRouter.use('/reminders', require("./routes/Personal/reminderRoutes"));
 mfgRouter.use('/transactions', transactionRoutes);
-mfgRouter.use('/members', require("./routes/Manufacturing/memberRoutes"));
-mfgRouter.use('/member-roles', require("./routes/Manufacturing/memberRoleRoutes"));
+mfgRouter.use('/members', require("./routes/Common/memberRoutes"));
+mfgRouter.use('/member-roles', require("./routes/Common/memberRoleRoutes"));
 mfgRouter.use('/attendance', require("./routes/Manufacturing/attendanceRoutes"));
-mfgRouter.use('/projects', require("./routes/Manufacturing/projectRoutes"));
+mfgRouter.use('/projects', require("./routes/Common/projectRoutes"));
 mfgRouter.use('/work-logs', require("./routes/Manufacturing/dailyWorkLogRoutes"));
 mfgRouter.use('/work-types', require("./routes/Manufacturing/workTypeRoutes"));
 mfgRouter.use('/team', require("./routes/Manufacturing/teamRoutes"));
@@ -77,9 +77,9 @@ itRouter.use('/reminders', require("./routes/Personal/reminderRoutes"));
 itRouter.use('/notes', require("./routes/Personal/noteRoutes"));
 itRouter.use('/transactions', transactionRoutes);
 itRouter.use('/categories', categoryRoutes);
-itRouter.use('/members', require("./routes/Manufacturing/memberRoutes")); // Generic Member Controller
-itRouter.use('/member-roles', require("./routes/Manufacturing/memberRoleRoutes")); // Generic Role Controller
-itRouter.use('/projects', require("./routes/Manufacturing/projectRoutes")); // Generic Project Controller
+itRouter.use('/members', require("./routes/Common/memberRoutes"));
+itRouter.use('/member-roles', require("./routes/Common/memberRoleRoutes"));
+itRouter.use('/projects', require("./routes/Common/projectRoutes"));
 itRouter.use('/attendance', require("./routes/IT/attendanceRoutes"));
 itRouter.use('/team', require("./routes/IT/teamRoutes"));
 itRouter.use('/timesheets', require("./routes/IT/timesheetRoutes"));
@@ -94,8 +94,8 @@ eduRouter.use('/reminders', require("./routes/Personal/reminderRoutes"));
 eduRouter.use('/notes', require("./routes/Personal/noteRoutes"));
 eduRouter.use('/transactions', transactionRoutes);
 eduRouter.use('/categories', categoryRoutes);
-eduRouter.use('/members', require("./routes/Manufacturing/memberRoutes")); // Generic Member Controller
-eduRouter.use('/member-roles', require("./routes/Manufacturing/memberRoleRoutes")); // Generic Role Controller
+eduRouter.use('/members', require("./routes/Common/memberRoutes"));
+eduRouter.use('/member-roles', require("./routes/Common/memberRoleRoutes"));
 eduRouter.use('/attendance', require("./routes/Education/attendanceRoutes"));
 eduRouter.use('/departments', require("./routes/Education/departmentRoutes"));
 eduRouter.use('/team', require("./routes/Education/teamRoutes"));
@@ -111,12 +111,11 @@ hotelRouter.use('/reminders', require("./routes/Personal/reminderRoutes"));
 hotelRouter.use('/notes', require("./routes/Personal/noteRoutes"));
 hotelRouter.use('/transactions', transactionRoutes);
 hotelRouter.use('/categories', categoryRoutes);
-hotelRouter.use('/members', require("./routes/Manufacturing/memberRoutes")); // Generic Member Controller
-hotelRouter.use('/member-roles', require("./routes/Manufacturing/memberRoleRoutes")); // Generic Role Controller
-hotelRouter.use('/projects', require("./routes/Manufacturing/projectRoutes")); // Generic Project Controller
-hotelRouter.use('/attendance', require("./routes/Manufacturing/attendanceRoutes")); // Generic Attendance Controller
+hotelRouter.use('/members', require("./routes/Common/memberRoutes"));
+hotelRouter.use('/member-roles', require("./routes/Common/memberRoleRoutes"));
+hotelRouter.use('/projects', require("./routes/Common/projectRoutes"));
+hotelRouter.use('/attendance', require("./routes/Hotel/attendanceRoutes"));
 hotelRouter.use('/team', require("./routes/Hotel/teamRoutes"));
-hotelRouter.use('/core', require("./routes/Hotel/hotelRoutes"));
 app.use('/api/hotel-sector', hotelRouter);
 
 // Direct hotel API access (for bookings module)

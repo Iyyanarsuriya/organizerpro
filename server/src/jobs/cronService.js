@@ -1,5 +1,5 @@
 const cron = require('node-cron');
-const Reminder = require('../models/remindermodel');
+const Reminder = require('../models/reminderModel');
 const emailService = require('../services/emailService');
 const pushService = require('../services/pushNotificationService');
 const User = require('../models/userModel');
