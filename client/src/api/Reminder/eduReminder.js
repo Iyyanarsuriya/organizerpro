@@ -11,7 +11,8 @@ export const createCategory = (categoryData) => axiosInstance.post('/categories'
 export const deleteCategory = (id, params = { sector: 'education' }) => axiosInstance.delete(`/categories/${id}`, { params });
 
 // Notes
-export const getNotes = (params = { sector: 'education' }) => axiosInstance.get('/notes', { params });
-export const createNote = (data) => axiosInstance.post('/notes', { ...data, sector: 'education' });
-export const updateNote = (id, data) => axiosInstance.put(`/notes/${id}`, { ...data, sector: 'education' });
-export const deleteNote = (id, params = { sector: 'education' }) => axiosInstance.delete(`/notes/${id}`, { params });
+// Notes
+export const getNotes = (params = { sector: 'education' }) => axiosInstance.get('/education-sector/notes', { params });
+export const createNote = (data) => axiosInstance.post('/education-sector/notes', { ...data, sector: 'education' });
+export const updateNote = (id, data) => axiosInstance.put(`/education-sector/notes/${id}`, { ...data, sector: 'education' });
+export const deleteNote = (id, params = { sector: 'education' }) => axiosInstance.delete(`/education-sector/notes/${id}`, { params });
