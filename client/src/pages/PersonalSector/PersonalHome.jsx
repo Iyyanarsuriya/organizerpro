@@ -145,7 +145,7 @@ const PersonalHome = ({ onProfileClick }) => {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                         {/* Daily Calendar Card */}
-                        <Link to="/reminders" className="p-10 rounded-[40px] bg-[#eff6ff] border border-blue-100 group hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500">
+                        <Link to="/personal/reminders" className="p-10 rounded-[40px] bg-[#eff6ff] border border-blue-100 group hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500">
                             <div className="w-16 h-16 bg-[#2d5bff] rounded-[24px] flex items-center justify-center mb-8 shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform">
                                 <Calendar className="w-8 h-8 text-white" />
                             </div>
@@ -159,7 +159,7 @@ const PersonalHome = ({ onProfileClick }) => {
                         </Link>
 
                         {/* Financial Card */}
-                        <Link to="/expenses" className="p-10 rounded-[40px] bg-[#ecfdf5] border border-emerald-100 group hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-500">
+                        <Link to="/personal/expenses" className="p-10 rounded-[40px] bg-[#ecfdf5] border border-emerald-100 group hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-500">
                             <div className="w-16 h-16 bg-[#00d1a0] rounded-[24px] flex items-center justify-center mb-8 shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform">
                                 <BarChart3 className="w-8 h-8 text-white" />
                             </div>
@@ -173,7 +173,7 @@ const PersonalHome = ({ onProfileClick }) => {
                         </Link>
 
                         {/* Analysis Card */}
-                        <Link to="/finance" className="p-10 rounded-[40px] bg-slate-50 border border-slate-100 group hover:shadow-2xl hover:shadow-slate-500/5 transition-all duration-500">
+                        <Link to="/personal/expenses" className="p-10 rounded-[40px] bg-slate-50 border border-slate-100 group hover:shadow-2xl hover:shadow-slate-500/5 transition-all duration-500">
                             <div className="w-16 h-16 bg-slate-800 rounded-[24px] flex items-center justify-center mb-8 shadow-lg shadow-slate-900/10 group-hover:scale-110 transition-transform">
                                 <LayoutDashboard className="w-8 h-8 text-white" />
                             </div>
@@ -186,17 +186,17 @@ const PersonalHome = ({ onProfileClick }) => {
                             </span>
                         </Link>
 
-                        {/* Attendance Tracker Card */}
-                        <Link to="/attendance" className="p-10 rounded-[40px] bg-[#fff7ed] border border-orange-100 group hover:shadow-2xl hover:shadow-orange-500/10 transition-all duration-500">
+                        {/* Notes Card (Replaces Attendance) */}
+                        <Link to="/notes" className="p-10 rounded-[40px] bg-[#fff7ed] border border-orange-100 group hover:shadow-2xl hover:shadow-orange-500/10 transition-all duration-500">
                             <div className="w-16 h-16 bg-orange-500 rounded-[24px] flex items-center justify-center mb-8 shadow-lg shadow-orange-500/20 group-hover:scale-110 transition-transform">
                                 <UserCheck className="w-8 h-8 text-white" />
                             </div>
-                            <h3 className="text-2xl font-black text-orange-600 mb-4">Check-ins</h3>
+                            <h3 className="text-2xl font-black text-orange-600 mb-4">My Notes</h3>
                             <p className="text-slate-500 font-medium leading-relaxed mb-6">
-                                Log your daily presence and maintain consistency with the attendance log.
+                                Capture ideas, to-do lists, and important information instantly.
                             </p>
                             <span className="text-[10px] font-black uppercase text-orange-600 tracking-widest flex items-center gap-2 group-hover:gap-3 transition-all">
-                                Mark Attendance <ArrowRight className="w-3 h-3" />
+                                View Notes <ArrowRight className="w-3 h-3" />
                             </span>
                         </Link>
 
@@ -225,10 +225,10 @@ const PersonalHome = ({ onProfileClick }) => {
                             <div className="space-y-4">
                                 <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Platform</h4>
                                 <ul className="space-y-2">
-                                    <li><Link to="/reminders" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">Reminders</Link></li>
-                                    <li><Link to="/expenses" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">Expense Tracker</Link></li>
-                                    <li><Link to="/attendance" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">Attendance Tracker</Link></li>
-                                    <li><Link to="/finance" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">Statistics</Link></li>
+                                    <li><Link to="/personal/reminders" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">Reminders</Link></li>
+                                    <li><Link to="/personal/expenses" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">Expense Tracker</Link></li>
+                                    <li><Link to="/notes" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">Notes</Link></li>
+                                    <li><Link to="/personal/expenses" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">Statistics</Link></li>
                                 </ul>
                             </div>
                             <div className="space-y-4">

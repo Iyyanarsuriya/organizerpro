@@ -10,9 +10,11 @@ import {
     getTransactionStats,
     getExpenseCategories,
     createExpenseCategory,
-    deleteExpenseCategory
+    deleteExpenseCategory,
+    // Vehicle Logs
+    getVehicleLogs
 } from '../../../api/Expense/mfgExpense';
-import { getVehicleLogs } from '../../../api/Expense/personalExpense';
+// import { getVehicleLogs } from '../../../api/Expense/personalExpense'; // Removed
 import { getProjects, createProject, deleteProject, getAttendanceStats } from '../../../api/Attendance/mfgAttendance';
 import { getMembers, getActiveMembers, getGuests, getMemberRoles } from '../../../api/TeamManagement/mfgTeam';
 import toast from 'react-hot-toast';

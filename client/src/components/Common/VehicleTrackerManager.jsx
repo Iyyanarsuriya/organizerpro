@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaTruck, FaClock, FaMoneyBillWave, FaGasPump, FaPlus, FaTrash, FaEdit, FaRoad, FaCheck, FaTimes, FaFilter, FaSearch, FaCalendarAlt } from 'react-icons/fa';
-import { getVehicleLogs, createVehicleLog, updateVehicleLog, deleteVehicleLog } from '../../api/Expense/personalExpense';
+import { getVehicleLogs, createVehicleLog, updateVehicleLog, deleteVehicleLog } from '../../api/Expense/mfgExpense';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../modals/ConfirmModal';
 import ExportButtons from './ExportButtons';

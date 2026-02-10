@@ -46,7 +46,7 @@ personalRouter.use('/transactions', transactionRoutes);
 personalRouter.use('/categories', categoryRoutes);
 personalRouter.use('/expense-categories', expenseCategoryRoutes);
 personalRouter.use('/notes', require("./routes/Personal/noteRoutes"));
-personalRouter.use('/vehicle-logs', require("./routes/Personal/vehicleLogRoutes"));
+// personalRouter.use('/vehicle-logs', require("./routes/Personal/vehicleLogRoutes")); // Removed
 personalRouter.use('/budgets', require("./routes/Personal/budgetRoutes"));
 app.use('/api', personalRouter);
 app.use("/api/push", pushRoutes);
@@ -65,6 +65,7 @@ mfgRouter.use('/member-roles', require("./routes/Common/memberRoleRoutes"));
 mfgRouter.use('/attendance', require("./routes/Manufacturing/attendanceRoutes"));
 mfgRouter.use('/projects', require("./routes/Common/projectRoutes"));
 mfgRouter.use('/work-logs', require("./routes/Manufacturing/dailyWorkLogRoutes"));
+mfgRouter.use('/vehicle-logs', require("./routes/Manufacturing/vehicleLogRoutes"));
 mfgRouter.use('/work-types', require("./routes/Manufacturing/workTypeRoutes"));
 mfgRouter.use('/team', require("./routes/Manufacturing/teamRoutes"));
 mfgRouter.use('/payroll', require("./routes/Manufacturing/payrollRoutes"));

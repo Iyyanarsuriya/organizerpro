@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const vehicleLogController = require('../../controllers/Personal/vehicleLogController');
+const vehicleLogController = require('../../controllers/Manufacturing/vehicleLogController');
 const { authenticateToken: protect, requireOwner } = require('../../middlewares/authMiddleware');
 
 router.get('/', protect, vehicleLogController.getVehicleLogs);
