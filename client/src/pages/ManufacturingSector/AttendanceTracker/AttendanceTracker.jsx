@@ -207,7 +207,7 @@ const AttendanceTracker = () => {
             setAttendances(attRes?.data?.data || []);
             setStats(statsRes?.data?.data || []);
             setMemberSummary(summaryRes?.data?.data || []);
-            setProjects(projRes?.data || []);
+            setProjects(projRes?.data?.data || []);
             setMembers(membersRes?.data?.data || []);
             setRoles(roleRes?.data?.data || []);
             setHolidays(holidaysRes?.data?.data || []);
@@ -1456,7 +1456,7 @@ const AttendanceTracker = () => {
                     onCreate={createProject}
                     onDelete={deleteProject}
                     onClose={() => { setShowProjectManager(false); fetchData(); }}
-                    onRefresh={() => getProjects().then(res => setProjects(res.data))}
+                    onRefresh={() => getProjects().then(res => setProjects(res.data.data))}
                 />
             )
             }

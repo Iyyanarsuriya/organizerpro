@@ -413,8 +413,27 @@ const quickMark = async (data) => {
         let updateParams = [status || null, note || null, updated_by || null];
 
         if (['it', 'manufacturing', 'hotel'].includes(data.sector)) {
-            updateQuery += `, check_in = COALESCE(?, check_in), check_out = COALESCE(?, check_out), total_hours = COALESCE(?, total_hours), work_mode = COALESCE(?, work_mode), shift_id = COALESCE(?, shift_id)`;
-            updateParams.push(check_in || null, check_out || null, final_total_hours || null, work_mode || null, shift_id);
+            const overtimeField = data.sector === 'hotel' ? 'overtime_hours' : 'overtime_duration';
+            const overtimeValue = data.sector === 'hotel' ? (overtime_duration || final_total_hours > 8 ? (final_total_hours - 8).toFixed(2) : 0) : (overtime_duration || null);
+
+            updateQuery += `, subject = COALESCE(?, subject), check_in = COALESCE(?, check_in), check_out = COALESCE(?, check_out), total_hours = COALESCE(?, total_hours), work_mode = COALESCE(?, work_mode), shift_id = COALESCE(?, shift_id), 
+                           permission_duration = COALESCE(?, permission_duration), permission_start_time = COALESCE(?, permission_start_time), permission_end_time = COALESCE(?, permission_end_time), permission_reason = COALESCE(?, permission_reason), 
+                           ${overtimeField} = COALESCE(?, ${overtimeField}), overtime_reason = COALESCE(?, overtime_reason)`;
+
+            updateParams.push(
+                subject || null,
+                check_in || null,
+                check_out || null,
+                final_total_hours || null,
+                work_mode || null,
+                shift_id,
+                permission_duration || null,
+                permission_start_time || null,
+                permission_end_time || null,
+                permission_reason || null,
+                overtimeValue,
+                overtime_reason || null
+            );
         }
 
         updateQuery += ` WHERE id = ?`;
@@ -432,8 +451,23 @@ const quickMark = async (data) => {
         }
 
         if (['it', 'manufacturing', 'hotel'].includes(data.sector)) {
-            fields.push('check_in', 'check_out', 'total_hours', 'work_mode', 'shift_id');
-            vals.push(check_in || null, check_out || null, final_total_hours || 0, work_mode || 'Office', shift_id);
+            const overtimeField = data.sector === 'hotel' ? 'overtime_hours' : 'overtime_duration';
+            const overtimeValue = data.sector === 'hotel' ? (overtime_duration || final_total_hours > 8 ? (final_total_hours - 8).toFixed(2) : 0) : (overtime_duration || null);
+
+            fields.push('check_in', 'check_out', 'total_hours', 'work_mode', 'shift_id', 'permission_duration', 'permission_start_time', 'permission_end_time', 'permission_reason', overtimeField, 'overtime_reason');
+            vals.push(
+                check_in || null,
+                check_out || null,
+                final_total_hours || 0,
+                work_mode || 'Office',
+                shift_id,
+                permission_duration || null,
+                permission_start_time || null,
+                permission_end_time || null,
+                permission_reason || null,
+                overtimeValue,
+                overtime_reason || null
+            );
         }
 
         const placeholders = fields.map(() => '?').join(', ');
