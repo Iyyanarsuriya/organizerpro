@@ -1,44 +1,51 @@
 const Category = require('../../models/categoryModel');
 
+// --- SECTOR SPECIFIC CONTROLLERS ---
+
+const ITCategoryController = {
+    add: async (req, res) => {
+        const result = await Category.create({ user_id: req.user.data_owner_id, ...req.body, sector: 'it' });
+        res.status(201).json(result);
+    }
+};
+
+const DefaultCategoryController = {
+    add: async (req, res) => {
+        const sector = req.body.sector || 'personal';
+        const result = await Category.create({ user_id: req.user.data_owner_id, ...req.body, sector });
+        res.status(201).json(result);
+    }
+};
+
+// --- DISPATCHER HELPERS ---
+const getSectorController = (sector) => {
+    return sector === 'it' ? ITCategoryController : DefaultCategoryController;
+};
+
+// --- CORE CATEGORY FUNCTIONS ---
+
 exports.getCategories = async (req, res) => {
     try {
         const sector = req.query.sector || 'personal';
         let categories = await Category.getAllByUserId(req.user.data_owner_id, sector);
-
-        // If no categories found, seed defaults and fetch again
         if (categories.length === 0) {
             await Category.seedDefaultCategories(req.user.data_owner_id, sector);
             categories = await Category.getAllByUserId(req.user.data_owner_id, sector);
         }
-
         res.json(categories);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch categories' });
-    }
+    } catch (error) { res.status(500).json({ error: error.message }); }
 };
 
 exports.addCategory = async (req, res) => {
     try {
-        const { name, color, sector = 'personal' } = req.body;
-        if (!name) return res.status(400).json({ error: 'Category name is required' });
-
-        const result = await Category.create({ user_id: req.user.data_owner_id, name, color, sector });
-        res.status(201).json(result);
-    } catch (error) {
-        if (error.code === 'ER_DUP_ENTRY') {
-            return res.status(400).json({ error: 'Category already exists' });
-        }
-        res.status(500).json({ error: 'Failed to add category' });
-    }
+        if (!req.body.name) return res.status(400).json({ error: "Name required" });
+        return getSectorController(req.body.sector).add(req, res);
+    } catch (error) { res.status(500).json({ error: error.message }); }
 };
 
 exports.deleteCategory = async (req, res) => {
     try {
-        const sector = req.query.sector || 'personal';
-        const deleted = await Category.delete(req.params.id, req.user.data_owner_id, sector);
-        if (!deleted) return res.status(404).json({ error: 'Category not found' });
-        res.json({ message: 'Category deleted successfully' });
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to delete category' });
-    }
+        const success = await Category.delete(req.params.id, req.user.data_owner_id, req.query.sector);
+        res.json({ success, message: success ? "Deleted" : "Not found" });
+    } catch (error) { res.status(500).json({ error: error.message }); }
 };

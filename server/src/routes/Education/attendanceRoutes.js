@@ -10,8 +10,8 @@ const {
     quickMarkAttendance,
     lockAttendance,
     unlockAttendance,
-    getLockedDates
-} = require('../../controllers/Education/attendanceController');
+    getLockStatus: getLockedDates
+} = require('../../controllers/Common/attendanceController');
 const { authenticateToken, requireOwner } = require('../../middlewares/authMiddleware');
 
 router.use(authenticateToken);

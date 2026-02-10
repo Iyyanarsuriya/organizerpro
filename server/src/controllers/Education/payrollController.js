@@ -1,6 +1,5 @@
 const Payroll = require('../../models/educationPayrollModel');
 const Attendance = require('../../models/attendanceModel');
-const Lock = require('../../models/educationAttendanceLockModel');
 const AuditLog = require('../../models/auditLogModel');
 const Transaction = require('../../models/transactionModel');
 

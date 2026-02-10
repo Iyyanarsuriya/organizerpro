@@ -18,7 +18,7 @@ const {
     lockAttendance,
     unlockAttendance,
     getLockStatus
-} = require('../../controllers/Manufacturing/attendanceController');
+} = require('../../controllers/Common/attendanceController');
 const { authenticateToken, requireOwner } = require('../../middlewares/authMiddleware');
 
 router.use(authenticateToken);

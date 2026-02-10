@@ -14,8 +14,11 @@ const {
     deleteHoliday,
     getShifts,
     createShift,
-    deleteShift
-} = require('../../controllers/Hotel/attendanceController');
+    deleteShift,
+    lockAttendance,
+    unlockAttendance,
+    getLockStatus
+} = require('../../controllers/Common/attendanceController');
 const { authenticateToken, requireOwner } = require('../../middlewares/authMiddleware');
 
 router.use(authenticateToken);

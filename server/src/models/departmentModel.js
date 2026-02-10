@@ -1,28 +1,40 @@
 const db = require('../config/db');
 
-// Only handling 'education' sector for now as requested
-const getTableName = (sector) => {
-    return 'education_departments';
+// --- SECTOR MAP ---
+const TABLE_MAP = {
+    education: 'education_departments'
 };
 
+// --- EDUCATION SECTOR ---
+const EducationDepartmentModel = {
+    create: async (data) => {
+        const { user_id, name } = data;
+        const [res] = await db.query(`INSERT INTO education_departments (user_id, name) VALUES (?, ?)`, [user_id, name]);
+        return { id: res.insertId, ...data };
+    },
+    getAll: async (userId) => {
+        const [rows] = await db.query(`SELECT * FROM education_departments WHERE user_id = ? ORDER BY name ASC`, [userId]);
+        return rows;
+    }
+};
+
+// --- DISPATCHER HELPERS ---
+const getSectorModel = (sector) => {
+    // Currently only education has dedicated departments
+    return EducationDepartmentModel;
+};
+
+// --- CORE DEPARTMENT FUNCTIONS (DISPATCHERS) ---
 const create = async (data) => {
-    const table = getTableName(data.sector);
-    const { user_id, name } = data;
-    const [result] = await db.query(
-        `INSERT INTO ${table} (user_id, name) VALUES (?, ?)`,
-        [user_id, name]
-    );
-    return { id: result.insertId, ...data };
+    return getSectorModel(data.sector || 'education').create(data);
 };
 
-const getAllByUserId = async (userId, sector) => {
-    const table = getTableName(sector);
-    const [rows] = await db.query(`SELECT * FROM ${table} WHERE user_id = ? ORDER BY name ASC`, [userId]);
-    return rows;
+const getAllByUserId = async (userId, sector = 'education') => {
+    return getSectorModel(sector).getAll(userId);
 };
 
-const deleteById = async (id, userId, sector) => {
-    const table = getTableName(sector);
+const deleteResult = async (id, userId, sector = 'education') => {
+    const table = TABLE_MAP[sector] || TABLE_MAP.education;
     const [result] = await db.query(`DELETE FROM ${table} WHERE id = ? AND user_id = ?`, [id, userId]);
     return result.affectedRows > 0;
 };
@@ -30,5 +42,5 @@ const deleteById = async (id, userId, sector) => {
 module.exports = {
     create,
     getAllByUserId,
-    delete: deleteById
+    delete: deleteResult
 };
