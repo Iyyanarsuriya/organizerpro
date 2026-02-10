@@ -11,13 +11,26 @@ const TABLE_MAP = {
 
 const getTableName = (sector) => TABLE_MAP[sector] || TABLE_MAP.personal;
 
+// Helper to sanitize date (Shared logic, could be in utils)
+const sanitizeDate = (date) => {
+    if (!date) return null;
+    if (typeof date === 'string') {
+        if (date.length === 10) return date + ' 12:00:00'; // YYYY-MM-DD
+        if (date.includes('T')) return date.replace('T', ' ').slice(0, 19); // ISO String
+    }
+    if (date instanceof Date) {
+        return date.toISOString().replace('T', ' ').slice(0, 19);
+    }
+    return date;
+};
+
 // --- IT SECTOR ---
 const ITReminderModel = {
     create: async (data) => {
         const { user_id, title, description, due_date, priority, category } = data;
         const [res] = await db.query(
             `INSERT INTO it_reminders (user_id, title, description, due_date, priority, category) VALUES (?, ?, ?, ?, ?, ?)`,
-            [user_id, title, description, due_date, priority || 'medium', category || 'General']
+            [user_id, title, description, sanitizeDate(due_date), priority || 'medium', category || 'General']
         );
         return { id: res.insertId, ...data };
     },
@@ -33,7 +46,7 @@ const HotelReminderModel = {
         const { user_id, title, description, due_date, priority } = data;
         const [res] = await db.query(
             `INSERT INTO hotel_reminders (user_id, title, description, due_date, priority, status) VALUES (?, ?, ?, ?, ?, ?)`,
-            [user_id, title, description, due_date, priority || 'medium', 'pending']
+            [user_id, title, description, sanitizeDate(due_date), priority || 'medium', 'pending']
         );
         return { id: res.insertId, ...data };
     },
@@ -50,7 +63,7 @@ const ManufacturingReminderModel = {
         const { user_id, title, description, due_date, priority } = data;
         const [res] = await db.query(
             `INSERT INTO manufacturing_reminders (user_id, title, description, due_date, priority, status) VALUES (?, ?, ?, ?, ?, ?)`,
-            [user_id, title, description, due_date, priority || 'medium', 'pending']
+            [user_id, title, description, sanitizeDate(due_date), priority || 'medium', 'pending']
         );
         return { id: res.insertId, ...data };
     },
@@ -67,7 +80,7 @@ const EducationReminderModel = {
         const { user_id, title, description, due_date, priority, category } = data;
         const [res] = await db.query(
             `INSERT INTO education_reminders (user_id, title, description, due_date, priority, category) VALUES (?, ?, ?, ?, ?, ?)`,
-            [user_id, title, description, due_date, priority || 'medium', category || 'General']
+            [user_id, title, description, sanitizeDate(due_date), priority || 'medium', category || 'General']
         );
         return { id: res.insertId, ...data };
     },
@@ -83,7 +96,7 @@ const PersonalReminderModel = {
         const { user_id, title, description, due_date, priority, category, google_event_id } = data;
         const [res] = await db.query(
             `INSERT INTO personal_reminders (user_id, title, description, due_date, priority, category, google_event_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [user_id, title, description, due_date, priority || 'medium', category || 'General', google_event_id || null]
+            [user_id, title, description, sanitizeDate(due_date), priority || 'medium', category || 'General', google_event_id || null]
         );
         return { id: res.insertId, ...data };
     },

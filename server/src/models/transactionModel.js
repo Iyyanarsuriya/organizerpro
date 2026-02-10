@@ -13,7 +13,14 @@ const getTableName = (sector) => TABLE_MAP[sector] || TABLE_MAP.personal;
 
 // Helper to sanitize date
 const sanitizeDate = (date) => {
-    if (typeof date === 'string' && date.length === 10) return date + ' 12:00:00';
+    if (!date) return date;
+    if (typeof date === 'string') {
+        if (date.length === 10) return date + ' 12:00:00';
+        if (date.includes('T')) return date.replace('T', ' ').slice(0, 19);
+    }
+    if (date instanceof Date) {
+        return date.toISOString().replace('T', ' ').slice(0, 19);
+    }
     return date;
 };
 
@@ -169,7 +176,7 @@ const PersonalTransactionModel = {
         return res.affectedRows > 0;
     },
     getAll: async (userId, filters) => {
-        let query = `SELECT * FROM personal_transactions WHERE user_id = ?`;
+        let query = `SELECT * FROM personal_transactions t WHERE t.user_id = ?`;
         const params = [userId];
         return await executeFilteredQuery(query, params, filters);
     }
@@ -241,6 +248,48 @@ module.exports = {
     delete: deleteTransaction,
     getStats,
     getLifetimeStats: async () => ({ total_income: 0, total_expense: 0 }), // Placeholder to match old API
-    getCategoryStats: async () => [], // Simplified
+    getCategoryStats: async (userId, period, projectId, startDate, endDate, memberId, filters = {}) => {
+        const sector = filters.sector || 'personal';
+        const table = getTableName(sector);
+
+        let query = "";
+        let params = [userId];
+
+        if (sector === 'personal' || sector === 'manufacturing') {
+            // Category is a string column
+            query = `SELECT category, type, SUM(amount) as total FROM ${table} WHERE user_id = ?`;
+        } else {
+            // Category is a join (IT, Hotel, Education)
+            const catTable = table.replace('_transactions', '_categories');
+            query = `SELECT c.name as category, t.type, SUM(t.amount) as total 
+                      FROM ${table} t 
+                      LEFT JOIN ${catTable} c ON t.category_id = c.id 
+                      WHERE t.user_id = ?`;
+        }
+
+        // Apply filters
+        if (startDate && endDate) {
+            query += " AND DATE(date) BETWEEN ? AND ?";
+            params.push(startDate, endDate);
+        } else if (period) {
+            query += " AND DATE_FORMAT(date, '%Y-%m') = ?";
+            params.push(period);
+        }
+
+        if (projectId && table !== 'personal_transactions') {
+            query += " AND project_id = ?";
+            params.push(projectId);
+        }
+
+        // Grouping
+        if (sector === 'personal' || sector === 'manufacturing') {
+            query += " GROUP BY category, type";
+        } else {
+            query += " GROUP BY c.name, t.type"; // Use t.type alias
+        }
+
+        const [rows] = await db.query(query, params);
+        return rows;
+    },
     getMemberExpenseSummary: async () => [] // Simplified
 };

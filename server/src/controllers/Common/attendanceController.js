@@ -114,7 +114,7 @@ const deleteAttendance = async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: error.message }); }
 };
 
-const getStats = async (req, res) => {
+const getAttendanceStats = async (req, res) => {
     try {
         const data = await Attendance.getStats(req.user.data_owner_id, { ...req.query });
         res.status(200).json({ success: true, data });
@@ -184,6 +184,6 @@ const getLockStatus = async (req, res) => {
 };
 
 module.exports = {
-    createAttendance, getAttendances, updateAttendance, deleteAttendance, getStats, getMemberSummary, quickMarkAttendance, bulkMarkAttendance,
+    createAttendance, getAttendances, updateAttendance, deleteAttendance, getAttendanceStats, getMemberSummary, quickMarkAttendance, bulkMarkAttendance,
     getHolidays, createHoliday, deleteHoliday, getShifts, createShift, deleteShift, lockAttendance, unlockAttendance, getLockStatus
 };
