@@ -152,7 +152,7 @@ const ExpenseTrackerMain = () => {
                 getGuests(),
                 getVehicleLogs()
             ]);
-            setTransactions(Array.isArray(transRes.data) ? transRes.data : []);
+            setTransactions(transRes.data.data || []);
             setVehicleLogs(vehicleRes?.data || []);
 
             // PROCESS VEHICLE LOGS
@@ -172,7 +172,7 @@ const ExpenseTrackerMain = () => {
             const vehicleExpense = filteredVehicleLogs.reduce((acc, log) => acc + (parseFloat(log.expense_amount) || 0), 0);
 
             // Adjust Stats: Exclude 'Salary Pot' from total_expense for the main business summary
-            const rawStats = statsRes?.data || { summary: { total_income: 0, total_expense: 0 }, categories: [] };
+            const rawStats = statsRes?.data?.data || { summary: { total_income: 0, total_expense: 0 }, categories: [] };
             const adjustedStats = {
                 ...rawStats,
                 summary: rawStats.summary || { total_income: 0, total_expense: 0 },
@@ -186,14 +186,14 @@ const ExpenseTrackerMain = () => {
             }
 
             if (!filterMember) {
-                const transArr = Array.isArray(transRes.data) ? transRes.data : [];
+                const transArr = transRes.data.data || [];
                 const potsOnly = transArr.filter(t => t.category === 'Salary Pot' && t.type === 'expense');
                 const potsTotal = potsOnly.reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
                 adjustedStats.summary.total_expense = Math.max(0, parseFloat(adjustedStats.summary.total_expense) - potsTotal);
             }
             setStats(adjustedStats);
 
-            setCategories(Array.isArray(catRes.data) ? catRes.data : []);
+            setCategories(catRes.data.data || []);
             setProjects(projRes.data?.data || []);
             const rawMembers = Array.isArray(membersRes.data?.data) ? membersRes.data.data : [];
             const guests = Array.isArray(guestRes.data?.data) ? guestRes.data.data.map(g => ({ ...g, isGuest: true })) : [];

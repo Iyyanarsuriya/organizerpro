@@ -1189,6 +1189,22 @@ CREATE TABLE `hotel_holidays` (
   CONSTRAINT `fk_hotel_hol_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- Hotel Vendors
+DROP TABLE IF EXISTS `hotel_vendors`;
+CREATE TABLE `hotel_vendors` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `contact` varchar(50) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `gst_number` varchar(20) DEFAULT NULL,
+  `address` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `fk_hotel_vendors_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 -- Hotel Transactions
 DROP TABLE IF EXISTS `hotel_transactions`;
 CREATE TABLE `hotel_transactions` (
@@ -1204,6 +1220,13 @@ CREATE TABLE `hotel_transactions` (
   `member_id` int DEFAULT NULL,
   `guest_name` varchar(255) DEFAULT NULL,
   `payment_status` enum('pending','completed','cancelled') DEFAULT 'completed',
+  `payment_mode` enum('Cash', 'UPI', 'Card', 'Bank') DEFAULT 'Cash',
+  `property_type` enum('Hotel', 'Homestay') DEFAULT 'Hotel',
+  `unit_id` int DEFAULT NULL,
+  `booking_id` int DEFAULT NULL,
+  `vendor_id` int DEFAULT NULL,
+  `income_source` enum('Room Booking', 'Food', 'Laundry', 'Other') DEFAULT 'Room Booking',
+  `attachment_url` varchar(255) DEFAULT NULL,
   `quantity` decimal(15,2) DEFAULT '1.00',
   `unit_price` decimal(15,2) DEFAULT '0.00',
   `description` text DEFAULT NULL,
@@ -1213,10 +1236,16 @@ CREATE TABLE `hotel_transactions` (
   KEY `fk_hotel_trans_proj` (`project_id`),
   KEY `fk_hotel_trans_memb` (`member_id`),
   KEY `fk_hotel_trans_cat` (`category_id`),
+  KEY `fk_hotel_trans_unit` (`unit_id`),
+  KEY `fk_hotel_trans_booking` (`booking_id`),
+  KEY `fk_hotel_trans_vendor` (`vendor_id`),
   CONSTRAINT `fk_hotel_trans_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_hotel_trans_proj` FOREIGN KEY (`project_id`) REFERENCES `hotel_projects` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_hotel_trans_memb` FOREIGN KEY (`member_id`) REFERENCES `hotel_members` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `fk_hotel_trans_cat` FOREIGN KEY (`category_id`) REFERENCES `hotel_categories` (`id`) ON DELETE SET NULL
+  CONSTRAINT `fk_hotel_trans_cat` FOREIGN KEY (`category_id`) REFERENCES `hotel_categories` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_hotel_trans_unit` FOREIGN KEY (`unit_id`) REFERENCES `hotel_units` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_hotel_trans_booking` FOREIGN KEY (`booking_id`) REFERENCES `hotel_bookings` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_hotel_trans_vendor` FOREIGN KEY (`vendor_id`) REFERENCES `hotel_vendors` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Hotel Attendance

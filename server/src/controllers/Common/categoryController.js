@@ -32,7 +32,7 @@ exports.getCategories = async (req, res) => {
             await Category.seedDefaultCategories(req.user.data_owner_id, sector);
             categories = await Category.getAllByUserId(req.user.data_owner_id, sector);
         }
-        res.json(categories);
+        res.json({ data: categories });
     } catch (error) { res.status(500).json({ error: error.message }); }
 };
 

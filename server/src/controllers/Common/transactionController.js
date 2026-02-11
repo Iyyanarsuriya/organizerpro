@@ -39,7 +39,7 @@ exports.getTransactions = async (req, res) => {
     try {
         const { projectId, memberId, memberType, period, startDate, endDate, sector } = req.query;
         const transactions = await Transaction.getAllByUserId(req.user.data_owner_id, { projectId, memberId, memberType, period, startDate, endDate, sector });
-        res.json(transactions);
+        res.json({ data: transactions });
     } catch (error) { res.status(500).json({ error: error.message }); }
 };
 
@@ -69,6 +69,7 @@ exports.getTransactionStats = async (req, res) => {
         const { period, projectId, memberId, memberType, startDate, endDate, sector } = req.query;
         const filters = { memberType, sector };
         const summary = await Transaction.getStats(req.user.data_owner_id, period, projectId, startDate, endDate, memberId, filters);
-        res.json({ summary }); // Simplified for now
+        const categories = await Transaction.getCategoryStats(req.user.data_owner_id, period, projectId, startDate, endDate, memberId, filters);
+        res.json({ data: { summary, categories } });
     } catch (error) { res.status(500).json({ error: error.message }); }
 };

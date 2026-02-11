@@ -61,30 +61,36 @@ const ITTransactionModel = {
 // --- HOTEL SECTOR ---
 const HotelTransactionModel = {
     create: async (data) => {
-        const { user_id, title, amount, type, category_id, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, description } = data;
+        const { user_id, title, amount, type, category_id, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, description, payment_mode, property_type, unit_id, booking_id, vendor_id, income_source, attachment_url } = data;
         const [res] = await db.query(
-            `INSERT INTO hotel_transactions (user_id, title, amount, type, category_id, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, description) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [user_id, title, amount, type, category_id, sanitizeDate(date), project_id, member_id, guest_name, payment_status || 'completed', quantity || 1, unit_price || 0, description]
+            `INSERT INTO hotel_transactions (user_id, title, amount, type, category_id, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, description, payment_mode, property_type, unit_id, booking_id, vendor_id, income_source, attachment_url) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [user_id, title, amount, type, category_id, sanitizeDate(date), project_id, member_id, guest_name, payment_status || 'completed', quantity || 1, unit_price || 0, description, payment_mode || 'Cash', property_type || 'Hotel', unit_id, booking_id, vendor_id, income_source, attachment_url]
         );
         return { id: res.insertId, ...data };
     },
     update: async (id, userId, data) => {
-        const { title, amount, type, category_id, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, description } = data;
+        const { title, amount, type, category_id, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, description, payment_mode, property_type, unit_id, booking_id, vendor_id, income_source, attachment_url } = data;
         const [res] = await db.query(
-            `UPDATE hotel_transactions SET title=?, amount=?, type=?, category_id=?, date=?, project_id=?, member_id=?, guest_name=?, payment_status=?, quantity=?, unit_price=?, description=? WHERE id=? AND user_id=?`,
-            [title, amount, type, category_id, sanitizeDate(date), project_id, member_id, guest_name, payment_status || 'completed', quantity || 1, unit_price || 0, description, id, userId]
+            `UPDATE hotel_transactions SET title=?, amount=?, type=?, category_id=?, date=?, project_id=?, member_id=?, guest_name=?, payment_status=?, quantity=?, unit_price=?, description=?, payment_mode=?, property_type=?, unit_id=?, booking_id=?, vendor_id=?, income_source=?, attachment_url=? WHERE id=? AND user_id=?`,
+            [title, amount, type, category_id, sanitizeDate(date), project_id, member_id, guest_name, payment_status || 'completed', quantity || 1, unit_price || 0, description, payment_mode, property_type, unit_id, booking_id, vendor_id, income_source, attachment_url, id, userId]
         );
         return res.affectedRows > 0;
     },
     getAll: async (userId, filters) => {
         let query = `
-            SELECT t.*, CASE WHEN t.member_id IS NOT NULL THEN w.name ELSE t.guest_name END as member_name,
-            w.member_type, c.name as category_name, p.name as project_name
+            SELECT t.*, 
+            CASE WHEN t.member_id IS NOT NULL THEN w.name ELSE t.guest_name END as member_name,
+            c.name as category_name, 
+            u.unit_number as room_number,
+            v.name as vendor_name,
+            b.status as booking_status
             FROM hotel_transactions t 
             LEFT JOIN hotel_members w ON t.member_id = w.id
-            LEFT JOIN hotel_projects p ON t.project_id = p.id
             LEFT JOIN hotel_categories c ON t.category_id = c.id
+            LEFT JOIN hotel_units u ON t.unit_id = u.id
+            LEFT JOIN hotel_vendors v ON t.vendor_id = v.id
+            LEFT JOIN hotel_bookings b ON t.booking_id = b.id
             WHERE t.user_id = ?`;
         const params = [userId];
         return await executeFilteredQuery(query, params, filters);
@@ -195,6 +201,15 @@ const executeFilteredQuery = async (query, params, filters) => {
         else if (filters.period.length === 7) { query += " AND DATE_FORMAT(t.date, '%Y-%m') = ?"; params.push(filters.period); }
     }
     if (filters.startDate && filters.endDate) { query += " AND DATE(t.date) BETWEEN ? AND ?"; params.push(filters.startDate, filters.endDate); }
+
+    // Hotel specific filters
+    if (filters.propertyType) { query += ' AND t.property_type = ?'; params.push(filters.propertyType); }
+    if (filters.paymentMode) { query += ' AND t.payment_mode = ?'; params.push(filters.paymentMode); }
+    if (filters.unitId) { query += ' AND t.unit_id = ?'; params.push(filters.unitId); }
+    if (filters.bookingId) { query += ' AND t.booking_id = ?'; params.push(filters.bookingId); }
+    if (filters.vendorId) { query += ' AND t.vendor_id = ?'; params.push(filters.vendorId); }
+    if (filters.categoryId) { query += ' AND t.category_id = ?'; params.push(filters.categoryId); }
+
     query += ' ORDER BY t.date DESC, t.created_at DESC LIMIT 500';
     const [rows] = await db.query(query, params);
     return rows;

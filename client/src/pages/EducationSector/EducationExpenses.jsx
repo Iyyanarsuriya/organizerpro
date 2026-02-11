@@ -126,9 +126,9 @@ const EducationExpenses = () => {
             setMembers(membersRes.data.data || []);
             setVendors(vendorsRes.data.data || []);
             setDepartments(deptsRes.data.data || []);
-            setTransactions(transRes.data);
-            setCategories(catRes.data);
-            setStats(statsRes.data);
+            setTransactions(transRes.data.data || []);
+            setCategories(catRes.data.data || []);
+            setStats(statsRes.data.data || { summary: { total_income: 0, total_expense: 0 }, categories: [] });
             setLoading(false);
         } catch (error) {
             console.error("Fetch Data Error Details:", error.response || error);

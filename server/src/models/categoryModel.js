@@ -46,10 +46,17 @@ const HotelCategoryModel = {
     },
     seed: async (userId) => {
         const defaults = [
-            { name: 'Room Service', color: '#2d5bff' },
+            { name: 'Housekeeping', color: '#10b981' },
+            { name: 'Staff Salary', color: '#2d5bff' },
             { name: 'Maintenance', color: '#f59e0b' },
-            { name: 'Housekeeping', color: '#00d1a0' },
-            { name: 'Kitchen', color: '#ef4444' }
+            { name: 'Utilities', color: '#ef4444' },
+            { name: 'Laundry', color: '#8b5cf6' },
+            { name: 'Food Supplies', color: '#ec4899' },
+            { name: 'OTA Commission', color: '#f59e0b' },
+            { name: 'Marketing', color: '#06b6d4' },
+            { name: 'Rent/EMI', color: '#64748b' },
+            { name: 'Internet', color: '#3b82f6' },
+            { name: 'Miscellaneous', color: '#94a3b8' }
         ];
         for (const cat of defaults) await HotelCategoryModel.create({ user_id: userId, name: cat.name, color: cat.color });
     }

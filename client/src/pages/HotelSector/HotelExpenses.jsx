@@ -1,4 +1,3 @@
-// Force reload
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReactDOM from 'react-dom';
@@ -12,27 +11,25 @@ import {
     createExpenseCategory,
     deleteExpenseCategory
 } from '../../api/Expense/hotelExpense';
-import { getProjects, createProject, deleteProject, getAttendanceStats } from '../../api/Attendance/hotelAttendance';
-import { getMembers, getGuests, getMemberRoles } from '../../api/TeamManagement/hotelTeam';
+import { getMembers, getMemberRoles } from '../../api/TeamManagement/hotelTeam';
+import { getVendors } from '../../api/TeamManagement/hotelVendor';
+import { getUnits, getBookings } from '../../api/Hotel/hotelOp';
+import { getAttendanceStats } from '../../api/Attendance/hotelAttendance';
 import toast from 'react-hot-toast';
 import {
     FaWallet, FaPlus, FaTrash, FaChartBar, FaExchangeAlt, FaFileAlt, FaEdit, FaTimes,
-    FaPlusCircle, FaFolderPlus,
-    FaCheck, FaCalculator, FaUsers, FaFilePdf, FaFileCsv
+    FaPlusCircle, FaFolderPlus, FaCheck, FaCalculator, FaUsers, FaBuilding, FaBed, FaUserTie, FaCog
 } from 'react-icons/fa';
-import { exportExpenseToCSV, exportExpenseToTXT, exportExpenseToPDF, exportMemberPayslipToPDF } from '../../utils/exportUtils/index.js';
 import { formatAmount } from '../../utils/formatUtils';
 
-import CategoryManager from '../../components/Common/CategoryManager';
-import ProjectManager from '../../components/Manufacturing/ProjectManager';
-import MemberManager from '../../components/Manufacturing/MemberManager';
-import ExportButtons from '../../components/Common/ExportButtons';
-
 // Sub-components
-import Dashboard from '../ManufacturingSector/ExpenseTracker/Dashboard';
-import Transactions from '../ManufacturingSector/ExpenseTracker/Transactions';
-import Reports from '../ManufacturingSector/ExpenseTracker/Reports';
+import HotelDashboard from './ExpenseTracker/HotelDashboard';
+import HotelTransactions from './ExpenseTracker/HotelTransactions';
+import HotelReports from './ExpenseTracker/HotelReports';
+import HotelVendorManager from './ExpenseTracker/HotelVendorManager';
 import SalaryCalculator from '../ManufacturingSector/ExpenseTracker/SalaryCalculator';
+import CategoryManager from '../../components/Common/CategoryManager';
+import MemberManager from '../../components/Manufacturing/MemberManager';
 
 const HotelExpenses = () => {
     const navigate = useNavigate();
@@ -43,65 +40,52 @@ const HotelExpenses = () => {
     const [showAddModal, setShowAddModal] = useState(false);
 
     // Filters & Period
-    const [periodType, setPeriodType] = useState('day');
-    const [currentPeriod, setCurrentPeriod] = useState(new Date().toISOString().split('T')[0]);
+    const [periodType, setPeriodType] = useState('month');
+    const [currentPeriod, setCurrentPeriod] = useState(new Date().toISOString().slice(0, 7));
     const [customRange, setCustomRange] = useState({ start: '', end: '' });
 
-    // Active Filters
-    const [filterProject, setFilterProject] = useState('');
-    const [filterMember, setFilterMember] = useState('');
-    const [filterRole, setFilterRole] = useState('');
-    const [filterMemberType, setFilterMemberType] = useState('all');
-    const [deleteModalOuter, setDeleteModalOuter] = useState({ show: false, id: null });
-
-    const [showCategoryManager, setShowCategoryManager] = useState(false);
-    const [showProjectManager, setShowProjectManager] = useState(false);
-
+    // State for Entities
     const [categories, setCategories] = useState([]);
-    const [projects, setProjects] = useState([]);
     const [members, setMembers] = useState([]);
-    const [roles, setRoles] = useState([]);
+    const [vendors, setVendors] = useState([]);
+    const [units, setUnits] = useState([]);
+    const [bookings, setBookings] = useState([]);
 
+    // Form State
     const [formData, setFormData] = useState({
         title: '',
         amount: '',
-        quantity: 1,
-        unit_price: 0,
         type: 'expense',
-        category: 'General',
+        category_id: '',
+        category: '',
         date: new Date().toISOString().split('T')[0],
-        project_id: '',
-        member_id: '',
+        payment_mode: 'Cash',
+        property_type: 'Hotel',
+        unit_id: '',
+        booking_id: '',
+        vendor_id: '',
+        income_source: 'Room Booking',
+        description: '',
+        attachment_url: '',
         payment_status: 'completed'
     });
     const [editingId, setEditingId] = useState(null);
 
-    const [filterType, setFilterType] = useState('all');
-    const [filterCat, setFilterCat] = useState('all');
-    const [sortBy, setSortBy] = useState('date_desc');
+    // UI States
+    const [showCategoryManager, setShowCategoryManager] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [filterProperty, setFilterProperty] = useState('');
+    const [filterRoom, setFilterRoom] = useState('');
+    const [filterVendor, setFilterVendor] = useState('');
+    const [filterPaymentMode, setFilterPaymentMode] = useState('');
+    const [filterCategory, setFilterCategory] = useState('');
 
-    const [showModal, setShowModal] = useState(null);
-    const [modalTransactions, setModalTransactions] = useState([]);
-
-    const [showCustomReportModal, setShowCustomReportModal] = useState(false);
-    const [customReportLoading, setCustomReportLoading] = useState(false);
-    const [customReportForm, setCustomReportForm] = useState({
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: new Date().toISOString().split('T')[0],
-        projectId: '',
-        memberId: '',
-        type: 'all',
-        category: 'all'
-    });
-    const [confirmModal, setConfirmModal] = useState({ show: false, type: null, label: '' });
-
+    // Salary integration states
+    const [filterMember, setFilterMember] = useState('');
     const [attendanceStats, setAttendanceStats] = useState(null);
     const [salaryMode, setSalaryMode] = useState('daily');
     const [dailyWage, setDailyWage] = useState(0);
     const [monthlySalary, setMonthlySalary] = useState(0);
-    const [unitsProduced, setUnitsProduced] = useState(0);
-    const [ratePerUnit, setRatePerUnit] = useState(0);
     const [bonus, setBonus] = useState(0);
     const [salaryLoading, setSalaryLoading] = useState(false);
 
@@ -112,162 +96,139 @@ const HotelExpenses = () => {
             const isRange = periodType === 'range';
             const rangeStart = isRange ? customRange.start : null;
             const rangeEnd = isRange ? customRange.end : null;
-            if (isRange && (!rangeStart || !rangeEnd)) return;
 
             const params = {
-                projectId: filterProject,
-                memberId: filterMember,
-                memberType: filterMemberType,
                 period: isRange ? null : currentPeriod,
                 startDate: rangeStart,
-                endDate: rangeEnd
+                endDate: rangeEnd,
+                propertyType: filterProperty,
+                unitId: filterRoom,
+                vendorId: filterVendor,
+                paymentMode: filterPaymentMode,
+                categoryId: filterCategory,
+                sector: 'hotel'
             };
 
-            const [transRes, statsRes, catRes, projRes, membersRes, roleRes, guestRes] = await Promise.all([
+            const [transRes, statsRes, catRes, membersRes, vendorRes, unitRes, bookingRes] = await Promise.all([
                 getTransactions(params),
                 getTransactionStats(params),
-                getExpenseCategories(),
-                getProjects(),
-                getMembers(),
-                getMemberRoles(),
-                getGuests()
+                getExpenseCategories({ sector: 'hotel' }),
+                getMembers({ sector: 'hotel' }),
+                getVendors(),
+                getUnits(),
+                getBookings()
             ]);
 
-            setTransactions(transRes.data || []);
-            setStats(statsRes.data || { summary: { total_income: 0, total_expense: 0 }, categories: [] });
-            setCategories(catRes.data || []);
-            setProjects(projRes.data?.data || []);
-            const rawMembers = membersRes.data?.data || [];
-            const guests = (guestRes.data?.data || []).map(g => ({ ...g, isGuest: true }));
-            setMembers([...rawMembers, ...guests]);
-            setRoles(roleRes.data?.data || []);
-
-            if (filterMember) {
-                setSalaryLoading(true);
-                const attRes = await getAttendanceStats({
-                    memberId: filterMember,
-                    period: isRange ? null : currentPeriod,
-                    startDate: rangeStart,
-                    endDate: rangeEnd
-                });
-
-                const statsArray = attRes.data?.data || [];
-                const summary = {
-                    present: statsArray.filter(s => ['present', 'late', 'permission'].includes(s.status))
-                        .reduce((acc, curr) => acc + curr.count, 0),
-                    absent: statsArray.find(s => s.status === 'absent')?.count || 0,
-                    late: statsArray.find(s => s.status === 'late')?.count || 0,
-                    half_day: statsArray.find(s => s.status === 'half-day')?.count || 0,
-                };
-
-                setAttendanceStats({ summary, raw: statsArray });
-                setSalaryLoading(false);
-            } else {
-                setAttendanceStats(null);
-            }
+            setTransactions(transRes.data.data || []);
+            setStats(statsRes.data.data || { summary: { total_income: 0, total_expense: 0 }, categories: [] });
+            setCategories(catRes.data.data || []);
+            setMembers(membersRes.data?.data || []);
+            setVendors(vendorRes.data?.data || []);
+            setUnits(unitRes.data?.data || []);
+            setBookings(bookingRes.data?.data || []);
 
             setLoading(false);
         } catch (error) {
-            console.error("Fetch Data Error Details:", error.response || error);
-            toast.error(`Failed to fetch data: ${error.response?.data?.message || error.message}`);
+            console.error("Fetch Data Error:", error);
+            toast.error("Failed to load hospitality data");
             setLoading(false);
         }
     };
 
     useEffect(() => {
         fetchData();
-    }, [currentPeriod, filterProject, filterMember, filterMemberType, customRange.start, customRange.end, periodType]);
+    }, [currentPeriod, periodType, customRange.start, customRange.end, filterProperty, filterRoom, filterVendor, filterPaymentMode, filterCategory]);
 
-    useEffect(() => {
-        if (filterMember && members.length > 0) {
-            const member = members.find(m => m.id == filterMember);
+    const handleSalaryFetch = async (memberId) => {
+        if (!memberId) return;
+        setSalaryLoading(true);
+        try {
+            const res = await getAttendanceStats({
+                memberId,
+                period: periodType === 'range' ? null : currentPeriod,
+                startDate: customRange.start,
+                endDate: customRange.end
+            });
+            const statsArray = res.data?.data || [];
+            const summary = {
+                present: statsArray.filter(s => ['present', 'late', 'permission'].includes(s.status))
+                    .reduce((acc, curr) => acc + curr.count, 0),
+                absent: statsArray.find(s => s.status === 'absent')?.count || 0,
+                late: statsArray.find(s => s.status === 'late')?.count || 0,
+                half_day: statsArray.find(s => s.status === 'half-day')?.count || 0,
+            };
+            setAttendanceStats({ summary, raw: statsArray });
+
+            const member = members.find(m => m.id == memberId);
             if (member) {
-                const mode = member.wage_type === 'piece_rate' ? 'production' : member.wage_type;
-                setSalaryMode(mode || 'daily');
-                const amount = parseFloat(member.daily_wage) || 0;
-                if (mode === 'daily') setDailyWage(amount);
-                else if (mode === 'monthly') setMonthlySalary(amount);
-                else if (mode === 'production') setRatePerUnit(amount);
+                setSalaryMode(member.wage_type || 'daily');
+                if (member.wage_type === 'daily') setDailyWage(member.daily_wage || 0);
+                else if (member.wage_type === 'monthly') setMonthlySalary(member.monthly_salary || 0);
             }
+        } catch (error) {
+            toast.error("Failed to fetch member attendance");
+        } finally {
+            setSalaryLoading(false);
         }
-    }, [filterMember, members]);
+    };
 
     useEffect(() => {
-        const today = new Date();
-        const yyyy = today.getFullYear();
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        const dd = String(today.getDate()).padStart(2, '0');
-
-        if (periodType === 'year') {
-            if (currentPeriod.length !== 4) setCurrentPeriod(`${yyyy}`);
-        } else if (periodType === 'month') {
-            if (currentPeriod.length !== 7) setCurrentPeriod(`${yyyy}-${mm}`);
-        } else if (periodType === 'day') {
-            if (currentPeriod.length !== 10) setCurrentPeriod(`${yyyy}-${mm}-${dd}`);
+        if (activeTab === 'Salary' && filterMember) {
+            handleSalaryFetch(filterMember);
         }
-    }, [periodType]);
+    }, [filterMember, activeTab]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            if (editingId) await updateTransaction(editingId, formData);
-            else await createTransaction(formData);
-            toast.success(editingId ? "Transaction updated!" : "Transaction added!");
+            const payload = { ...formData, sector: 'hotel' };
+            if (editingId) await updateTransaction(editingId, payload);
+            else await createTransaction(payload);
+            toast.success(editingId ? "Transaction updated" : "Hospitality transaction recorded");
             setShowAddModal(false);
             setEditingId(null);
             fetchData();
         } catch (error) {
-            toast.error("Error saving transaction");
+            toast.error("Error saving hospitality record");
         }
     };
 
     const handleEdit = (t) => {
-        setFormData({ ...t, date: new Date(t.date).toISOString().split('T')[0] });
+        setFormData({
+            ...t,
+            date: new Date(t.date).toISOString().split('T')[0],
+            category_id: t.category_id || '',
+            unit_id: t.unit_id || '',
+            booking_id: t.booking_id || '',
+            vendor_id: t.vendor_id || ''
+        });
         setEditingId(t.id);
         setShowAddModal(true);
     };
 
     const handleAddNewTransaction = () => {
-        setFormData({ title: '', amount: '', quantity: 1, unit_price: 0, type: 'expense', category: 'General', category_id: null, date: new Date().toISOString().split('T')[0], project_id: filterProject || '', member_id: filterMember || '', payment_status: 'completed' });
+        setFormData({
+            title: '', amount: '', type: 'expense', category_id: '', category: '',
+            date: new Date().toISOString().split('T')[0], payment_mode: 'Cash',
+            property_type: 'Hotel', unit_id: '', booking_id: '', vendor_id: '',
+            income_source: 'Room Booking', description: '', attachment_url: '',
+            payment_status: 'completed'
+        });
         setEditingId(null);
         setShowAddModal(true);
     };
 
-    const handleDelete = async (id) => {
-        try {
-            await deleteTransaction(id);
-            toast.success("Deleted");
-            setDeleteModalOuter({ show: false, id: null });
-            fetchData();
-        } catch (error) {
-            toast.error("Delete failed");
+    const confirmDelete = async (id) => {
+        if (window.confirm('Delete this transaction record?')) {
+            try {
+                await deleteTransaction(id);
+                toast.success("Deleted");
+                fetchData();
+            } catch (error) {
+                toast.error("Delete failed");
+            }
         }
     };
-
-    const confirmDelete = (id) => setDeleteModalOuter({ show: true, id });
-
-    const handleShowTransactions = (type) => {
-        setModalTransactions(transactions.filter(t => t.type === type));
-        setShowModal(type);
-    };
-
-    const memberIdToRoleMap = useMemo(() => {
-        const map = {};
-        members.forEach(m => { map[m.id] = m.role; });
-        return map;
-    }, [members]);
-
-    const combinedData = useMemo(() => transactions.sort((a, b) => new Date(b.date) - new Date(a.date)), [transactions]);
-
-    const filteredTransactions = useMemo(() => {
-        return combinedData.filter(t => {
-            const matchesType = filterType === 'all' || t.type === filterType;
-            const matchesCat = filterCat === 'all' || t.category === filterCat;
-            const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase());
-            const matchesRole = !filterRole || (t.member_id && memberIdToRoleMap[t.member_id] === filterRole);
-            return matchesType && matchesCat && matchesSearch && matchesRole;
-        });
-    }, [combinedData, filterType, filterCat, searchQuery, filterRole, memberIdToRoleMap]);
 
     const pieData = useMemo(() => {
         if (!stats.categories) return [];
@@ -293,130 +254,102 @@ const HotelExpenses = () => {
         });
     }, [transactions]);
 
-    const handleExportCSV = (data = transactions) => exportExpenseToCSV(data, `hotel_expense_${currentPeriod}`);
-    const handleExportPDF = (data = transactions) => exportExpenseToPDF({ data, period: currentPeriod, filename: `hotel_expense_${currentPeriod}` });
-    const handleExportTXT = (data = transactions) => exportExpenseToTXT({ data, period: currentPeriod, filename: `hotel_expense_${currentPeriod}` });
-
-    const handleExportPayslip = ({ memberId, transactions, attendanceStats, period, calculatedSalary, bonus }) => {
-        const member = members.find(m => m.id == memberId);
-        if (member) exportMemberPayslipToPDF({ member, transactions, attendanceStats, period, filename: `payslip_${member.name}_${period}`, calculatedSalary, bonus });
-    };
-
-    const handleGenerateCustomReport = async (format) => {
-        setCustomReportLoading(format);
-        try {
-            const params = {
-                projectId: customReportForm.projectId,
-                memberId: customReportForm.memberId,
-                startDate: customReportForm.startDate,
-                endDate: customReportForm.endDate
-            };
-            const res = await getTransactions(params);
-            if (format === 'PDF') handleExportPDF(res.data);
-            else if (format === 'CSV') handleExportCSV(res.data);
-            setShowCustomReportModal(false);
-            toast.success("Report generated");
-        } catch (error) {
-            toast.error("Failed to generate report");
-        } finally {
-            setCustomReportLoading(false);
-        }
-    };
-
-    const SidebarItem = ({ icon: Icon, label, onClick }) => (
-        <button onClick={() => onClick ? onClick() : setActiveTab(label)} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === label ? 'bg-[#2d5bff] text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
+    const SidebarItem = ({ icon: Icon, label }) => (
+        <button onClick={() => setActiveTab(label)} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 group ${activeTab === label ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
             <Icon className={`text-lg transition-transform group-hover:scale-110 ${activeTab === label ? 'text-white' : 'text-slate-400'}`} />
-            <span className="font-black text-xs uppercase tracking-widest">{label}</span>
+            <span className="font-black text-[10px] uppercase tracking-widest">{label}</span>
         </button>
     );
 
-    if (loading) return <div className="h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-[#2d5bff]"></div></div>;
+    if (loading) return <div className="h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-slate-900"></div></div>;
 
     return (
-        <div className="flex bg-slate-50 min-h-screen text-slate-800 font-['Outfit']">
-            <aside className="w-72 bg-white border-r border-slate-200 p-8 hidden lg:flex flex-col">
-                <div className="flex items-center gap-3 mb-12">
-                    <div className="w-10 h-10 rounded-xl bg-linear-to-br from-[#2d5bff] to-[#6366f1] flex items-center justify-center shadow-lg shadow-blue-500/20"><FaWallet className="text-white text-lg" /></div>
-                    <div><h2 className="text-sm font-black tracking-tight">Financial Hub</h2><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Management</p></div>
+        <div className="flex bg-[#fcfcfd] min-h-screen text-slate-800 font-['Outfit']">
+            {/* Sidebar */}
+            <aside className="w-76 bg-white border-r border-slate-100 p-8 hidden lg:flex flex-col fixed h-full z-50">
+                <div className="flex items-center gap-4 mb-14">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center shadow-2xl shadow-slate-200">
+                        <FaBuilding className="text-white text-xl" />
+                    </div>
+                    <div>
+                        <h2 className="text-lg font-black tracking-tighter leading-tight">Hospitality ERP</h2>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mt-0.5">Expense Tracker</p>
+                    </div>
                 </div>
-                <nav className="flex-1 space-y-2">
+                <nav className="flex-1 space-y-3">
                     <SidebarItem icon={FaChartBar} label="Dashboard" />
-                    <SidebarItem icon={FaUsers} label="Members" />
                     <SidebarItem icon={FaExchangeAlt} label="Transactions" />
-                    <SidebarItem icon={FaFileAlt} label="Reports" />
+                    <SidebarItem icon={FaUserTie} label="Vendors" />
+                    <SidebarItem icon={FaUsers} label="Members" />
                     <SidebarItem icon={FaCalculator} label="Salary" />
+                    <SidebarItem icon={FaFileAlt} label="Reports" />
+                    <SidebarItem icon={FaCog} label="Categories" />
                 </nav>
             </aside>
 
-            <main className="flex-1 p-[16px] lg:p-[48px] h-screen overflow-y-auto custom-scrollbar">
-                {activeTab === 'Dashboard' && (
-                    <div className="flex flex-col gap-6 mb-8 lg:mb-12">
-                        <div className="flex items-center justify-between">
-                            <div><h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">Hotel Expenses</h1><div className="h-[8px] mt-0.5 flex gap-1"><div className="px-1 bg-emerald-50 text-[6px] font-black text-emerald-600 rounded-full flex items-center uppercase tracking-tighter">FINANCE HUB</div></div></div>
-                        </div>
-
-                        <div className="flex flex-wrap items-end gap-3 p-6 bg-white rounded-[32px] border border-slate-100 shadow-sm transition-all hover:shadow-md">
-                            <div className="w-full">
-                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Period Type</label>
-                                <div className="flex p-1 bg-slate-50 rounded-xl border border-slate-100">
-                                    {['day', 'week', 'month', 'year', 'range'].map((type) => (
-                                        <button key={type} onClick={() => setPeriodType(type)} className={`flex-1 h-9 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${periodType === type ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{type}</button>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="w-full sm:w-[140px]">
-                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Project</label>
-                                <select value={filterProject} onChange={(e) => setFilterProject(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer"><option value="">All Projects</option>{projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
-                            </div>
-                            <div className="flex items-center gap-2 ml-auto">
-                                <ExportButtons onExportCSV={() => setConfirmModal({ show: true, type: 'CSV', label: 'CSV' })} onExportPDF={() => setConfirmModal({ show: true, type: 'PDF', label: 'PDF' })} onExportTXT={() => setConfirmModal({ show: true, type: 'TXT', label: 'TXT' })} />
-                                <button onClick={() => setShowProjectManager(true)} className="h-10 bg-blue-600 text-white px-4 rounded-xl shadow-lg"><FaFolderPlus /></button>
-                            </div>
-                        </div>
+            {/* Main Content */}
+            <main className="flex-1 lg:ml-76 p-4 lg:p-12 overflow-y-auto">
+                <header className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div>
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2 uppercase">{activeTab}</h1>
+                        <nav className="flex gap-2 text-[10px] font-black uppercase tracking-widest text-slate-300">
+                            <span>Hospitality</span>
+                            <span>/</span>
+                            <span className="text-slate-900">Expense Hub</span>
+                        </nav>
                     </div>
-                )}
+                    <div className="flex gap-3">
+                        <button onClick={handleAddNewTransaction} className="h-14 bg-slate-900 text-white rounded-[24px] px-8 text-[11px] font-black uppercase tracking-widest flex items-center gap-3 hover:bg-slate-800 transition-all shadow-xl shadow-black/10 transition-transform active:scale-95">
+                            <FaPlus size={14} /> New Entry
+                        </button>
+                    </div>
+                </header>
 
-                <div className="lg:hidden flex overflow-x-auto gap-3 mb-8 pb-2 custom-scrollbar">
-                    {['Dashboard', 'Members', 'Transactions', 'Reports', 'Salary'].map(tab => (
-                        <button key={tab} onClick={() => setActiveTab(tab)} className={`whitespace-nowrap px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-[#2d5bff] text-white' : 'bg-white text-slate-500 border'}`}>{tab}</button>
+                <div className="lg:hidden flex overflow-x-auto gap-3 mb-10 pb-2 no-scrollbar">
+                    {['Dashboard', 'Transactions', 'Vendors', 'Members', 'Salary', 'Reports'].map(tab => (
+                        <button key={tab} onClick={() => setActiveTab(tab)} className={`whitespace-nowrap px-6 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-slate-900 text-white shadow-lg' : 'bg-white text-slate-500 border border-slate-100'}`}>{tab}</button>
                     ))}
                 </div>
 
-                {activeTab === 'Dashboard' ? (
-                    <Dashboard
-                        periodType={periodType}
-                        customRange={customRange}
-                        currentPeriod={currentPeriod}
+                {/* Content Mapping */}
+                {activeTab === 'Dashboard' && (
+                    <HotelDashboard
                         stats={stats}
-                        transactions={combinedData}
                         pieData={pieData}
                         barData={barData}
                         COLORS={COLORS}
-                        handleShowTransactions={handleShowTransactions}
+                        transactions={transactions}
                         handleAddNewTransaction={handleAddNewTransaction}
                         setActiveTab={setActiveTab}
-                        formatCurrency={(v) => `₹${formatAmount(v)}`}
+                        units={units}
+                        bookings={bookings}
                     />
-                ) : activeTab === 'Members' ? (
-                    <MemberManager onUpdate={fetchData} />
-                ) : activeTab === 'Transactions' ? (
-                    <Transactions
-                        filteredTransactions={filteredTransactions}
+                )}
+
+                {activeTab === 'Transactions' && (
+                    <HotelTransactions
+                        filteredTransactions={transactions}
                         searchQuery={searchQuery}
                         setSearchQuery={setSearchQuery}
-                        filterType={filterType}
-                        setFilterType={setFilterType}
-                        sortBy={sortBy}
-                        setSortBy={setSortBy}
+                        filterType={formData.type}
+                        setFilterType={(t) => setFormData({ ...formData, type: t })}
+                        sortBy={filterCategory}
+                        setSortBy={setFilterCategory}
                         handleAddNewTransaction={handleAddNewTransaction}
                         handleEdit={handleEdit}
                         confirmDelete={confirmDelete}
-                        projects={projects}
+                        units={units}
                         members={members}
-                        filterProject={filterProject}
-                        setFilterProject={setFilterProject}
-                        filterMember={filterMember}
-                        setFilterMember={setFilterMember}
+                        vendors={vendors}
+                        categories={categories}
+                        filterProperty={filterProperty}
+                        setFilterProperty={setFilterProperty}
+                        filterRoom={filterRoom}
+                        setFilterRoom={setFilterRoom}
+                        filterVendor={filterVendor}
+                        setFilterVendor={setFilterVendor}
+                        filterPaymentMode={filterPaymentMode}
+                        setFilterPaymentMode={setFilterPaymentMode}
                         periodType={periodType}
                         setPeriodType={setPeriodType}
                         currentPeriod={currentPeriod}
@@ -424,127 +357,193 @@ const HotelExpenses = () => {
                         customRange={customRange}
                         setCustomRange={setCustomRange}
                     />
-                ) : activeTab === 'Reports' ? (
-                    <Reports transactions={transactions} filteredTransactions={filteredTransactions} handleExportPDF={handleExportPDF} handleExportCSV={handleExportCSV} handleExportTXT={handleExportTXT} members={members} projects={projects} periodType={periodType} stats={stats} setShowCustomReportModal={setShowCustomReportModal} />
-                ) : (
-                    <SalaryCalculator periodType={periodType} filterMember={filterMember} setFilterMember={setFilterMember} members={members} filteredTransactions={filteredTransactions} handleExportPayslip={handleExportPayslip} salaryLoading={salaryLoading} attendanceStats={attendanceStats} salaryMode={salaryMode} setSalaryMode={setSalaryMode} dailyWage={dailyWage} setDailyWage={setDailyWage} monthlySalary={monthlySalary} setMonthlySalary={setMonthlySalary} bonus={bonus} setBonus={setBonus} stats={stats} transactions={transactions} />
+                )}
+
+                {activeTab === 'Vendors' && <HotelVendorManager />}
+                {activeTab === 'Members' && (
+                    <MemberManager sector="hotel" onUpdate={fetchData} />
+                )}
+                {activeTab === 'Salary' && (
+                    <SalaryCalculator
+                        periodType={periodType}
+                        filterMember={filterMember}
+                        setFilterMember={setFilterMember}
+                        members={members}
+                        filteredTransactions={transactions}
+                        handleExportPayslip={() => { }}
+                        salaryLoading={salaryLoading}
+                        attendanceStats={attendanceStats}
+                        salaryMode={salaryMode}
+                        setSalaryMode={setSalaryMode}
+                        dailyWage={dailyWage}
+                        setDailyWage={setDailyWage}
+                        monthlySalary={monthlySalary}
+                        setMonthlySalary={setMonthlySalary}
+                        bonus={bonus}
+                        setBonus={setBonus}
+                        stats={stats}
+                        transactions={transactions}
+                    />
+                )}
+                {activeTab === 'Reports' && (
+                    <HotelReports
+                        transactions={transactions}
+                        categories={categories}
+                        stats={stats}
+                        units={units}
+                    />
+                )}
+                {activeTab === 'Categories' && (
+                    <div className="bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm max-w-4xl mx-auto">
+                        <div className="flex justify-between items-center mb-10">
+                            <h2 className="text-xl font-black">Expense Categories</h2>
+                            <button onClick={() => setShowCategoryManager(true)} className="px-6 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest">Manage All</button>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {categories.map(cat => (
+                                <div key={cat.id} className="p-6 rounded-[32px] border border-slate-50 shadow-sm hover:shadow-md transition-all flex flex-col items-center text-center group">
+                                    <div className="w-4 h-4 rounded-full mb-3" style={{ backgroundColor: cat.color }}></div>
+                                    <span className="text-[11px] font-black uppercase text-slate-600 tracking-tight">{cat.name}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 )}
             </main>
 
+            {/* Entry Modal */}
             {showAddModal && (
-                <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-                    <div className="bg-white rounded-[40px] p-8 w-full max-w-lg shadow-2xl relative overflow-y-auto max-h-[90vh] custom-scrollbar">
-                        <button onClick={() => setShowAddModal(false)} className="absolute top-8 right-8 text-slate-400 hover:text-slate-600 transition-colors"><FaTimes /></button>
-                        <h2 className="text-2xl font-black mb-6 tracking-tight text-slate-900">{editingId ? 'Update Record' : 'New Transaction'}</h2>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="col-span-2">
-                                    <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Title</label>
-                                    <input required value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-100 transition-all" placeholder="Enter title..." />
-                                </div>
-
-                                <div>
-                                    <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Type</label>
-                                    <select value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value })} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-sm font-bold outline-none cursor-pointer">
-                                        <option value="expense">Expense</option>
-                                        <option value="income">Income</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Date</label>
-                                    <input type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-sm font-bold outline-none" />
-                                </div>
-
-                                <div>
-                                    <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Category</label>
-                                    <div className="relative group">
-                                        <select value={formData.category_id || ''} onChange={e => {
-                                            const cat = categories.find(c => c.id == e.target.value);
-                                            setFormData({ ...formData, category_id: e.target.value, category: cat ? cat.name : 'Other' });
-                                        }} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-sm font-bold outline-none cursor-pointer appearance-none">
-                                            <option value="">Select Category</option>
-                                            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                        </select>
-                                        <div onClick={() => setShowCategoryManager(true)} className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-600 cursor-pointer"><FaPlusCircle size={14} /></div>
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setShowAddModal(false)}></div>
+                    <div className="relative bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+                        <div className="max-h-[90vh] overflow-y-auto no-scrollbar">
+                            <div className="p-10">
+                                <header className="flex justify-between items-center mb-10">
+                                    <div>
+                                        <h2 className="text-2xl font-black text-slate-900 mb-1">{editingId ? 'Edit Record' : 'Add New Record'}</h2>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hospitality Flow Management</p>
                                     </div>
-                                </div>
+                                    <div className="flex bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
+                                        <button onClick={() => setFormData({ ...formData, type: 'income' })} className={`px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${formData.type === 'income' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-400'}`}>Income</button>
+                                        <button onClick={() => setFormData({ ...formData, type: 'expense' })} className={`px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${formData.type === 'expense' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-400'}`}>Expense</button>
+                                    </div>
+                                </header>
 
-                                <div>
-                                    <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Project</label>
-                                    <select value={formData.project_id || ''} onChange={e => setFormData({ ...formData, project_id: e.target.value })} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-sm font-bold outline-none cursor-pointer">
-                                        <option value="">No Project</option>
-                                        {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                    </select>
-                                </div>
+                                <form onSubmit={handleSubmit} className="space-y-8">
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div className="col-span-2">
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Title / Label</label>
+                                            <input required value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} className="w-full h-14 bg-slate-50 border border-slate-100 rounded-[24px] px-6 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-50 transition-all shadow-sm" placeholder="e.g., Room Booking #102, Laundry Soap, Kitchen Gas" />
+                                        </div>
 
-                                <div className="col-span-2">
-                                    <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Member / Staff</label>
-                                    <select value={formData.member_id || ''} onChange={e => setFormData({ ...formData, member_id: e.target.value })} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-sm font-bold outline-none cursor-pointer">
-                                        <option value="">No Member</option>
-                                        {members.map(m => <option key={m.id} value={m.id}>{m.name} ({m.role})</option>)}
-                                    </select>
-                                </div>
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Amount (₹)</label>
+                                            <input required type="number" step="0.01" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} className="w-full h-14 bg-blue-50/50 border border-blue-100 rounded-[24px] px-6 text-lg font-black text-blue-600 outline-none focus:ring-4 focus:ring-blue-100/30 transition-all" placeholder="0.00" />
+                                        </div>
 
-                                <div>
-                                    <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Quantity</label>
-                                    <input type="number" step="0.01" value={formData.quantity} onChange={e => {
-                                        const qty = parseFloat(e.target.value) || 0;
-                                        setFormData({ ...formData, quantity: qty, amount: (qty * formData.unit_price).toFixed(2) });
-                                    }} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-sm font-bold outline-none" />
-                                </div>
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Date</label>
+                                            <input type="date" required value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} className="w-full h-14 bg-slate-50 border border-slate-100 rounded-[24px] px-6 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-50 transition-all shadow-sm" />
+                                        </div>
 
-                                <div>
-                                    <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Unit Price</label>
-                                    <input type="number" step="0.01" value={formData.unit_price} onChange={e => {
-                                        const up = parseFloat(e.target.value) || 0;
-                                        setFormData({ ...formData, unit_price: up, amount: (formData.quantity * up).toFixed(2) });
-                                    }} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-sm font-bold outline-none" />
-                                </div>
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Payment Mode</label>
+                                            <select value={formData.payment_mode} onChange={e => setFormData({ ...formData, payment_mode: e.target.value })} className="w-full h-14 bg-slate-50 border border-slate-100 rounded-[24px] px-6 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-50 transition-all shadow-sm cursor-pointer appearance-none">
+                                                <option value="Cash">Cash</option>
+                                                <option value="UPI">UPI / Digital</option>
+                                                <option value="Card">Credit/Debit Card</option>
+                                                <option value="Bank">Bank Transfer</option>
+                                            </select>
+                                        </div>
 
-                                <div className="col-span-2">
-                                    <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Total Amount (₹)</label>
-                                    <input required type="number" step="0.01" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} className="w-full bg-blue-50 text-blue-600 border border-blue-100 rounded-2xl px-5 py-3 text-lg font-black outline-none" placeholder="0.00" />
-                                </div>
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Property Type</label>
+                                            <select value={formData.property_type} onChange={e => setFormData({ ...formData, property_type: e.target.value })} className="w-full h-14 bg-slate-50 border border-slate-100 rounded-[24px] px-6 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-50 transition-all shadow-sm cursor-pointer appearance-none">
+                                                <option value="Hotel">Hotel</option>
+                                                <option value="Homestay">Homestay</option>
+                                            </select>
+                                        </div>
+
+                                        {formData.type === 'income' ? (
+                                            <>
+                                                <div>
+                                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Income Source</label>
+                                                    <select value={formData.income_source} onChange={e => setFormData({ ...formData, income_source: e.target.value })} className="w-full h-14 bg-slate-50 border border-slate-100 rounded-[24px] px-6 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-50 transition-all shadow-sm cursor-pointer appearance-none">
+                                                        <option value="Room Booking">Room Booking</option>
+                                                        <option value="Food">Food / Restaurant</option>
+                                                        <option value="Laundry">Laundry Service</option>
+                                                        <option value="Other">Other Services</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Linked Room</label>
+                                                    <select value={formData.unit_id} onChange={e => setFormData({ ...formData, unit_id: e.target.value })} className="w-full h-14 bg-slate-50 border border-slate-100 rounded-[24px] px-6 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-50 transition-all shadow-sm cursor-pointer appearance-none">
+                                                        <option value="">Select Room (Optional)</option>
+                                                        {units.map(u => <option key={u.id} value={u.id}>Room {u.unit_number} ({u.category})</option>)}
+                                                    </select>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div>
+                                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Category</label>
+                                                    <select required value={formData.category_id} onChange={e => {
+                                                        const cat = categories.find(c => c.id == e.target.value);
+                                                        setFormData({ ...formData, category_id: e.target.value, category: cat?.name || '' });
+                                                    }} className="w-full h-14 bg-slate-50 border border-slate-100 rounded-[24px] px-6 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-50 transition-all shadow-sm cursor-pointer appearance-none">
+                                                        <option value="">Select Category</option>
+                                                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Linked Vendor</label>
+                                                    <select value={formData.vendor_id} onChange={e => setFormData({ ...formData, vendor_id: e.target.value })} className="w-full h-14 bg-slate-50 border border-slate-100 rounded-[24px] px-6 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-50 transition-all shadow-sm cursor-pointer appearance-none">
+                                                        <option value="">Select Vendor (Optional)</option>
+                                                        {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                                                    </select>
+                                                </div>
+                                            </>
+                                        )}
+
+                                        <div className="col-span-2">
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Linked Booking</label>
+                                            <select value={formData.booking_id} onChange={e => setFormData({ ...formData, booking_id: e.target.value })} className="w-full h-14 bg-slate-50 border border-slate-100 rounded-[24px] px-6 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-50 transition-all shadow-sm cursor-pointer appearance-none">
+                                                <option value="">Select Active Booking (Optional)</option>
+                                                {bookings.filter(b => b.status !== 'cancelled').map(b => (
+                                                    <option key={b.id} value={b.id}>
+                                                        #{b.id} - {b.guest_name} (Room {b.unit_number})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="col-span-2">
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Notes / Description</label>
+                                            <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full h-24 bg-slate-50 border border-slate-100 rounded-[24px] p-6 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-50 transition-all shadow-sm resize-none" placeholder="Add relevant details..."></textarea>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-4 pt-6">
+                                        <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 h-14 bg-slate-100 text-slate-400 rounded-[24px] text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all shadow-sm">Cancel</button>
+                                        <button type="submit" className={`flex-1 h-14 rounded-[24px] text-[10px] font-black uppercase tracking-widest transition-all shadow-2xl shadow-black/10 ${formData.type === 'income' ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-slate-900 text-white hover:bg-slate-800'}`}>
+                                            {editingId ? 'Update Record' : 'Confirm & Save'}
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
-
-                            <button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-2xl shadow-xl transition-all active:scale-[0.98] mt-4 flex items-center justify-center gap-2">
-                                {editingId ? <FaEdit /> : <FaCheck />}
-                                <span>{editingId ? 'Update Record' : 'Confirm & Save'}</span>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {showCategoryManager && <CategoryManager categories={categories} onUpdate={() => getExpenseCategories().then(res => setCategories(res.data))} onCreate={createExpenseCategory} onDelete={deleteExpenseCategory} onClose={() => setShowCategoryManager(false)} />}
-            {showProjectManager && <ProjectManager projects={projects} onCreate={createProject} onDelete={deleteProject} onRefresh={fetchData} onClose={() => setShowProjectManager(false)} />}
-            {showCustomReportModal && (
-                <div className="fixed inset-0 z-150 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
-                    <div className="bg-white rounded-[40px] p-8 w-full max-w-md shadow-2xl relative">
-                        <button onClick={() => setShowCustomReportModal(false)} className="absolute top-8 right-8 text-slate-400"><FaTimes /></button>
-                        <h2 className="text-2xl font-black mb-6">Custom Report</h2>
-                        <div className="space-y-4">
-                            <input type="date" value={customReportForm.startDate} onChange={e => setCustomReportForm({ ...customReportForm, startDate: e.target.value })} className="w-full bg-slate-50 border rounded-2xl px-5 py-3" />
-                            <input type="date" value={customReportForm.endDate} onChange={e => setCustomReportForm({ ...customReportForm, endDate: e.target.value })} className="w-full bg-slate-50 border rounded-2xl px-5 py-3" />
-                            <button onClick={() => handleGenerateCustomReport('PDF')} className="w-full bg-[#2d5bff] text-white font-black py-4 rounded-2xl">Generate PDF</button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {confirmModal.show && ReactDOM.createPortal(
-                <div className="fixed inset-0 z-9999 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-md" onClick={() => setConfirmModal({ show: false, type: null, label: '' })}></div>
-                    <div className="relative bg-white rounded-[32px] p-8 w-full max-w-sm shadow-2xl text-center">
-                        <h3 className="text-2xl font-black mb-4 tracking-tight">Export {confirmModal.label}?</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <button onClick={() => setConfirmModal({ show: false, type: null, label: '' })} className="py-4 rounded-2xl bg-slate-100 font-black">Cancel</button>
-                            <button onClick={() => { if (confirmModal.type === 'CSV') handleExportCSV(); if (confirmModal.type === 'PDF') handleExportPDF(); if (confirmModal.type === 'TXT') handleExportTXT(); setConfirmModal({ show: false, type: null, label: '' }); }} className="py-4 rounded-2xl bg-slate-900 text-white font-black">Confirm</button>
-                        </div>
-                    </div>
-                </div>,
-                document.body
+            {showCategoryManager && (
+                <CategoryManager
+                    categories={categories}
+                    onUpdate={() => getExpenseCategories({ sector: 'hotel' }).then(res => setCategories(res.data.data))}
+                    onCreate={(data) => createExpenseCategory({ ...data, sector: 'hotel' })}
+                    onDelete={deleteExpenseCategory}
+                    onClose={() => setShowCategoryManager(false)}
+                />
             )}
         </div>
     );
