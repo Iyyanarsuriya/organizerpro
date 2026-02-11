@@ -146,8 +146,15 @@ const HotelAttendanceModel = {
             FROM hotel_members w
             LEFT JOIN hotel_attendance a ON w.id = a.member_id AND a.user_id = ?`;
         const params = [userId];
-        if (filters.period) { query += " AND DATE_FORMAT(a.date, '%Y-%m') = ?"; params.push(filters.period); }
+        if (filters.period) {
+            if (filters.period.length > 7) { query += ' AND DATE(a.date) = ?'; params.push(filters.period); }
+            else { query += " AND DATE_FORMAT(a.date, '%Y-%m') = ?"; params.push(filters.period); }
+        } else if (filters.startDate && filters.endDate) {
+            query += ' AND a.date BETWEEN ? AND ?';
+            params.push(filters.startDate, filters.endDate);
+        }
         query += ` WHERE w.user_id = ? AND w.status = 'active' GROUP BY w.id`;
+        params.push(userId);
         const [rows] = await db.query(query, params);
         return HotelAttendanceModel.calculateWages(rows);
     },
@@ -242,8 +249,15 @@ const ManufacturingAttendanceModel = {
             COUNT(CASE WHEN a.status = 'absent' THEN 1 END) as absent
             FROM manufacturing_members w LEFT JOIN manufacturing_attendance a ON w.id = a.member_id AND a.user_id = ?`;
         const params = [userId];
-        if (filters.period) { query += " AND DATE_FORMAT(a.date, '%Y-%m') = ?"; params.push(filters.period); }
+        if (filters.period) {
+            if (filters.period.length > 7) { query += ' AND DATE(a.date) = ?'; params.push(filters.period); }
+            else { query += " AND DATE_FORMAT(a.date, '%Y-%m') = ?"; params.push(filters.period); }
+        } else if (filters.startDate && filters.endDate) {
+            query += ' AND a.date BETWEEN ? AND ?';
+            params.push(filters.startDate, filters.endDate);
+        }
         query += ` WHERE w.user_id=? AND w.status = 'active' GROUP BY w.id`;
+        params.push(userId);
         const [rows] = await db.query(query, params);
         return rows;
     },
@@ -306,8 +320,15 @@ const ITAttendanceModel = {
             COUNT(CASE WHEN a.status = 'absent' THEN 1 END) as absent
             FROM it_members w LEFT JOIN it_attendance a ON w.id = a.member_id AND a.user_id = ?`;
         const params = [userId];
-        if (filters.period) { query += " AND DATE_FORMAT(a.date, '%Y-%m') = ?"; params.push(filters.period); }
+        if (filters.period) {
+            if (filters.period.length > 7) { query += ' AND DATE(a.date) = ?'; params.push(filters.period); }
+            else { query += " AND DATE_FORMAT(a.date, '%Y-%m') = ?"; params.push(filters.period); }
+        } else if (filters.startDate && filters.endDate) {
+            query += ' AND a.date BETWEEN ? AND ?';
+            params.push(filters.startDate, filters.endDate);
+        }
         query += ` WHERE w.user_id=? AND w.status = 'active' GROUP BY w.id`;
+        params.push(userId);
         const [rows] = await db.query(query, params);
         return rows;
     },
@@ -349,7 +370,13 @@ const EducationAttendanceModel = {
         let query = `SELECT a.*, w.name as member_name FROM education_attendance a LEFT JOIN education_members w ON a.member_id = w.id WHERE a.user_id = ?`;
         const params = [userId];
         if (filters.memberId) { query += ' AND a.member_id = ?'; params.push(filters.memberId); }
-        if (filters.period) { query += " AND DATE_FORMAT(a.date, '%Y-%m') = ?"; params.push(filters.period); }
+        if (filters.period) {
+            if (filters.period.length > 7) { query += ' AND DATE(a.date) = ?'; params.push(filters.period); }
+            else { query += " AND DATE_FORMAT(a.date, '%Y-%m') = ?"; params.push(filters.period); }
+        } else if (filters.startDate && filters.endDate) {
+            query += ' AND a.date BETWEEN ? AND ?';
+            params.push(filters.startDate, filters.endDate);
+        }
         query += ' ORDER BY a.date DESC';
         const [rows] = await db.query(query, params);
         return rows;
@@ -358,20 +385,39 @@ const EducationAttendanceModel = {
     getStats: async (userId, filters) => {
         let query = `SELECT status, COUNT(*) as count FROM education_attendance WHERE user_id=?`;
         const params = [userId];
-        if (filters.period) { query += " AND DATE_FORMAT(date, '%Y-%m') = ?"; params.push(filters.period); }
+        if (filters.memberId) { query += ' AND member_id = ?'; params.push(filters.memberId); }
+        if (filters.period) {
+            if (filters.period.length > 7) { query += ' AND DATE(date) = ?'; params.push(filters.period); }
+            else { query += " AND DATE_FORMAT(date, '%Y-%m') = ?"; params.push(filters.period); }
+        } else if (filters.startDate && filters.endDate) {
+            query += ' AND date BETWEEN ? AND ?';
+            params.push(filters.startDate, filters.endDate);
+        }
         query += ` GROUP BY status`;
         const [rows] = await db.query(query, params);
         return rows;
     },
 
     getSummary: async (userId, filters) => {
-        let query = `SELECT w.id, w.name, COUNT(a.id) as total_records,
-            COUNT(CASE WHEN a.status IN ('present', 'late') THEN 1 END) as present,
-            COUNT(CASE WHEN a.status = 'absent' THEN 1 END) as absent
+        let query = `SELECT w.id, w.name, COUNT(a.id) as total,
+            SUM(CASE WHEN a.status IN ('present', 'late', 'permission') THEN 1 ELSE 0 END) as present,
+            SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END) as absent,
+            SUM(CASE WHEN a.status = 'half-day' THEN 1 ELSE 0 END) as half_day,
+            SUM(CASE WHEN a.status = 'CL' THEN 1 ELSE 0 END) as CL,
+            SUM(CASE WHEN a.status = 'SL' THEN 1 ELSE 0 END) as SL,
+            SUM(CASE WHEN a.status = 'EL' THEN 1 ELSE 0 END) as EL,
+            SUM(CASE WHEN a.status = 'OD' THEN 1 ELSE 0 END) as OD
             FROM education_members w LEFT JOIN education_attendance a ON w.id = a.member_id AND a.user_id = ?`;
         const params = [userId];
-        if (filters.period) { query += " AND DATE_FORMAT(a.date, '%Y-%m') = ?"; params.push(filters.period); }
-        query += ` WHERE w.user_id=? AND w.status = 'active' GROUP BY w.id`;
+        if (filters.period) {
+            if (filters.period.length > 7) { query += ' AND DATE(a.date) = ?'; params.push(filters.period); }
+            else { query += " AND DATE_FORMAT(a.date, '%Y-%m') = ?"; params.push(filters.period); }
+        } else if (filters.startDate && filters.endDate) {
+            query += ' AND a.date BETWEEN ? AND ?';
+            params.push(filters.startDate, filters.endDate);
+        }
+        query += ` WHERE w.user_id=? GROUP BY w.id`;
+        params.push(userId);
         const [rows] = await db.query(query, params);
         return rows;
     },

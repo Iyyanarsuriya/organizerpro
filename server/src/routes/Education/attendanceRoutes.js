@@ -16,6 +16,16 @@ const { authenticateToken, requireOwner } = require('../../middlewares/authMiddl
 
 router.use(authenticateToken);
 
+// Middleware to inject sector
+router.use((req, res, next) => {
+    req.query = req.query || {};
+    req.body = req.body || {};
+    req.query.sector = 'education';
+    req.body.sector = 'education';
+    console.log('Middleware: req.user:', req.user, 'req.query:', req.query);
+    next();
+});
+
 router.post('/', createAttendance);
 router.post('/quick', quickMarkAttendance);
 router.post('/lock', requireOwner, lockAttendance);

@@ -36,7 +36,7 @@ const EducationAuditLogModel = {
         let query = `SELECT a.*, u.username as performer_name FROM education_audit_logs a LEFT JOIN users u ON a.performed_by = u.id WHERE a.user_id = ?`;
         const params = [userId];
         if (filters.module) { query += ' AND a.module = ?'; params.push(filters.module); }
-        query += ' ORDER BY a.created_at DESC LIMIT 100';
+        query += ' ORDER BY a.timestamp DESC LIMIT 100';
         const [rows] = await db.query(query, params);
         return rows;
     }

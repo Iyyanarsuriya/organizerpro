@@ -151,7 +151,7 @@ const EducationAttendance = () => {
             setMembers(membersRes.data.data);
             setRoles(roleRes.data.data);
             setDepartments(deptRes.data.data);
-            setLockedDates(lockRes.data.data.map(d => d.split('T')[0]));
+            setLockedDates(lockRes.data.data.map(d => new Date(d.date).toISOString().split('T')[0]));
             setLoading(false);
         } catch (error) {
             toast.error("Failed to fetch attendance data");

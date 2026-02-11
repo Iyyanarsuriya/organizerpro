@@ -52,9 +52,7 @@ const ManufacturingAttendanceController = {
 
 const EducationAttendanceController = {
     checkLock: async (userId, date) => {
-        const month = new Date(date).getMonth() + 1;
-        const year = new Date(date).getFullYear();
-        const [locks] = await db.query(`SELECT id FROM education_attendance_locks WHERE user_id = ? AND month = ? AND year = ? AND unlocked_at IS NULL`, [userId, month, year]);
+        const [locks] = await db.query(`SELECT id FROM education_attendance_locks WHERE user_id = ? AND date = ? AND is_locked = 1`, [userId, date]);
         return locks.length > 0;
     },
     create: async (req, res) => {
@@ -94,7 +92,12 @@ const createAttendance = async (req, res) => {
 
 const getAttendances = async (req, res) => {
     try {
-        const data = await Attendance.getAllByUserId(req.user.data_owner_id, { ...req.query });
+        const sector = req.query.sector || (req.baseUrl.includes('education') ? 'education' :
+            req.baseUrl.includes('manufacturing') ? 'manufacturing' :
+                req.baseUrl.includes('it') ? 'it' :
+                    req.baseUrl.includes('hotel') ? 'hotel' : 'manufacturing');
+
+        const data = await Attendance.getAllByUserId(req.user.data_owner_id, { ...req.query, sector });
         res.status(200).json({ success: true, data });
     } catch (error) { res.status(500).json({ success: false, message: error.message }); }
 };
@@ -116,16 +119,30 @@ const deleteAttendance = async (req, res) => {
 
 const getAttendanceStats = async (req, res) => {
     try {
-        const data = await Attendance.getStats(req.user.data_owner_id, { ...req.query });
+        const sector = req.query.sector || (req.baseUrl.includes('education') ? 'education' :
+            req.baseUrl.includes('manufacturing') ? 'manufacturing' :
+                req.baseUrl.includes('it') ? 'it' :
+                    req.baseUrl.includes('hotel') ? 'hotel' : 'manufacturing');
+
+        const data = await Attendance.getStats(req.user.data_owner_id, { ...req.query, sector });
         res.status(200).json({ success: true, data });
-    } catch (error) { res.status(500).json({ success: false, message: error.message }); }
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
 };
 
 const getMemberSummary = async (req, res) => {
     try {
-        const data = await Attendance.getMemberSummary(req.user.data_owner_id, { ...req.query });
+        const sector = req.query.sector || (req.baseUrl.includes('education') ? 'education' :
+            req.baseUrl.includes('manufacturing') ? 'manufacturing' :
+                req.baseUrl.includes('it') ? 'it' :
+                    req.baseUrl.includes('hotel') ? 'hotel' : 'manufacturing');
+
+        const data = await Attendance.getMemberSummary(req.user.data_owner_id, { ...req.query, sector });
         res.status(200).json({ success: true, data });
-    } catch (error) { res.status(500).json({ success: false, message: error.message }); }
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
 };
 
 const quickMarkAttendance = async (req, res) => {
@@ -154,9 +171,21 @@ const deleteShift = async (req, res) => { try { await Attendance.deleteShift(req
 // --- LOCKING ---
 const lockAttendance = async (req, res) => {
     try {
-        const { sector, month, year, date } = req.body;
+        const sector = req.body.sector || (req.baseUrl.includes('education') ? 'education' :
+            req.baseUrl.includes('manufacturing') ? 'manufacturing' :
+                req.baseUrl.includes('it') ? 'it' :
+                    req.baseUrl.includes('hotel') ? 'hotel' : 'manufacturing');
+
+        const { month, year, date } = req.body;
         const userId = req.user.data_owner_id;
-        if (sector === 'education') await db.query('INSERT INTO education_attendance_locks (user_id, month, year, date, locked_by) VALUES (?, ?, ?, ?, ?)', [userId, month || new Date(date).getMonth() + 1, year || new Date(date).getFullYear(), date, req.user.id]);
+        if (sector === 'education') {
+            // Upsert or Insert check 
+            // With Education, we might just store date. If already locked?
+            // Assuming simply insert or ignore duplicate
+            await db.query('INSERT IGNORE INTO education_attendance_locks (user_id, date, is_locked, locked_by) VALUES (?, ?, 1, ?)', [userId, date, req.user.id]);
+            // If ignore didn't insert, update
+            await db.query('UPDATE education_attendance_locks SET is_locked = 1 WHERE user_id = ? AND date = ?', [userId, date]);
+        }
         else if (sector === 'manufacturing') await db.query('INSERT INTO manufacturing_attendance_locks (user_id, month, year, locked_by) VALUES (?, ?, ?, ?)', [userId, month, year, req.user.id]);
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false, message: e.message }); }
@@ -164,23 +193,54 @@ const lockAttendance = async (req, res) => {
 
 const unlockAttendance = async (req, res) => {
     try {
-        const { sector, month, year, date, reason } = req.body;
+        const sector = req.body.sector || (req.baseUrl.includes('education') ? 'education' :
+            req.baseUrl.includes('manufacturing') ? 'manufacturing' :
+                req.baseUrl.includes('it') ? 'it' :
+                    req.baseUrl.includes('hotel') ? 'hotel' : 'manufacturing');
+
+        const { month, year, date, reason } = req.body;
         if (req.user.owner_id) return res.status(403).json({ success: false, message: "Only owner can unlock" });
-        const table = sector === 'education' ? 'education_attendance_locks' : 'manufacturing_attendance_locks';
-        const field = sector === 'education' ? 'date = ?' : 'month = ? AND year = ?';
-        const val = sector === 'education' ? [date] : [month, year];
-        await db.query(`UPDATE ${table} SET unlocked_by = ?, unlocked_at = NOW(), unlock_reason = ? WHERE user_id = ? AND ${field}`, [req.user.id, reason, req.user.data_owner_id, ...val]);
+
+        if (sector === 'education') {
+            await db.query(`UPDATE education_attendance_locks SET is_locked = 0 WHERE user_id = ? AND date = ?`, [req.user.data_owner_id, date]);
+        } else {
+            // For now default other sectors might attempt this, but let's be safe
+            if (sector !== 'manufacturing') {
+                return res.status(400).json({ success: false, message: "Sector not supported for locking yet" });
+            }
+            const table = 'manufacturing_attendance_locks';
+            await db.query(`UPDATE ${table} SET unlocked_by = ?, unlocked_at = NOW(), unlock_reason = ? WHERE user_id = ? AND month = ? AND year = ?`, [req.user.id, reason, req.user.data_owner_id, month, year]);
+        }
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 };
 
 const getLockStatus = async (req, res) => {
     try {
-        const { sector, month, year } = req.query;
+        const sector = req.query.sector || (req.baseUrl.includes('education') ? 'education' :
+            req.baseUrl.includes('manufacturing') ? 'manufacturing' :
+                req.baseUrl.includes('it') ? 'it' :
+                    req.baseUrl.includes('hotel') ? 'hotel' : 'manufacturing');
+
+        const { month, year } = req.query; // Extract month and year from query
         const table = sector === 'education' ? 'education_attendance_locks' : 'manufacturing_attendance_locks';
-        const [locks] = await db.query(`SELECT * FROM ${table} WHERE user_id = ? AND month = ? AND year = ?`, [req.user.data_owner_id, month, year]);
+        let locks;
+        if (sector === 'education') {
+            [locks] = await db.query(`SELECT * FROM ${table} WHERE user_id = ? AND MONTH(date) = ? AND YEAR(date) = ?`, [req.user.data_owner_id, month, year]);
+        } else {
+            // For now default other sectors might attempt this, but let's be safe
+            if (sector !== 'manufacturing') {
+                // Other sectors might not have locks yet
+                return res.json({ success: true, data: [] });
+            }
+            console.log('getLockStatus manufacturing query:', table, month, year);
+            [locks] = await db.query(`SELECT * FROM ${table} WHERE user_id = ? AND month = ? AND year = ?`, [req.user.data_owner_id, month, year]);
+        }
         res.json({ success: true, data: locks });
-    } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+    } catch (e) {
+        console.error('getLockStatus error:', e);
+        res.status(500).json({ success: false, message: e.message });
+    }
 };
 
 module.exports = {
