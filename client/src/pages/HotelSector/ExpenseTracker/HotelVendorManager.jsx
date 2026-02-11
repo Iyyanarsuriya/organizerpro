@@ -121,7 +121,7 @@ const HotelVendorManager = () => {
                             </div>
                             <div className="flex items-center gap-3 text-slate-500">
                                 <FaIdCard size={12} className="text-slate-300" />
-                                <span className="text-[11px] font-bold uppercase tracking-widest text-[9px]">GST: {vendor.gst_number || 'N/A'}</span>
+                                <span className="text-[11px] font-bold uppercase tracking-widest">GST: {vendor.gst_number || 'N/A'}</span>
                             </div>
                             <div className="flex items-start gap-3 text-slate-500 pt-2">
                                 <FaMapMarkerAlt size={12} className="text-slate-300 mt-1" />
@@ -143,7 +143,7 @@ const HotelVendorManager = () => {
             )}
 
             {isModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
                     <div className="relative bg-white w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
                         <div className="p-10">
