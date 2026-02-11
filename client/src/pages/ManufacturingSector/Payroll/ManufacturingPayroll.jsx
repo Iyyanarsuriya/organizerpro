@@ -18,8 +18,11 @@ import {
     Clock,
     AlertCircle,
     Loader2,
-    ArrowLeft
+    ArrowLeft,
+    FileText
 } from 'lucide-react';
+import ExportButtons from '../../../components/Common/ExportButtons';
+import { generateCSV, generatePDF, generateTXT } from '../../../utils/exportUtils/base';
 
 const ManufacturingPayroll = () => {
     const [loading, setLoading] = useState(true);
@@ -108,6 +111,67 @@ const ManufacturingPayroll = () => {
         }
     };
 
+    const handleExportCSV = () => {
+        const headers = ['Member Name', 'Role', 'Present', 'Half Day', 'Absent', 'Total Days', 'Calculated Wage', 'Net Amount', 'Status'];
+        const rows = (Array.isArray(payrolls) ? payrolls : []).map(p => [
+            p.member_name,
+            p.member_role,
+            p.days_present,
+            p.days_half,
+            p.days_absent,
+            (p.days_present || 0) + (p.days_half || 0) + (p.days_absent || 0),
+            p.base_amount,
+            p.net_amount,
+            p.status
+        ]);
+        const monthYear = selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        generateCSV(headers, rows, `Manufacturing_Payroll_${monthYear.replace(' ', '_')}`);
+    };
+
+    const handleExportPDF = () => {
+        const headers = ['Member', 'Role', 'P/HD/A', 'Days', 'Wage', 'Net', 'Status'];
+        const rows = (Array.isArray(payrolls) ? payrolls : []).map(p => [
+            p.member_name,
+            p.member_role,
+            `${p.days_present}/${p.days_half}/${p.days_absent}`,
+            (p.days_present || 0) + (p.days_half || 0) + (p.days_absent || 0),
+            p.base_amount,
+            p.net_amount,
+            p.status
+        ]);
+        const monthYear = selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        generatePDF({
+            title: `Manufacturing Payroll - ${monthYear}`,
+            period: monthYear,
+            stats: [
+                { label: 'Total Amount', value: `₹${summary.total_amount?.toLocaleString() || 0}` },
+                { label: 'Total Records', value: payrolls.length }
+            ],
+            tableHeaders: headers,
+            tableRows: rows,
+            filename: `Manufacturing_Payroll_${monthYear.replace(' ', '_')}`
+        });
+    };
+
+    const handleExportTXT = () => {
+        const headers = ['Member Name', 'Role', 'Net Amount', 'Status'];
+        const rows = (Array.isArray(payrolls) ? payrolls : []).map(p => [
+            p.member_name,
+            p.member_role,
+            p.net_amount,
+            p.status
+        ]);
+        const monthYear = selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        generateTXT({
+            title: `Manufacturing Payroll - ${monthYear}`,
+            period: monthYear,
+            stats: [{ label: 'Total Amount', value: `₹${summary.total_amount?.toLocaleString() || 0}` }],
+            logHeaders: headers,
+            logRows: rows,
+            filename: `Manufacturing_Payroll_${monthYear.replace(' ', '_')}`
+        });
+    };
+
     const changeMonth = (delta) => {
         const newDate = new Date(selectedDate);
         newDate.setMonth(newDate.getMonth() + delta);
@@ -115,7 +179,7 @@ const ManufacturingPayroll = () => {
     };
 
     const filteredPayrolls = (Array.isArray(payrolls) ? payrolls : []).filter(p =>
-        (p.memberName || '').toLowerCase().includes((searchTerm || '').toLowerCase())
+        (p.member_name || '').toLowerCase().includes((searchTerm || '').toLowerCase())
     );
 
     const monthNames = ["January", "February", "March", "April", "May", "June",
@@ -140,17 +204,25 @@ const ManufacturingPayroll = () => {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-[16px] bg-white p-[8px] rounded-[16px] shadow-sm border border-slate-200">
-                        <button onClick={() => changeMonth(-1)} className="p-[8px] hover:bg-slate-50 rounded-[12px] text-slate-600 transition-colors">
-                            <ChevronLeft className="w-[20px] h-[20px]" />
-                        </button>
-                        <div className="flex items-center gap-[8px] px-[8px] min-w-[160px] justify-center text-slate-700 font-bold">
-                            <Calendar className="w-[18px] h-[18px] text-rose-500" />
-                            {monthNames[selectedDate.getMonth()]} {selectedDate.getFullYear()}
+                    <div className="flex flex-col sm:flex-row items-center gap-[16px]">
+                        <ExportButtons
+                            onExportCSV={handleExportCSV}
+                            onExportPDF={handleExportPDF}
+                            onExportTXT={handleExportTXT}
+                        />
+
+                        <div className="flex items-center gap-[16px] bg-white p-[8px] rounded-[16px] shadow-sm border border-slate-200">
+                            <button onClick={() => changeMonth(-1)} className="p-[8px] hover:bg-slate-50 rounded-[12px] text-slate-600 transition-colors">
+                                <ChevronLeft className="w-[20px] h-[20px]" />
+                            </button>
+                            <div className="flex items-center gap-[8px] px-[8px] min-w-[160px] justify-center text-slate-700 font-bold">
+                                <Calendar className="w-[18px] h-[18px] text-rose-500" />
+                                {monthNames[selectedDate.getMonth()]} {selectedDate.getFullYear()}
+                            </div>
+                            <button onClick={() => changeMonth(1)} className="p-[8px] hover:bg-slate-50 rounded-[12px] text-slate-600 transition-colors">
+                                <ChevronRight className="w-[20px] h-[20px]" />
+                            </button>
                         </div>
-                        <button onClick={() => changeMonth(1)} className="p-[8px] hover:bg-slate-50 rounded-[12px] text-slate-600 transition-colors">
-                            <ChevronRight className="w-[20px] h-[20px]" />
-                        </button>
                     </div>
                 </div>
 
@@ -244,19 +316,19 @@ const ManufacturingPayroll = () => {
                                     </tr>
                                 ) : (
                                     filteredPayrolls.map((payroll) => (
-                                        <tr key={payroll.payrollId} className="hover:bg-slate-50/50 transition-colors group">
+                                        <tr key={payroll.id} className="hover:bg-slate-50/50 transition-colors group">
                                             <td className="py-[20px] px-[24px]">
-                                                <div className="font-bold text-slate-800">{payroll.memberName || 'Unknown Member'}</div>
+                                                <div className="font-bold text-slate-800">{payroll.member_name || 'Unknown Member'}</div>
                                             </td>
                                             <td className="py-[20px] px-[24px]">
-                                                <div className="text-slate-600 font-medium">{payroll.role}</div>
-                                                <div className="text-[12px] text-slate-400 capitalize">{payroll.wageType}</div>
+                                                <div className="text-slate-600 font-medium">{payroll.member_role}</div>
+                                                <div className="text-[12px] text-slate-400 capitalize">{payroll.wage_type}</div>
                                             </td>
                                             <td className="py-[20px] px-[24px]">
-                                                <div className="text-slate-600 font-medium">₹{payroll.baseSalary?.toLocaleString()}</div>
+                                                <div className="text-slate-600 font-medium">₹{payroll.base_amount?.toLocaleString()}</div>
                                             </td>
                                             <td className="py-[20px] px-[24px]">
-                                                <div className="text-[18px] font-bold text-slate-800">₹{payroll.netAmount?.toLocaleString()}</div>
+                                                <div className="text-[18px] font-bold text-slate-800">₹{payroll.net_amount?.toLocaleString()}</div>
                                             </td>
                                             <td className="py-[20px] px-[24px]">
                                                 <span className={`inline-flex items-center px-[12px] py-[6px] rounded-full text-[12px] font-bold capitalize
@@ -271,14 +343,14 @@ const ManufacturingPayroll = () => {
                                                     {payroll.status === 'draft' && (
                                                         <>
                                                             <button
-                                                                onClick={() => handleDelete(payroll.payrollId)}
+                                                                onClick={() => handleDelete(payroll.id)}
                                                                 className="text-slate-400 hover:text-rose-500 font-medium text-[14px] transition-colors"
                                                                 title="Delete"
                                                             >
                                                                 Delete
                                                             </button>
                                                             <button
-                                                                onClick={() => handleApprove(payroll.payrollId)}
+                                                                onClick={() => handleApprove(payroll.id)}
                                                                 className="px-[16px] py-[8px] bg-slate-900 hover:bg-slate-800 text-white rounded-[10px] font-bold text-[14px] transition-colors shadow-lg shadow-slate-900/20 active:scale-95"
                                                             >
                                                                 Approve

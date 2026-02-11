@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { FaUserPlus, FaTrash, FaUserShield, FaUserTie, FaTimes, FaEnvelope, FaPhone, FaCalendar, FaChevronLeft } from 'react-icons/fa';
+import { FaUserPlus, FaTrash, FaUserShield, FaUserTie, FaTimes, FaEnvelope, FaPhone, FaCalendar, FaChevronLeft, FaFileAlt } from 'react-icons/fa';
+import ExportButtons from '../../../components/Common/ExportButtons';
+import { generateCSV, generatePDF, generateTXT } from '../../../utils/exportUtils/base';
 
 const TeamManagement = () => {
     const [team, setTeam] = useState([]);
@@ -62,6 +64,53 @@ const TeamManagement = () => {
         }
     };
 
+    const handleExportCSV = () => {
+        const headers = ['Username', 'Email', 'Role', 'Joined Date'];
+        const rows = team.map(u => [
+            u.username,
+            u.email,
+            u.role,
+            new Date(u.created_at).toLocaleDateString()
+        ]);
+        generateCSV(headers, rows, 'Manufacturing_Team_Members');
+    };
+
+    const handleExportPDF = () => {
+        const headers = ['Username', 'Email', 'Role', 'Joined Date'];
+        const rows = team.map(u => [
+            u.username,
+            u.email,
+            u.role,
+            new Date(u.created_at).toLocaleDateString()
+        ]);
+        generatePDF({
+            title: 'Manufacturing Team Members',
+            period: 'All Time',
+            stats: [{ label: 'Total Members', value: team.length }],
+            tableHeaders: headers,
+            tableRows: rows,
+            filename: 'Manufacturing_Team_Report'
+        });
+    };
+
+    const handleExportTXT = () => {
+        const headers = ['Username', 'Email', 'Role', 'Joined Date'];
+        const rows = team.map(u => [
+            u.username,
+            u.email,
+            u.role,
+            new Date(u.created_at).toLocaleDateString()
+        ]);
+        generateTXT({
+            title: 'Manufacturing Team Report',
+            period: 'All Time',
+            stats: [{ label: 'Total', value: team.length }],
+            logHeaders: headers,
+            logRows: rows,
+            filename: 'Manufacturing_Team_Report'
+        });
+    };
+
     return (
         <div className="min-h-screen bg-[#f8fafc]">
             {/* Navbar is handled by App.jsx layout */}
@@ -80,12 +129,19 @@ const TeamManagement = () => {
                             <p className="text-slate-500 mt-[4px] text-[14px]">Manage access for your organization</p>
                         </div>
                     </div>
-                    <button
-                        onClick={() => setShowModal(true)}
-                        className="w-full sm:w-auto flex items-center justify-center gap-[8px] bg-[#2d5bff] text-white px-[20px] py-[10px] rounded-[12px] font-bold hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/30 text-[14px]"
-                    >
-                        <FaUserPlus /> Add Member
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <ExportButtons
+                            onExportCSV={handleExportCSV}
+                            onExportPDF={handleExportPDF}
+                            onExportTXT={handleExportTXT}
+                        />
+                        <button
+                            onClick={() => setShowModal(true)}
+                            className="w-full sm:w-auto flex items-center justify-center gap-[8px] bg-[#2d5bff] text-white px-[20px] py-[10px] rounded-[12px] font-bold hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/30 text-[14px]"
+                        >
+                            <FaUserPlus /> Add Member
+                        </button>
+                    </div>
                 </div>
 
                 {loading ? (
