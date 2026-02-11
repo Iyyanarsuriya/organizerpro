@@ -7,6 +7,7 @@ import {
     getMemberSummary,
     quickMarkAttendance as quickMarkITAttendance,
     bulkMarkAttendance as bulkMarkITAttendance,
+    deleteAttendance,
     getProjects,
     createProject,
     deleteProject
@@ -128,13 +129,16 @@ const ITAttendance = () => {
     // Helper for mapping member IDs to their roles
     const memberIdToRoleMap = useMemo(() => {
         const map = {};
-        members.forEach(m => {
-            map[m.id] = m.role;
-        });
+        if (Array.isArray(members)) {
+            members.forEach(m => {
+                map[m.id] = m.role;
+            });
+        }
         return map;
     }, [members]);
 
     const uniqueRoles = useMemo(() => {
+        if (!Array.isArray(members)) return [];
         return [...new Set(members.map(m => m.role).filter(Boolean))];
     }, [members]);
 
@@ -205,12 +209,12 @@ const ITAttendance = () => {
                 getMembers({ sector: SECTOR }),
                 getMemberRoles({ sector: SECTOR })
             ]);
-            setAttendances(attRes.data.data);
+            setAttendances(attRes.data.data || []);
             setStats(statsRes.data.data || []);
-            setMemberSummary(summaryRes.data.data);
-            setProjects(projRes.data);
-            setMembers(membersRes.data.data);
-            setRoles(roleRes.data.data);
+            setMemberSummary(summaryRes.data.data || []);
+            setProjects(projRes.data.data || []);
+            setMembers(membersRes.data.data || []);
+            setRoles(roleRes.data.data || []);
             setLoading(false);
         } catch (error) {
             toast.error("Failed to fetch attendance data");
@@ -542,17 +546,18 @@ const ITAttendance = () => {
         if (!targetDate) return {};
 
         const map = {};
-        attendances.forEach(a => {
-            if (a.member_id) {
-                // Robust date matching: format both to YYYY-MM-DD
-                const d = new Date(a.date);
-                const aDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        if (Array.isArray(attendances)) {
+            attendances.forEach(a => {
+                if (a.member_id) {
+                    const d = new Date(a.date);
+                    const aDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-                if (aDate === targetDate) {
-                    map[a.member_id] = a;
+                    if (aDate === targetDate) {
+                        map[a.member_id] = a;
+                    }
                 }
-            }
-        });
+            });
+        }
         return map;
     }, [attendances, activeTargetDate]);
 
@@ -565,9 +570,11 @@ const ITAttendance = () => {
     }, [activeMembersAttendanceRecords]);
 
     const projectSummary = useMemo(() => {
-        if (!attendances.length) return [];
+        if (!Array.isArray(attendances) || !attendances.length) return [];
         const map = {};
-        projects.forEach(p => map[p.id] = { id: p.id, name: p.name, hours: 0, cost: 0, count: 0 });
+        if (Array.isArray(projects)) {
+            projects.forEach(p => map[p.id] = { id: p.id, name: p.name, hours: 0, cost: 0, count: 0 });
+        }
         map['null'] = { id: 'null', name: 'No Project', hours: 0, cost: 0, count: 0 };
 
         attendances.forEach(a => {
@@ -577,11 +584,9 @@ const ITAttendance = () => {
             if (a.total_hours) map[pid].hours += parseFloat(a.total_hours);
             map[pid].count += 1;
 
-            // Calculate refined cost if possible
-            const member = members.find(m => m.id === a.member_id);
+            const member = Array.isArray(members) ? members.find(m => m.id === a.member_id) : null;
             if (member) {
-                // Approximate cost: (wage / 8) * hours
-                const hourlyRate = (parseFloat(member.daily_wage) || 0) / 8; // Assuming 8hr day for wage calc
+                const hourlyRate = (parseFloat(member.daily_wage) || 0) / 8;
                 map[pid].cost += hourlyRate * (parseFloat(a.total_hours) || 0);
             }
         });
@@ -589,7 +594,7 @@ const ITAttendance = () => {
         return Object.values(map).filter(p => p.hours > 0 || p.count > 0).sort((a, b) => b.hours - a.hours);
     }, [attendances, projects, members]);
 
-    const pieData = stats.map(s => {
+    const pieData = (Array.isArray(stats) ? stats : []).map(s => {
         const option = statusOptions.find(o => o.id === s.status);
         return {
             name: option ? option.label : s.status,
@@ -742,7 +747,7 @@ const ITAttendance = () => {
                                         className="w-full h-[38px] pl-8 pr-3 bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-700 outline-none hover:border-blue-500 transition-all cursor-pointer appearance-none shadow-sm"
                                     >
                                         <option value="">All Projects</option>
-                                        {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                        {Array.isArray(projects) && projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                     </select>
                                 </div>
                                 <div className="flex-1 sm:w-[150px] relative">
@@ -779,9 +784,9 @@ const ITAttendance = () => {
                                         className="w-full h-[38px] pl-8 pr-3 bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-700 outline-none hover:border-blue-500 transition-all cursor-pointer appearance-none shadow-sm"
                                     >
                                         <option value="">All Categories</option>
-                                        {[...new Set([...roles.map(r => r.name), ...uniqueRoles])].sort().map(role => (
+                                        {[...new Set([...(roles?.map(r => r.name) || []), ...uniqueRoles])].sort().map(role => (
                                             <option key={role} value={role}>{role}</option>
-                                        ))}
+                                        )) || null}
                                     </select>
                                 </div>
                                 <button
@@ -799,7 +804,7 @@ const ITAttendance = () => {
                                         className="w-full h-[38px] pl-8 pr-3 bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-700 outline-none hover:border-blue-500 transition-all cursor-pointer appearance-none shadow-sm"
                                     >
                                         <option value="">All Projects</option>
-                                        {projects.map(p => (
+                                        {Array.isArray(projects) && projects.map(p => (
                                             <option key={p.id} value={p.id}>{p.name}</option>
                                         ))}
                                     </select>
@@ -1038,7 +1043,7 @@ const ITAttendance = () => {
                                         <div className="px-4 py-1 text-center">
                                             <p className="text-[8px] font-black text-slate-400 uppercase">Avg</p>
                                             <p className="text-sm font-black text-blue-600">
-                                                {(memberSummary.reduce((acc, curr) => acc + (curr.working_days > 0 ? ((curr.present + curr.half_day * 0.5) / curr.working_days) * 100 : 0), 0) / (memberSummary.length || 1)).toFixed(0)}%
+                                                {(Array.isArray(memberSummary) ? memberSummary.reduce((acc, curr) => acc + (curr.working_days > 0 ? ((curr.present + curr.half_day * 0.5) / curr.working_days) * 100 : 0), 0) / (memberSummary.length || 1) : 0).toFixed(0)}%
                                             </p>
                                         </div>
                                     </div>
@@ -1059,7 +1064,7 @@ const ITAttendance = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {memberSummary
+                                    {Array.isArray(memberSummary) && memberSummary
                                         .filter(w => {
                                             const matchesRole = !filterRole || memberIdToRoleMap[w.id] === filterRole;
                                             const matchesSearch = !searchQuery || w.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -1126,7 +1131,7 @@ const ITAttendance = () => {
 
                         {/* Mobile Summary View */}
                         <div className="md:hidden space-y-3 p-4 bg-slate-50/50">
-                            {memberSummary
+                            {Array.isArray(memberSummary) && memberSummary
                                 .filter(w => {
                                     const matchesRole = !filterRole || memberIdToRoleMap[w.id] === filterRole;
                                     const matchesSearch = !searchQuery || w.name.toLowerCase().includes(searchQuery.toLowerCase());

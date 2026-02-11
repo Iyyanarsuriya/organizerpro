@@ -50,6 +50,7 @@ const ITSalaryCalculator = ({
 
     // Filter Logic
     const filteredMembers = useMemo(() => {
+        if (!Array.isArray(members)) return [];
         return members.filter(m => {
             const matchesSearch = m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 (m.phone && m.phone.includes(searchQuery));
@@ -66,7 +67,7 @@ const ITSalaryCalculator = ({
         if (!filterMember) return { earned: 0, paid: 0, advance: 0, balance: 0 };
 
         const memberObj = members.find(m => m.id == filterMember);
-        const memberTrans = transactions.filter(t => {
+        const memberTrans = (Array.isArray(transactions) ? transactions : []).filter(t => {
             if (memberObj?.isGuest) {
                 return t.member_id === null && t.guest_name === memberObj.name;
             }
@@ -271,7 +272,7 @@ const ITSalaryCalculator = ({
                         <FaTag className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-indigo-400 group-hover:text-indigo-500 transition-colors" size={12} />
                         <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} className="w-full bg-indigo-50 hover:bg-indigo-100 border border-transparent rounded-2xl py-2 md:py-3 pl-8 md:pl-10 pr-6 md:pr-10 text-[10px] md:text-xs font-black text-indigo-600 text-center outline-none focus:ring-2 focus:ring-indigo-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
                             <option value="">All Roles</option>
-                            {[...new Set((roles || []).map(r => r.name).concat(members.map(m => m.role).filter(Boolean)))].sort().map(role => (
+                            {[...new Set((Array.isArray(roles) ? roles.map(r => r.name) : []).concat(Array.isArray(members) ? members.map(m => m.role).filter(Boolean) : []))].sort().map(role => (
                                 <option key={role} value={role}>{role}</option>
                             ))}
                         </select>
@@ -298,7 +299,7 @@ const ITSalaryCalculator = ({
                             className="w-full h-full bg-slate-800 text-white rounded-2xl py-2 md:py-3 pl-8 md:pl-10 pr-6 md:pr-10 text-[10px] md:text-xs font-black text-center outline-none focus:ring-2 focus:ring-slate-600 hover:bg-slate-700 transition-all cursor-pointer appearance-none uppercase tracking-wide shadow-lg shadow-slate-200"
                         >
                             <option value="">Select Member...</option>
-                            {filteredMembers.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                            {Array.isArray(filteredMembers) && filteredMembers.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                         </select>
                         <div className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                             <FaUserCheck size={12} />
@@ -330,7 +331,7 @@ const ITSalaryCalculator = ({
                             <tbody>
                                 {filteredMembers.length > 0 ? (
                                     filteredMembers.map(member => {
-                                        const mTrans = transactions.filter(t => t.member_id == member.id);
+                                        const mTrans = (Array.isArray(transactions) ? transactions : []).filter(t => t.member_id == member.id);
                                         const earned = mTrans.filter(t => t.category === 'Salary Pot').reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
                                         const paid = mTrans.filter(t => ['Salary', 'Advance'].includes(t.category)).reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
                                         const balance = earned - paid;
@@ -594,7 +595,7 @@ const ITSalaryCalculator = ({
                             </div>
 
                             <div className="space-y-3">
-                                {transactions
+                                {(Array.isArray(transactions) ? transactions : [])
                                     .filter(t => t.member_id == filterMember && ['Salary', 'Advance', 'Salary Pot'].includes(t.category))
                                     .slice(0, 5)
                                     .map(t => (

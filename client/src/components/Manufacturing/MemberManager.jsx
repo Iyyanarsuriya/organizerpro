@@ -43,9 +43,10 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
                 getMemberRoles({ sector }),
                 getGuests({ sector })
             ]);
-            const guests = guestRes.data.data.map(g => ({ ...g, isGuest: true }));
-            setMembers([...memRes.data.data, ...guests]);
-            setRoles(roleRes.data.data);
+            const guests = (Array.isArray(guestRes?.data?.data) ? guestRes.data.data : []).map(g => ({ ...g, isGuest: true }));
+            const membersRaw = Array.isArray(memRes?.data?.data) ? memRes.data.data : [];
+            setMembers([...membersRaw, ...guests]);
+            setRoles(Array.isArray(roleRes?.data?.data) ? roleRes.data.data : []);
             setLoading(false);
         } catch (error) {
             toast.error("Failed to fetch data");
@@ -58,10 +59,10 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
     }, []);
 
     // Filter Logic
-    const filteredMembers = members.filter(m => {
-        const matchesSearch = m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const filteredMembers = (Array.isArray(members) ? members : []).filter(m => {
+        const matchesSearch = (m.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
             (m.phone && m.phone.includes(searchQuery)) ||
-            (m.email && m.email.toLowerCase().includes(searchQuery.toLowerCase()));
+            (m.email && (m.email || '').toLowerCase().includes(searchQuery.toLowerCase()));
 
         const matchesRole = !filterRole || m.role === filterRole;
         const matchesType = filterType === 'all' ||
@@ -255,7 +256,7 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
                                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
                                 >
                                     <option value="">Select Category</option>
-                                    {[...new Set([...roles.map(r => r.name), ...members.map(m => m.role).filter(Boolean)])].sort().map(role => (
+                                    {[...new Set([(Array.isArray(roles) ? roles : []).map(r => r.name), (Array.isArray(members) ? members : []).map(m => m.role).filter(Boolean)].flat())].sort().map(role => (
                                         <option key={role} value={role}>{role}</option>
                                     ))}
                                 </select>
@@ -375,7 +376,7 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
                             <FaTag className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400 group-hover:text-indigo-500 transition-colors" size={12} />
                             <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} className="w-full bg-indigo-50 hover:bg-indigo-100 border border-transparent rounded-2xl py-3 pl-10 pr-10 text-xs font-black text-indigo-600 text-center outline-none focus:ring-2 focus:ring-indigo-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
                                 <option value="">All Categories</option>
-                                {[...new Set(members.map(m => m.role).filter(Boolean))].map(role => (
+                                {[...new Set((Array.isArray(members) ? members : []).map(m => m.role).filter(Boolean))].map(role => (
                                     <option key={role} value={role}>{role}</option>
                                 ))}
                             </select>
@@ -577,7 +578,7 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
                                     <div className="flex justify-center py-20">
                                         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
                                     </div>
-                                ) : payments.length > 0 ? (
+                                ) : Array.isArray(payments) && payments.length > 0 ? (
                                     <div className="space-y-[16px]">
                                         {payments.map(p => (
                                             <div key={p.id} className="flex justify-between items-center p-[24px] bg-slate-50 rounded-[24px] border border-slate-100 hover:border-emerald-200 transition-all">
@@ -609,16 +610,18 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
                                         ))}
                                         <div className="pt-6 border-t border-slate-100 sticky bottom-0 bg-white">
                                             <div className={`flex justify-between items-center p-[24px] rounded-[24px] text-white ${(() => {
-                                                const earned = payments.filter(p => p.category === 'Salary Pot').reduce((acc, p) => acc + parseFloat(p.amount), 0);
-                                                const paid = payments.filter(p => ['Salary', 'Advance'].includes(p.category)).reduce((acc, p) => acc + parseFloat(p.amount), 0);
+                                                const pArr = Array.isArray(payments) ? payments : [];
+                                                const earned = pArr.filter(p => p.category === 'Salary Pot').reduce((acc, p) => acc + parseFloat(p.amount || 0), 0);
+                                                const paid = pArr.filter(p => ['Salary', 'Advance'].includes(p.category)).reduce((acc, p) => acc + parseFloat(p.amount || 0), 0);
                                                 return (earned - paid) > 0 ? 'bg-amber-600' : 'bg-slate-900';
                                             })()
                                                 }`}>
                                                 <span className="font-black uppercase tracking-widest text-[12px]">Ledger Balance (Owed)</span>
                                                 <span className="text-[24px] font-black tracking-tighter">
                                                     ₹{(() => {
-                                                        const earned = payments.filter(p => p.category === 'Salary Pot').reduce((acc, p) => acc + parseFloat(p.amount), 0);
-                                                        const paid = payments.filter(p => ['Salary', 'Advance'].includes(p.category)).reduce((acc, p) => acc + parseFloat(p.amount), 0);
+                                                        const pArr = Array.isArray(payments) ? payments : [];
+                                                        const earned = pArr.filter(p => p.category === 'Salary Pot').reduce((acc, p) => acc + parseFloat(p.amount || 0), 0);
+                                                        const paid = pArr.filter(p => ['Salary', 'Advance'].includes(p.category)).reduce((acc, p) => acc + parseFloat(p.amount || 0), 0);
                                                         return (earned - paid).toFixed(2);
                                                     })()}
                                                 </span>

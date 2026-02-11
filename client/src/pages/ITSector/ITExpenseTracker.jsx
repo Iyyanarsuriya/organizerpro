@@ -126,14 +126,14 @@ const ITExpenseTracker = () => {
                 getMemberRoles({ sector: 'it' }),
                 getGuests({ sector: 'it' })
             ]);
-            setTransactions(transRes.data);
-            setStats(statsRes.data);
-            setCategories(catRes.data);
-            setProjects(projRes.data);
-            const rawMembers = membersRes.data.data;
-            const guests = guestRes.data.data.map(g => ({ ...g, isGuest: true }));
+            setTransactions(transRes.data.data || []);
+            setStats(statsRes.data.data || { summary: { total_income: 0, total_expense: 0 }, categories: [] });
+            setCategories(catRes.data.data || []);
+            setProjects(projRes.data.data || []);
+            const rawMembers = membersRes.data.data || [];
+            const guests = (guestRes.data.data || []).map(g => ({ ...g, isGuest: true }));
             setMembers([...rawMembers, ...guests]);
-            setRoles(roleRes.data.data);
+            setRoles(roleRes.data.data || []);
 
             if (filterMember) {
                 await fetchAttendanceData(filterMember);
@@ -330,13 +330,16 @@ const ITExpenseTracker = () => {
 
     const memberIdToRoleMap = useMemo(() => {
         const map = {};
-        members.forEach(m => {
-            map[m.id] = m.role;
-        });
+        if (Array.isArray(members)) {
+            members.forEach(m => {
+                map[m.id] = m.role;
+            });
+        }
         return map;
     }, [members]);
 
     const filteredTransactions = useMemo(() => {
+        if (!Array.isArray(transactions)) return [];
         return transactions
             .filter(t => {
                 const matchesType = filterType === 'all' || t.type === filterType;
@@ -490,8 +493,8 @@ const ITExpenseTracker = () => {
                                 customRange={customRange}
                                 currentPeriod={currentPeriod}
                                 stats={stats}
-                                pieData={stats.categories.filter(c => c.type === 'expense').map(c => ({ name: c.category, value: parseFloat(c.total) }))}
-                                barData={[{ name: 'This Period', Income: parseFloat(stats.summary?.total_income || 0), Expenses: parseFloat(stats.summary?.total_expense || 0) }]}
+                                pieData={(stats?.categories || []).filter(c => c.type === 'expense').map(c => ({ name: c.category, value: parseFloat(c.total) }))}
+                                barData={[{ name: 'This Period', Income: parseFloat(stats?.summary?.total_income || 0), Expenses: parseFloat(stats?.summary?.total_expense || 0) }]}
                                 COLORS={['#2d5bff', '#f43f5e', '#0ea5e9', '#f59e0b', '#8b5cf6', '#10b981']}
                                 transactions={transactions}
                                 handleAddNewTransaction={handleAddNewTransaction}
@@ -706,7 +709,7 @@ const ITExpenseTracker = () => {
                                     <div className="flex gap-1 sm:gap-3">
                                         <select value={formData.category_id} onChange={e => setFormData({ ...formData, category_id: e.target.value })} className="flex-1 h-[36px] sm:h-[48px] bg-slate-50 border border-slate-200 rounded-xl px-2 sm:px-4 text-[11px] sm:text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer">
                                             <option value="">Select Category</option>
-                                            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                            {Array.isArray(categories) && categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                         </select>
                                         <button
                                             type="button"
@@ -729,14 +732,14 @@ const ITExpenseTracker = () => {
                                     <label className="text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Project</label>
                                     <select value={formData.project_id} onChange={e => setFormData({ ...formData, project_id: e.target.value })} className="w-full h-[36px] sm:h-[48px] bg-slate-50 border border-slate-200 rounded-xl px-2 sm:px-4 text-[11px] sm:text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer">
                                         <option value="">None</option>
-                                        {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                        {Array.isArray(projects) && projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                     </select>
                                 </div>
                                 <div className="space-y-[2px] sm:space-y-[6px]">
                                     <label className="text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Member</label>
                                     <select value={formData.member_id || ''} onChange={e => setFormData({ ...formData, member_id: e.target.value })} className="w-full h-[36px] sm:h-[48px] bg-slate-50 border border-slate-200 rounded-xl px-2 sm:px-4 text-[11px] sm:text-sm font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer">
                                         <option value="">None</option>
-                                        {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                        {Array.isArray(members) && members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                                     </select>
                                 </div>
                             </div>
@@ -811,7 +814,7 @@ const ITExpenseTracker = () => {
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Filter by Project</label>
                                 <select value={customReportForm.projectId} onChange={e => setCustomReportForm({ ...customReportForm, projectId: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all cursor-pointer">
                                     <option value="">All Projects</option>
-                                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                    {Array.isArray(projects) && projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                 </select>
                             </div>
 
@@ -819,7 +822,7 @@ const ITExpenseTracker = () => {
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Filter by Member</label>
                                 <select value={customReportForm.memberId} onChange={e => setCustomReportForm({ ...customReportForm, memberId: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all cursor-pointer">
                                     <option value="">All Members</option>
-                                    {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                    {Array.isArray(members) && members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                                 </select>
                             </div>
 

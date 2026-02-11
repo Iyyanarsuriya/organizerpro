@@ -114,8 +114,8 @@ const ManufacturingPayroll = () => {
         setSelectedDate(newDate);
     };
 
-    const filteredPayrolls = payrolls.filter(p =>
-        p.memberName.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredPayrolls = (Array.isArray(payrolls) ? payrolls : []).filter(p =>
+        (p.memberName || '').toLowerCase().includes((searchTerm || '').toLowerCase())
     );
 
     const monthNames = ["January", "February", "March", "April", "May", "June",
@@ -162,7 +162,7 @@ const ManufacturingPayroll = () => {
                         </div>
                         <div>
                             <p className="text-slate-400 text-[14px] font-semibold uppercase tracking-wider">Total Payout</p>
-                            <p className="text-[28px] font-black text-emerald-600">₹{summary.total_amount?.toLocaleString() || '0'}</p>
+                            <p className="text-[28px] font-black text-emerald-600">₹{summary?.total_amount?.toLocaleString() || '0'}</p>
                         </div>
                     </div>
 
@@ -172,7 +172,7 @@ const ManufacturingPayroll = () => {
                         </div>
                         <div>
                             <p className="text-slate-400 text-[14px] font-semibold uppercase tracking-wider">Approved</p>
-                            <p className="text-[28px] font-black text-slate-800">{summary.status_counts?.approved || 0} <span className="text-[14px] text-slate-400 font-medium">Members</span></p>
+                            <p className="text-[28px] font-black text-slate-800">{summary?.status_counts?.approved || 0} <span className="text-[14px] text-slate-400 font-medium">Members</span></p>
                         </div>
                     </div>
 
@@ -182,7 +182,7 @@ const ManufacturingPayroll = () => {
                         </div>
                         <div>
                             <p className="text-slate-400 text-[14px] font-semibold uppercase tracking-wider">Pending</p>
-                            <p className="text-[28px] font-black text-slate-800">{summary.status_counts?.draft || 0} <span className="text-[14px] text-slate-400 font-medium">Review Needed</span></p>
+                            <p className="text-[28px] font-black text-slate-800">{summary?.status_counts?.pending || 0} <span className="text-[14px] text-slate-400 font-medium">Review Needed</span></p>
                         </div>
                     </div>
                 </div>
@@ -210,7 +210,7 @@ const ManufacturingPayroll = () => {
                             }`}
                     >
                         {generating ? <Loader2 className="w-[20px] h-[20px] animate-spin" /> : <Banknote className="w-[20px] h-[20px]" />}
-                        {payrolls.length > 0 ? 'Payroll Generated' : 'Generate Payroll'}
+                        {(Array.isArray(payrolls) && payrolls.length > 0) ? 'Payroll Generated' : 'Generate Payroll'}
                     </button>
                 </div>
 
@@ -236,17 +236,17 @@ const ManufacturingPayroll = () => {
                                             Loading payroll records...
                                         </td>
                                     </tr>
-                                ) : filteredPayrolls.length === 0 ? (
+                                ) : (Array.isArray(filteredPayrolls) && filteredPayrolls.length === 0) ? (
                                     <tr>
                                         <td colSpan="6" className="py-[60px] text-center text-slate-400 font-medium">
-                                            {payrolls.length === 0 ? "No payroll generated for this month." : "No members found matching your search."}
+                                            {(Array.isArray(payrolls) && payrolls.length === 0) ? "No payroll generated for this month." : "No members found matching your search."}
                                         </td>
                                     </tr>
                                 ) : (
                                     filteredPayrolls.map((payroll) => (
                                         <tr key={payroll.payrollId} className="hover:bg-slate-50/50 transition-colors group">
                                             <td className="py-[20px] px-[24px]">
-                                                <div className="font-bold text-slate-800">{payroll.memberName}</div>
+                                                <div className="font-bold text-slate-800">{payroll.memberName || 'Unknown Member'}</div>
                                             </td>
                                             <td className="py-[20px] px-[24px]">
                                                 <div className="text-slate-600 font-medium">{payroll.role}</div>

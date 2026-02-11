@@ -138,7 +138,7 @@ const AttendanceTracker = () => {
     }, [members]);
 
     const uniqueRoles = useMemo(() => {
-        return [...new Set(members.map(m => m.role).filter(Boolean))];
+        return [...new Set((Array.isArray(members) ? members : []).map(m => m.role).filter(Boolean))];
     }, [members]);
 
     const statusOptions = [
@@ -299,7 +299,7 @@ const AttendanceTracker = () => {
     const confirmBulkMark = async (status) => {
         try {
             const date = periodType === 'day' ? currentPeriod : new Date().toISOString().split('T')[0];
-            const activeMemberIds = members.filter(m => m.status === 'active').map(m => m.id);
+            const activeMemberIds = (Array.isArray(members) ? members : []).filter(m => m.status === 'active').map(m => m.id);
 
             if (activeMemberIds.length === 0) {
                 toast.error("No active members found");
@@ -466,7 +466,7 @@ const AttendanceTracker = () => {
     };
 
     const filteredAttendances = useMemo(() => {
-        return attendances.filter(a => {
+        return (Array.isArray(attendances) ? attendances : []).filter(a => {
             const d = new Date(a.date);
             const dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
             const matchesSearch = (a.subject || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -502,7 +502,7 @@ const AttendanceTracker = () => {
         if (!targetDate) return {};
 
         const map = {};
-        attendances.forEach(a => {
+        (Array.isArray(attendances) ? attendances : []).forEach(a => {
             if (a.member_id) {
                 // Robust date matching: format both to YYYY-MM-DD
                 const d = new Date(a.date);
@@ -524,7 +524,7 @@ const AttendanceTracker = () => {
         return map;
     }, [activeMembersAttendanceRecords]);
 
-    const pieData = stats.map(s => {
+    const pieData = (Array.isArray(stats) ? stats : []).map(s => {
         const option = statusOptions.find(o => o.id === s.status);
         return {
             name: option ? option.label : s.status,
@@ -654,7 +654,7 @@ const AttendanceTracker = () => {
                                         className="w-full h-[38px] pl-8 pr-3 bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-700 outline-none hover:border-blue-500 transition-all cursor-pointer appearance-none shadow-sm"
                                     >
                                         <option value="">All Projects</option>
-                                        {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                        {(Array.isArray(projects) ? projects : []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                     </select>
                                 </div>
                                 <div className="flex-1 sm:w-[150px] relative">
@@ -665,7 +665,7 @@ const AttendanceTracker = () => {
                                         className="w-full h-[38px] pl-8 pr-3 bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-700 outline-none hover:border-blue-500 transition-all cursor-pointer appearance-none shadow-sm"
                                     >
                                         <option value="">All Members</option>
-                                        {members.sort((a, b) => a.name.localeCompare(b.name)).map(m => (
+                                        {(Array.isArray(members) ? members : []).slice().sort((a, b) => (a.name || '').localeCompare(b.name || '')).map(m => (
                                             <option key={m.id} value={m.id}>{m.name}</option>
                                         ))}
                                     </select>
@@ -689,7 +689,7 @@ const AttendanceTracker = () => {
                                         className="w-full h-[38px] pl-8 pr-3 bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-700 outline-none hover:border-blue-500 transition-all cursor-pointer appearance-none shadow-sm"
                                     >
                                         <option value="">All Categories</option>
-                                        {[...new Set([...roles.map(r => r.name), ...uniqueRoles])].sort().map(role => (
+                                        {[...new Set([...(Array.isArray(roles) ? roles : []).map(r => r.name), ...uniqueRoles])].sort().map(role => (
                                             <option key={role} value={role}>{role}</option>
                                         ))}
                                     </select>
@@ -781,7 +781,7 @@ const AttendanceTracker = () => {
                                                     paddingAngle={5}
                                                     dataKey="value"
                                                 >
-                                                    {pieData.map((entry, index) => (
+                                                    {(Array.isArray(pieData) ? pieData : []).map((entry, index) => (
                                                         <Cell key={`cell-${index}`} fill={entry.color} />
                                                     ))}
                                                 </Pie>
@@ -813,7 +813,7 @@ const AttendanceTracker = () => {
                                     {/* Global search applies here */}
                                 </div>
                                 <div className="space-y-4">
-                                    {filteredAttendances.length > 0 ? (
+                                    {Array.isArray(filteredAttendances) && filteredAttendances.length > 0 ? (
                                         <div className="flex flex-col gap-3">
                                             {filteredAttendances.map((item, idx) => {
                                                 const option = statusOptions.find(o => o.id === item.status);
@@ -917,7 +917,7 @@ const AttendanceTracker = () => {
                                         <div className="px-4 py-2 flex flex-col items-center justify-center min-w-[70px]">
                                             <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider">AVG</p>
                                             <p className="text-sm font-black text-blue-600">
-                                                {(memberSummary.reduce((acc, curr) => acc + (curr.total > 0 ? ((curr.present + curr.half_day * 0.5) / curr.total) * 100 : 0), 0) / (memberSummary.length || 1)).toFixed(0)}%
+                                                {((Array.isArray(memberSummary) ? memberSummary : []).reduce((acc, curr) => acc + (curr.total > 0 ? ((curr.present + curr.half_day * 0.5) / curr.total) * 100 : 0), 0) / (memberSummary.length || 1)).toFixed(0)}%
                                             </p>
                                         </div>
                                     </div>
@@ -937,10 +937,10 @@ const AttendanceTracker = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {memberSummary
+                                    {(Array.isArray(memberSummary) ? memberSummary : [])
                                         .filter(w => {
                                             const matchesRole = !filterRole || memberIdToRoleMap[w.id] === filterRole;
-                                            const matchesSearch = !searchQuery || w.name.toLowerCase().includes(searchQuery.toLowerCase());
+                                            const matchesSearch = !searchQuery || (w.name || '').toLowerCase().includes(searchQuery.toLowerCase());
                                             const matchesMember = !filterMember || w.id == filterMember;
                                             return matchesRole && matchesSearch && matchesMember;
                                         })
@@ -951,7 +951,7 @@ const AttendanceTracker = () => {
                                                     <td className="px-8 py-5">
                                                         <div className="flex items-center gap-3">
                                                             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xs shrink-0 shadow-md shadow-blue-500/20">
-                                                                {w.name.charAt(0)}
+                                                                {w.name ? w.name.charAt(0) : '?'}
                                                             </div>
                                                             <div>
                                                                 <p className="font-black text-slate-900 leading-none mb-1.5">{w.name}</p>
@@ -994,10 +994,10 @@ const AttendanceTracker = () => {
 
                         {/* Mobile Summary View */}
                         <div className="md:hidden space-y-3 p-4 bg-slate-50/50">
-                            {memberSummary
+                            {(Array.isArray(memberSummary) ? memberSummary : [])
                                 .filter(w => {
                                     const matchesRole = !filterRole || memberIdToRoleMap[w.id] === filterRole;
-                                    const matchesSearch = !searchQuery || w.name.toLowerCase().includes(searchQuery.toLowerCase());
+                                    const matchesSearch = !searchQuery || (w.name || '').toLowerCase().includes(searchQuery.toLowerCase());
                                     const matchesMember = !filterMember || w.id == filterMember;
                                     return matchesRole && matchesSearch && matchesMember;
                                 })
@@ -1008,7 +1008,7 @@ const AttendanceTracker = () => {
                                             <div className="flex items-center justify-between mb-5">
                                                 <div className="flex items-center gap-4">
                                                     <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-sm shadow-md shadow-blue-500/20">
-                                                        {w.name.charAt(0)}
+                                                        {w.name ? w.name.charAt(0) : '?'}
                                                     </div>
                                                     <div>
                                                         <h4 className="font-black text-slate-900 text-base leading-tight mb-1">{w.name}</h4>
@@ -1181,10 +1181,10 @@ const AttendanceTracker = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
-                                        {members
+                                        {(Array.isArray(members) ? members : [])
                                             .filter(m => {
                                                 const matchesRole = !filterRole || m.role === filterRole;
-                                                const matchesSearch = !searchQuery || m.name.toLowerCase().includes(searchQuery.toLowerCase());
+                                                const matchesSearch = !searchQuery || (m.name || '').toLowerCase().includes(searchQuery.toLowerCase());
                                                 const matchesMemberFilter = !filterMember || m.id == filterMember;
                                                 return matchesRole && matchesSearch && matchesMemberFilter;
                                             })
@@ -1313,10 +1313,10 @@ const AttendanceTracker = () => {
 
                             {/* Mobile Card View */}
                             <div className="md:hidden space-y-3 p-4 bg-slate-50/50">
-                                {members
+                                {((Array.isArray(members) ? members : []))
                                     .filter(m => {
                                         const matchesRole = !filterRole || m.role === filterRole;
-                                        const matchesSearch = !searchQuery || m.name.toLowerCase().includes(searchQuery.toLowerCase());
+                                        const matchesSearch = !searchQuery || (m.name || '').toLowerCase().includes(searchQuery.toLowerCase());
                                         const matchesMemberFilter = !filterMember || m.id == filterMember;
                                         return matchesRole && matchesSearch && matchesMemberFilter;
                                     })

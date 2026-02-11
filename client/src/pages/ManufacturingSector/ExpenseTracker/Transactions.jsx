@@ -84,7 +84,7 @@ const Transactions = ({
                             <FaProjectDiagram className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-indigo-400 group-hover:text-indigo-500 transition-colors" size={12} />
                             <select value={filterProject} onChange={(e) => setFilterProject(e.target.value)} className="w-full bg-indigo-50 hover:bg-indigo-100 border border-transparent rounded-2xl py-2 md:py-3 pl-8 md:pl-10 pr-6 md:pr-10 text-[10px] md:text-xs font-black text-indigo-600 text-center outline-none focus:ring-2 focus:ring-indigo-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
                                 <option value="">All Projects</option>
-                                {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                {Array.isArray(projects) && projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                             </select>
                             <div className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 pointer-events-none text-indigo-400 text-[10px]">▼</div>
                         </div>
@@ -95,7 +95,7 @@ const Transactions = ({
                             <select value={filterMember} onChange={(e) => setFilterMember(e.target.value)} className="w-full bg-emerald-50 hover:bg-emerald-100 border border-transparent rounded-2xl py-2 md:py-3 pl-8 md:pl-10 pr-6 md:pr-10 text-[10px] md:text-xs font-black text-emerald-600 text-center outline-none focus:ring-2 focus:ring-emerald-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
                                 <option value="">All Members</option>
                                 <option value="guest">Guests / Non-Members</option>
-                                {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                {Array.isArray(members) && members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                             </select>
                             <div className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 pointer-events-none text-emerald-400 text-[10px]">▼</div>
                         </div>
@@ -105,7 +105,7 @@ const Transactions = ({
                             <FaTruck className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-orange-400 group-hover:text-orange-500 transition-colors" size={12} />
                             <select value={filterVehicle} onChange={(e) => setFilterVehicle(e.target.value)} className="w-full bg-orange-50 hover:bg-orange-100 border border-transparent rounded-2xl py-2 md:py-3 pl-8 md:pl-10 pr-6 md:pr-10 text-[10px] md:text-xs font-black text-orange-600 text-center outline-none focus:ring-2 focus:ring-orange-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
                                 <option value="">All Vehicles</option>
-                                {vehicleNames.map(v => <option key={v} value={v}>{v}</option>)}
+                                {Array.isArray(vehicleNames) && vehicleNames.map(v => <option key={v} value={v}>{v}</option>)}
                             </select>
                             <div className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 pointer-events-none text-orange-400 text-[10px]">▼</div>
                         </div>
@@ -137,7 +137,7 @@ const Transactions = ({
             </div>
 
             <div className="space-y-4">
-                {filteredTransactions.map(t => (
+                {Array.isArray(filteredTransactions) && filteredTransactions.map(t => (
                     <div key={t.id} className="bg-white p-4 sm:p-6 rounded-[32px] shadow-sm border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:shadow-md transition-all">
                         <div className="flex items-center gap-4">
                             <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-xl shadow-sm shrink-0 transition-transform group-hover:scale-105 ${t.type === 'income' ? 'bg-blue-50 text-blue-500' : 'bg-red-50 text-red-500'}`}>

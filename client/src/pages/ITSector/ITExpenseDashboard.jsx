@@ -121,7 +121,7 @@ const ITExpenseDashboard = ({
                                         paddingAngle={5}
                                         dataKey="value"
                                     >
-                                        {pieData.map((entry, index) => (
+                                        {Array.isArray(pieData) && pieData.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={['#2d5bff', '#f43f5e', '#0ea5e9', '#f59e0b', '#8b5cf6', '#10b981'][index % 6]} />
                                         ))}
                                     </Pie>
@@ -178,7 +178,7 @@ const ITExpenseDashboard = ({
                         <button onClick={() => setActiveTab('Transactions')} className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline">View All Records</button>
                     </div>
                     <div className="space-y-3">
-                        {transactions.slice(0, 5).map(t => (
+                        {Array.isArray(transactions) && transactions.slice(0, 5).map(t => (
                             <div key={t.id} className="flex justify-between items-center p-4 rounded-3xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100 group">
                                 <div className="flex items-center gap-4">
                                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm shadow-xs ${t.type === 'income' ? 'bg-blue-50 text-blue-500' : 'bg-red-50 text-red-500'}`}>

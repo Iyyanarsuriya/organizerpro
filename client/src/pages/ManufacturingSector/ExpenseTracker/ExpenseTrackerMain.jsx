@@ -152,12 +152,12 @@ const ExpenseTrackerMain = () => {
                 getGuests(),
                 getVehicleLogs()
             ]);
-            setTransactions(transRes.data);
+            setTransactions(Array.isArray(transRes.data) ? transRes.data : []);
             setVehicleLogs(vehicleRes?.data || []);
 
             // PROCESS VEHICLE LOGS
-            const vehicleLogs = vehicleRes?.data || [];
-            const filteredVehicleLogs = vehicleLogs.filter(log => {
+            const vLogsRaw = vehicleRes?.data || [];
+            const filteredVehicleLogs = (Array.isArray(vLogsRaw) ? vLogsRaw : []).filter(log => {
                 const logDate = (log.out_time || log.created_at || '').split('T')[0];
                 if (!logDate) return false;
 
@@ -172,8 +172,12 @@ const ExpenseTrackerMain = () => {
             const vehicleExpense = filteredVehicleLogs.reduce((acc, log) => acc + (parseFloat(log.expense_amount) || 0), 0);
 
             // Adjust Stats: Exclude 'Salary Pot' from total_expense for the main business summary
-            // But if it's a member-specific view, we keep everything for the ledger calculation
-            const adjustedStats = { ...statsRes.data };
+            const rawStats = statsRes?.data || { summary: { total_income: 0, total_expense: 0 }, categories: [] };
+            const adjustedStats = {
+                ...rawStats,
+                summary: rawStats.summary || { total_income: 0, total_expense: 0 },
+                categories: Array.isArray(rawStats.categories) ? rawStats.categories : []
+            };
 
             // Add Vehicle Stats
             if (adjustedStats.summary) {
@@ -182,18 +186,19 @@ const ExpenseTrackerMain = () => {
             }
 
             if (!filterMember) {
-                const potsOnly = transRes.data.filter(t => t.category === 'Salary Pot' && t.type === 'expense');
+                const transArr = Array.isArray(transRes.data) ? transRes.data : [];
+                const potsOnly = transArr.filter(t => t.category === 'Salary Pot' && t.type === 'expense');
                 const potsTotal = potsOnly.reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
                 adjustedStats.summary.total_expense = Math.max(0, parseFloat(adjustedStats.summary.total_expense) - potsTotal);
             }
             setStats(adjustedStats);
 
-            setCategories(catRes.data);
-            setProjects(projRes.data);
-            const rawMembers = membersRes.data.data;
-            const guests = guestRes.data.data.map(g => ({ ...g, isGuest: true }));
+            setCategories(Array.isArray(catRes.data) ? catRes.data : []);
+            setProjects(Array.isArray(projRes.data) ? projRes.data : []);
+            const rawMembers = Array.isArray(membersRes.data?.data) ? membersRes.data.data : [];
+            const guests = Array.isArray(guestRes.data?.data) ? guestRes.data.data.map(g => ({ ...g, isGuest: true })) : [];
             setMembers([...rawMembers, ...guests]);
-            setRoles(roleRes.data.data);
+            setRoles(Array.isArray(roleRes.data?.data) ? roleRes.data.data : []);
 
             if (filterMember) {
                 setSalaryLoading(true);
@@ -373,10 +378,11 @@ const ExpenseTrackerMain = () => {
 
     const handleShowTransactions = (type) => {
         let filtered = [];
+        const transArr = Array.isArray(transactions) ? transactions : [];
         if (type === 'income') {
-            filtered = transactions.filter(t => t.type === 'income');
+            filtered = transArr.filter(t => t.type === 'income');
         } else if (type === 'expense') {
-            filtered = transactions.filter(t => t.type === 'expense');
+            filtered = transArr.filter(t => t.type === 'expense');
         }
         setModalTransactions(filtered);
         setShowModal(type);
@@ -385,15 +391,17 @@ const ExpenseTrackerMain = () => {
     // Helper for mapping member IDs to their roles
     const memberIdToRoleMap = useMemo(() => {
         const map = {};
-        members.forEach(m => {
-            map[m.id] = m.role;
-        });
+        if (Array.isArray(members)) {
+            members.forEach(m => {
+                map[m.id] = m.role;
+            });
+        }
         return map;
     }, [members]);
 
     const combinedData = useMemo(() => {
         // 1. Filter Vehicle Logs
-        const filteredVLogs = vehicleLogs.filter(log => {
+        const filteredVLogs = (Array.isArray(vehicleLogs) ? vehicleLogs : []).filter(log => {
             const logDate = (log.out_time || log.created_at || '').split('T')[0];
             if (!logDate) return false;
 
@@ -410,7 +418,7 @@ const ExpenseTrackerMain = () => {
 
             if (!dateMatch) return false;
 
-            if (filterMember) {
+            if (filterMember && Array.isArray(members)) {
                 const memberName = members.find(m => m.id == filterMember)?.name;
                 if (!memberName || (log.driver_name !== memberName)) return false;
             }
@@ -445,7 +453,7 @@ const ExpenseTrackerMain = () => {
             return items;
         });
 
-        const relevantTransactions = filterVehicle ? [] : transactions;
+        const relevantTransactions = filterVehicle ? [] : (Array.isArray(transactions) ? transactions : []);
 
         return [...relevantTransactions, ...filteredVLogs].sort((a, b) => new Date(b.date) - new Date(a.date));
     }, [transactions, vehicleLogs, periodType, currentPeriod, customRange, filterMember, members, filterVehicle]);
@@ -475,7 +483,7 @@ const ExpenseTrackerMain = () => {
             });
     }, [combinedData, filterType, filterCat, sortBy, searchQuery, filterProject, filterRole, memberIdToRoleMap]);
 
-    const vehicleNames = useMemo(() => [...new Set(vehicleLogs.map(l => l.vehicle_name))].filter(Boolean).sort(), [vehicleLogs]);
+    const vehicleNames = useMemo(() => [...new Set((Array.isArray(vehicleLogs) ? vehicleLogs : []).map(l => l.vehicle_name))].filter(Boolean).sort(), [vehicleLogs]);
 
     const formatCurrency = (val) => {
         const absVal = Math.abs(val || 0);
@@ -484,12 +492,13 @@ const ExpenseTrackerMain = () => {
 
     const memberStats = useMemo(() => {
         if (!filterMember) return null;
-        const totalSalary = transactions
-            .filter(t => t.category.toLowerCase().includes('salary'))
-            .reduce((acc, t) => acc + parseFloat(t.amount), 0);
-        const totalAdvances = transactions
-            .filter(t => t.category.toLowerCase().includes('advance'))
-            .reduce((acc, t) => acc + parseFloat(t.amount), 0);
+        const transArr = Array.isArray(transactions) ? transactions : [];
+        const totalSalary = transArr
+            .filter(t => t.category && t.category.toLowerCase().includes('salary'))
+            .reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
+        const totalAdvances = transArr
+            .filter(t => t.category && t.category.toLowerCase().includes('advance'))
+            .reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
         return { totalSalary, totalAdvances };
     }, [transactions, filterMember]);
 
@@ -724,8 +733,8 @@ const ExpenseTrackerMain = () => {
     };
 
     // Chart Data
-    const pieData = stats.categories.filter(c => c.type === 'expense').map(c => ({ name: c.category, value: parseFloat(c.total) }));
-    const barData = [{ name: 'This Period', Income: parseFloat(stats.summary?.total_income || 0), Expenses: parseFloat(stats.summary?.total_expense || 0) }];
+    const pieData = (Array.isArray(stats?.categories) ? stats.categories : []).filter(c => c.type === 'expense').map(c => ({ name: c.category, value: parseFloat(c.total || 0) }));
+    const barData = [{ name: 'This Period', Income: parseFloat(stats?.summary?.total_income || 0), Expenses: parseFloat(stats?.summary?.total_expense || 0) }];
 
     const SidebarItem = ({ icon: Icon, label, onClick }) => (
         <button
@@ -833,7 +842,7 @@ const ExpenseTrackerMain = () => {
                                 <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Project</label>
                                 <select value={filterProject} onChange={(e) => setFilterProject(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
                                     <option value="">All Projects</option>
-                                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                    {Array.isArray(projects) && projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                 </select>
                             </div>
 
@@ -842,7 +851,7 @@ const ExpenseTrackerMain = () => {
                                 <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Vehicle</label>
                                 <select value={filterVehicle} onChange={(e) => setFilterVehicle(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
                                     <option value="">All Vehicles</option>
-                                    {[...new Set(vehicleLogs.map(l => l.vehicle_name))].filter(Boolean).sort().map(v => <option key={v} value={v}>{v}</option>)}
+                                    {[...new Set((Array.isArray(vehicleLogs) ? vehicleLogs : []).map(l => l.vehicle_name))].filter(Boolean).sort().map(v => <option key={v} value={v}>{v}</option>)}
                                 </select>
                             </div>
 
@@ -851,7 +860,7 @@ const ExpenseTrackerMain = () => {
                                 <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Role</label>
                                 <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
                                     <option value="">All Roles</option>
-                                    {[...new Set([...roles.map(r => r.name), ...members.map(m => m.role).filter(Boolean)])].sort().map(role => (
+                                    {[...new Set([...(Array.isArray(roles) ? roles.map(r => r.name) : []), ...(Array.isArray(members) ? members.map(m => m.role).filter(Boolean) : [])])].sort().map(role => (
                                         <option key={role} value={role}>{role}</option>
                                     ))}
                                 </select>
@@ -1022,7 +1031,7 @@ const ExpenseTrackerMain = () => {
                                         <div className="flex gap-2">
                                             <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-xs cursor-pointer">
                                                 <option value="General">General</option>
-                                                {categories.filter(c => c.type === formData.type && c.name !== 'General').map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                                                {Array.isArray(categories) && categories.filter(c => c.type === formData.type && c.name !== 'General').map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                                             </select>
                                             <button
                                                 type="button"
@@ -1041,7 +1050,7 @@ const ExpenseTrackerMain = () => {
                                         <label className="block text-[7px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1.5 ml-1">Project (Optional)</label>
                                         <select value={formData.project_id} onChange={(e) => setFormData({ ...formData, project_id: e.target.value })} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-[10px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all shadow-xs cursor-pointer">
                                             <option value="">No Project</option>
-                                            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                            {Array.isArray(projects) && projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                         </select>
                                     </div>
                                     <div>
@@ -1057,7 +1066,7 @@ const ExpenseTrackerMain = () => {
                                         ) : (
                                             <select value={formData.member_id} onChange={(e) => setFormData({ ...formData, member_id: e.target.value, guest_name: '' })} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-[10px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all shadow-xs cursor-pointer">
                                                 <option value="">No Member</option>
-                                                {members.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                                                {Array.isArray(members) && members.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
                                             </select>
                                         )}
                                     </div>

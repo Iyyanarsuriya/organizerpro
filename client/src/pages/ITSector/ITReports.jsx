@@ -43,14 +43,15 @@ const ITReports = ({
     // Ledger Logic for Member View
     const memberLedgerBalance = React.useMemo(() => {
         if (!filterMember) return { earned: 0, paid: 0, balance: 0 };
-        const earned = transactions.filter(t => t.category === 'Salary Pot').reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
-        const paid = transactions.filter(t => ['Salary', 'Advance'].includes(t.category)).reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
+        const transArr = Array.isArray(transactions) ? transactions : [];
+        const earned = transArr.filter(t => t.category === 'Salary Pot').reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
+        const paid = transArr.filter(t => ['Salary', 'Advance'].includes(t.category)).reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
         return { earned, paid, balance: earned - paid };
     }, [transactions, filterMember]);
 
     // Calculate Project Expenses for Pie Chart or Report
     const projectExpenses = React.useMemo(() => {
-        return transactions
+        return (Array.isArray(transactions) ? transactions : [])
             .filter(t => t.type === 'expense' && t.project_id)
             .reduce((acc, t) => {
                 acc[t.project_id] = (acc[t.project_id] || 0) + parseFloat(t.amount);
@@ -259,7 +260,7 @@ const ITReports = ({
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-50">
-                                        {transactions.length > 0 ? (
+                                        {Array.isArray(transactions) && transactions.length > 0 ? (
                                             [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date)).map((t) => (
                                                 <tr key={t.id} className="hover:bg-slate-50/50 transition-colors group">
                                                     <td className="px-6 py-5">
@@ -323,7 +324,7 @@ const ITReports = ({
                                 <h4 className="text-xs font-black uppercase tracking-widest text-slate-800">Member Disbursement View</h4>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {stats.memberExpenses.map((me, i) => (
+                                {Array.isArray(stats?.memberExpenses) && stats.memberExpenses.map((me, i) => (
                                     <div key={i} className="bg-white border border-slate-100 p-6 rounded-[32px] shadow-xs hover:border-purple-200 transition-all group">
                                         <div className="flex items-center gap-4 mb-4">
                                             <div className="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center text-xs font-black">

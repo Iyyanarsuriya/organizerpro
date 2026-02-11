@@ -66,15 +66,15 @@ const MemberManager = ({ onClose, onUpdate, sector, projects: parentProjects }) 
             const roleRes = results[1];
             const guestRes = results[2];
 
-            // If we fetched projects, it's the 4th result. Otherwise use parentProjects.
-            const fetchedProjects = (!parentProjects || parentProjects.length === 0) ? results[3].data : parentProjects;
+            // If we fetched projects, it's the 4th result (index 3). Extract the .data property from the API response structure.
+            const fetchedProjects = (!parentProjects || parentProjects.length === 0) ? (results[3]?.data?.data || []) : parentProjects;
 
             console.log('Projects used in member manager:', fetchedProjects);
 
-            const guests = guestRes.data.data.map(g => ({ ...g, isGuest: true }));
-            setMembers([...memRes.data.data, ...guests]);
-            setRoles(roleRes.data.data);
-            setProjects(fetchedProjects);
+            const guests = (guestRes?.data?.data || []).map(g => ({ ...g, isGuest: true }));
+            setMembers([...(memRes?.data?.data || []), ...guests]);
+            setRoles(roleRes?.data?.data || []);
+            setProjects(fetchedProjects || []);
             setLoading(false);
         } catch (error) {
             console.error('Error in fetchMembers:', error);
@@ -296,7 +296,7 @@ const MemberManager = ({ onClose, onUpdate, sector, projects: parentProjects }) 
                                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
                                 >
                                     <option value="">Select Category</option>
-                                    {[...new Set([...roles.map(r => r.name), ...members.map(m => m.role).filter(Boolean)])].sort().map(role => (
+                                    {[...new Set([...(roles?.map(r => r.name) || []), ...(Array.isArray(members) ? members.map(m => m.role).filter(Boolean) : [])])].sort().map(role => (
                                         <option key={role} value={role}>{role}</option>
                                     ))}
                                 </select>
@@ -321,7 +321,7 @@ const MemberManager = ({ onClose, onUpdate, sector, projects: parentProjects }) 
                                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
                             >
                                 <option value="">No Project</option>
-                                {projects.map(p => (
+                                {Array.isArray(projects) && projects.map(p => (
                                     <option key={p.id} value={p.id}>{p.name}</option>
                                 ))}
                             </select>
@@ -488,7 +488,7 @@ const MemberManager = ({ onClose, onUpdate, sector, projects: parentProjects }) 
                             <FaTag className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400 group-hover:text-indigo-500 transition-colors" size={12} />
                             <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} className="w-full bg-indigo-50 hover:bg-indigo-100 border border-transparent rounded-2xl py-3 pl-10 pr-10 text-xs font-black text-indigo-600 text-center outline-none focus:ring-2 focus:ring-indigo-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
                                 <option value="">All Categories</option>
-                                {[...new Set(members.map(m => m.role).filter(Boolean))].map(role => (
+                                {[...new Set(Array.isArray(members) ? members.map(m => m.role).filter(Boolean) : [])].map(role => (
                                     <option key={role} value={role}>{role}</option>
                                 ))}
                             </select>
@@ -502,7 +502,7 @@ const MemberManager = ({ onClose, onUpdate, sector, projects: parentProjects }) 
                             <FaFolder className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-400 group-hover:text-orange-500 transition-colors" size={12} />
                             <select value={filterProject} onChange={(e) => setFilterProject(e.target.value)} className="w-full bg-orange-50 hover:bg-orange-100 border border-transparent rounded-2xl py-3 pl-10 pr-10 text-xs font-black text-orange-600 text-center outline-none focus:ring-2 focus:ring-orange-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
                                 <option value="">All Projects</option>
-                                {projects.map(p => (
+                                {Array.isArray(projects) && projects.map(p => (
                                     <option key={p.id} value={p.id}>{p.name}</option>
                                 ))}
                             </select>
