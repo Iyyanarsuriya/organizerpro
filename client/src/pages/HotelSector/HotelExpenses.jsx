@@ -133,14 +133,14 @@ const HotelExpenses = () => {
                 getGuests()
             ]);
 
-            setTransactions(transRes.data);
-            setStats(statsRes.data);
-            setCategories(catRes.data);
-            setProjects(projRes.data);
-            const rawMembers = membersRes.data.data;
-            const guests = guestRes.data.data.map(g => ({ ...g, isGuest: true }));
+            setTransactions(transRes.data || []);
+            setStats(statsRes.data || { summary: { total_income: 0, total_expense: 0 }, categories: [] });
+            setCategories(catRes.data || []);
+            setProjects(projRes.data?.data || []);
+            const rawMembers = membersRes.data?.data || [];
+            const guests = (guestRes.data?.data || []).map(g => ({ ...g, isGuest: true }));
             setMembers([...rawMembers, ...guests]);
-            setRoles(roleRes.data.data);
+            setRoles(roleRes.data?.data || []);
 
             if (filterMember) {
                 setSalaryLoading(true);

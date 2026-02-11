@@ -194,7 +194,7 @@ const ExpenseTrackerMain = () => {
             setStats(adjustedStats);
 
             setCategories(Array.isArray(catRes.data) ? catRes.data : []);
-            setProjects(Array.isArray(projRes.data) ? projRes.data : []);
+            setProjects(projRes.data?.data || []);
             const rawMembers = Array.isArray(membersRes.data?.data) ? membersRes.data.data : [];
             const guests = Array.isArray(guestRes.data?.data) ? guestRes.data.data.map(g => ({ ...g, isGuest: true })) : [];
             setMembers([...rawMembers, ...guests]);
