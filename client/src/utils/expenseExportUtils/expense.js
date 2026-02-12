@@ -19,7 +19,7 @@ export const exportExpenseToCSV = (data, filename) => {
         [] // Empty row
     ];
 
-    const headers = ["Date", "Description", "Amount", "Type", "Category", "Project", "Member"];
+    const headers = ["Date", "Description", "Amount", "Type", "Category", "Project", "Member", "Room", "Vendor"];
     const rows = [
         ...summaryRows,
         headers,
@@ -28,9 +28,11 @@ export const exportExpenseToCSV = (data, filename) => {
             t.title,
             t.amount,
             t.type.toUpperCase(),
-            t.category,
+            t.category || t.category_name || 'N/A',
             t.project_name || 'N/A',
-            t.member_name || 'N/A'
+            t.member_name || 'N/A',
+            t.room_number ? `Room ${t.room_number}` : 'N/A',
+            t.vendor_name || 'N/A'
         ])
     ];
 
@@ -56,7 +58,7 @@ export const exportExpenseToTXT = ({ data, period, filename }) => {
         t.title,
         `Rs. ${formatAmount(t.amount)}`,
         t.type.toUpperCase(),
-        t.category,
+        t.category || t.category_name || 'N/A',
         t.member_name || '-'
     ]);
 
@@ -81,7 +83,7 @@ export const exportExpenseToPDF = ({ data, period, subHeader, filename }) => {
     const tableRows = data.map(t => [
         new Date(t.date).toLocaleDateString('en-GB'),
         t.title,
-        t.category,
+        t.category || t.category_name || 'N/A',
         t.type.toUpperCase(),
         t.project_name || '-',
         t.member_name || '-',

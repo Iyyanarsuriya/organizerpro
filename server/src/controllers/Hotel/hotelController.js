@@ -81,7 +81,7 @@ const createBooking = async (req, res) => {
     const connection = await db.getConnection();
     await connection.beginTransaction();
     try {
-        const { guest_id, unit_id, check_in, check_out, total_amount, advance_paid, booking_source, notes } = req.body;
+        const { guest_id, unit_id, check_in, check_out, total_amount, advance_paid, booking_source, notes, payment_method } = req.body;
 
         // 1. Availability Logic (Integration Testing Case)
         const [overlap] = await connection.query(
@@ -107,16 +107,17 @@ const createBooking = async (req, res) => {
 
         // 3. Record Payment if advance paid
         if (parseFloat(advance_paid) > 0) {
+            const mode = payment_method || 'Cash';
             // Record in payments table
             await connection.query(
                 'INSERT INTO hotel_payments (user_id, booking_id, amount, payment_method, remark) VALUES (?, ?, ?, ?, ?)',
-                [req.user.data_owner_id, bookingId, advance_paid, 'cash', 'Advance payment']
+                [req.user.data_owner_id, bookingId, advance_paid, mode, 'Advance payment']
             );
 
             // ✅ CRITICAL: Also record in transactions table for revenue tracking
             await connection.query(
-                'INSERT INTO hotel_transactions (user_id, title, amount, type, category, date, guest_name, payment_status) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
-                [req.user.data_owner_id, `Booking Advance - ${guestName} (Booking #${bookingId})`, advance_paid, 'income', 'Room Revenue', guestName, 'completed']
+                'INSERT INTO hotel_transactions (user_id, title, amount, type, category, date, guest_name, payment_status, payment_mode) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?, ?)',
+                [req.user.data_owner_id, `Booking Advance - ${guestName} (Booking #${bookingId})`, advance_paid, 'income', 'Room Revenue', guestName, 'completed', mode]
             );
         }
 

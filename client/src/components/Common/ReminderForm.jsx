@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, Plus } from 'lucide-react';
+import { FaChevronDown, FaPlus } from 'react-icons/fa';
 
 function ReminderForm({ onAdd, categories = [], onManageCategories }) {
   const [title, setTitle] = useState('');
@@ -96,7 +96,7 @@ function ReminderForm({ onAdd, categories = [], onManageCategories }) {
               <option value="medium">Medium Priority</option>
               <option value="high">High Priority</option>
             </select>
-            <ChevronDown className={`absolute right-[12px] top-1/2 -translate-y-1/2 w-[14px] h-[14px] sm:w-[15px] sm:h-[15px] md:w-[16px] md:h-[16px] pointer-events-none transition-colors ${priority === 'high' ? 'text-red-400' : priority === 'medium' ? 'text-amber-400' : 'text-blue-400'}`} />
+            <FaChevronDown className={`absolute right-[12px] top-1/2 -translate-y-1/2 w-[14px] h-[14px] sm:w-[15px] sm:h-[15px] md:w-[16px] md:h-[16px] pointer-events-none transition-colors ${priority === 'high' ? 'text-red-400' : priority === 'medium' ? 'text-amber-400' : 'text-blue-400'}`} />
           </div>
         </div>
       </div>
@@ -114,14 +114,14 @@ function ReminderForm({ onAdd, categories = [], onManageCategories }) {
                 onChange={(e) => setCategory(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-[8px] sm:rounded-[10px] md:rounded-[11px] px-[12px] sm:px-[14px] md:px-[15px] h-[32px] sm:h-[36px] md:h-[38px] text-slate-800 input-focus text-[11px] sm:text-[12px] md:text-[13px] font-medium appearance-none cursor-pointer outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
               >
-                {categories.map((cat) => (
+                {Array.isArray(categories) && categories.map((cat) => (
                   <option key={cat.id || cat.name} value={cat.name}>
                     {cat.name}
                   </option>
                 ))}
-                {categories.length === 0 && <option value="General">General</option>}
+                {(!categories || categories.length === 0) && <option value="General">General</option>}
               </select>
-              <ChevronDown className="absolute right-[12px] top-1/2 -translate-y-1/2 w-[14px] h-[14px] sm:w-[15px] sm:h-[15px] md:w-[16px] md:h-[16px] text-slate-400 pointer-events-none" />
+              <FaChevronDown className="absolute right-[12px] top-1/2 -translate-y-1/2 w-[14px] h-[14px] sm:w-[15px] sm:h-[15px] md:w-[16px] md:h-[16px] text-slate-400 pointer-events-none" />
             </div>
             {onManageCategories && (
               <button
@@ -130,7 +130,7 @@ function ReminderForm({ onAdd, categories = [], onManageCategories }) {
                 className="h-[32px] sm:h-[36px] md:h-[38px] w-[32px] sm:w-[36px] md:w-[38px] bg-purple-50 text-purple-600 rounded-[8px] sm:rounded-[10px] md:rounded-[11px] flex items-center justify-center hover:bg-purple-100 transition-all border border-purple-100 shrink-0 shadow-sm"
                 title="Manage Categories"
               >
-                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                <FaPlus className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             )}
           </div>

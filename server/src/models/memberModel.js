@@ -65,13 +65,10 @@ const HotelMemberModel = {
     },
     getAll: async (userId, memberType) => {
         let query = `
-            SELECT m.*, p.name as project_name, s.name as shift_name 
+            SELECT m.*
             FROM hotel_members m 
-            LEFT JOIN hotel_projects p ON m.project_id = p.id 
-            LEFT JOIN hotel_shifts s ON m.default_shift_id = s.id
             WHERE m.user_id = ?`;
         const params = [userId];
-        if (memberType && memberType !== 'all') { query += ' AND m.member_type = ?'; params.push(memberType); }
         query += ' ORDER BY m.created_at DESC';
         const [rows] = await db.query(query, params);
         return rows;
@@ -179,7 +176,7 @@ const getActiveMembers = async (userId, memberType = null, sector) => {
     const { members: table } = getTables(sector);
     let query = `SELECT * FROM ${table} WHERE user_id = ? AND status = "active"`;
     let params = [userId];
-    if (memberType && memberType !== 'all') { query += ' AND member_type = ?'; params.push(memberType); }
+    if (sector !== 'hotel' && memberType && memberType !== 'all') { query += ' AND member_type = ?'; params.push(memberType); }
     query += ' ORDER BY name ASC';
     const [rows] = await db.query(query, params);
     return rows;

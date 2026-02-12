@@ -111,20 +111,28 @@ const HotelBookings = () => {
         }
     };
 
-    const calculateTotal = () => {
+    // Calculate total amount automatically
+    useEffect(() => {
         if (formData.unit_id && formData.check_in && formData.check_out) {
             const unit = units.find(u => u.id == formData.unit_id);
             if (unit) {
+                // Parse dates properly
                 const start = new Date(formData.check_in);
                 const end = new Date(formData.check_out);
-                const diffTime = Math.abs(end - start);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                if (diffDays > 0) {
-                    setFormData(prev => ({ ...prev, total_amount: (diffDays * unit.base_price).toFixed(2) }));
+
+                if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+                    const diffTime = end - start;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    if (diffDays > 0) {
+                        const price = parseFloat(unit.base_price) || 0;
+                        const total = (diffDays * price).toFixed(2);
+                        setFormData(prev => ({ ...prev, total_amount: total }));
+                    }
                 }
             }
         }
-    };
+    }, [formData.unit_id, formData.check_in, formData.check_out, units]);
 
     const filteredBookings = bookings.filter(b => {
         const matchesStatus = filterStatus === 'all' || b.status === filterStatus;
@@ -461,8 +469,6 @@ const HotelBookings = () => {
                                         value={formData.unit_id}
                                         onChange={e => {
                                             setFormData({ ...formData, unit_id: e.target.value });
-                                            // Trigger total recalc if dates are set
-                                            setTimeout(calculateTotal, 0);
                                         }}
                                         className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-indigo-500"
                                     >
@@ -499,7 +505,6 @@ const HotelBookings = () => {
                                         value={formData.check_in}
                                         onChange={e => {
                                             setFormData({ ...formData, check_in: e.target.value });
-                                            setTimeout(calculateTotal, 0);
                                         }}
                                         className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-indigo-500"
                                     />
@@ -512,7 +517,6 @@ const HotelBookings = () => {
                                         value={formData.check_out}
                                         onChange={e => {
                                             setFormData({ ...formData, check_out: e.target.value });
-                                            setTimeout(calculateTotal, 0);
                                         }}
                                         className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-indigo-500"
                                     />
@@ -540,6 +544,21 @@ const HotelBookings = () => {
                                         placeholder="0.00"
                                     />
                                 </div>
+                                {parseFloat(formData.advance_paid) > 0 && (
+                                    <div>
+                                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 pl-1">Payment Method</label>
+                                        <select
+                                            value={formData.payment_method || 'Cash'}
+                                            onChange={e => setFormData({ ...formData, payment_method: e.target.value })}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-indigo-500"
+                                        >
+                                            <option value="Cash">Cash</option>
+                                            <option value="Card">Card</option>
+                                            <option value="UPI">UPI</option>
+                                            <option value="Bank Transfer">Bank Transfer</option>
+                                        </select>
+                                    </div>
+                                )}
 
                                 <div className="col-span-1 md:col-span-2">
                                     <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 pl-1">Notes</label>

@@ -54,8 +54,8 @@ const getSectorHandler = (sector) => {
 
 exports.getTransactions = async (req, res) => {
     try {
-        const { projectId, memberId, memberType, period, startDate, endDate, sector } = req.query;
-        const transactions = await Transaction.getAllByUserId(req.user.data_owner_id, { projectId, memberId, memberType, period, startDate, endDate, sector });
+        const { projectId, memberId, memberType, period, startDate, endDate, sector, propertyType, unitId, vendorId, paymentMode, categoryId } = req.query;
+        const transactions = await Transaction.getAllByUserId(req.user.data_owner_id, { projectId, memberId, memberType, period, startDate, endDate, sector, propertyType, unitId, vendorId, paymentMode, categoryId });
         res.json({ data: transactions });
     } catch (error) { res.status(500).json({ error: error.message }); }
 };

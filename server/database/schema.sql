@@ -1297,6 +1297,7 @@ CREATE TABLE `hotel_reminders` (
   `priority` enum('low','medium','high') DEFAULT 'medium',
   `is_completed` tinyint(1) DEFAULT '0',
   `status` varchar(50) DEFAULT 'pending',
+  `category` varchar(50) DEFAULT 'General',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),

@@ -43,10 +43,10 @@ const ITReminderModel = {
 // --- HOTEL SECTOR ---
 const HotelReminderModel = {
     create: async (data) => {
-        const { user_id, title, description, due_date, priority } = data;
+        const { user_id, title, description, due_date, priority, category } = data;
         const [res] = await db.query(
-            `INSERT INTO hotel_reminders (user_id, title, description, due_date, priority, status) VALUES (?, ?, ?, ?, ?, ?)`,
-            [user_id, title, description, sanitizeDate(due_date), priority || 'medium', 'pending']
+            `INSERT INTO hotel_reminders (user_id, title, description, due_date, priority, status, category) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [user_id, title, description, sanitizeDate(due_date), priority || 'medium', 'pending', category || 'General']
         );
         return { id: res.insertId, ...data };
     },

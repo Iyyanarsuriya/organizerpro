@@ -144,6 +144,7 @@ const HotelTransactions = ({
                     <FilterSelect label="Category" value={sortBy} onChange={setSortBy} options={categories} icon={FaFilter} />
                     <div className="flex items-end">
                         <button
+                            type="button"
                             onClick={() => {
                                 setFilterProperty('');
                                 setFilterRoom('');
