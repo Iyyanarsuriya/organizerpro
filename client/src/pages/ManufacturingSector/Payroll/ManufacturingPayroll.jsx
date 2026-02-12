@@ -13,7 +13,6 @@ import {
     ChevronLeft,
     ChevronRight,
     Search,
-    Search,
     CheckCircle,
     Clock,
     Loader2

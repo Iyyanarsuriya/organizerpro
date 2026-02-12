@@ -28,7 +28,7 @@ import HotelDashboard from './ExpenseTracker/HotelDashboard';
 import HotelTransactions from './ExpenseTracker/HotelTransactions';
 import HotelReports from './ExpenseTracker/HotelReports';
 import HotelVendorManager from './ExpenseTracker/HotelVendorManager';
-import SalaryCalculator from '../ManufacturingSector/ExpenseTracker/SalaryCalculator';
+import HotelSalaryCalculator from './ExpenseTracker/HotelSalaryCalculator';
 import CategoryManager from '../../components/Common/CategoryManager';
 import MemberManager from '../../components/Hotel/MemberManager';
 import RoleManager from '../../components/Hotel/RoleManager';
@@ -492,7 +492,7 @@ const HotelExpenses = () => {
                     <MemberManager sector="hotel" onUpdate={fetchData} />
                 )}
                 {activeTab === 'Salary' && (
-                    <SalaryCalculator
+                    <HotelSalaryCalculator
                         periodType={periodType}
                         filterMember={filterMember}
                         setFilterMember={setFilterMember}
@@ -511,6 +511,10 @@ const HotelExpenses = () => {
                         setBonus={setBonus}
                         stats={stats}
                         transactions={transactions}
+                        setFormData={setFormData}
+                        formData={formData}
+                        setShowAddModal={setShowAddModal}
+                        currentPeriod={currentPeriod}
                     />
                 )}
                 {activeTab === 'Reports' && (
