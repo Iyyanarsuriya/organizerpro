@@ -187,8 +187,8 @@ const addPayment = async (req, res) => {
 
         // Record in transactions table for revenue tracking
         await connection.query(
-            'INSERT INTO hotel_transactions (user_id, title, amount, type, category, date, guest_name, payment_status) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
-            [req.user.data_owner_id, `Booking Payment - ${guest_name} (Booking #${booking_id})`, amount, 'income', 'Room Revenue', guest_name, 'completed']
+            'INSERT INTO hotel_transactions (user_id, title, amount, type, category, date, guest_name, payment_status, payment_mode) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?, ?)',
+            [req.user.data_owner_id, `Booking Payment - ${guest_name} (Booking #${booking_id})`, amount, 'income', 'Room Revenue', guest_name, 'completed', payment_method]
         );
 
         // Check if booking is now fully paid

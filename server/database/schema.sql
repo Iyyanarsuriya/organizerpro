@@ -1220,7 +1220,7 @@ CREATE TABLE `hotel_transactions` (
   `member_id` int DEFAULT NULL,
   `guest_name` varchar(255) DEFAULT NULL,
   `payment_status` enum('pending','completed','cancelled') DEFAULT 'completed',
-  `payment_mode` enum('Cash', 'UPI', 'Card', 'Bank') DEFAULT 'Cash',
+  `payment_mode` varchar(50) DEFAULT 'Cash',
   `property_type` enum('Hotel', 'Homestay') DEFAULT 'Hotel',
   `unit_id` int DEFAULT NULL,
   `booking_id` int DEFAULT NULL,

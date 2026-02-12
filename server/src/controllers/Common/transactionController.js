@@ -16,6 +16,21 @@ const EducationTransactionHandler = {
     }
 };
 
+const HotelTransactionHandler = {
+    create: async (req) => {
+        const { title, amount, type, category_id, date, member_id, sector, description, guest_name, payment_status, quantity, unit_price, vendor_id, unit_id, booking_id, property_type, payment_mode, income_source, attachment_url } = req.body;
+        return await Transaction.create({
+            user_id: req.user.data_owner_id, title, amount, type, date, sector, description, guest_name, payment_status, quantity, unit_price,
+            category_id: (category_id === 'None' || category_id === '') ? null : category_id,
+            member_id: (member_id === 'None' || member_id === '') ? null : member_id,
+            vendor_id: (vendor_id === 'None' || vendor_id === '') ? null : vendor_id,
+            unit_id: (unit_id === 'None' || unit_id === '') ? null : unit_id,
+            booking_id: (booking_id === 'None' || booking_id === '') ? null : booking_id,
+            property_type, payment_mode, income_source, attachment_url
+        });
+    }
+};
+
 const DefaultTransactionHandler = {
     create: async (req) => {
         const { title, amount, type, category, category_id, date, project_id, member_id, sector, description, guest_name, payment_status, quantity, unit_price } = req.body;
@@ -30,7 +45,9 @@ const DefaultTransactionHandler = {
 
 // --- DISPATCHER HELPERS ---
 const getSectorHandler = (sector) => {
-    return sector === 'education' ? EducationTransactionHandler : DefaultTransactionHandler;
+    if (sector === 'education') return EducationTransactionHandler;
+    if (sector === 'hotel') return HotelTransactionHandler;
+    return DefaultTransactionHandler;
 };
 
 // --- EXPORTED CONTROLLER FUNCTIONS ---

@@ -75,8 +75,23 @@ const HotelReports = ({ transactions, categories, stats, units }) => {
                 exportData = transactions;
         }
 
-        if (format === 'csv') exportToCSV(exportData, filename);
-        else exportToPDF(exportData, filename, reportType.replace(/_/g, ' '));
+
+        const headers = exportData.length > 0 ? Object.keys(exportData[0]) : [];
+        const rows = exportData.map(obj => Object.values(obj));
+        const title = reportType.replace(/_/g, ' ');
+        const period = new Date().toLocaleDateString();
+
+        if (format === 'csv') {
+            exportToCSV(headers, rows, filename);
+        } else {
+            exportToPDF({
+                title,
+                period,
+                tableHeaders: headers,
+                tableRows: rows,
+                filename
+            });
+        }
     };
 
     return (
