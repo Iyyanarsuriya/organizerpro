@@ -249,9 +249,27 @@ const getStats = async (userId, period, projectId, startDate, endDate, memberId,
     const table = getTableName(filters.sector);
     let query = `SELECT SUM(CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END) as total_income, SUM(CASE WHEN t.type = 'expense' THEN t.amount ELSE 0 END) as total_expense FROM ${table} t WHERE t.user_id = ?`;
     const params = [userId];
-    // Simple filter application for stats
-    if (period) { query += " AND DATE_FORMAT(t.date, '%Y-%m') = ?"; params.push(period); }
+
+    if (startDate && endDate) {
+        query += " AND DATE(t.date) BETWEEN ? AND ?";
+        params.push(startDate, endDate);
+    } else if (period) {
+        if (period.length === 10) { query += " AND DATE(t.date) = ?"; params.push(period); }
+        else if (period.length === 7) { query += " AND DATE_FORMAT(t.date, '%Y-%m') = ?"; params.push(period); }
+        else if (period.length === 4) { query += " AND YEAR(t.date) = ?"; params.push(period); }
+    }
+
     if (projectId && table !== 'personal_transactions') { query += " AND t.project_id = ?"; params.push(projectId); }
+    if (memberId && memberId !== 'all') { query += " AND t.member_id = ?"; params.push(memberId); }
+
+    // Hotel specific filters
+    if (filters.propertyType) { query += ' AND t.property_type = ?'; params.push(filters.propertyType); }
+    if (filters.paymentMode) { query += ' AND t.payment_mode = ?'; params.push(filters.paymentMode); }
+    if (filters.unitId) { query += ' AND t.unit_id = ?'; params.push(filters.unitId); }
+    if (filters.bookingId) { query += ' AND t.booking_id = ?'; params.push(filters.bookingId); }
+    if (filters.vendorId) { query += ' AND t.vendor_id = ?'; params.push(filters.vendorId); }
+    if (filters.categoryId) { query += ' AND t.category_id = ?'; params.push(filters.categoryId); }
+
     const [rows] = await db.query(query, params);
     return rows[0];
 };
@@ -271,10 +289,8 @@ module.exports = {
         let params = [userId];
 
         if (sector === 'personal' || sector === 'manufacturing') {
-            // Category is a string column
-            query = `SELECT category, type, SUM(amount) as total FROM ${table} WHERE user_id = ?`;
+            query = `SELECT category, type, SUM(amount) as total FROM ${table} t WHERE t.user_id = ?`;
         } else {
-            // Category is a join (IT, Hotel, Education)
             const catTable = table.replace('_transactions', '_categories');
             query = `SELECT c.name as category, t.type, SUM(t.amount) as total 
                       FROM ${table} t 
@@ -282,25 +298,32 @@ module.exports = {
                       WHERE t.user_id = ?`;
         }
 
-        // Apply filters
         if (startDate && endDate) {
-            query += " AND DATE(date) BETWEEN ? AND ?";
+            query += " AND DATE(t.date) BETWEEN ? AND ?";
             params.push(startDate, endDate);
         } else if (period) {
-            query += " AND DATE_FORMAT(date, '%Y-%m') = ?";
-            params.push(period);
+            if (period.length === 10) { query += " AND DATE(t.date) = ?"; params.push(period); }
+            else if (period.length === 7) { query += " AND DATE_FORMAT(t.date, '%Y-%m') = ?"; params.push(period); }
+            else if (period.length === 4) { query += " AND YEAR(t.date) = ?"; params.push(period); }
         }
 
         if (projectId && table !== 'personal_transactions') {
-            query += " AND project_id = ?";
+            query += " AND t.project_id = ?";
             params.push(projectId);
         }
 
-        // Grouping
+        // Hotel specific filters
+        if (filters.propertyType) { query += ' AND t.property_type = ?'; params.push(filters.propertyType); }
+        if (filters.paymentMode) { query += ' AND t.payment_mode = ?'; params.push(filters.paymentMode); }
+        if (filters.unitId) { query += ' AND t.unit_id = ?'; params.push(filters.unitId); }
+        if (filters.bookingId) { query += ' AND t.booking_id = ?'; params.push(filters.bookingId); }
+        if (filters.vendorId) { query += ' AND t.vendor_id = ?'; params.push(filters.vendorId); }
+        if (filters.categoryId) { query += ' AND t.category_id = ?'; params.push(filters.categoryId); }
+
         if (sector === 'personal' || sector === 'manufacturing') {
             query += " GROUP BY category, type";
         } else {
-            query += " GROUP BY c.name, t.type"; // Use t.type alias
+            query += " GROUP BY c.name, t.type";
         }
 
         const [rows] = await db.query(query, params);

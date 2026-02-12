@@ -185,7 +185,7 @@ const HotelTransactions = ({
                                             <div>
                                                 <p className="font-black text-slate-900 text-[14px] leading-tight mb-1.5 group-hover:text-blue-600 transition-colors">{t.title}</p>
                                                 <div className="flex gap-2">
-                                                    <span className="px-2.5 py-1 bg-white border border-slate-100 text-[8px] font-black text-slate-500 rounded-full uppercase tracking-widest shadow-sm">{t.category_name || t.category}</span>
+                                                    <span className="px-2.5 py-1 bg-white border border-slate-100 text-[8px] font-black text-slate-500 rounded-full uppercase tracking-widest shadow-sm">{t.type === 'income' ? (t.income_source || t.category_name || t.category) : (t.category_name || t.category)}</span>
                                                     {t.payment_mode && <span className="px-2.5 py-1 bg-slate-100 text-[8px] font-black text-slate-600 rounded-full uppercase tracking-widest">{t.payment_mode}</span>}
                                                 </div>
                                             </div>

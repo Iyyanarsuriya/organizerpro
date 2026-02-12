@@ -103,9 +103,24 @@ const SalaryCalculator = ({
         }
     }, [salaryMode, attendanceStats, dailyWage, monthlySalary, unitsProduced, ratePerUnit, currentPeriod]);
 
+    const memberPeriodDeductions = useMemo(() => {
+        if (!filterMember) return 0;
+        const memberTrans = (Array.isArray(transactions) ? transactions : []).filter(t => {
+            const memberObj = (Array.isArray(members) ? members : []).find(m => m.id == filterMember);
+            if (memberObj?.isGuest) {
+                return t.member_id === null && t.guest_name === memberObj.name;
+            }
+            return t.member_id == filterMember;
+        });
+
+        return memberTrans
+            .filter(t => ['Salary', 'Advance'].includes(t.category) && t.type === 'expense')
+            .reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
+    }, [transactions, filterMember, members]);
+
     const totalGross = currentAttendanceEarned + parseFloat(bonus || 0);
-    // Note: Deductions usually include both Salary payments and Advances in this period
-    const netPayable = Math.max(0, totalGross - (stats.summary?.total_expense || 0));
+    // Deductions include Salary payments and Advances in this period for the specific member
+    const netPayable = Math.max(0, totalGross - memberPeriodDeductions);
 
     // Export Wrappers
     const onExport = (type) => {
@@ -535,7 +550,7 @@ const SalaryCalculator = ({
                                     </div>
                                     <div className="flex justify-between items-center border-t border-white/5 pt-4">
                                         <span className="text-rose-400 text-[10px] font-bold uppercase tracking-widest">Paid / Advances (Period)</span>
-                                        <span className="text-rose-400 font-black text-xs">-₹{formatAmount(stats.summary?.total_expense || 0)}</span>
+                                        <span className="text-rose-400 font-black text-xs">-₹{formatAmount(memberPeriodDeductions)}</span>
                                     </div>
                                     <div className="h-px bg-white/10 my-6"></div>
                                     <div className="flex justify-between items-end">

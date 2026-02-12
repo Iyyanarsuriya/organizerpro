@@ -47,19 +47,19 @@ const ITMemberModel = {
 // --- HOTEL SECTOR ---
 const HotelMemberModel = {
     create: async (data) => {
-        const { user_id, name, role, phone, email, status, project_id, default_shift_id, employment_nature, primary_work_area, monthly_salary, hourly_rate, overtime_rate, allow_overtime, allow_late, max_hours_per_day, auto_mark_absent } = data;
+        const { user_id, name, role, phone, email, status, project_id, wage_type, daily_wage, default_shift_id, employment_nature, primary_work_area, monthly_salary, hourly_rate, overtime_rate, allow_overtime, allow_late, max_hours_per_day, auto_mark_absent } = data;
         const [res] = await db.query(
-            `INSERT INTO hotel_members (user_id, name, role, phone, email, status, project_id, default_shift_id, employment_nature, primary_work_area, monthly_salary, hourly_rate, overtime_rate, allow_overtime, allow_late, max_hours_per_day, auto_mark_absent) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [user_id, name, role, phone, email, status || 'active', project_id, default_shift_id, employment_nature || 'Permanent', primary_work_area || 'Rooms', monthly_salary || 0, hourly_rate || 0, overtime_rate || 0, allow_overtime ? 1 : 0, allow_late ? 1 : 0, max_hours_per_day || 12, auto_mark_absent ? 1 : 0]
+            `INSERT INTO hotel_members (user_id, name, role, phone, email, status, project_id, wage_type, daily_wage, default_shift_id, employment_nature, primary_work_area, monthly_salary, hourly_rate, overtime_rate, allow_overtime, allow_late, max_hours_per_day, auto_mark_absent) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [user_id, name, role, phone, email, status || 'active', project_id || null, wage_type || 'daily', daily_wage || 0, default_shift_id || null, employment_nature || 'Permanent', primary_work_area || 'Rooms', monthly_salary || 0, hourly_rate || 0, overtime_rate || 0, allow_overtime ? 1 : 0, allow_late ? 1 : 0, max_hours_per_day || 12, auto_mark_absent ? 1 : 0]
         );
         return { id: res.insertId, ...data };
     },
     update: async (id, userId, data) => {
-        const { name, role, phone, email, status, project_id, default_shift_id, employment_nature, primary_work_area, monthly_salary, hourly_rate, overtime_rate, allow_overtime, allow_late, max_hours_per_day, auto_mark_absent } = data;
+        const { name, role, phone, email, status, project_id, wage_type, daily_wage, default_shift_id, employment_nature, primary_work_area, monthly_salary, hourly_rate, overtime_rate, allow_overtime, allow_late, max_hours_per_day, auto_mark_absent } = data;
         const [res] = await db.query(
-            `UPDATE hotel_members SET name=?, role=?, phone=?, email=?, status=?, project_id=?, default_shift_id=?, employment_nature=?, primary_work_area=?, monthly_salary=?, hourly_rate=?, overtime_rate=?, allow_overtime=?, allow_late=?, max_hours_per_day=?, auto_mark_absent=? WHERE id=? AND user_id=?`,
-            [name, role, phone, email, status, project_id, default_shift_id, employment_nature, primary_work_area, monthly_salary, hourly_rate, overtime_rate, allow_overtime ? 1 : 0, allow_late ? 1 : 0, max_hours_per_day, auto_mark_absent ? 1 : 0, id, userId]
+            `UPDATE hotel_members SET name=?, role=?, phone=?, email=?, status=?, project_id=?, wage_type=?, daily_wage=?, default_shift_id=?, employment_nature=?, primary_work_area=?, monthly_salary=?, hourly_rate=?, overtime_rate=?, allow_overtime=?, allow_late=?, max_hours_per_day=?, auto_mark_absent=? WHERE id=? AND user_id=?`,
+            [name, role, phone, email, status, project_id || null, wage_type, daily_wage, default_shift_id || null, employment_nature, primary_work_area, monthly_salary, hourly_rate, overtime_rate, allow_overtime ? 1 : 0, allow_late ? 1 : 0, max_hours_per_day, auto_mark_absent ? 1 : 0, id, userId]
         );
         return res.affectedRows > 0;
     },
