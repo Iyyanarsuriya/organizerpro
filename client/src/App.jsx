@@ -13,6 +13,7 @@ const LandingPage = lazy(() => import('./pages/LandingPage'));
 const Home = lazy(() => import('./pages/PersonalSector/PersonalHome'));
 const PersonalSectorHome = lazy(() => import('./pages/PersonalSector/PersonalDashboard')); // New Personal Dashboard
 const PersonalReminders = lazy(() => import('./pages/PersonalSector/PersonalReminders')); // Specific Personal Reminders
+const ReminderDashboard = lazy(() => import('./pages/PersonalSector/ReminderDashboard')); // Reminder Dashboard
 const PersonalExpenseTracker = lazy(() => import('./pages/PersonalSector/PersonalExpenseTracker')); // New Personal Expenses
 
 const ITHome = lazy(() => import('./pages/ITSector/ITHome'));
@@ -249,6 +250,7 @@ const AppContent = () => {
             {/* Personal Sector Routes */}
             <Route path="/personal" element={<ProtectedRoute><PersonalSectorHome /></ProtectedRoute>} />
             <Route path="/personal/reminders" element={<ProtectedRoute><PersonalReminders /></ProtectedRoute>} />
+            <Route path="/reminder-dashboard" element={<ProtectedRoute><ReminderDashboard /></ProtectedRoute>} />
             <Route path="/personal/expenses" element={<ProtectedRoute><PersonalExpenseTracker /></ProtectedRoute>} />
 
             {/* IT Sector Routes */}
