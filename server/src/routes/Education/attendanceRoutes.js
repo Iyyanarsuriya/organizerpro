@@ -22,7 +22,7 @@ router.use((req, res, next) => {
     req.body = req.body || {};
     req.query.sector = 'education';
     req.body.sector = 'education';
-    console.log('Middleware: req.user:', req.user, 'req.query:', req.query);
+
     next();
 });
 

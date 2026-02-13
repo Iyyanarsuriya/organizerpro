@@ -29,6 +29,8 @@ if (!fs.existsSync(uploadDir)) {
 app.use("/uploads", express.static(uploadDir));
 
 app.use("/api/auth", authRoutes);
+app.use("/api/push", pushRoutes);
+
 // Middleware to inject sector
 const withSector = (sector) => (req, res, next) => {
     req.query.sector = sector;
@@ -38,21 +40,8 @@ const withSector = (sector) => (req, res, next) => {
     next();
 };
 
-// Personal Sector Header - DEFAULT
-const personalRouter = express.Router();
-personalRouter.use(withSector('personal'));
-personalRouter.use('/reminders', require("./routes/Personal/reminderRoutes"));
-personalRouter.use('/transactions', transactionRoutes);
-personalRouter.use('/categories', categoryRoutes);
-personalRouter.use('/expense-categories', expenseCategoryRoutes);
-personalRouter.use('/notes', require("./routes/Personal/noteRoutes"));
-
-personalRouter.use('/budgets', require("./routes/Personal/budgetRoutes"));
-app.use('/api', personalRouter);
-app.use("/api/push", pushRoutes);
-
 // ==========================================
-// SECTOR SPECIFIC ROUTES
+// SECTOR SPECIFIC ROUTES (PRIORITIZED)
 // ==========================================
 
 // Manufacturing Sector Header
@@ -92,7 +81,7 @@ app.use('/api/it-sector', itRouter);
 // Education Sector Header
 const eduRouter = express.Router();
 eduRouter.use(withSector('education'));
-eduRouter.use('/reminders', require("./routes/Personal/reminderRoutes"));
+eduRouter.use('/reminders', require("./routes/Education/reminderRoutes"));
 eduRouter.use('/notes', require("./routes/Personal/noteRoutes"));
 eduRouter.use('/transactions', transactionRoutes);
 eduRouter.use('/categories', categoryRoutes);
@@ -124,6 +113,21 @@ hotelRouter.use('/lookups', require("./routes/Hotel/lookupRoutes"));
 hotelRouter.use('/', require("./routes/Hotel/hotelRoutes"));
 app.use('/api/hotel-sector', hotelRouter);
 
+
+// ==========================================
+// PERSONAL SECTOR / FALLBACK (GENERIC /api)
+// ==========================================
+
+const personalRouter = express.Router();
+personalRouter.use(withSector('personal'));
+personalRouter.use('/reminders', require("./routes/Personal/reminderRoutes"));
+personalRouter.use('/transactions', transactionRoutes);
+personalRouter.use('/categories', categoryRoutes);
+personalRouter.use('/expense-categories', expenseCategoryRoutes);
+personalRouter.use('/notes', require("./routes/Personal/noteRoutes"));
+
+personalRouter.use('/budgets', require("./routes/Personal/budgetRoutes"));
+app.use('/api', personalRouter);
 
 
 app.listen(PORT, () => {
