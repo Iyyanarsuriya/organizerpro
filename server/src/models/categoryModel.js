@@ -4,7 +4,8 @@ const db = require('../config/db');
 const TABLE_MAP = {
     it: 'it_categories',
     education: 'education_categories',
-    hotel: 'hotel_categories', // Added hotel categories to the map
+    hotel: 'hotel_categories',
+    manufacturing: 'manufacturing_categories', // Added manufacturing categories
     personal: 'personal_categories'
 };
 
@@ -62,6 +63,28 @@ const HotelCategoryModel = {
     }
 };
 
+// --- MANUFACTURING SECTOR ---
+const ManufacturingCategoryModel = {
+    getAll: async (userId) => {
+        const [rows] = await db.query(`SELECT * FROM manufacturing_categories WHERE user_id = ? ORDER BY name ASC`, [userId]);
+        return rows;
+    },
+    create: async (data) => {
+        const { user_id, name, color } = data;
+        const [res] = await db.query(`INSERT INTO manufacturing_categories (user_id, name, color) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE name=name`, [user_id, name, color || '#2d5bff']);
+        return { id: res.insertId, ...data };
+    },
+    seed: async (userId) => {
+        const defaults = [
+            { name: 'Production', color: '#2d5bff' },
+            { name: 'Maintenance', color: '#f59e0b' },
+            { name: 'Order Material', color: '#ef4444' },
+            { name: 'Delivery', color: '#10b981' }
+        ];
+        for (const cat of defaults) await ManufacturingCategoryModel.create({ user_id: userId, name: cat, color: cat.color });
+    }
+};
+
 // --- EDUCATION SECTOR ---
 const EducationCategoryModel = {
     getAll: async (userId) => {
@@ -114,6 +137,7 @@ const getSectorModel = (sector) => {
         case 'hotel': return HotelCategoryModel;
         case 'it': return ITCategoryModel;
         case 'education': return EducationCategoryModel;
+        case 'manufacturing': return ManufacturingCategoryModel;
         default: return PersonalCategoryModel;
     }
 };
