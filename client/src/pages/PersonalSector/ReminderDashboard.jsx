@@ -1,19 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaCalendarAlt, FaCheckCircle, FaClock, FaTasks, FaGoogle } from 'react-icons/fa';
+import { FaCalendarAlt, FaGoogle, FaFilter } from 'react-icons/fa';
 import { IoArrowBack } from "react-icons/io5";
 import { getReminders } from '../../api/Reminder/personalReminder'; // Assuming personal sector context
 import toast from 'react-hot-toast';
+import { exportReminderToCSV, exportReminderToTXT, exportReminderToPDF } from '../../utils/exportUtils/index.js';
+import ExportButtons from '../../components/Common/ExportButtons';
 
 const ReminderDashboard = () => {
     const navigate = useNavigate();
-    const [stats, setStats] = useState({
-        total: 0,
-        completed: 0,
-        remaining: 0
-    });
     const [loading, setLoading] = useState(true);
-    const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')) || {});
+    const [reminders, setReminders] = useState([]);
+
+    // Filter State
+    const [periodType, setPeriodType] = useState('all'); // 'all', 'today', 'range'
+    const [customRange, setCustomRange] = useState({ start: '', end: '' });
+    const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'completed', 'pending'
 
     useEffect(() => {
         fetchData();
@@ -22,20 +24,59 @@ const ReminderDashboard = () => {
     const fetchData = async () => {
         try {
             const res = await getReminders();
-            const reminders = res.data || [];
-
-            const total = reminders.length;
-            const completed = reminders.filter(r => r.is_completed).length;
-            const remaining = total - completed;
-
-            setStats({ total, completed, remaining });
+            setReminders(res.data || []);
         } catch (error) {
             console.error("Error fetching reminders", error);
-            // toast.error("Failed to load stats"); // meaningful error not strictly necessary for dashboard view if empty
+            toast.error("Failed to load data");
         } finally {
             setLoading(false);
         }
     };
+
+    // Filter Logic
+    const processedReminders = useMemo(() => {
+        return reminders.filter(r => {
+            let matches = true;
+
+            // Period Filter
+            if (periodType === 'today') {
+                const today = new Date().toISOString().split('T')[0];
+                if (!r.due_date || !r.due_date.startsWith(today)) matches = false;
+            } else if (periodType === 'range') {
+                if (!r.due_date) matches = false;
+                else {
+                    const rDate = r.due_date.split('T')[0];
+                    if (customRange.start && rDate < customRange.start) matches = false;
+                    if (customRange.end && rDate > customRange.end) matches = false;
+                }
+            }
+
+            // Status Filter
+            if (filterStatus !== 'all') {
+                const isCompleted = filterStatus === 'completed';
+                if (r.is_completed !== isCompleted) matches = false;
+            }
+
+            return matches;
+        });
+    }, [reminders, periodType, customRange, filterStatus]);
+
+    // Derived Stats
+    const stats = useMemo(() => {
+        const total = processedReminders.length;
+        const completed = processedReminders.filter(r => r.is_completed).length;
+        const remaining = total - completed;
+        return { total, completed, remaining };
+    }, [processedReminders]);
+
+    const exportPeriod = useMemo(() => {
+        if (periodType === 'today') return new Date().toLocaleDateString('en-GB');
+        if (periodType === 'range') {
+            if (customRange.start && customRange.end) return `${customRange.start} to ${customRange.end}`;
+            return 'Custom Range';
+        }
+        return 'All Time';
+    }, [periodType, customRange]);
 
     const handleLogout = () => {
         localStorage.clear();
@@ -83,22 +124,87 @@ const ReminderDashboard = () => {
                     </div>
                 </div>
 
+                {/* Filters & Export Bar */}
+                <div className="bg-white rounded-[24px] p-4 sm:p-6 shadow-lg shadow-slate-200/50 border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+
+                        {/* Period Filter */}
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Period:</span>
+                            <select
+                                value={periodType}
+                                onChange={(e) => setPeriodType(e.target.value)}
+                                className="bg-transparent text-xs font-bold text-slate-700 outline-none cursor-pointer uppercase tracking-wider"
+                            >
+                                <option value="all">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="range">Range</option>
+                            </select>
+                        </div>
+
+                        {/* Date Range Inputs */}
+                        {periodType === 'range' && (
+                            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl animate-in fade-in zoom-in-95 duration-200">
+                                <input
+                                    type="date"
+                                    value={customRange.start}
+                                    onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })}
+                                    className="bg-transparent text-[10px] font-bold text-slate-600 outline-none w-[90px]"
+                                />
+                                <span className="text-slate-400 font-bold">-</span>
+                                <input
+                                    type="date"
+                                    value={customRange.end}
+                                    onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })}
+                                    className="bg-transparent text-[10px] font-bold text-slate-600 outline-none w-[90px]"
+                                />
+                            </div>
+                        )}
+
+                        {/* Status Filter */}
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Status:</span>
+                            <select
+                                value={filterStatus}
+                                onChange={(e) => setFilterStatus(e.target.value)}
+                                className="bg-transparent text-xs font-bold text-slate-700 outline-none cursor-pointer uppercase tracking-wider"
+                            >
+                                <option value="all">All</option>
+                                <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Export Actions */}
+                    <div className="flex items-center gap-4">
+                        <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest hidden sm:inline">Export Report</span>
+                        <div className="h-8 w-px bg-slate-100 hidden sm:block"></div>
+                        <ExportButtons
+                            onExportCSV={() => exportReminderToCSV({ data: processedReminders, period: exportPeriod, filename: `reminders_report_${new Date().toISOString().split('T')[0]}` })}
+                            onExportPDF={() => exportReminderToPDF({ data: processedReminders, period: exportPeriod, filename: `reminders_report_${new Date().toISOString().split('T')[0]}` })}
+                            onExportTXT={() => exportReminderToTXT({ data: processedReminders, period: exportPeriod, filename: `reminders_report_${new Date().toISOString().split('T')[0]}` })}
+                        />
+                    </div>
+                </div>
+
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* Total Tasks */}
-                    <div className="bg-white rounded-[32px] p-8 shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col items-center justify-center text-center">
+                    <div className="bg-white rounded-[32px] p-8 shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col items-center justify-center text-center transition-all hover:scale-105 duration-300">
                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Total Tasks</h3>
                         <div className="text-6xl font-black text-[#2d5bff] drop-shadow-sm">{stats.total}</div>
+                        {periodType !== 'all' && <span className="text-[10px] font-bold text-slate-300 mt-2 uppercase tracking-wide">Filtered</span>}
                     </div>
 
                     {/* Completed */}
-                    <div className="bg-white rounded-[32px] p-8 shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col items-center justify-center text-center">
+                    <div className="bg-white rounded-[32px] p-8 shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col items-center justify-center text-center transition-all hover:scale-105 duration-300">
                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 text-[#00d1a0]/80">Completed</h3>
                         <div className="text-6xl font-black text-[#00d1a0] drop-shadow-sm">{stats.completed}</div>
                     </div>
 
                     {/* Remaining */}
-                    <div className="bg-white rounded-[32px] p-8 shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col items-center justify-center text-center">
+                    <div className="bg-white rounded-[32px] p-8 shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col items-center justify-center text-center transition-all hover:scale-105 duration-300">
                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 text-orange-400">Remaining</h3>
                         <div className="text-6xl font-black text-orange-400 drop-shadow-sm">{stats.remaining}</div>
                     </div>
