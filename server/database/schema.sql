@@ -1012,7 +1012,7 @@ CREATE TABLE `education_transactions` (
   KEY `fk_edu_trans_dept` (`department_id`),
   CONSTRAINT `fk_edu_trans_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_edu_trans_memb` FOREIGN KEY (`member_id`) REFERENCES `education_members` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `fk_edu_trans_cat` FOREIGN KEY (`category_id`) REFERENCES `education_categories` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_edu_trans_cat` FOREIGN KEY (`category_id`) REFERENCES `education_expense_categories` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_edu_trans_vend` FOREIGN KEY (`vendor_id`) REFERENCES `education_vendors` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_edu_trans_dept` FOREIGN KEY (`department_id`) REFERENCES `education_departments` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -1028,6 +1028,20 @@ CREATE TABLE `education_categories` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_user_educat` (`user_id`,`name`),
   CONSTRAINT `fk_edu_cat_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Education Expense Categories
+DROP TABLE IF EXISTS `education_expense_categories`;
+CREATE TABLE `education_expense_categories` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `color` varchar(20) DEFAULT '#2d5bff',
+  `type` enum('income','expense') DEFAULT 'expense',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_edu_exp_cat` (`user_id`,`name`,`type`),
+  CONSTRAINT `fk_edu_exp_cat_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 

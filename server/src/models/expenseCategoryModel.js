@@ -2,13 +2,13 @@ const db = require('../config/db');
 
 const getTableName = (sector) => {
     if (sector === 'it') return 'it_categories';
-    if (sector === 'education') return 'education_categories';
+    if (sector === 'education') return 'education_expense_categories';
     return sector === 'manufacturing' ? 'manufacturing_expense_categories' : 'personal_categories';
 };
 
 const getAllByUserId = async (userId, sector) => {
     const table = getTableName(sector);
-    const query = sector === 'manufacturing'
+    const query = (sector === 'manufacturing' || sector === 'education')
         ? `SELECT * FROM ${table} WHERE user_id = ? ORDER BY type, name`
         : `SELECT *, 'expense' as type FROM ${table} WHERE user_id = ? ORDER BY name`; // Shim type for personal/it
 
@@ -24,7 +24,7 @@ const create = async (data) => {
     // Manufacturing has type
 
     let query, params;
-    if (sector === 'manufacturing') {
+    if (sector === 'manufacturing' || sector === 'education') {
         query = `INSERT INTO ${table} (user_id, name, type) VALUES (?, ?, ?)`;
         params = [user_id, name, type || 'expense'];
     } else {
