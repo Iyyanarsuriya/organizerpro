@@ -64,7 +64,7 @@ app.use('/api/manufacturing-sector', mfgRouter);
 // IT Sector Header
 const itRouter = express.Router();
 itRouter.use(withSector('it'));
-itRouter.use('/reminders', require("./routes/Personal/reminderRoutes"));
+itRouter.use('/reminders', require("./routes/IT/reminderRoutes"));
 itRouter.use('/notes', require("./routes/Personal/noteRoutes"));
 itRouter.use('/transactions', transactionRoutes);
 itRouter.use('/categories', categoryRoutes);

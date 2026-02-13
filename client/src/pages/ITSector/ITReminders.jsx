@@ -578,7 +578,8 @@ const ITReminders = () => {
 
                         {/* 📊 Dashboard Shortcut Button */}
                         <Link
-                            to="/profile"
+                            to="/it-sector/reminder-dashboard"
+
                             title="Go to Dashboard"
                             className="bg-white/10 hover:bg-white/20 text-white p-[8px] rounded-[8px] transition-all active:scale-95 flex items-center justify-center shrink-0"
                         >
