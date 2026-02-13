@@ -49,10 +49,10 @@ const Reminders = () => {
 
     const lastFetchRef = useRef(0);
 
-    const fetchData = async () => {
+    const fetchData = async (force = false) => {
         // Throttle fetching: don't fetch if last fetch was less than 60s ago
         const now = Date.now();
-        if (now - lastFetchRef.current < 60000 && !loading) {
+        if (!force && now - lastFetchRef.current < 60000 && !loading) {
             return;
         }
 
@@ -64,7 +64,7 @@ const Reminders = () => {
             ]);
             setReminders(remindersRes.data);
             setUser(userRes.data);
-            setCategories(categoriesRes.data);
+            setCategories(categoriesRes.data.data || []);
             localStorage.setItem('user', JSON.stringify(userRes.data));
             lastFetchRef.current = Date.now();
         } catch (error) {
@@ -1055,10 +1055,7 @@ const Reminders = () => {
                     showCategoryManager && (
                         <CategoryManager
                             categories={categories}
-                            onUpdate={() => {
-                                getCategories().then(res => setCategories(res.data));
-                                // No need to refresh reminders, but good practice
-                            }}
+                            onUpdate={() => fetchData(true)}
                             onCreate={createCategory}
                             onDelete={deleteCategory}
                             onClose={() => setShowCategoryManager(false)}

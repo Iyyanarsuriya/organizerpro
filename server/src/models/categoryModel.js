@@ -81,7 +81,7 @@ const ManufacturingCategoryModel = {
             { name: 'Order Material', color: '#ef4444' },
             { name: 'Delivery', color: '#10b981' }
         ];
-        for (const cat of defaults) await ManufacturingCategoryModel.create({ user_id: userId, name: cat, color: cat.color });
+        for (const cat of defaults) await ManufacturingCategoryModel.create({ user_id: userId, name: cat.name, color: cat.color });
     }
 };
 
