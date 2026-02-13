@@ -51,9 +51,9 @@ const HotelReminders = () => {
 
     const lastFetchRef = useRef(0);
 
-    const fetchData = async () => {
+    const fetchData = async (force = false) => {
         const now = Date.now();
-        if (now - lastFetchRef.current < 60000 && !loading) {
+        if (!force && now - lastFetchRef.current < 60000 && !loading) {
             return;
         }
 
@@ -65,7 +65,7 @@ const HotelReminders = () => {
             ]);
             setReminders(remindersRes.data);
             setUser(userRes.data);
-            setCategories(categoriesRes.data);
+            setCategories(categoriesRes.data.data || []);
             localStorage.setItem('user', JSON.stringify(userRes.data));
             lastFetchRef.current = Date.now();
         } catch (error) {
@@ -435,10 +435,10 @@ const HotelReminders = () => {
             {showCategoryManager && (
                 <CategoryManager
                     categories={categories}
-                    onUpdate={fetchData}
+                    onUpdate={() => fetchData(true)}
                     onClose={() => setShowCategoryManager(false)}
-                    onCreate={(data) => createCategory({ name: data, sector: SECTOR }).then(fetchData)}
-                    onDelete={(id) => deleteCategory(id, { sector: SECTOR }).then(fetchData)}
+                    onCreate={(data) => createCategory({ name: data, sector: SECTOR }).then(() => fetchData(true))}
+                    onDelete={(id) => deleteCategory(id, { sector: SECTOR }).then(() => fetchData(true))}
                 />
             )}
 
