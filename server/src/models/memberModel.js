@@ -112,6 +112,18 @@ const ManufacturingMemberModel = {
 const EducationMemberModel = {
     create: async (data) => {
         const { user_id, name, role, phone, email, status, staff_id, department, subjects, gender, profile_image, employment_type, date_of_joining, reporting_manager_id, shift_start_time, shift_end_time, cl_balance, sl_balance, el_balance } = data;
+
+        // Check duplicates
+        if (email || phone) {
+            const checks = [];
+            const values = [user_id];
+            if (email) { checks.push('email = ?'); values.push(email); }
+            if (phone) { checks.push('phone = ?'); values.push(phone); }
+
+            const [existing] = await db.query(`SELECT id FROM education_members WHERE user_id = ? AND (${checks.join(' OR ')})`, values);
+            if (existing.length > 0) throw new Error("Member with this email or phone already exists");
+        }
+
         const [res] = await db.query(
             `INSERT INTO education_members (user_id, name, role, phone, email, status, staff_id, department, subjects, gender, profile_image, employment_type, date_of_joining, reporting_manager_id, shift_start_time, shift_end_time, cl_balance, sl_balance, el_balance) 
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -121,6 +133,18 @@ const EducationMemberModel = {
     },
     update: async (id, userId, data) => {
         const { name, role, phone, email, status, staff_id, department, subjects, gender, profile_image, employment_type, date_of_joining, reporting_manager_id, shift_start_time, shift_end_time, cl_balance, sl_balance, el_balance } = data;
+
+        // Check duplicates (excluding self)
+        if (email || phone) {
+            const checks = [];
+            const values = [userId, id];
+            if (email) { checks.push('email = ?'); values.push(email); }
+            if (phone) { checks.push('phone = ?'); values.push(phone); }
+
+            const [existing] = await db.query(`SELECT id FROM education_members WHERE user_id = ? AND id != ? AND (${checks.join(' OR ')})`, values);
+            if (existing.length > 0) throw new Error("Member with this email or phone already exists");
+        }
+
         const [res] = await db.query(
             `UPDATE education_members SET name=?, role=?, phone=?, email=?, status=?, staff_id=?, department=?, subjects=?, gender=?, profile_image=?, employment_type=?, date_of_joining=?, reporting_manager_id=?, shift_start_time=?, shift_end_time=?, cl_balance=?, sl_balance=?, el_balance=? WHERE id=? AND user_id=?`,
             [name, role, phone, email, status, staff_id, department, subjects, gender, profile_image, employment_type, date_of_joining, reporting_manager_id, shift_start_time, shift_end_time, cl_balance, sl_balance, el_balance, id, userId]

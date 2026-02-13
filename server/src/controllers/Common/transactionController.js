@@ -5,6 +5,12 @@ const Transaction = require('../../models/transactionModel');
 const EducationTransactionHandler = {
     create: async (req) => {
         const { title, amount, type, category_id, date, member_id, sector, description, guest_name, payment_status, quantity, unit_price, vendor_id, department_id, approval_status, approved_by, payment_mode, bill_image, remarks } = req.body;
+
+        // Validation
+        if (!amount || Number(amount) <= 0) throw new Error("Amount must be greater than 0");
+        if (!category_id) throw new Error("Category is required");
+        if (!date) throw new Error("Date is required");
+
         return await Transaction.create({
             user_id: req.user.data_owner_id, title, amount, type, date, sector, description, guest_name, payment_status, quantity, unit_price,
             category_id: (category_id === 'None' || category_id === '') ? null : category_id,

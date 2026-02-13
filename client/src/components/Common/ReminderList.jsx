@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Trash2, X, Calendar, Clock, AlertCircle, Repeat, Tag, CheckSquare, Square } from 'lucide-react';
+import { Trash2, X, Calendar, Clock, AlertCircle, Repeat, Tag, CheckSquare, Square, Edit } from 'lucide-react';
 
-function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selectedIds, onSelect }) {
+function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selectedIds, onSelect, onEdit }) {
   const [selectedReminder, setSelectedReminder] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
 
@@ -282,6 +282,19 @@ function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selected
                 >
                   {selectedReminder.is_completed ? 'Mark as Incomplete' : 'Mark as Complete'}
                 </button>
+
+                {!selectedReminder.is_completed && onEdit && (
+                  <button
+                    onClick={() => {
+                      onEdit(selectedReminder);
+                      setSelectedReminder(null);
+                    }}
+                    className="flex-1 py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm bg-blue-50 text-[#2d5bff] hover:bg-blue-100 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Edit
+                  </button>
+                )}
 
                 {!!selectedReminder.is_completed && (
                   <button

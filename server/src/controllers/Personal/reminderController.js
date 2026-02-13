@@ -14,6 +14,11 @@ exports.getReminders = async (req, res) => {
 
 exports.createReminder = async (req, res) => {
     const { title, description, due_date, priority, category, sector } = req.body;
+
+    // Validation: Date cannot be in past (Education Specific)
+    if (sector === 'education' && due_date && new Date(due_date) < new Date()) {
+        return res.status(400).json({ error: 'Due date cannot be in the past' });
+    }
     try {
         const newReminder = await Reminder.create({
             user_id: req.user.data_owner_id,
@@ -76,10 +81,28 @@ exports.deleteReminder = async (req, res) => {
 
 exports.updateReminder = async (req, res) => {
     const { id } = req.params;
-    const { is_completed, sector } = req.body;
+    const { is_completed, title, description, due_date, priority, category, sector } = req.body;
+
+    // Validation: Date cannot be in past (Education Specific)
+    if (sector === 'education' && due_date && new Date(due_date) < new Date()) {
+        return res.status(400).json({ error: 'Due date cannot be in the past' });
+    }
     try {
-        const success = await Reminder.updateStatus(id, req.user.data_owner_id, is_completed, sector);
-        if (!success) {
+        let updated = false;
+
+        // 1. Handle Status Update if present
+        if (is_completed !== undefined) {
+            const success = await Reminder.updateStatus(id, req.user.data_owner_id, is_completed, sector);
+            if (success) updated = true;
+        }
+
+        // 2. Handle Content Update if any field is present
+        if (title || description || due_date || priority || category) {
+            const success = await Reminder.update(id, req.user.data_owner_id, req.body, sector);
+            if (success) updated = true;
+        }
+
+        if (!updated) {
             // Check if reminder exists to verify if it was a "no-op" update or truly missing
             const existing = await Reminder.getById(id, req.user.data_owner_id, sector);
             if (existing) {

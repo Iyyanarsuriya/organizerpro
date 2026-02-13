@@ -348,6 +348,13 @@ const ITAttendanceModel = {
 const EducationAttendanceModel = {
     create: async (data) => {
         const { user_id, status, date, member_id, created_by, note } = data;
+
+        // Validation: Check for duplicate
+        const [existing] = await db.query(`SELECT id FROM education_attendance WHERE user_id=? AND member_id=? AND DATE(date)=?`, [user_id, member_id, date]);
+        if (existing.length > 0) {
+            throw new Error("Attendance already marked for this date");
+        }
+
         const [res] = await db.query(
             `INSERT INTO education_attendance (user_id, status, date, member_id, note, created_by) VALUES (?, ?, ?, ?, ?, ?)`,
             [user_id, status, date, member_id, note, created_by]

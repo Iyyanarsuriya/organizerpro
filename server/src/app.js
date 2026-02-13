@@ -46,7 +46,7 @@ personalRouter.use('/transactions', transactionRoutes);
 personalRouter.use('/categories', categoryRoutes);
 personalRouter.use('/expense-categories', expenseCategoryRoutes);
 personalRouter.use('/notes', require("./routes/Personal/noteRoutes"));
-// personalRouter.use('/vehicle-logs', require("./routes/Personal/vehicleLogRoutes")); // Removed
+
 personalRouter.use('/budgets', require("./routes/Personal/budgetRoutes"));
 app.use('/api', personalRouter);
 app.use("/api/push", pushRoutes);
@@ -101,6 +101,7 @@ eduRouter.use('/member-roles', require("./routes/Common/memberRoleRoutes"));
 eduRouter.use('/attendance', require("./routes/Education/attendanceRoutes"));
 eduRouter.use('/departments', require("./routes/Education/departmentRoutes"));
 eduRouter.use('/team', require("./routes/Education/teamRoutes"));
+eduRouter.use('/expense-categories', expenseCategoryRoutes);
 eduRouter.use('/payroll', require("./routes/Education/payrollRoutes"));
 eduRouter.use('/vendors', require("./routes/Education/vendorRoutes"));
 eduRouter.use('/audit', require("./routes/Education/auditRoutes"));

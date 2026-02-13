@@ -1,12 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FaChevronDown, FaPlus } from 'react-icons/fa';
 
-function ReminderForm({ onAdd, categories = [], onManageCategories }) {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [dueDate, setDueDate] = useState('');
-  const [priority, setPriority] = useState('low');
-  const [category, setCategory] = useState('General');
+function ReminderForm({ onAdd, categories = [], onManageCategories, initialData }) {
+  const [title, setTitle] = useState(initialData?.title || '');
+  const [description, setDescription] = useState(initialData?.description || '');
+  const [dueDate, setDueDate] = useState(initialData?.due_date ? new Date(initialData.due_date).toISOString().slice(0, 16) : '');
+  const [priority, setPriority] = useState(initialData?.priority || 'low');
+  const [category, setCategory] = useState(initialData?.category || 'General');
+
+  useEffect(() => {
+    if (initialData) {
+      setTitle(initialData.title || '');
+      setDescription(initialData.description || '');
+      setDueDate(initialData.due_date ? new Date(initialData.due_date).toISOString().slice(0, 16) : '');
+      setPriority(initialData.priority || 'low');
+      setCategory(initialData.category || 'General');
+    }
+  }, [initialData]);
 
 
   const handleSubmit = (e) => {
@@ -21,11 +31,13 @@ function ReminderForm({ onAdd, categories = [], onManageCategories }) {
       category,
     });
 
-    setTitle('');
-    setDescription('');
-    setDueDate('');
-    setPriority('low');
-    setCategory(categories[0]?.name || 'General');
+    if (!initialData) {
+      setTitle('');
+      setDescription('');
+      setDueDate('');
+      setPriority('low');
+      setCategory(categories[0]?.name || 'General');
+    }
   };
 
   return (
@@ -142,7 +154,7 @@ function ReminderForm({ onAdd, categories = [], onManageCategories }) {
         type="submit"
         className="w-full bg-[#1a1c21] hover:bg-slate-800 text-white font-black h-[36px] sm:h-[40px] md:h-[42px] px-[16px] sm:px-[20px] md:px-[22px] rounded-[8px] sm:rounded-[10px] md:rounded-[11px] transform active:scale-95 sm:hover:scale-[1.02] transition-all duration-300 shadow-lg text-[10px] sm:text-[11px] md:text-[12px] mt-[8px] cursor-pointer flex items-center justify-center uppercase tracking-widest"
       >
-        Create Reminder
+        {initialData ? 'Update Reminder' : 'Create Reminder'}
       </button>
     </form>
   );

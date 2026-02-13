@@ -37,6 +37,14 @@ const ITReminderModel = {
     updateStatus: async (id, userId, is_completed) => {
         const [res] = await db.query(`UPDATE it_reminders SET is_completed = ? WHERE id = ? AND user_id = ?`, [is_completed, id, userId]);
         return res.affectedRows > 0;
+    },
+    update: async (id, userId, data) => {
+        const { title, description, due_date, priority, category } = data;
+        const [res] = await db.query(
+            `UPDATE it_reminders SET title=?, description=?, due_date=?, priority=?, category=? WHERE id=? AND user_id=?`,
+            [title, description, sanitizeDate(due_date), priority, category, id, userId]
+        );
+        return res.affectedRows > 0;
     }
 };
 
@@ -53,6 +61,14 @@ const HotelReminderModel = {
     updateStatus: async (id, userId, is_completed) => {
         const status = is_completed ? 'completed' : 'pending';
         const [res] = await db.query(`UPDATE hotel_reminders SET is_completed = ?, status = ? WHERE id = ? AND user_id = ?`, [is_completed, status, id, userId]);
+        return res.affectedRows > 0;
+    },
+    update: async (id, userId, data) => {
+        const { title, description, due_date, priority, category } = data;
+        const [res] = await db.query(
+            `UPDATE hotel_reminders SET title=?, description=?, due_date=?, priority=?, category=? WHERE id=? AND user_id=?`,
+            [title, description, sanitizeDate(due_date), priority, category, id, userId]
+        );
         return res.affectedRows > 0;
     }
 };
@@ -71,6 +87,14 @@ const ManufacturingReminderModel = {
         const status = is_completed ? 'completed' : 'pending';
         const [res] = await db.query(`UPDATE manufacturing_reminders SET is_completed = ?, status = ? WHERE id = ? AND user_id = ?`, [is_completed, status, id, userId]);
         return res.affectedRows > 0;
+    },
+    update: async (id, userId, data) => {
+        const { title, description, due_date, priority } = data;
+        const [res] = await db.query(
+            `UPDATE manufacturing_reminders SET title=?, description=?, due_date=?, priority=? WHERE id=? AND user_id=?`,
+            [title, description, sanitizeDate(due_date), priority, id, userId]
+        );
+        return res.affectedRows > 0;
     }
 };
 
@@ -86,6 +110,14 @@ const EducationReminderModel = {
     },
     updateStatus: async (id, userId, is_completed) => {
         const [res] = await db.query(`UPDATE education_reminders SET is_completed = ? WHERE id = ? AND user_id = ?`, [is_completed, id, userId]);
+        return res.affectedRows > 0;
+    },
+    update: async (id, userId, data) => {
+        const { title, description, due_date, priority, category } = data;
+        const [res] = await db.query(
+            `UPDATE education_reminders SET title=?, description=?, due_date=?, priority=?, category=? WHERE id=? AND user_id=?`,
+            [title, description, sanitizeDate(due_date), priority, category, id, userId]
+        );
         return res.affectedRows > 0;
     }
 };
@@ -103,6 +135,14 @@ const PersonalReminderModel = {
     updateStatus: async (id, userId, is_completed) => {
         const completed_at = is_completed ? new Date() : null;
         const [res] = await db.query(`UPDATE personal_reminders SET is_completed = ?, completed_at = ? WHERE id = ? AND user_id = ?`, [is_completed, completed_at, id, userId]);
+        return res.affectedRows > 0;
+    },
+    update: async (id, userId, data) => {
+        const { title, description, due_date, priority, category } = data;
+        const [res] = await db.query(
+            `UPDATE personal_reminders SET title=?, description=?, due_date=?, priority=?, category=? WHERE id=? AND user_id=?`,
+            [title, description, sanitizeDate(due_date), priority, category, id, userId]
+        );
         return res.affectedRows > 0;
     }
 };
@@ -137,6 +177,10 @@ const getById = async (id, userId, sector) => {
 
 const updateStatus = async (id, userId, is_completed, sector) => {
     return getSectorModel(sector).updateStatus(id, userId, is_completed);
+};
+
+const update = async (id, userId, data, sector) => {
+    return getSectorModel(sector).update(id, userId, data);
 };
 
 const updateGoogleEventId = async (id, googleEventId, sector) => {
@@ -177,6 +221,7 @@ module.exports = {
     create,
     updateGoogleEventId,
     updateStatus,
+    update,
     delete: deleteReminder,
     getOverdueRemindersForToday
 };

@@ -127,7 +127,7 @@ const EducationExpenses = () => {
             setVendors(vendorsRes.data.data || []);
             setDepartments(deptsRes.data.data || []);
             setTransactions(transRes.data.data || []);
-            setCategories(catRes.data.data || []);
+            setCategories(catRes.data || []);
             setStats(statsRes.data.data || { summary: { total_income: 0, total_expense: 0 }, categories: [] });
             setLoading(false);
         } catch (error) {
@@ -253,7 +253,7 @@ const EducationExpenses = () => {
             });
             fetchData();
         } catch (error) {
-            toast.error(editingId ? "Failed to update transaction" : "Failed to add transaction");
+            toast.error(editingId ? "Failed to update transaction" : `Failed to add transaction: ${error.response?.data?.error || error.message}`);
         }
     };
 

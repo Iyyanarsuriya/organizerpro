@@ -40,6 +40,7 @@ const EducationReminders = () => {
     const [categories, setCategories] = useState([]);
     const [showCategoryManager, setShowCategoryManager] = useState(false);
     const [activeTab, setActiveTab] = useState('tasks'); // 'tasks' | 'notes'
+    const [editingReminder, setEditingReminder] = useState(null);
 
     // Email Modal State
     const [showMailModal, setShowMailModal] = useState(false);
@@ -67,7 +68,7 @@ const EducationReminders = () => {
             ]);
             setReminders(remindersRes.data);
             setUser(userRes.data);
-            setCategories(categoriesRes.data);
+            setCategories(categoriesRes.data.data || []);
             localStorage.setItem('user', JSON.stringify(userRes.data));
             lastFetchRef.current = Date.now();
         } catch (error) {
@@ -413,6 +414,19 @@ const EducationReminders = () => {
             toast.error("Update failed");
         }
     }, [confirmToggle, reminders]);
+
+    const handleUpdate = useCallback(async (updatedData) => {
+        if (!editingReminder) return;
+        try {
+            await updateReminder(editingReminder.id, { ...updatedData, sector: SECTOR });
+            const res = await getReminders({ sector: SECTOR }); // Refetch to be safe or optimistic update
+            setReminders(res.data);
+            setEditingReminder(null);
+            toast.success("Task updated successfully!");
+        } catch (error) {
+            toast.error("Failed to update task");
+        }
+    }, [editingReminder]);
 
     const handleDelete = useCallback(async (id) => {
         try {
@@ -836,6 +850,7 @@ const EducationReminders = () => {
                                             );
                                         }}
                                         SECTOR={SECTOR}
+                                        onEdit={(reminder) => setEditingReminder(reminder)}
                                     />
                                 </div>
                             </div>
@@ -902,9 +917,33 @@ const EducationReminders = () => {
                     <div className="bg-white rounded-[24px] w-full max-w-md shadow-2xl border border-white/20 animate-in zoom-in-95 duration-200 overflow-hidden relative">
                         <CategoryManager
                             onClose={() => setShowCategoryManager(false)}
-                            sector={SECTOR}
                             categories={categories}
-                            setCategories={setCategories}
+                            onUpdate={fetchData}
+                            onCreate={async (data) => await createCategory({ ...data, sector: SECTOR })}
+                            onDelete={async (id) => await deleteCategory(id, { sector: SECTOR })}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Reminder Modal */}
+            {editingReminder && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-[24px] p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-white/20 animate-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-black text-slate-800">Edit Task</h3>
+                            <button
+                                onClick={() => setEditingReminder(null)}
+                                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                            >
+                                <FaTimes className="text-slate-400" />
+                            </button>
+                        </div>
+                        <ReminderForm
+                            initialData={editingReminder}
+                            onAdd={handleUpdate}
+                            categories={categories}
+                            onManageCategories={() => setShowCategoryManager(true)}
                         />
                     </div>
                 </div>

@@ -6,6 +6,6 @@ export const updateTransaction = (id, data) => axiosInstance.put(`/education-sec
 export const deleteTransaction = (id) => axiosInstance.delete(`/education-sector/transactions/${id}`);
 export const getTransactionStats = (params) => axiosInstance.get('/education-sector/transactions/stats', { params });
 
-export const getExpenseCategories = (params = { sector: 'education' }) => axiosInstance.get('/expense-categories', { params });
-export const createExpenseCategory = (categoryData) => axiosInstance.post('/expense-categories', { ...categoryData, sector: 'education' });
-export const deleteExpenseCategory = (id, params = { sector: 'education' }) => axiosInstance.delete(`/expense-categories/${id}`, { params });
+export const getExpenseCategories = (params = { sector: 'education' }) => axiosInstance.get('/education-sector/expense-categories', { params });
+export const createExpenseCategory = (categoryData) => axiosInstance.post('/education-sector/expense-categories', { ...categoryData, sector: 'education' });
+export const deleteExpenseCategory = (id, params = { sector: 'education' }) => axiosInstance.delete(`/education-sector/expense-categories/${id}`, { params });
