@@ -8,14 +8,14 @@ const User = require('../models/userModel');
 const notifiedTasks = new Set();
 
 // Reusable function to check and send emails (Daily Report or Manual)
-const runMissedTaskCheck = async (userId = null, date = null, endDate = null, customMessage = null, status = 'pending') => {
+const runMissedTaskCheck = async (userId = null, date = null, endDate = null, customMessage = null, status = 'pending', sector = 'personal') => {
     const targetDate = date || new Date().toISOString().split('T')[0];
     const logMsg = endDate ? `${targetDate} to ${endDate}` : targetDate;
-    console.log(`⏰ Running task completion check for ${logMsg} [Status: ${status}]... ${userId ? `(Target User: ${userId})` : '(All Users)'}`);
+    console.log(`⏰ Running ${sector} task completion check for ${logMsg} [Status: ${status}]... ${userId ? `(Target User: ${userId})` : '(All Users)'}`);
 
     try {
         const queryStatus = status === 'all' ? 'all' : (status === 'completed' ? 'completed' : 'pending');
-        const overdueReminders = await Reminder.getOverdueRemindersForToday(userId, targetDate, endDate, queryStatus);
+        const overdueReminders = await Reminder.getOverdueRemindersForToday(userId, targetDate, endDate, queryStatus, sector);
 
         if (overdueReminders.length === 0) {
             console.log('✅ No matching tasks found.');

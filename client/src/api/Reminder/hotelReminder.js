@@ -7,7 +7,7 @@ export const getReminders = (params) => axiosInstance.get(`${BASE_URL}/reminders
 export const createReminder = (data) => axiosInstance.post(`${BASE_URL}/reminders`, data);
 export const updateReminder = (id, data) => axiosInstance.put(`${BASE_URL}/reminders/${id}`, data);
 export const deleteReminder = (id, params) => axiosInstance.delete(`${BASE_URL}/reminders/${id}`, { params });
-export const triggerMissedAlert = (payload) => axiosInstance.post('/reminders/send-missed-alert', payload);
+export const triggerMissedAlert = (payload) => axiosInstance.post(`${BASE_URL}/reminders/send-missed-alert`, payload);
 
 // Categories
 export const getCategories = (params = { sector: 'hotel' }) => axiosInstance.get('/categories', { params });
