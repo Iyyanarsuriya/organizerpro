@@ -360,7 +360,6 @@ const PersonalReminders = () => {
         try {
             const res = await createReminder(reminderData);
             setReminders(prev => [res.data, ...prev]);
-            window.dispatchEvent(new Event('refresh-reminders'));
             toast.success("Reminder added!");
         } catch {
             toast.error("Failed to add reminder");
