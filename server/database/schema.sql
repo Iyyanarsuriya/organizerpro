@@ -1,17 +1,13 @@
 -- ==========================================
--- OrganizerPro Database Schema V2.1
+-- OrganizerPro Database Schema V2.2
 -- ==========================================
--- Last Updated: February 5, 2026
--- Total Tables: 55 (2 Shared + 5 Personal + 18 Manufacturing + 11 IT + 12 Education + 8 Hotel)
+-- Last Updated: February 16, 2026
+-- Total Tables: 72 (2 Shared + 5 Personal + 19 Manufacturing + 13 IT + 16 Education + 17 Hotel)
 -- 
 -- ARCHITECTURE:
 -- - Sector-based isolation for data organization
 -- - Shared tables for authentication and notifications
 -- - Sector-specific tables for reminders, notes, transactions, attendance, etc.
--- 
--- LEGACY CLEANUP COMPLETED:
--- Removed redundant generic tables.
--- Removed unused sample data scripts.
 -- ==========================================
 --
 -- TABLE OF CONTENTS:
@@ -28,62 +24,78 @@
 --   6. personal_categories - Personal reminder categories
 --   7. personal_budgets - Personal monthly/yearly category budgets
 --
--- MANUFACTURING SECTOR (18):
---   7. manufacturing_projects - Manufacturing projects
---   8. manufacturing_members - Manufacturing employees/workers
---   9. manufacturing_transactions - Manufacturing financial transactions
---  10. manufacturing_attendance - Manufacturing employee attendance
---  11. manufacturing_work_logs - Daily work logs for manufacturing
---  12. manufacturing_expense_categories - Manufacturing expense categories
---  13. manufacturing_vehicle_logs - Vehicle tracking for manufacturing
---  14. manufacturing_member_roles - Manufacturing employee roles
---  15. manufacturing_work_types - Manufacturing work type definitions
---  16. manufacturing_reminders - Manufacturing sector reminders
---  17. manufacturing_notes - Manufacturing sector notes
---  18. manufacturing_holidays - Manufacturing holidays
---  19. manufacturing_shifts - Manufacturing shifts
---  20. manufacturing_payroll - Manufacturing payroll
---  21. manufacturing_approvals - Manufacturing approvals
---  22. manufacturing_expense_locks - Manufacturing expense locks
---  23. manufacturing_advances - Manufacturing advances
---  24. manufacturing_payroll_settings - Manufacturing payroll settings
+-- MANUFACTURING SECTOR (19):
+--   8. manufacturing_projects - Manufacturing projects
+--   9. manufacturing_members - Manufacturing employees/workers
+--  10. manufacturing_transactions - Manufacturing financial transactions
+--  11. manufacturing_attendance - Manufacturing employee attendance
+--  12. manufacturing_work_logs - Daily work logs for manufacturing
+--  13. manufacturing_expense_categories - Manufacturing expense categories
+--  14. manufacturing_categories - Manufacturing reminder categories
+--  15. manufacturing_vehicle_logs - Vehicle tracking for manufacturing
+--  16. manufacturing_member_roles - Manufacturing employee roles
+--  17. manufacturing_work_types - Manufacturing work type definitions
+--  18. manufacturing_reminders - Manufacturing sector reminders
+--  19. manufacturing_notes - Manufacturing sector notes
+--  20. manufacturing_holidays - Manufacturing holidays
+--  21. manufacturing_shifts - Manufacturing shifts
+--  22. manufacturing_payroll - Manufacturing payroll
+--  23. manufacturing_approvals - Manufacturing approvals
+--  24. manufacturing_expense_locks - Manufacturing expense locks
+--  25. manufacturing_advances - Manufacturing advances
+--  26. manufacturing_payroll_settings - Manufacturing payroll settings
 --
--- IT SECTOR (11):
---  25. it_projects - IT projects
---  26. it_members - IT team members
---  27. it_attendance - IT team attendance
---  28. it_reminders - IT sector reminders
---  29. it_notes - IT sector notes
---  30. it_member_roles - IT team member roles
---  31. it_timesheets - IT timesheets
---  32. it_leaves - IT leave management
---  33. it_audit_logs - IT audit logs
---  34. it_transactions - IT sector financial transactions
---  35. it_categories - IT expense/transaction categories
+-- IT SECTOR (13):
+--  27. it_projects - IT projects
+--  28. it_members - IT team members
+--  29. it_attendance - IT team attendance
+--  30. it_reminders - IT sector reminders
+--  31. it_notes - IT sector notes
+--  32. it_member_roles - IT team member roles
+--  33. it_timesheets - IT timesheets
+--  34. it_leaves - IT leave management
+--  35. it_audit_logs - IT audit logs
+--  36. it_transactions - IT sector financial transactions
+--  37. it_categories - IT expense/transaction categories
+--  38. it_holidays - IT sector holidays
+--  39. it_shifts - IT sector shifts
 --
--- EDUCATION SECTOR (12):
---  36. education_members - Education staff and students
---  37. education_attendance - Education attendance tracking
---  38. education_reminders - Education sector reminders
---  39. education_notes - Education sector notes
---  40. education_member_roles - Education staff/student roles
---  41. education_transactions - Education sector financial transactions
---  42. education_categories - Education expense categories
---  43. education_departments - Education departments
---  44. education_vendors - Education vendors
---  45. education_payroll - Education payroll and salary tracking
---  46. education_attendance_locks - Education attendance locking system
---  47. education_audit_logs - Education sector audit trails
+-- EDUCATION SECTOR (16):
+--  40. education_projects - Education projects
+--  41. education_members - Education staff and students
+--  42. education_attendance - Education attendance tracking
+--  43. education_reminders - Education sector reminders
+--  44. education_notes - Education sector notes
+--  45. education_member_roles - Education staff/student roles
+--  46. education_transactions - Education sector financial transactions
+--  47. education_categories - Education reminder categories
+--  48. education_expense_categories - Education expense categories
+--  49. education_departments - Education departments
+--  50. education_vendors - Education vendors
+--  51. education_payroll - Education payroll and salary tracking
+--  52. education_attendance_locks - Education attendance locking system
+--  53. education_holidays - Education Institutional holidays
+--  54. education_shifts - Education staff shifts
+--  55. education_audit_logs - Education sector audit trails
 --
--- HOTEL SECTOR (8):
---  48. hotel_projects - Hotel projects
---  49. hotel_members - Hotel staff members
---  50. hotel_transactions - Hotel sector financial transactions
---  51. hotel_attendance - Hotel staff attendance
---  52. hotel_reminders - Hotel sector reminders
---  53. hotel_notes - Hotel sector notes
---  54. hotel_member_roles - Hotel staff roles
---  55. hotel_categories - Hotel expense categories
+-- HOTEL SECTOR (17):
+--  56. hotel_projects - Hotel projects
+--  57. hotel_members - Hotel staff members
+--  58. hotel_holidays - Hotel holidays
+--  59. hotel_vendors - Hotel vendors
+--  60. hotel_transactions - Hotel sector financial transactions
+--  61. hotel_attendance - Hotel staff attendance
+--  62. hotel_reminders - Hotel sector reminders
+--  63. hotel_notes - Hotel sector notes
+--  64. hotel_member_roles - Hotel staff roles
+--  65. hotel_categories - Hotel expense categories
+--  66. hotel_settings - Hotel property settings
+--  67. hotel_units - Hotel rooms/accomodations
+--  68. hotel_guests - Hotel guest profiles
+--  69. hotel_bookings - Hotel room bookings
+--  70. hotel_payments - Hotel booking payments
+--  71. hotel_maintenance - Hotel unit maintenance
+--  72. hotel_shifts - Hotel staff shifts
 -- ==========================================
 
 
@@ -379,6 +391,19 @@ CREATE TABLE `manufacturing_expense_categories` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_man_cat` (`user_id`,`name`,`type`),
   CONSTRAINT `fk_man_cat_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Manufacturing Categories (Reminders/General)
+DROP TABLE IF EXISTS `manufacturing_categories`;
+CREATE TABLE `manufacturing_categories` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(50) NOT NULL,
+  `color` varchar(20) DEFAULT '#2d5bff',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_user_mfgcat` (`user_id`,`name`),
+  CONSTRAINT `fk_man_cat_gen_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Manufacturing Vehicle Logs
@@ -850,6 +875,36 @@ CREATE TABLE `it_categories` (
   CONSTRAINT `fk_it_cat_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- IT Holidays
+DROP TABLE IF EXISTS `it_holidays`;
+CREATE TABLE `it_holidays` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `date` date NOT NULL,
+  `type` enum('National','Regional','Company','Other') DEFAULT 'National',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `fk_it_hol_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- IT Shifts
+DROP TABLE IF EXISTS `it_shifts`;
+CREATE TABLE `it_shifts` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `start_time` time NOT NULL,
+  `end_time` time NOT NULL,
+  `break_duration` int DEFAULT '60',
+  `is_default` tinyint(1) DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `fk_it_shift_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 
 
 -- Personal Budgets
@@ -872,6 +927,19 @@ CREATE TABLE `personal_budgets` (
 -- ==========================================
 -- EDUCATION SECTOR TABLES
 -- ==========================================
+
+-- Education Projects
+DROP TABLE IF EXISTS `education_projects`;
+CREATE TABLE `education_projects` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `description` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `fk_edu_proj_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Education Members (Teachers, Staff, Students)
 DROP TABLE IF EXISTS `education_members`;
@@ -1136,6 +1204,36 @@ CREATE TABLE `education_audit_logs` (
   KEY `user_id` (`user_id`),
   KEY `performed_by` (`performed_by`),
   CONSTRAINT `fk_edu_audit_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Education Holidays
+DROP TABLE IF EXISTS `education_holidays`;
+CREATE TABLE `education_holidays` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `date` date NOT NULL,
+  `type` enum('National','Regional','Institutional','Other') DEFAULT 'National',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `fk_edu_hol_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Education Shifts
+DROP TABLE IF EXISTS `education_shifts`;
+CREATE TABLE `education_shifts` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `start_time` time NOT NULL,
+  `end_time` time NOT NULL,
+  `break_duration` int DEFAULT '60',
+  `is_default` tinyint(1) DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `fk_edu_shift_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ==========================================
