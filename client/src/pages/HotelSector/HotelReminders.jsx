@@ -406,7 +406,16 @@ const HotelReminders = () => {
                                         </select>
                                     </div>
                                 )}
-                                <ReminderList reminders={processedReminders} onToggle={handleToggle} onDelete={handleDelete} isSelectionMode={isSelectionMode} selectedIds={selectedIds} setSelectedIds={setSelectedIds} />
+                                <ReminderList
+                                    reminders={processedReminders}
+                                    onToggle={handleToggle}
+                                    onDelete={handleDelete}
+                                    isSelectionMode={isSelectionMode}
+                                    selectedIds={selectedIds}
+                                    onSelect={(id) => {
+                                        setSelectedIds(prev => prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]);
+                                    }}
+                                />
                             </div>
                         </div>
                     </div>

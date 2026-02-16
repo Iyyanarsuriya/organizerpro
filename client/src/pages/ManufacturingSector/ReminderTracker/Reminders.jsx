@@ -722,12 +722,17 @@ const Reminders = () => {
                                     <div className="flex-1 overflow-y-auto min-h-[300px] custom-scrollbar pr-[4px]">
                                         <ReminderList
                                             reminders={processedReminders}
-                                            onUpdate={handleUpdate}
+                                            onToggle={handleToggleComplete}
                                             onDelete={handleDelete}
-                                            onToggleComplete={handleToggleComplete}
                                             isSelectionMode={isSelectionMode}
                                             selectedIds={selectedIds}
-                                            setSelectedIds={setSelectedIds}
+                                            onSelect={(id) => {
+                                                setSelectedIds(prev => prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]);
+                                            }}
+                                            onEdit={(reminder) => {
+                                                // If you have an edit modal, handle it here.
+                                                // For now, let's keep it simple or implement if needed.
+                                            }}
                                         />
                                     </div>
                                 </div>
