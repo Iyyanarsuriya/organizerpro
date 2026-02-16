@@ -50,6 +50,7 @@ const HotelUnits = lazy(() => import('./pages/HotelSector/HotelUnits'));
 const HotelGuests = lazy(() => import('./pages/HotelSector/HotelGuests'));
 const HotelOperations = lazy(() => import('./pages/HotelSector/HotelOperations'));
 const HotelSettings = lazy(() => import('./pages/HotelSector/HotelSettings'));
+const HotelReminderDashboard = lazy(() => import('./pages/HotelSector/HotelReminderDashboard'));
 const Notes = lazy(() => import('./pages/Notes/Notes'));
 const ForgotPassword = lazy(() => import('./pages/Authentication/ForgotPassword'));
 
@@ -289,6 +290,7 @@ const AppContent = () => {
             <Route path="/hotel-sector" element={<ProtectedRoute><HotelHome /></ProtectedRoute>} />
             <Route path="/hotel-sector/expenses" element={<ProtectedRoute><HotelExpenses /></ProtectedRoute>} />
             <Route path="/hotel-sector/reminders" element={<ProtectedRoute><HotelReminders /></ProtectedRoute>} />
+            <Route path="/hotel-sector/reminder-dashboard" element={<ProtectedRoute><HotelReminderDashboard /></ProtectedRoute>} />
             <Route path="/hotel-sector/attendance" element={<ProtectedRoute><HotelAttendance /></ProtectedRoute>} />
             <Route path="/hotel-sector/team" element={<ProtectedRoute><HotelTeam /></ProtectedRoute>} />
             <Route path="/hotel-sector/bookings" element={<ProtectedRoute><HotelBookings /></ProtectedRoute>} />

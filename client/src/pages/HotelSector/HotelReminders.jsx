@@ -5,7 +5,7 @@ import ReminderForm from '../../components/Common/ReminderForm';
 import ReminderList from '../../components/Common/ReminderList';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { FaBell, FaTimes, FaChevronLeft } from 'react-icons/fa';
+import { FaBell, FaTimes, FaChevronLeft, FaCalendarAlt, FaArrowLeft } from 'react-icons/fa';
 import { LayoutDashboard } from 'lucide-react';
 
 import CategoryManager from '../../components/Common/CategoryManager';
@@ -217,6 +217,7 @@ const HotelReminders = () => {
         });
     }, [reminders]);
 
+    // 🔔 Modern Agenda Alert for Today's Tasks
     useEffect(() => {
         if (!loading && notifications.length > 0 && !hasShownAgenda) {
             toast.custom((t) => (
@@ -238,6 +239,9 @@ const HotelReminders = () => {
                                             <span className="truncate">{n.title}</span>
                                         </div>
                                     ))}
+                                    {notifications.length > 3 && (
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">+ {notifications.length - 3} more tasks</p>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -246,7 +250,7 @@ const HotelReminders = () => {
                         <button onClick={() => { toast.dismiss(t.id); setHasShownAgenda(true); }} className="w-full border border-transparent rounded-none rounded-r-[24px] sm:rounded-r-[32px] p-4 sm:p-6 flex items-center justify-center text-xs sm:text-sm font-black text-[#2d5bff] hover:bg-slate-50 transition-all uppercase tracking-widest cursor-pointer">Got it</button>
                     </div>
                 </div>
-            ), { duration: 4000, position: 'top-center' });
+            ), { duration: 5000, position: 'top-center' });
             setHasShownAgenda(true);
         }
     }, [notifications.length, loading, hasShownAgenda]);
@@ -365,6 +369,7 @@ const HotelReminders = () => {
                             {notifications.length > 0 && <span className="absolute -top-[4px] sm:-top-[8px] -right-[4px] sm:-right-[8px] bg-[#ff4d4d] w-[14px] h-[14px] sm:w-[20px] sm:h-[20px] text-[7px] sm:text-[10px] flex items-center justify-center rounded-full font-bold text-white shadow-lg animate-pulse">{notifications.length}</span>}
                         </div>
                         <button onClick={() => setShowMailModal(true)} className="bg-white/10 hover:bg-white/20 text-white p-[8px] rounded-[8px] transition-all"><svg className="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg></button>
+                        <Link to="/hotel-sector/reminder-dashboard" className="bg-white/10 hover:bg-white/20 text-white p-[8px] rounded-[8px] transition-all"><LayoutDashboard className="w-[20px] h-[20px]" /></Link>
                     </div>
                 </div>
 
@@ -380,10 +385,71 @@ const HotelReminders = () => {
                             <div className="glass rounded-[16px] sm:rounded-[24px] md:rounded-[32px] p-[16px] sm:p-[20px] md:p-[24px] shadow-2xl flex flex-col h-auto sm:min-h-[516px]">
                                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-[12px] sm:gap-[16px] mb-[16px] sm:mb-[24px]">
                                     <div className="flex flex-wrap items-center gap-[8px] sm:gap-[16px]">
-                                        <h2 className="text-[14px] sm:text-[16px] md:text-[18px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-[8px]"><div className="w-[4px] h-[16px] bg-[#2d5bff] rounded-full"></div>Timeline</h2>
+                                        <h2 className="text-[14px] sm:text-[16px] md:text-[18px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-[8px]"><div className="w-[4px] h-[16px] bg-[#2d5bff] rounded-full"></div>Your Timeline</h2>
                                         <span className="text-[9px] sm:text-[10px] md:text-[12px] font-black px-[8px] sm:px-[12px] py-[2px] sm:py-[4px] rounded-full bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-widest">{processedReminders.length} Tasks</span>
                                         <div className="flex flex-wrap items-center gap-[4px] sm:gap-[8px]">
-                                            <button onClick={() => setShowFilters(!showFilters)} className={`flex items-center gap-[6px] px-[10px] py-[4px] rounded-[8px] border transition-all ${showFilters ? 'bg-slate-800 text-white' : 'bg-white text-slate-500 hover:border-slate-300'}`}><span className="text-[9px] sm:text-[10px] md:text-[12px] font-black uppercase tracking-widest">Filters</span></button>
+                                            <button onClick={() => setShowFilters(!showFilters)} className={`flex items-center gap-[6px] px-[10px] py-[6px] rounded-[10px] border transition-all ${showFilters ? 'bg-slate-800 text-white' : 'bg-white text-slate-500 hover:border-slate-300'}`}>
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+                                                <span className="text-[9px] sm:text-[10px] md:text-[12px] font-black uppercase tracking-widest">Filters</span>
+                                            </button>
+
+                                            <div className="flex items-center gap-2 bg-white border border-slate-200 p-1 rounded-xl shadow-sm">
+                                                <span className="hidden sm:inline text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-wide ml-2">Period:</span>
+                                                <select
+                                                    value={periodType}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        setPeriodType(val);
+                                                        if (val === 'today') setFilterDate(new Date().toISOString().split('T')[0]);
+                                                        else setFilterDate('');
+                                                    }}
+                                                    className="bg-transparent text-[10px] sm:text-xs font-bold text-slate-700 outline-none cursor-pointer uppercase tracking-wider px-2"
+                                                >
+                                                    <option value="today">Today</option>
+                                                    <option value="all">All Time</option>
+                                                    <option value="range">Range</option>
+                                                </select>
+
+                                                {periodType === 'today' && (
+                                                    <div className="relative flex items-center gap-2 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
+                                                        <input
+                                                            type="date"
+                                                            value={filterDate}
+                                                            onChange={(e) => setFilterDate(e.target.value)}
+                                                            className="bg-transparent text-[10px] font-black text-slate-600 outline-none cursor-pointer"
+                                                        />
+                                                        <FaCalendarAlt className="text-slate-300 w-3 h-3" />
+                                                    </div>
+                                                )}
+
+                                                {periodType === 'range' && (
+                                                    <div className="flex items-center gap-1">
+                                                        <input
+                                                            type="date"
+                                                            value={customRange.start}
+                                                            onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })}
+                                                            className="bg-slate-50 border border-slate-100 rounded-lg px-2 py-1 text-[10px] font-bold text-slate-600 outline-none w-[90px]"
+                                                        />
+                                                        <span className="text-slate-400 font-bold">-</span>
+                                                        <input
+                                                            type="date"
+                                                            value={customRange.end}
+                                                            onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })}
+                                                            className="bg-slate-50 border border-slate-100 rounded-lg px-2 py-1 text-[10px] font-bold text-slate-600 outline-none w-[90px]"
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <button
+                                                onClick={() => setIsSelectionMode(!isSelectionMode)}
+                                                className={`text-[9px] sm:text-[10px] md:text-[12px] font-black uppercase tracking-widest px-[12px] py-[6px] rounded-[10px] border transition-all cursor-pointer ${isSelectionMode ? 'bg-[#2d5bff] text-white border-[#2d5bff]' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'}`}
+                                            >
+                                                {isSelectionMode ? 'Cancel' : 'Select'}
+                                            </button>
+
+                                            <div className="h-6 w-px bg-slate-200 mx-1"></div>
+
                                             <ExportButtons
                                                 onExportCSV={() => exportReminderToCSV({ data: processedReminders, period: exportPeriod, filename: 'hotel_reminders' })}
                                                 onExportPDF={() => exportReminderToPDF({ data: processedReminders, period: exportPeriod, filename: 'hotel_reminders' })}
@@ -393,16 +459,26 @@ const HotelReminders = () => {
                                     </div>
                                 </div>
                                 {showFilters && (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                        <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search..." className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold" />
-                                        <select value={periodType} onChange={(e) => setPeriodType(e.target.value)} className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold">
-                                            <option value="today">Today</option>
-                                            <option value="all">All</option>
-                                            <option value="range">Range</option>
-                                        </select>
-                                        <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold">
+                                    <div className="flex flex-wrap items-center gap-3 mb-6 p-4 bg-slate-50/50 rounded-2xl border border-slate-100 animate-in slide-in-from-top-2 duration-200">
+                                        <div className="relative flex-1 min-w-[200px]">
+                                            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search tasks..." className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-xs font-bold placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all" />
+                                        </div>
+                                        <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all cursor-pointer">
                                             <option value="">All Categories</option>
                                             {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                                        </select>
+                                        <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)} className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all cursor-pointer">
+                                            <option value="">All Priorities</option>
+                                            <option value="high">High</option>
+                                            <option value="medium">Medium</option>
+                                            <option value="low">Low</option>
+                                        </select>
+                                        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all cursor-pointer ml-auto">
+                                            <option value="due_date">Sort: Due Date</option>
+                                            <option value="newest">Sort: Newest First</option>
+                                            <option value="oldest">Sort: Oldest First</option>
+                                            <option value="priority">Sort: High Priority First</option>
                                         </select>
                                     </div>
                                 )}
