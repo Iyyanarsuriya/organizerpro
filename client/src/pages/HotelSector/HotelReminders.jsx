@@ -57,12 +57,35 @@ const HotelReminders = () => {
             return;
         }
 
+        // Request Deduplication
+        if (!force && window._hotelFetchPromise) {
+            try {
+                const [remindersRes, userRes, categoriesRes] = await window._hotelFetchPromise;
+                setReminders(remindersRes.data);
+                setUser(userRes.data);
+                setCategories(categoriesRes.data.data || []);
+                localStorage.setItem('user', JSON.stringify(userRes.data));
+                lastFetchRef.current = Date.now();
+            } catch (error) {
+                console.error("Error joining existing fetch:", error);
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
+        const fetchPromise = Promise.all([
+            getReminders({ sector: SECTOR }),
+            getMe(),
+            getCategories({ sector: SECTOR })
+        ]);
+
+        if (!force) {
+            window._hotelFetchPromise = fetchPromise;
+        }
+
         try {
-            const [remindersRes, userRes, categoriesRes] = await Promise.all([
-                getReminders({ sector: SECTOR }),
-                getMe(),
-                getCategories({ sector: SECTOR })
-            ]);
+            const [remindersRes, userRes, categoriesRes] = await fetchPromise;
             setReminders(remindersRes.data);
             setUser(userRes.data);
             setCategories(categoriesRes.data.data || []);
@@ -71,6 +94,7 @@ const HotelReminders = () => {
         } catch (error) {
             console.error("Error fetching data", error);
         } finally {
+            if (!force) window._hotelFetchPromise = null;
             setLoading(false);
         }
     };

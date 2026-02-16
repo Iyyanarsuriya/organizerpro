@@ -56,12 +56,35 @@ const Reminders = () => {
             return;
         }
 
+        // Request Deduplication (Handles StrictMode & Rapid Calls)
+        if (!force && window._mfgFetchPromise) {
+            try {
+                const [remindersRes, userRes, categoriesRes] = await window._mfgFetchPromise;
+                setReminders(Array.isArray(remindersRes.data) ? remindersRes.data : []);
+                setUser(userRes.data);
+                setCategories(categoriesRes.data && Array.isArray(categoriesRes.data.data) ? categoriesRes.data.data : []);
+                localStorage.setItem('user', JSON.stringify(userRes.data));
+                lastFetchRef.current = Date.now();
+            } catch (error) {
+                console.error("Error joining existing fetch:", error);
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
+        const fetchPromise = Promise.all([
+            getReminders(),
+            getMe(),
+            getCategories()
+        ]);
+
+        if (!force) {
+            window._mfgFetchPromise = fetchPromise;
+        }
+
         try {
-            const [remindersRes, userRes, categoriesRes] = await Promise.all([
-                getReminders(),
-                getMe(),
-                getCategories()
-            ]);
+            const [remindersRes, userRes, categoriesRes] = await fetchPromise;
             setReminders(Array.isArray(remindersRes.data) ? remindersRes.data : []);
             setUser(userRes.data);
             setCategories(categoriesRes.data && Array.isArray(categoriesRes.data.data) ? categoriesRes.data.data : []);
@@ -70,6 +93,7 @@ const Reminders = () => {
         } catch (error) {
             console.error("Error fetching data", error);
         } finally {
+            if (!force) window._mfgFetchPromise = null;
             setLoading(false);
         }
     };
@@ -253,11 +277,67 @@ const Reminders = () => {
         });
     }, [reminders]);
 
+    // 🔔 Modern Agenda Alert for Today's Tasks
+    useEffect(() => {
+        if (!loading && notifications.length > 0 && !hasShownAgenda) {
+            // Show a custom, beautiful agenda toast
+            toast.custom((t) => (
+                <div
+                    className={`${t.visible ? 'animate-enter' : 'animate-leave'
+                        } max-w-[448px] w-[95%] sm:w-full bg-white shadow-2xl rounded-[24px] sm:rounded-[32px] pointer-events-auto flex ring-[1px] ring-black ring-opacity-5 overflow-hidden border border-slate-100 mt-[24px]`}
+                >
+                    <div className="flex-1 w-0 p-[16px] sm:p-[24px]">
+                        <div className="flex items-start gap-[12px] sm:gap-[16px]">
+                            <div className="shrink-0">
+                                <div className="h-[40px] w-[40px] sm:h-[56px] sm:w-[56px] bg-linear-to-br from-[#2d5bff] to-[#4a69ff] rounded-[12px] sm:rounded-[16px] flex items-center justify-center shadow-xl shadow-blue-500/20">
+                                    <FaBell className="h-5 w-5 sm:h-7 sm:w-7 text-white" />
+                                </div>
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-lg sm:text-xl font-black text-slate-800 tracking-tight">
+                                    Your Manufacturing Brief
+                                </p>
+                                <p className="text-[11px] sm:text-[14px] font-bold text-slate-500">
+                                    You have <span className="text-[#2d5bff] font-black">{notifications.length} priorities</span> today.
+                                </p>
+                                <div className="mt-4 flex flex-col gap-2">
+                                    {notifications.slice(0, 3).map(n => (
+                                        <div key={n.id} className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
+                                            <span className="truncate">{n.title}</span>
+                                        </div>
+                                    ))}
+                                    {notifications.length > 3 && (
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">+ {notifications.length - 3} more tasks</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex border-l border-slate-50">
+                        <button
+                            onClick={() => {
+                                toast.dismiss(t.id);
+                                setHasShownAgenda(true);
+                            }}
+                            className="w-full border border-transparent rounded-none rounded-r-[24px] sm:rounded-r-[32px] p-4 sm:p-6 flex items-center justify-center text-xs sm:text-sm font-black text-[#2d5bff] hover:bg-slate-50 transition-all uppercase tracking-widest cursor-pointer"
+                        >
+                            Got it
+                        </button>
+                    </div>
+                </div>
+            ), {
+                duration: 4000,
+                position: 'top-center'
+            });
+            setHasShownAgenda(true);
+        }
+    }, [notifications.length, loading, hasShownAgenda]);
+
     const handleAdd = useCallback(async (data) => {
         try {
             const res = await createReminder(data);
             setReminders(prev => [res.data, ...prev]);
-            window.dispatchEvent(new Event('refresh-reminders'));
             toast.success("Reminder created");
         } catch {
             toast.error("Failed to create reminder");
@@ -268,7 +348,6 @@ const Reminders = () => {
         try {
             await updateReminder(id, data);
             setReminders(prev => prev.map(r => r.id === id ? { ...r, ...data } : r));
-            window.dispatchEvent(new Event('refresh-reminders'));
             toast.success("Reminder updated");
         } catch {
             toast.error("Update failed");
@@ -280,7 +359,6 @@ const Reminders = () => {
             const nextStatus = !currentStatus;
             await updateReminder(id, { is_completed: nextStatus });
             setReminders(prev => prev.map(r => r.id === id ? { ...r, is_completed: nextStatus, status: nextStatus ? 'completed' : 'pending' } : r));
-            window.dispatchEvent(new Event('refresh-reminders'));
             setConfirmToggle(null);
             toast.success(nextStatus ? "Task completed" : "Task pending");
         } catch {
@@ -292,7 +370,6 @@ const Reminders = () => {
         try {
             await deleteReminder(id);
             setReminders(prev => prev.filter(r => r.id !== id));
-            window.dispatchEvent(new Event('refresh-reminders'));
             toast.success("Reminder deleted");
         } catch {
             toast.error("Delete failed");

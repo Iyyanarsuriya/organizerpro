@@ -59,12 +59,35 @@ const ITReminders = () => {
             return;
         }
 
+        // Request Deduplication (Handles StrictMode & Rapid Calls)
+        if (!force && window._itFetchPromise) {
+            try {
+                const [remindersRes, userRes, categoriesRes] = await window._itFetchPromise;
+                setReminders(Array.isArray(remindersRes.data) ? remindersRes.data : []);
+                setUser(userRes.data);
+                setCategories(categoriesRes.data && Array.isArray(categoriesRes.data.data) ? categoriesRes.data.data : []);
+                localStorage.setItem('user', JSON.stringify(userRes.data));
+                lastFetchRef.current = Date.now();
+            } catch (error) {
+                console.error("Error joining existing fetch:", error);
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
+        const fetchPromise = Promise.all([
+            getReminders({ sector: SECTOR }),
+            getMe(),
+            getCategories({ sector: SECTOR })
+        ]);
+
+        if (!force) {
+            window._itFetchPromise = fetchPromise;
+        }
+
         try {
-            const [remindersRes, userRes, categoriesRes] = await Promise.all([
-                getReminders({ sector: SECTOR }),
-                getMe(),
-                getCategories({ sector: SECTOR })
-            ]);
+            const [remindersRes, userRes, categoriesRes] = await fetchPromise;
             setReminders(Array.isArray(remindersRes.data) ? remindersRes.data : []);
             setUser(userRes.data);
             setCategories(categoriesRes.data && Array.isArray(categoriesRes.data.data) ? categoriesRes.data.data : []);
@@ -73,6 +96,7 @@ const ITReminders = () => {
         } catch (error) {
             console.error("Error fetching data", error);
         } finally {
+            if (!force) window._itFetchPromise = null;
             setLoading(false);
         }
     };
@@ -341,7 +365,6 @@ const ITReminders = () => {
         try {
             const res = await createReminder({ ...reminderData, sector: SECTOR });
             setReminders(prev => [res.data, ...prev]);
-            window.dispatchEvent(new Event('refresh-reminders'));
             toast.success("Reminder added!");
         } catch {
             toast.error("Failed to add reminder");
@@ -359,7 +382,6 @@ const ITReminders = () => {
 
             try {
                 await updateReminder(id, { is_completed: false, sector: SECTOR });
-                window.dispatchEvent(new Event('refresh-reminders'));
                 toast.success("Task marked as incomplete");
             } catch {
                 setReminders(previousReminders); // Revert
@@ -386,7 +408,6 @@ const ITReminders = () => {
 
         try {
             await updateReminder(id, { is_completed: true, sector: SECTOR });
-            window.dispatchEvent(new Event('refresh-reminders'));
             toast.success("Task completed! 🥳");
         } catch {
             setReminders(previousReminders); // Revert
@@ -398,7 +419,6 @@ const ITReminders = () => {
         try {
             await deleteReminder(id, { sector: SECTOR });
             setReminders(prev => prev.filter(r => r.id !== id));
-            window.dispatchEvent(new Event('refresh-reminders'));
             toast.success("Reminder deleted");
         } catch {
             toast.error("Delete failed");

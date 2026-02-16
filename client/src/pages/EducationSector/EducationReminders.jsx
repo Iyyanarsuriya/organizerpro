@@ -53,19 +53,42 @@ const EducationReminders = () => {
 
     const lastFetchRef = useRef(0);
 
-    const fetchData = async () => {
+    const fetchData = async (force = false) => {
         // Throttle fetching: don't fetch if last fetch was less than 60s ago
         const now = Date.now();
-        if (now - lastFetchRef.current < 60000 && !loading) {
+        if (!force && now - lastFetchRef.current < 60000 && !loading) {
             return;
         }
 
+        // Request Deduplication (Handles StrictMode & Rapid Calls)
+        if (!force && window._eduFetchPromise) {
+            try {
+                const [remindersRes, userRes, categoriesRes] = await window._eduFetchPromise;
+                setReminders(Array.isArray(remindersRes.data) ? remindersRes.data : []);
+                setUser(userRes.data);
+                setCategories(categoriesRes.data && Array.isArray(categoriesRes.data.data) ? categoriesRes.data.data : []);
+                localStorage.setItem('user', JSON.stringify(userRes.data));
+                lastFetchRef.current = Date.now();
+            } catch (error) {
+                console.error("Error joining existing fetch:", error);
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
+        const fetchPromise = Promise.all([
+            getReminders({ sector: SECTOR }),
+            getMe(),
+            getCategories({ sector: SECTOR })
+        ]);
+
+        if (!force) {
+            window._eduFetchPromise = fetchPromise;
+        }
+
         try {
-            const [remindersRes, userRes, categoriesRes] = await Promise.all([
-                getReminders({ sector: SECTOR }),
-                getMe(),
-                getCategories({ sector: SECTOR })
-            ]);
+            const [remindersRes, userRes, categoriesRes] = await fetchPromise;
             setReminders(Array.isArray(remindersRes.data) ? remindersRes.data : []);
             setUser(userRes.data);
             setCategories(categoriesRes.data && Array.isArray(categoriesRes.data.data) ? categoriesRes.data.data : []);
@@ -74,6 +97,7 @@ const EducationReminders = () => {
         } catch (error) {
             console.error("Error fetching data", error);
         } finally {
+            if (!force) window._eduFetchPromise = null;
             setLoading(false);
         }
     };
@@ -342,7 +366,6 @@ const EducationReminders = () => {
         try {
             const res = await createReminder({ ...reminderData, sector: SECTOR });
             setReminders(prev => [res.data, ...prev]);
-            window.dispatchEvent(new Event('refresh-reminders'));
             toast.success("Reminder added!");
         } catch {
             toast.error("Failed to add reminder");
@@ -360,7 +383,6 @@ const EducationReminders = () => {
 
             try {
                 await updateReminder(id, { is_completed: false, sector: SECTOR });
-                window.dispatchEvent(new Event('refresh-reminders'));
                 toast.success("Task marked as incomplete");
             } catch {
                 setReminders(previousReminders); // Revert
@@ -387,7 +409,6 @@ const EducationReminders = () => {
 
         try {
             await updateReminder(id, { is_completed: true, sector: SECTOR });
-            window.dispatchEvent(new Event('refresh-reminders'));
             toast.success("Task completed! 🥳");
         } catch {
             setReminders(previousReminders); // Revert
@@ -412,7 +433,6 @@ const EducationReminders = () => {
         try {
             await deleteReminder(id, { sector: SECTOR });
             setReminders(prev => prev.filter(r => r.id !== id));
-            window.dispatchEvent(new Event('refresh-reminders'));
             toast.success("Reminder deleted");
         } catch {
             toast.error("Delete failed");
