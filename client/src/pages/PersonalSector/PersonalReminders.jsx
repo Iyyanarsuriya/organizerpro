@@ -58,12 +58,35 @@ const PersonalReminders = () => {
             return;
         }
 
+        // Request Deduplication (Handles StrictMode & Rapid Calls)
+        if (!force && window._personalFetchPromise) {
+            try {
+                const [remindersRes, userRes, categoriesRes] = await window._personalFetchPromise;
+                setReminders(remindersRes.data);
+                setUser(userRes.data);
+                setCategories(categoriesRes.data.data || []);
+                localStorage.setItem('user', JSON.stringify(userRes.data));
+                lastFetchRef.current = Date.now();
+            } catch (error) {
+                console.error("Error joining existing fetch:", error);
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
+        const fetchPromise = Promise.all([
+            getReminders(),
+            getMe(),
+            getCategories()
+        ]);
+
+        if (!force) {
+            window._personalFetchPromise = fetchPromise;
+        }
+
         try {
-            const [remindersRes, userRes, categoriesRes] = await Promise.all([
-                getReminders(),
-                getMe(),
-                getCategories()
-            ]);
+            const [remindersRes, userRes, categoriesRes] = await fetchPromise;
             setReminders(remindersRes.data);
             setUser(userRes.data);
             setCategories(categoriesRes.data.data || []);
@@ -72,6 +95,7 @@ const PersonalReminders = () => {
         } catch (error) {
             console.error("Error fetching data", error);
         } finally {
+            if (!force) window._personalFetchPromise = null;
             setLoading(false);
         }
     };
