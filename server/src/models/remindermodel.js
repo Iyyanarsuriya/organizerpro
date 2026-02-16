@@ -166,11 +166,20 @@ const getSectorModel = (sector) => {
     }
 };
 
-const formatDbDate = (dateStr) => {
+const formatUtcDate = (dateStr) => {
     if (!dateStr || typeof dateStr !== 'string') return dateStr;
     // Check if it's in YYYY-MM-DD HH:MM:SS format
     if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(dateStr)) {
         return dateStr.replace(' ', 'T') + 'Z';
+    }
+    return dateStr;
+};
+
+const formatLocalDate = (dateStr) => {
+    if (!dateStr || typeof dateStr !== 'string') return dateStr;
+    // Check if it's in YYYY-MM-DD HH:MM:SS format
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(dateStr)) {
+        return dateStr.replace(' ', 'T');
     }
     return dateStr;
 };
@@ -185,9 +194,9 @@ const getAllByUserId = async (userId, sector) => {
     const [rows] = await db.query(`SELECT * FROM ${table} WHERE user_id = ? ORDER BY created_at DESC`, [userId]);
     return rows.map(r => ({
         ...r,
-        due_date: formatDbDate(r.due_date),
-        created_at: formatDbDate(r.created_at),
-        completed_at: formatDbDate(r.completed_at)
+        due_date: formatUtcDate(r.due_date),
+        created_at: formatLocalDate(r.created_at),
+        completed_at: formatLocalDate(r.completed_at)
     }));
 };
 
@@ -198,9 +207,9 @@ const getById = async (id, userId, sector) => {
     const r = rows[0];
     return {
         ...r,
-        due_date: formatDbDate(r.due_date),
-        created_at: formatDbDate(r.created_at),
-        completed_at: formatDbDate(r.completed_at)
+        due_date: formatUtcDate(r.due_date),
+        created_at: formatLocalDate(r.created_at),
+        completed_at: formatLocalDate(r.completed_at)
     };
 };
 
@@ -243,9 +252,9 @@ const getOverdueRemindersForToday = async (userId, startDate, endDate, status, s
     const [rows] = await db.query(query, params);
     return rows.map(r => ({
         ...r,
-        due_date: formatDbDate(r.due_date),
-        created_at: formatDbDate(r.created_at),
-        completed_at: formatDbDate(r.completed_at)
+        due_date: formatUtcDate(r.due_date),
+        created_at: formatLocalDate(r.created_at),
+        completed_at: formatLocalDate(r.completed_at)
     }));
 };
 
