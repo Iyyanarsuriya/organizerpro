@@ -36,35 +36,32 @@ const ReminderDashboard = () => {
     // Filter Logic
     const processedReminders = useMemo(() => {
         return reminders.filter(r => {
-            let matches = true;
-
             // Period Filter
             if (periodType === 'today') {
                 const today = new Date().toISOString().split('T')[0];
-                if (!r.due_date || !r.due_date.startsWith(today)) matches = false;
+                if (!r.due_date || !r.due_date.startsWith(today)) return false;
             } else if (periodType === 'range') {
-                if (!r.due_date) matches = false;
-                else {
-                    const rDate = r.due_date.split('T')[0];
-                    if (customRange.start && rDate < customRange.start) matches = false;
-                    if (customRange.end && rDate > customRange.end) matches = false;
-                }
+                if (!r.due_date) return false;
+                const rDate = r.due_date.split('T')[0];
+                if (customRange.start && rDate < customRange.start) return false;
+                if (customRange.end && rDate > customRange.end) return false;
             }
 
             // Status Filter
             if (filterStatus !== 'all') {
                 const isCompleted = filterStatus === 'completed';
-                if (r.is_completed !== isCompleted) matches = false;
+                // Convert to boolean for comparison (handles 1/0 from DB)
+                if (Boolean(r.is_completed) !== isCompleted) return false;
             }
 
-            return matches;
+            return true;
         });
     }, [reminders, periodType, customRange, filterStatus]);
 
     // Derived Stats
     const stats = useMemo(() => {
         const total = processedReminders.length;
-        const completed = processedReminders.filter(r => r.is_completed).length;
+        const completed = processedReminders.filter(r => Boolean(r.is_completed)).length;
         const remaining = total - completed;
         return { total, completed, remaining };
     }, [processedReminders]);
