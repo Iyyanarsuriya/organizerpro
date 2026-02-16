@@ -70,8 +70,8 @@ const PersonalExpenseTracker = () => {
             // Filter out complex manufacturing transactions (optional: could rely on category or project_id being null)
             // For now, we'll just show all, but when creating we won't add project_id
             setTransactions(transRes.data.data || []);
-            setCategories(catRes.data.data || []);
-            setBudgets(budgetRes.data.data || []);
+            setCategories(catRes.data || []);
+            setBudgets(budgetRes.data || []);
         } catch (error) {
             console.error("Failed to fetch expenses", error);
             toast.error("Failed to load data");
