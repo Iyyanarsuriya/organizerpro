@@ -197,13 +197,13 @@ const EducationReminderDashboard = () => {
 
                     {/* Completed */}
                     <div className="bg-white rounded-[32px] p-8 shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col items-center justify-center text-center transition-all hover:scale-105 duration-300">
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 text-[#00d1a0]/80">Completed</h3>
+                        <h3 className="text-xs font-black uppercase tracking-widest mb-4 text-[#00d1a0]/80">Completed</h3>
                         <div className="text-6xl font-black text-[#00d1a0] drop-shadow-sm">{stats.completed}</div>
                     </div>
 
                     {/* Remaining */}
                     <div className="bg-white rounded-[32px] p-8 shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col items-center justify-center text-center transition-all hover:scale-105 duration-300">
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 text-orange-400">Remaining</h3>
+                        <h3 className="text-xs font-black uppercase tracking-widest mb-4 text-orange-400">Remaining</h3>
                         <div className="text-6xl font-black text-orange-400 drop-shadow-sm">{stats.remaining}</div>
                     </div>
                 </div>

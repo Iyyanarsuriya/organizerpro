@@ -166,6 +166,15 @@ const getSectorModel = (sector) => {
     }
 };
 
+const formatDbDate = (dateStr) => {
+    if (!dateStr || typeof dateStr !== 'string') return dateStr;
+    // Check if it's in YYYY-MM-DD HH:MM:SS format
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(dateStr)) {
+        return dateStr.replace(' ', 'T') + 'Z';
+    }
+    return dateStr;
+};
+
 // --- CORE REMINDER FUNCTIONS (DISPATCHERS) ---
 const create = async (data) => {
     return getSectorModel(data.sector).create(data);
@@ -174,13 +183,25 @@ const create = async (data) => {
 const getAllByUserId = async (userId, sector) => {
     const table = getTableName(sector);
     const [rows] = await db.query(`SELECT * FROM ${table} WHERE user_id = ? ORDER BY created_at DESC`, [userId]);
-    return rows;
+    return rows.map(r => ({
+        ...r,
+        due_date: formatDbDate(r.due_date),
+        created_at: formatDbDate(r.created_at),
+        completed_at: formatDbDate(r.completed_at)
+    }));
 };
 
 const getById = async (id, userId, sector) => {
     const table = getTableName(sector);
     const [rows] = await db.query(`SELECT * FROM ${table} WHERE id = ? AND user_id = ?`, [id, userId]);
-    return rows[0];
+    if (!rows[0]) return null;
+    const r = rows[0];
+    return {
+        ...r,
+        due_date: formatDbDate(r.due_date),
+        created_at: formatDbDate(r.created_at),
+        completed_at: formatDbDate(r.completed_at)
+    };
 };
 
 const updateStatus = async (id, userId, is_completed, sector) => {
@@ -220,7 +241,12 @@ const getOverdueRemindersForToday = async (userId, startDate, endDate, status, s
     if (userId) { query += " AND r.user_id = ?"; params.push(userId); }
 
     const [rows] = await db.query(query, params);
-    return rows;
+    return rows.map(r => ({
+        ...r,
+        due_date: formatDbDate(r.due_date),
+        created_at: formatDbDate(r.created_at),
+        completed_at: formatDbDate(r.completed_at)
+    }));
 };
 
 module.exports = {

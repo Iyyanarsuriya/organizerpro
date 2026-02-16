@@ -146,41 +146,36 @@ const HotelReminders = () => {
                             </div>
                             <div className="flex border-t border-slate-700/50 divide-x divide-slate-700/50 bg-slate-800/50">
                                 <button
-                                    onClick={async () => {
+                                    onClick={() => {
                                         toast.remove(t.id);
                                         delete activeToastsRef.current[reminder.id];
-                                        if (!remindersRef.current.find(r => r.id === reminder.id)) {
-                                            toast.error("Task no longer exists");
-                                            return;
-                                        }
-                                        try {
-                                            const newDate = new Date(Date.now() + 10 * 60000).toISOString();
-                                            await updateReminder(reminder.id, { due_date: newDate, sector: SECTOR });
-                                            setReminders(prev => prev.map(r => r.id === reminder.id ? { ...r, due_date: newDate } : r));
-                                            toast.success("Snoozed for 10 min", { icon: '💤' });
-                                        } catch (e) {
-                                            toast.error("Failed to snooze");
-                                        }
+
+                                        // Snooze for 10 minutes (Local suppression only)
+                                        setLastNotifiedTimes(prev => ({
+                                            ...prev,
+                                            [reminder.id]: Date.now() + (10 * 60000) - 300000
+                                        }));
+                                        toast.success("Snoozed for 10 min", { icon: '💤' });
                                     }}
                                     className="flex-1 py-3 text-[10px] sm:text-xs font-bold text-slate-300 hover:bg-slate-700 transition-colors uppercase tracking-wider cursor-pointer"
                                 >
                                     Snooze 10m
                                 </button>
                                 <button
-                                    onClick={async () => {
+                                    onClick={() => {
                                         toast.remove(t.id);
                                         delete activeToastsRef.current[reminder.id];
-                                        try {
-                                            await updateReminder(reminder.id, { is_completed: true, sector: SECTOR });
-                                            setReminders(prev => prev.map(r => r.id === reminder.id ? { ...r, is_completed: true, completed_at: new Date().toISOString() } : r));
-                                            toast.success("Task completed!", { icon: '✅' });
-                                        } catch {
-                                            toast.error("Failed to complete task");
-                                        }
+
+                                        // Snooze for 1 hour (Local suppression only)
+                                        setLastNotifiedTimes(prev => ({
+                                            ...prev,
+                                            [reminder.id]: Date.now() + (60 * 60000) - 300000
+                                        }));
+                                        toast.success("Snoozed for 1 hour", { icon: '💤' });
                                     }}
-                                    className="flex-1 py-3 text-[10px] sm:text-xs font-black text-emerald-400 hover:bg-slate-700 transition-colors uppercase tracking-wider cursor-pointer"
+                                    className="flex-1 py-3 text-[10px] sm:text-xs font-bold text-slate-300 hover:bg-slate-700 transition-colors uppercase tracking-wider cursor-pointer"
                                 >
-                                    Done
+                                    1h
                                 </button>
                                 <button
                                     onClick={() => {
