@@ -32,7 +32,7 @@ const ITReminderModel = {
             `INSERT INTO it_reminders (user_id, title, description, due_date, priority, category) VALUES (?, ?, ?, ?, ?, ?)`,
             [user_id, title, description, sanitizeDate(due_date), priority || 'medium', category || 'General']
         );
-        return { id: res.insertId, ...data };
+        return { id: res.insertId, ...data, created_at: new Date().toISOString() };
     },
     updateStatus: async (id, userId, is_completed) => {
         const [res] = await db.query(`UPDATE it_reminders SET is_completed = ? WHERE id = ? AND user_id = ?`, [is_completed, id, userId]);
@@ -56,7 +56,7 @@ const HotelReminderModel = {
             `INSERT INTO hotel_reminders (user_id, title, description, due_date, priority, status, category) VALUES (?, ?, ?, ?, ?, ?, ?)`,
             [user_id, title, description, sanitizeDate(due_date), priority || 'medium', 'pending', category || 'General']
         );
-        return { id: res.insertId, ...data };
+        return { id: res.insertId, ...data, status: 'pending', created_at: new Date().toISOString() };
     },
     updateStatus: async (id, userId, is_completed) => {
         const status = is_completed ? 'completed' : 'pending';
@@ -114,7 +114,7 @@ const EducationReminderModel = {
             `INSERT INTO education_reminders (user_id, title, description, due_date, priority, category) VALUES (?, ?, ?, ?, ?, ?)`,
             [user_id, title, description, sanitizeDate(due_date), priority || 'medium', category || 'General']
         );
-        return { id: res.insertId, ...data };
+        return { id: res.insertId, ...data, created_at: new Date().toISOString() };
     },
     updateStatus: async (id, userId, is_completed) => {
         const [res] = await db.query(`UPDATE education_reminders SET is_completed = ? WHERE id = ? AND user_id = ?`, [is_completed, id, userId]);
@@ -138,7 +138,7 @@ const PersonalReminderModel = {
             `INSERT INTO personal_reminders (user_id, title, description, due_date, priority, category, google_event_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
             [user_id, title, description, sanitizeDate(due_date), priority || 'medium', category || 'General', google_event_id || null]
         );
-        return { id: res.insertId, ...data };
+        return { id: res.insertId, ...data, created_at: new Date().toISOString() };
     },
     updateStatus: async (id, userId, is_completed) => {
         const completed_at = is_completed ? new Date() : null;

@@ -22,7 +22,7 @@ exports.createReminder = async (req, res) => {
         return res.status(400).json({ error: 'Due date cannot be in the past' });
     }
     try {
-        const newReminder = await Reminder.create({
+        const createdReminder = await Reminder.create({
             user_id: req.user.data_owner_id,
             title,
             description,
@@ -34,21 +34,21 @@ exports.createReminder = async (req, res) => {
 
         // Sync with Google Calendar if connected (Using Data Owner's Token) & Sector is Personal (implicit check in model but good here too)
         if (sector === 'personal' || !sector) {
-            const user = await User.findById(req.user.data_owner_id);
-            if (user && user.google_refresh_token && due_date) {
-                try {
-                    const event = await googleService.createEvent(user.google_refresh_token, newReminder);
+            try {
+                const user = await User.findById(req.user.data_owner_id); // Reverted to findById as per model export
+                if (user && user.google_refresh_token && due_date) {
+                    const event = await googleService.createEvent(user.google_refresh_token, createdReminder);
                     if (event && event.id) {
-                        await Reminder.updateGoogleEventId(newReminder.id, event.id, sector);
-                        newReminder.google_event_id = event.id;
+                        await Reminder.updateGoogleEventId(createdReminder.id, event.id, sector);
+                        createdReminder.google_event_id = event.id;
                     }
-                } catch (gErr) {
-                    console.error('Failed to create Google Event:', gErr.message);
                 }
+            } catch (gErr) {
+                console.error('Failed to create Google Event/fetch user:', gErr.message);
             }
         }
 
-        res.status(201).json(newReminder);
+        res.status(201).json(createdReminder);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal Server Error' });

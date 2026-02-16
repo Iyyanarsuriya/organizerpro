@@ -39,7 +39,13 @@ const ITReminderDashboard = () => {
             // Period Filter
             if (periodType === 'today') {
                 const today = new Date().toISOString().split('T')[0];
-                if (!r.due_date || !r.due_date.startsWith(today)) return false;
+                if (!r.due_date) return false;
+
+                const rDate = r.due_date.split('T')[0].split(' ')[0]; // Handle both T and space separators
+                const isToday = rDate === today;
+                const isOverdue = rDate < today && !Boolean(r.is_completed);
+
+                if (!isToday && !isOverdue) return false;
             } else if (periodType === 'range') {
                 if (!r.due_date) return false;
                 const rDate = r.due_date.split('T')[0];

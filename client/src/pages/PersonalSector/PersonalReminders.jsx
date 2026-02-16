@@ -433,8 +433,17 @@ const PersonalReminders = () => {
             .filter(r => {
                 let matches = true;
                 if (periodType === 'today') {
+                    const today = new Date().toISOString().split('T')[0];
                     if (!r.due_date) matches = false;
-                    else if (!r.due_date.startsWith(filterDate)) matches = false;
+                    else {
+                        const rDate = r.due_date.split('T')[0].split(' ')[0];
+                        const isToday = rDate === filterDate;
+                        // If filterDate is TODAY, also show overdue
+                        const viewingToday = filterDate === today;
+                        const isOverdue = viewingToday && rDate < today && !r.is_completed;
+
+                        if (!isToday && !isOverdue) matches = false;
+                    }
                 } else if (periodType === 'range') {
                     if (!r.due_date) matches = false;
                     else {

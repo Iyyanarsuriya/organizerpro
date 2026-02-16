@@ -355,8 +355,17 @@ const Reminders = () => {
             }
 
             if (periodType === 'today') {
+                const today = new Date().toISOString().split('T')[0];
                 if (!dueDateStr) matches = false;
-                else if (!dueDateStr.includes(filterDate)) matches = false;
+                else {
+                    const rDate = dueDateStr.split('T')[0].split(' ')[0];
+                    const isToday = rDate === filterDate;
+                    // If filterDate is TODAY, also show overdue
+                    const viewingToday = filterDate === today;
+                    const isOverdue = viewingToday && rDate < today && !r.is_completed;
+
+                    if (!isToday && !isOverdue) matches = false;
+                }
             } else if (periodType === 'range') {
                 if (!dueDateStr) matches = false;
                 else {
