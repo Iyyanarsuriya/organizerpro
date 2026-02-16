@@ -799,10 +799,10 @@ const ITReminders = () => {
                                                             className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer appearance-none min-w-[60px]"
                                                         >
                                                             <option value="">All</option>
-                                                            {categories.map(cat => (
+                                                            <option value="General">General</option>
+                                                            {categories.filter(cat => cat.name !== 'General').map(cat => (
                                                                 <option key={cat.id} value={cat.name}>{cat.name}</option>
                                                             ))}
-                                                            {categories.length === 0 && <option value="General">General</option>}
                                                         </select>
                                                         {filterCategory ? (
                                                             <button

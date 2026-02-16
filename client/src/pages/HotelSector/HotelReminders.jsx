@@ -466,7 +466,8 @@ const HotelReminders = () => {
                                         </div>
                                         <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all cursor-pointer">
                                             <option value="">All Categories</option>
-                                            {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                                            <option value="General">General</option>
+                                            {categories.filter(c => c.name !== 'General').map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                                         </select>
                                         <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)} className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all cursor-pointer">
                                             <option value="">All Priorities</option>
