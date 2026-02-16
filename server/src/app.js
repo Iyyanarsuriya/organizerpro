@@ -47,7 +47,7 @@ const withSector = (sector) => (req, res, next) => {
 // Manufacturing Sector Header
 const mfgRouter = express.Router();
 mfgRouter.use(withSector('manufacturing'));
-mfgRouter.use('/reminders', require("./routes/Personal/reminderRoutes"));
+mfgRouter.use('/reminders', require("./routes/Manufacturing/reminderRoutes"));
 mfgRouter.use('/transactions', transactionRoutes);
 mfgRouter.use('/members', require("./routes/Common/memberRoutes"));
 mfgRouter.use('/member-roles', require("./routes/Common/memberRoleRoutes"));

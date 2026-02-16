@@ -7,6 +7,7 @@ const pool = mysql.createPool({
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     port: Number(process.env.DB_PORT), // ✅ REQUIRED
+    dateStrings: true, // ✅ Return dates as strings to avoid timezone issues
 
     waitForConnections: true,
     connectionLimit: 5,
@@ -14,6 +15,7 @@ const pool = mysql.createPool({
 
     connectTimeout: 30000,
 });
+
 
 module.exports = pool.promise();
 

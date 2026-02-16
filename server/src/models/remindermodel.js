@@ -76,12 +76,19 @@ const HotelReminderModel = {
 // --- MANUFACTURING SECTOR ---
 const ManufacturingReminderModel = {
     create: async (data) => {
-        const { user_id, title, description, due_date, priority } = data;
+        const { user_id, title, description, due_date, priority, category } = data;
         const [res] = await db.query(
-            `INSERT INTO manufacturing_reminders (user_id, title, description, due_date, priority, status) VALUES (?, ?, ?, ?, ?, ?)`,
-            [user_id, title, description, sanitizeDate(due_date), priority || 'medium', 'pending']
+            `INSERT INTO manufacturing_reminders (user_id, title, description, due_date, priority, status, category) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [user_id, title, description, sanitizeDate(due_date), priority || 'medium', 'pending', category || 'General']
         );
-        return { id: res.insertId, ...data };
+        return {
+            id: res.insertId,
+            ...data,
+            is_completed: 0,
+            status: 'pending',
+            category: category || 'General',
+            created_at: new Date().toISOString()
+        };
     },
     updateStatus: async (id, userId, is_completed) => {
         const status = is_completed ? 'completed' : 'pending';
@@ -89,14 +96,15 @@ const ManufacturingReminderModel = {
         return res.affectedRows > 0;
     },
     update: async (id, userId, data) => {
-        const { title, description, due_date, priority } = data;
+        const { title, description, due_date, priority, category } = data;
         const [res] = await db.query(
-            `UPDATE manufacturing_reminders SET title=?, description=?, due_date=?, priority=? WHERE id=? AND user_id=?`,
-            [title, description, sanitizeDate(due_date), priority, id, userId]
+            `UPDATE manufacturing_reminders SET title=?, description=?, due_date=?, priority=?, category=? WHERE id=? AND user_id=?`,
+            [title, description, sanitizeDate(due_date), priority, category, id, userId]
         );
         return res.affectedRows > 0;
     }
 };
+
 
 // --- EDUCATION SECTOR ---
 const EducationReminderModel = {

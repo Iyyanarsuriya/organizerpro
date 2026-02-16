@@ -4,10 +4,12 @@ const googleService = require('../../services/googleCalendarService');
 
 exports.getReminders = async (req, res) => {
     try {
+        console.log("Fetching reminders for user:", req.user.data_owner_id, "sector:", req.query.sector);
         const rows = await Reminder.getAllByUserId(req.user.data_owner_id, req.query.sector);
+        console.log("Reminders found:", rows.length);
         res.json(rows);
     } catch (error) {
-        console.error(error);
+        console.error("Error in getReminders:", error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };

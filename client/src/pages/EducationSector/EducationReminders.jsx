@@ -66,9 +66,9 @@ const EducationReminders = () => {
                 getMe(),
                 getCategories({ sector: SECTOR })
             ]);
-            setReminders(remindersRes.data);
+            setReminders(Array.isArray(remindersRes.data) ? remindersRes.data : []);
             setUser(userRes.data);
-            setCategories(categoriesRes.data.data || []);
+            setCategories(categoriesRes.data && Array.isArray(categoriesRes.data.data) ? categoriesRes.data.data : []);
             localStorage.setItem('user', JSON.stringify(userRes.data));
             lastFetchRef.current = Date.now();
         } catch (error) {
@@ -130,15 +130,25 @@ const EducationReminders = () => {
             const now = new Date();
             const nowMs = now.getTime();
 
+            if (!Array.isArray(remindersRef.current)) return;
+
             remindersRef.current.forEach(reminder => {
                 if (reminder.is_completed || !reminder.due_date) return;
 
-                const dueDate = new Date(reminder.due_date);
+                let dueDate;
+                try {
+                    dueDate = new Date(reminder.due_date);
+                    if (isNaN(dueDate.getTime())) return;
+                } catch (e) {
+                    return;
+                }
                 const dueDateMs = dueDate.getTime();
                 const lastNotifyTime = JSON.parse(localStorage.getItem('lastNotifiedTimes') || '{}')[reminder.id] || 0;
 
                 // Only notify if it's due today (to avoid confusion with filtered lists)
-                const isDueToday = reminder.due_date.startsWith(new Date().toISOString().split('T')[0]);
+                // Robust today check
+                const today = new Date().toISOString().split('T')[0];
+                const isDueToday = reminder.due_date && reminder.due_date.toString().includes(today);
 
                 if (isDueToday && nowMs >= dueDateMs - 30000 && (nowMs - lastNotifyTime >= 300000)) {
                     // Show In-App Toast
@@ -439,52 +449,68 @@ const EducationReminders = () => {
         }
     }, []);
 
-    // Memoized derived state for reminders
-    // This sorting/filtering can be expensive, so we memoize it.
     const processedReminders = useMemo(() => {
         const priorityWeight = { 'low': 1, 'medium': 2, 'high': 3 };
 
-        return reminders
-            .filter(r => {
-                let matches = true;
-                if (periodType === 'today') {
-                    if (!r.due_date) matches = false;
-                    else if (!r.due_date.startsWith(filterDate)) matches = false;
-                } else if (periodType === 'range') {
-                    if (!r.due_date) matches = false;
-                    else {
-                        const rDate = r.due_date.split('T')[0];
-                        if (customRange.start && rDate < customRange.start) matches = false;
-                        if (customRange.end && rDate > customRange.end) matches = false;
+        const filtered = Array.isArray(reminders) ? reminders.filter(r => {
+            let matches = true;
+
+            // Robust due_date check (handles ISO strings, DB strings, and Date objects)
+            let dueDateStr = null;
+            if (r.due_date) {
+                if (typeof r.due_date === 'string') {
+                    dueDateStr = r.due_date;
+                } else {
+                    try {
+                        const d = new Date(r.due_date);
+                        if (!isNaN(d.getTime())) {
+                            dueDateStr = d.toISOString();
+                        }
+                    } catch (e) {
+                        dueDateStr = null;
                     }
                 }
-                if (filterCategory) {
-                    if (r.category !== filterCategory) matches = false;
+            }
+
+            if (periodType === 'today') {
+                if (!dueDateStr) matches = false;
+                else if (!dueDateStr.includes(filterDate)) matches = false;
+            } else if (periodType === 'range') {
+                if (!dueDateStr) matches = false;
+                else {
+                    const rDate = dueDateStr.split('T')[0];
+                    if (customRange.start && rDate < customRange.start) matches = false;
+                    if (customRange.end && rDate > customRange.end) matches = false;
                 }
-                if (filterPriority) {
-                    if (r.priority !== filterPriority) matches = false;
+            }
+            if (filterCategory) {
+                if (r.category !== filterCategory) matches = false;
+            }
+            if (filterPriority) {
+                if (r.priority !== filterPriority) matches = false;
+            }
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                if (!r.title.toLowerCase().includes(query) &&
+                    !r.description?.toLowerCase().includes(query)) {
+                    matches = false;
                 }
-                if (searchQuery) {
-                    const query = searchQuery.toLowerCase();
-                    if (!r.title.toLowerCase().includes(query) &&
-                        !r.description?.toLowerCase().includes(query)) {
-                        matches = false;
-                    }
-                }
-                return matches;
-            })
-            .sort((a, b) => {
-                if (sortBy === 'newest') return new Date(b.created_at || 0) - new Date(a.created_at || 0);
-                if (sortBy === 'oldest') return new Date(a.created_at || 0) - new Date(b.created_at || 0);
-                if (sortBy === 'due_date') {
-                    const dateA = a.due_date ? new Date(a.due_date) : new Date(8640000000000000);
-                    const dateB = b.due_date ? new Date(b.due_date) : new Date(8640000000000000);
-                    return dateA.getTime() - dateB.getTime();
-                }
-                if (sortBy === 'priority') return (priorityWeight[b.priority] || 0) - (priorityWeight[a.priority] || 0);
-                if (sortBy === 'status') return (a.is_completed ? 1 : 0) - (b.is_completed ? 1 : 0);
-                return 0;
-            });
+            }
+            return matches;
+        }) : [];
+
+        return filtered.sort((a, b) => {
+            if (sortBy === 'newest') return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+            if (sortBy === 'oldest') return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+            if (sortBy === 'due_date') {
+                const dateA = a.due_date ? new Date(a.due_date) : new Date(8640000000000000);
+                const dateB = b.due_date ? new Date(b.due_date) : new Date(8640000000000000);
+                return dateA.getTime() - dateB.getTime();
+            }
+            if (sortBy === 'priority') return (priorityWeight[b.priority] || 0) - (priorityWeight[a.priority] || 0);
+            if (sortBy === 'status') return (a.is_completed ? 1 : 0) - (b.is_completed ? 1 : 0);
+            return 0;
+        });
     }, [reminders, filterDate, periodType, customRange, filterCategory, filterPriority, sortBy, searchQuery]);
 
     const exportPeriod = useMemo(() => {

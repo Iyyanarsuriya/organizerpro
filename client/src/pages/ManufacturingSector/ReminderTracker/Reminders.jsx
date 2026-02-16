@@ -62,9 +62,9 @@ const Reminders = () => {
                 getMe(),
                 getCategories()
             ]);
-            setReminders(remindersRes.data);
+            setReminders(Array.isArray(remindersRes.data) ? remindersRes.data : []);
             setUser(userRes.data);
-            setCategories(categoriesRes.data.data || []);
+            setCategories(categoriesRes.data && Array.isArray(categoriesRes.data.data) ? categoriesRes.data.data : []);
             localStorage.setItem('user', JSON.stringify(userRes.data));
             lastFetchRef.current = Date.now();
         } catch (error) {
@@ -126,15 +126,25 @@ const Reminders = () => {
             const now = new Date();
             const nowMs = now.getTime();
 
+            if (!Array.isArray(remindersRef.current)) return;
+
             remindersRef.current.forEach(reminder => {
                 if (reminder.is_completed || !reminder.due_date) return;
 
-                const dueDate = new Date(reminder.due_date);
+                let dueDate;
+                try {
+                    dueDate = new Date(reminder.due_date);
+                    if (isNaN(dueDate.getTime())) return;
+                } catch (e) {
+                    return;
+                }
                 const dueDateMs = dueDate.getTime();
                 const lastNotifyTime = JSON.parse(localStorage.getItem('lastNotifiedTimes') || '{}')[reminder.id] || 0;
 
                 // Only notify if it's due today (to avoid confusion with filtered lists)
-                const isDueToday = reminder.due_date.startsWith(new Date().toISOString().split('T')[0]);
+                // Robust today check
+                const today = new Date().toISOString().split('T')[0];
+                const isDueToday = reminder.due_date && reminder.due_date.toString().includes(today);
 
                 if (isDueToday && nowMs >= dueDateMs - 30000 && (nowMs - lastNotifyTime >= 300000)) {
                     // Show In-App Toast
@@ -268,148 +278,45 @@ const Reminders = () => {
     const notifications = useMemo(() => {
         const todayStr = new Date().toISOString().split('T')[0];
         return reminders.filter(r => {
-            if (r.is_completed) return false;
-            return r.due_date && r.due_date.startsWith(todayStr);
+            if (r.is_completed || !r.due_date) return false;
+            return r.due_date.startsWith(todayStr);
         });
     }, [reminders]);
 
-    // 🔔 Modern Agenda Alert for Today's Tasks
-    useEffect(() => {
-        if (!loading && notifications.length > 0 && !hasShownAgenda) {
-            // Show a custom, beautiful agenda toast
-            toast.custom((t) => (
-                <div
-                    className={`${t.visible ? 'animate-enter' : 'animate-leave'
-                        } max-w-[448px] w-[95%] sm:w-full bg-white shadow-2xl rounded-[24px] sm:rounded-[32px] pointer-events-auto flex ring-[1px] ring-black ring-opacity-5 overflow-hidden border border-slate-100 mt-[24px]`}
-                >
-                    <div className="flex-1 w-0 p-[16px] sm:p-[24px]">
-                        <div className="flex items-start gap-[12px] sm:gap-[16px]">
-                            <div className="shrink-0">
-                                <div className="h-[40px] w-[40px] sm:h-[56px] sm:w-[56px] bg-linear-to-br from-[#2d5bff] to-[#4a69ff] rounded-[12px] sm:rounded-[16px] flex items-center justify-center shadow-xl shadow-blue-500/20">
-                                    <FaBell className="h-5 w-5 sm:h-7 sm:w-7 text-white" />
-                                </div>
-                            </div>
-                            <div className="flex-1">
-                                <p className="text-lg sm:text-xl font-black text-slate-800 tracking-tight">
-                                    Your Daily Brief
-                                </p>
-                                <p className="text-[11px] sm:text-[14px] font-bold text-slate-500">
-                                    You have <span className="text-[#2d5bff] font-black">{notifications.length} priorities</span> today.
-                                </p>
-                                <div className="mt-4 flex flex-col gap-2">
-                                    {notifications.slice(0, 3).map(n => (
-                                        <div key={n.id} className="flex items-center gap-2 text-xs font-bold text-slate-600">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
-                                            <span className="truncate">{n.title}</span>
-                                        </div>
-                                    ))}
-                                    {notifications.length > 3 && (
-                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">+ {notifications.length - 3} more tasks</p>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex border-l border-slate-50">
-                        <button
-                            onClick={() => {
-                                toast.dismiss(t.id);
-                                setHasShownAgenda(true);
-                            }}
-                            className="w-full border border-transparent rounded-none rounded-r-[24px] sm:rounded-r-[32px] p-4 sm:p-6 flex items-center justify-center text-xs sm:text-sm font-black text-[#2d5bff] hover:bg-slate-50 transition-all uppercase tracking-widest cursor-pointer"
-                        >
-                            Got it
-                        </button>
-                    </div>
-                </div>
-            ), {
-                duration: 4000,
-                position: 'top-center'
-            });
-            setHasShownAgenda(true);
-        }
-    }, [notifications.length, loading, hasShownAgenda]);
-
-    const handleTriggerMissedAlert = async () => {
-        // Legacy direct trigger, now replaced by modal usually, but kept for Fallback
+    const handleAdd = useCallback(async (data) => {
         try {
-            await triggerMissedAlert({ date: filterDate });
-            toast.success(`Checking missed tasks for ${filterDate || 'today'}...`);
-        } catch (error) {
-            toast.error("Failed to trigger missed task check");
-        }
-    };
-
-    const handleSendMail = async () => {
-        try {
-            await triggerMissedAlert({
-                date: mailConfig.startDate,
-                endDate: mailConfig.endDate,
-                customMessage: mailConfig.customMessage,
-                status: mailConfig.status
-            });
-            toast.success("Email report sent successfully!");
-            setShowMailModal(false);
-        } catch (error) {
-            toast.error("Failed to send email report");
-        }
-    };
-    const handleAdd = useCallback(async (reminderData) => {
-        try {
-            const res = await createReminder(reminderData);
+            const res = await createReminder(data);
             setReminders(prev => [res.data, ...prev]);
             window.dispatchEvent(new Event('refresh-reminders'));
-            toast.success("Reminder added!");
+            toast.success("Reminder created");
         } catch {
-            toast.error("Failed to add reminder");
+            toast.error("Failed to create reminder");
         }
     }, []);
 
-    const handleToggle = useCallback(async (id, currentStatus) => {
-        // If unchecking (marking as incomplete)
-        if (currentStatus) {
-            // Optimistic Update
-            const previousReminders = [...reminders];
-            setReminders(prev => prev.map(r =>
-                r.id === id ? { ...r, is_completed: false, completed_at: null } : r
-            ));
-
-            try {
-                await updateReminder(id, { is_completed: false });
-                window.dispatchEvent(new Event('refresh-reminders'));
-                toast.success("Task marked as incomplete");
-            } catch {
-                setReminders(previousReminders); // Revert
-                toast.error("Update failed");
-            }
-            return;
-        }
-
-        // If checking (marking as complete), show confirmation modal
-        setConfirmToggle({ id, currentStatus });
-    }, [reminders]);
-
-    const confirmCompletion = useCallback(async () => {
-        if (!confirmToggle) return;
-        const { id } = confirmToggle;
-
-        // Optimistic Update
-        const previousReminders = [...reminders];
-        const now = new Date().toISOString();
-        setReminders(prev => prev.map(r =>
-            r.id === id ? { ...r, is_completed: true, completed_at: now } : r
-        ));
-        setConfirmToggle(null);
-
+    const handleUpdate = useCallback(async (id, data) => {
         try {
-            await updateReminder(id, { is_completed: true });
+            await updateReminder(id, data);
+            setReminders(prev => prev.map(r => r.id === id ? { ...r, ...data } : r));
             window.dispatchEvent(new Event('refresh-reminders'));
-            toast.success("Task completed! 🥳");
+            toast.success("Reminder updated");
         } catch {
-            setReminders(previousReminders); // Revert
             toast.error("Update failed");
         }
-    }, [confirmToggle, reminders]);
+    }, []);
+
+    const handleToggleComplete = useCallback(async (id, currentStatus) => {
+        try {
+            const nextStatus = !currentStatus;
+            await updateReminder(id, { is_completed: nextStatus });
+            setReminders(prev => prev.map(r => r.id === id ? { ...r, is_completed: nextStatus, status: nextStatus ? 'completed' : 'pending' } : r));
+            window.dispatchEvent(new Event('refresh-reminders'));
+            setConfirmToggle(null);
+            toast.success(nextStatus ? "Task completed" : "Task pending");
+        } catch {
+            toast.error("Status update failed");
+        }
+    }, []);
 
     const handleDelete = useCallback(async (id) => {
         try {
@@ -427,48 +334,68 @@ const Reminders = () => {
     const processedReminders = useMemo(() => {
         const priorityWeight = { 'low': 1, 'medium': 2, 'high': 3 };
 
-        return reminders
-            .filter(r => {
-                let matches = true;
-                if (periodType === 'today') {
-                    if (!r.due_date) matches = false;
-                    else if (!r.due_date.startsWith(filterDate)) matches = false;
-                } else if (periodType === 'range') {
-                    if (!r.due_date) matches = false;
-                    else {
-                        const rDate = r.due_date.split('T')[0];
-                        if (customRange.start && rDate < customRange.start) matches = false;
-                        if (customRange.end && rDate > customRange.end) matches = false;
+        const filtered = Array.isArray(reminders) ? reminders.filter(r => {
+            let matches = true;
+
+            // Robust due_date check (handles ISO strings, DB strings, and Date objects)
+            let dueDateStr = null;
+            if (r.due_date) {
+                if (typeof r.due_date === 'string') {
+                    dueDateStr = r.due_date;
+                } else {
+                    try {
+                        const d = new Date(r.due_date);
+                        if (!isNaN(d.getTime())) {
+                            dueDateStr = d.toISOString();
+                        }
+                    } catch (e) {
+                        dueDateStr = null;
                     }
                 }
-                if (filterCategory) {
-                    if (r.category !== filterCategory) matches = false;
+            }
+
+            if (periodType === 'today') {
+                if (!dueDateStr) matches = false;
+                else if (!dueDateStr.includes(filterDate)) matches = false;
+            } else if (periodType === 'range') {
+                if (!dueDateStr) matches = false;
+                else {
+                    const rDate = dueDateStr.split('T')[0];
+                    if (customRange.start && rDate < customRange.start) matches = false;
+                    if (customRange.end && rDate > customRange.end) matches = false;
                 }
-                if (filterPriority) {
-                    if (r.priority !== filterPriority) matches = false;
+            }
+            if (filterCategory) {
+                if (r.category !== filterCategory) matches = false;
+            }
+            if (filterPriority) {
+                if (r.priority !== filterPriority) matches = false;
+            }
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                if (!r.title.toLowerCase().includes(query) &&
+                    !r.description?.toLowerCase().includes(query)) {
+                    matches = false;
                 }
-                if (searchQuery) {
-                    const query = searchQuery.toLowerCase();
-                    if (!r.title.toLowerCase().includes(query) &&
-                        !r.description?.toLowerCase().includes(query)) {
-                        matches = false;
-                    }
-                }
-                return matches;
-            })
-            .sort((a, b) => {
-                if (sortBy === 'newest') return new Date(b.created_at || 0) - new Date(a.created_at || 0);
-                if (sortBy === 'oldest') return new Date(a.created_at || 0) - new Date(b.created_at || 0);
-                if (sortBy === 'due_date') {
-                    const dateA = a.due_date ? new Date(a.due_date) : new Date(8640000000000000);
-                    const dateB = b.due_date ? new Date(b.due_date) : new Date(8640000000000000);
-                    return dateA.getTime() - dateB.getTime();
-                }
-                if (sortBy === 'priority') return (priorityWeight[b.priority] || 0) - (priorityWeight[a.priority] || 0);
-                if (sortBy === 'status') return (a.is_completed ? 1 : 0) - (b.is_completed ? 1 : 0);
-                return 0;
-            });
+            }
+            return matches;
+        }) : [];
+
+        return filtered.sort((a, b) => {
+
+            if (sortBy === 'newest') return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+            if (sortBy === 'oldest') return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+            if (sortBy === 'due_date') {
+                const dateA = a.due_date ? new Date(a.due_date) : new Date(8640000000000000);
+                const dateB = b.due_date ? new Date(b.due_date) : new Date(8640000000000000);
+                return dateA.getTime() - dateB.getTime();
+            }
+            if (sortBy === 'priority') return (priorityWeight[b.priority] || 0) - (priorityWeight[a.priority] || 0);
+            if (sortBy === 'status') return (a.is_completed ? 1 : 0) - (b.is_completed ? 1 : 0);
+            return 0;
+        });
     }, [reminders, filterDate, periodType, customRange, filterCategory, filterPriority, sortBy, searchQuery]);
+
 
     const exportPeriod = useMemo(() => {
         if (periodType === 'today') return filterDate;
@@ -576,7 +503,8 @@ const Reminders = () => {
 
                         {/* 📊 Dashboard Shortcut Button */}
                         <Link
-                            to="/profile"
+                            to="/manufacturing/reminder-dashboard"
+
                             title="Go to Dashboard"
                             className="bg-white/10 hover:bg-white/20 text-white p-[8px] rounded-[8px] transition-all active:scale-95 flex items-center justify-center shrink-0"
                         >
@@ -590,35 +518,24 @@ const Reminders = () => {
                     <>
                         {/* BULK ACTION BAR */}
                         {selectedIds.length > 0 && (
-                            <div className="fixed bottom-[24px] left-1/2 -translate-x-1/2 bg-slate-900/90 backdrop-blur-md text-white px-[16px] py-[12px] rounded-[16px] shadow-2xl flex items-center gap-[16px] z-50 animate-in slide-in-from-bottom-10 fade-in duration-300 border border-slate-700">
-                                <span className="text-[12px] font-bold text-slate-300">
-                                    {selectedIds.length} selected
-                                </span>
-                                <div className="h-[16px] w-px bg-slate-700"></div>
-                                <button
-                                    onClick={async () => {
-                                        try {
-                                            await Promise.all(selectedIds.map(id => updateReminder(id, { is_completed: true })));
-                                            setReminders(prev => prev.map(r => selectedIds.includes(r.id) ? { ...r, is_completed: true, completed_at: new Date().toISOString() } : r));
-                                            window.dispatchEvent(new Event('refresh-reminders'));
-                                            toast.success(`${selectedIds.length} tasks completed`);
-                                            setSelectedIds([]);
-                                            setIsSelectionMode(false);
-                                        } catch (e) { toast.error("Batch update failed"); }
-                                    }}
-                                    className="text-[12px] font-black text-white hover:text-blue-400 transition-colors uppercase tracking-wider cursor-pointer"
-                                >
-                                    Complete All
-                                </button>
+                            <div className="bg-white/90 backdrop-blur-md border border-slate-200 p-[12px] rounded-[16px] mb-[16px] flex items-center justify-between shadow-lg animate-in slide-in-from-top-4 duration-300 sticky top-0 z-30">
+                                <div className="flex items-center gap-[12px]">
+                                    <span className="text-xs font-black text-slate-600 bg-slate-100 px-3 py-1 rounded-full">{selectedIds.length} Selected</span>
+                                    <button
+                                        onClick={() => setSelectedIds([])}
+                                        className="text-xs font-bold text-slate-400 hover:text-slate-600"
+                                    >
+                                        Deselect All
+                                    </button>
+                                </div>
                                 <button
                                     onClick={() => setConfirmBulkDelete(true)}
-                                    className="text-[12px] font-black text-[#ff4d4d] hover:text-[#ff3333] transition-colors uppercase tracking-wider cursor-pointer"
+                                    className="px-4 py-2 bg-red-50 text-red-600 text-xs font-black rounded-xl hover:bg-red-100 transition-colors flex items-center gap-2"
                                 >
-                                    Delete All
-                                </button>
-                                <div className="h-[16px] w-px bg-slate-700"></div>
-                                <button onClick={() => { setSelectedIds([]); setIsSelectionMode(false); }} className="p-[4px] hover:bg-white/10 rounded-full transition-colors cursor-pointer">
-                                    <FaTimes className="w-[12px] h-[12px]" />
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                    Delete Tasks
                                 </button>
                             </div>
                         )}
@@ -741,303 +658,170 @@ const Reminders = () => {
                                                         </svg>
                                                         <input
                                                             type="text"
+                                                            placeholder="Search tasks..."
                                                             value={searchQuery}
                                                             onChange={(e) => setSearchQuery(e.target.value)}
-                                                            placeholder="Search tasks..."
-                                                            className="bg-transparent text-[11px] font-bold text-slate-700 outline-none w-full placeholder:text-slate-400 placeholder:font-medium"
+                                                            className="bg-transparent text-[10px] sm:text-xs font-bold text-slate-700 outline-none w-full placeholder:text-slate-400"
                                                         />
-                                                        {searchQuery && (
-                                                            <button
-                                                                onClick={() => setSearchQuery('')}
-                                                                className="text-slate-400 hover:text-[#ff4d4d] transition-colors cursor-pointer"
-                                                            >
-                                                                <FaTimes className="w-2.5 h-2.5" />
-                                                            </button>
-                                                        )}
                                                     </div>
                                                 </div>
 
-
+                                                <div className="h-[20px] w-px bg-slate-200 hidden sm:block"></div>
 
                                                 {/* 🏷️ Category Filter */}
-                                                <div className="relative group/cat flex items-center gap-[8px]">
-                                                    <div className={`flex items-center gap-[8px] bg-white border px-[12px] py-[8px] rounded-[12px] transition-all cursor-pointer ${filterCategory ? 'border-[#2d5bff] ring-2 ring-[#2d5bff]/10' : 'border-slate-200 hover:border-slate-300'}`}>
-                                                        <div className={`w-[8px] h-[8px] rounded-full ${filterCategory ? 'bg-[#2d5bff]' : 'bg-slate-300'}`}></div>
-                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-wide">Category:</span>
-                                                        <select
-                                                            value={filterCategory}
-                                                            onChange={(e) => setFilterCategory(e.target.value)}
-                                                            className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer appearance-none min-w-[60px]"
-                                                        >
-                                                            <option value="">All</option>
-                                                            {categories.map(cat => (
-                                                                <option key={cat.id} value={cat.name}>{cat.name}</option>
-                                                            ))}
-                                                            {categories.length === 0 && <option value="General">General</option>}
-                                                        </select>
-                                                        {filterCategory ? (
-                                                            <button
-                                                                onClick={() => setFilterCategory('')}
-                                                                className="text-slate-400 hover:text-[#ff4d4d] transition-colors cursor-pointer"
-                                                            >
-                                                                <FaTimes className="w-2.5 h-2.5" />
-                                                            </button>
-                                                        ) : (
-                                                            <svg className="w-3 h-3 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
-                                                            </svg>
-                                                        )}
-                                                    </div>
-
-                                                </div>
-                                                {/* 🎯 Priority Filter */}
-                                                <div className="relative group/prio flex items-center gap-[8px]">
-                                                    <div className={`flex items-center gap-[8px] bg-white border px-[12px] py-[8px] rounded-[12px] transition-all cursor-pointer ${filterPriority ? 'border-[#2d5bff] ring-2 ring-[#2d5bff]/10' : 'border-slate-200 hover:border-slate-300'}`}>
-                                                        <div className={`w-[8px] h-[8px] rounded-full ${filterPriority === 'high' ? 'bg-red-500' : filterPriority === 'medium' ? 'bg-orange-500' : filterPriority === 'low' ? 'bg-green-500' : 'bg-slate-300'}`}></div>
-                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-wide">Priority:</span>
-                                                        <select
-                                                            value={filterPriority}
-                                                            onChange={(e) => setFilterPriority(e.target.value)}
-                                                            className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer appearance-none min-w-[60px] uppercase"
-                                                        >
-                                                            <option value="">All</option>
-                                                            <option value="low">Low</option>
-                                                            <option value="medium">Medium</option>
-                                                            <option value="high">High</option>
-                                                        </select>
-                                                        {filterPriority ? (
-                                                            <button
-                                                                onClick={() => setFilterPriority('')}
-                                                                className="text-slate-400 hover:text-[#ff4d4d] transition-colors cursor-pointer"
-                                                            >
-                                                                <FaTimes className="w-2.5 h-2.5" />
-                                                            </button>
-                                                        ) : (
-                                                            <svg className="w-3 h-3 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
-                                                            </svg>
-                                                        )}
-                                                    </div>
+                                                <div className="flex items-center gap-[6px] sm:gap-[8px]">
+                                                    <span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest hidden xs:inline">Category:</span>
+                                                    <select
+                                                        value={filterCategory}
+                                                        onChange={(e) => setFilterCategory(e.target.value)}
+                                                        className="bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] px-[8px] sm:px-[12px] py-[6px] sm:py-[8px] text-[10px] sm:text-xs font-bold text-slate-700 outline-none hover:border-slate-300 focus:border-[#2d5bff] focus:ring-2 focus:ring-[#2d5bff]/10 transition-all cursor-pointer uppercase tracking-wider min-w-[100px]"
+                                                    >
+                                                        <option value="">All Categories</option>
+                                                        <option value="General">General</option>
+                                                        {categories.map(cat => (
+                                                            <option key={cat.id} value={cat.name}>{cat.name}</option>
+                                                        ))}
+                                                    </select>
                                                 </div>
 
-                                                {/* 🧪 Sort Control */}
-                                                <div className="relative group/sort">
-                                                    <div className="flex items-center gap-[8px] bg-white border border-slate-200 px-[12px] py-[8px] rounded-[12px] shadow-sm hover:border-[#2d5bff]/30 transition-all cursor-pointer relative">
-                                                        <svg className="w-[14px] h-[14px] text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
-                                                        </svg>
-                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-wide">Sort:</span>
-                                                        <select
-                                                            value={sortBy}
-                                                            onChange={(e) => setSortBy(e.target.value)}
-                                                            className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer appearance-none pr-[20px] min-w-[80px]"
-                                                        >
-                                                            <option value="due_date">Due Date</option>
-                                                            <option value="newest">Newest</option>
-                                                            <option value="oldest">Oldest</option>
-                                                            <option value="priority">Priority</option>
-                                                            <option value="status">Status</option>
-                                                        </select>
-                                                        <svg className="w-[10px] h-[10px] text-slate-400 absolute right-[8px] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
-                                                        </svg>
-                                                    </div>
+                                                {/* 🚩 Priority Filter */}
+                                                <div className="flex items-center gap-[6px] sm:gap-[8px]">
+                                                    <span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest hidden xs:inline">Priority:</span>
+                                                    <select
+                                                        value={filterPriority}
+                                                        onChange={(e) => setFilterPriority(e.target.value)}
+                                                        className="bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] px-[8px] sm:px-[12px] py-[6px] sm:py-[8px] text-[10px] sm:text-xs font-bold text-slate-700 outline-none hover:border-slate-300 focus:border-[#2d5bff] focus:ring-2 focus:ring-[#2d5bff]/10 transition-all cursor-pointer uppercase tracking-wider min-w-[100px]"
+                                                    >
+                                                        <option value="">All Priority</option>
+                                                        <option value="low">Low</option>
+                                                        <option value="medium">Medium</option>
+                                                        <option value="high">High</option>
+                                                    </select>
+                                                </div>
+
+                                                {/* 🔃 Sort Filter */}
+                                                <div className="flex items-center gap-[6px] sm:gap-[8px]">
+                                                    <span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest hidden xs:inline">Sort:</span>
+                                                    <select
+                                                        value={sortBy}
+                                                        onChange={(e) => setSortBy(e.target.value)}
+                                                        className="bg-white border border-slate-200 rounded-[10px] sm:rounded-[12px] px-[8px] sm:px-[12px] py-[6px] sm:py-[8px] text-[10px] sm:text-xs font-bold text-slate-700 outline-none hover:border-slate-300 focus:border-[#2d5bff] focus:ring-2 focus:ring-[#2d5bff]/10 transition-all cursor-pointer uppercase tracking-wider"
+                                                    >
+                                                        <option value="newest">Newest</option>
+                                                        <option value="oldest">Oldest</option>
+                                                        <option value="due_date">Due Date</option>
+                                                        <option value="priority">Priority</option>
+                                                        <option value="status">Status</option>
+                                                    </select>
                                                 </div>
                                             </div>
                                         </div>
                                     )}
 
-                                    <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                                    {/* LIST ITEMS */}
+                                    <div className="flex-1 overflow-y-auto min-h-[300px] custom-scrollbar pr-[4px]">
                                         <ReminderList
                                             reminders={processedReminders}
-                                            onToggle={handleToggle}
+                                            onUpdate={handleUpdate}
                                             onDelete={handleDelete}
+                                            onToggleComplete={handleToggleComplete}
                                             isSelectionMode={isSelectionMode}
                                             selectedIds={selectedIds}
-                                            onSelect={(id) => {
-                                                setSelectedIds(prev => prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]);
-                                            }}
+                                            setSelectedIds={setSelectedIds}
                                         />
-                                        {processedReminders.length === 0 && (
-                                            <div className="h-full flex flex-col items-center justify-center p-12 text-center opacity-60">
-                                                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
-                                                    <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                    </svg>
-                                                </div>
-                                                <p className="text-slate-600 font-black text-sm uppercase tracking-widest">No matching tasks</p>
-                                                <p className="text-slate-400 text-[11px] mt-1 font-medium">Try selecting another date or clearing the filter</p>
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             </div>
-
                         </div>
-
                     </>
                 )}
 
-                {/* NOTES VIEW */}
                 {activeTab === 'notes' && (
-                    <div className="flex-1 h-full overflow-hidden">
-                        <Notes isEmbedded={true} sector="manufacturing" />
+                    <div className="flex-1 mt-[16px] overflow-hidden">
+                        <Notes sector="manufacturing" />
                     </div>
                 )}
-                {/* Completion Confirmation Modal */}
-                {
-                    confirmToggle && (
-                        <div className="fixed inset-0 z-120 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
-                            <div className="bg-white rounded-[32px] p-[24px] sm:p-[32px] w-full max-w-[400px] shadow-2xl animate-in zoom-in-95 duration-200 border border-white">
-                                <div className="flex flex-col items-center text-center">
-                                    <div className="w-[64px] h-[64px] bg-blue-50 rounded-full flex items-center justify-center mb-[24px] border border-blue-100 shadow-lg shadow-blue-500/10">
-                                        <div className="w-[32px] h-[32px] bg-[#2d5bff] rounded-full flex items-center justify-center animate-pulse">
-                                            <svg className="w-[20px] h-[20px] text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <h3 className="text-[20px] font-black text-slate-800 mb-[8px] uppercase tracking-tighter">Mark as Complete?</h3>
-                                    <p className="text-slate-500 text-[14px] font-medium mb-[32px]">
-                                        High five! 👋 Shall we mark this task as finished and save your progress?
-                                    </p>
-                                    <div className="flex w-full gap-[12px]">
-                                        <button
-                                            onClick={() => setConfirmToggle(null)}
-                                            className="flex-1 py-[12px] px-[24px] rounded-[12px] font-black text-[11px] tracking-widest uppercase border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
-                                        >
-                                            Not yet
-                                        </button>
-                                        <button
-                                            onClick={confirmCompletion}
-                                            className="flex-1 py-[12px] px-[24px] rounded-[12px] font-black text-[11px] tracking-widest uppercase bg-[#2d5bff] text-white shadow-lg shadow-blue-500/20 hover:bg-blue-600 hover:shadow-xl transition-all active:scale-95 cursor-pointer"
-                                        >
-                                            Yes, Done!
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )
-                }
-                {/* Bulk Delete Confirmation Modal */}
-                {
-                    confirmBulkDelete && (
-                        <div className="fixed inset-0 z-120 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
-                            <div className="bg-white rounded-[32px] p-[24px] sm:p-[32px] w-full max-w-[400px] shadow-2xl animate-in zoom-in-95 duration-200 border border-white">
-                                <div className="flex flex-col items-center text-center">
-                                    <div className="w-[64px] h-[64px] bg-red-50 rounded-full flex items-center justify-center mb-[24px] border border-red-100 shadow-lg shadow-red-500/10">
-                                        <div className="w-[32px] h-[32px] bg-[#ff4d4d] rounded-full flex items-center justify-center animate-pulse">
-                                            <svg className="w-[20px] h-[20px] text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <h3 className="text-[20px] font-black text-slate-800 mb-[8px] uppercase tracking-tighter">Delete {selectedIds.length} Tasks?</h3>
-                                    <p className="text-slate-500 text-[14px] font-medium mb-[32px]">
-                                        Are you sure you want to delete these tasks? This action cannot be undone! 🗑️
-                                    </p>
-                                    <div className="flex w-full gap-[12px]">
-                                        <button
-                                            onClick={() => setConfirmBulkDelete(false)}
-                                            className="flex-1 py-[12px] px-[24px] rounded-[12px] font-black text-[11px] tracking-widest uppercase border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            onClick={async () => {
-                                                try {
-                                                    await Promise.all(selectedIds.map(id => deleteReminder(id)));
-                                                    setReminders(prev => prev.filter(r => !selectedIds.includes(r.id)));
-                                                    window.dispatchEvent(new Event('refresh-reminders'));
-                                                    toast.success("Tasks deleted");
-                                                    setSelectedIds([]);
-                                                    setIsSelectionMode(false);
-                                                } catch (e) { toast.error("Delete failed"); }
-                                                finally { setConfirmBulkDelete(false); }
-                                            }}
-                                            className="flex-1 py-[12px] px-[24px] rounded-[12px] font-black text-[11px] tracking-widest uppercase bg-[#ff4d4d] text-white shadow-lg shadow-red-500/20 hover:bg-red-600 hover:shadow-xl transition-all active:scale-95 cursor-pointer"
-                                        >
-                                            Yes, Delete
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )
-                }
-                {/* Email Report Modal */}
+
+                {/* Email Modal */}
                 {
                     showMailModal && (
-                        <div className="fixed inset-0 z-120 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
-                            <div className="bg-white rounded-[32px] p-[24px] sm:p-[32px] w-full max-w-[450px] shadow-2xl animate-in zoom-in-95 duration-200 border border-white">
-                                <div className="flex justify-between items-center mb-[24px]">
-                                    <h3 className="text-[20px] font-black text-slate-800 uppercase tracking-tighter flex items-center gap-[12px]">
-                                        <div className="w-[4px] h-[24px] bg-[#2d5bff] rounded-full"></div>
-                                        Send Email Report
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowMailModal(false)}></div>
+                            <div className="bg-white rounded-[24px] w-full max-w-[448px] p-[24px] sm:p-[32px] relative z-10 shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100">
+                                <div className="flex justify-between items-center mb-[24px] sm:mb-[32px]">
+                                    <h3 className="text-[18px] sm:text-[22px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-3">
+                                        <div className="w-[4px] h-[20px] bg-[#2d5bff] rounded-full"></div>
+                                        Mail Report
                                     </h3>
-                                    <button onClick={() => setShowMailModal(false)} className="text-slate-400 hover:text-slate-800 transition-colors">
-                                        <FaTimes className="w-5 h-5" />
+                                    <button onClick={() => setShowMailModal(false)} className="bg-slate-50 hover:bg-slate-100 p-2 rounded-full transition-colors">
+                                        <FaTimes className="text-slate-400" />
                                     </button>
                                 </div>
 
-                                <div className="space-y-[20px]">
-                                    <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Date Range</label>
-                                        <div className="flex flex-col sm:flex-row gap-[8px] sm:gap-[12px]">
-                                            <div className="flex-1">
-                                                <input
-                                                    type="date"
-                                                    value={mailConfig.startDate}
-                                                    onChange={(e) => setMailConfig({ ...mailConfig, startDate: e.target.value })}
-                                                    className="w-full bg-slate-50 border border-slate-200 rounded-[12px] px-[16px] py-[12px] text-[12px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all font-['Outfit']"
-                                                />
-                                            </div>
-                                            <div className="hidden sm:flex items-center text-slate-400 font-bold">-</div>
-                                            <div className="flex-1">
-                                                <input
-                                                    type="date"
-                                                    value={mailConfig.endDate}
-                                                    onChange={(e) => setMailConfig({ ...mailConfig, endDate: e.target.value })}
-                                                    className="w-full bg-slate-50 border border-slate-200 rounded-[12px] px-[16px] py-[12px] text-[12px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all font-['Outfit']"
-                                                    placeholder="End Date"
-                                                />
-                                            </div>
+                                <div className="space-y-[16px] sm:space-y-[20px]">
+                                    <div className="grid grid-cols-2 gap-[12px] sm:gap-[16px]">
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[2px]">From Date</label>
+                                            <input
+                                                type="date"
+                                                value={mailConfig.startDate}
+                                                onChange={(e) => setMailConfig({ ...mailConfig, startDate: e.target.value })}
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-[12px] px-[12px] py-[10px] text-[12px] font-bold text-slate-700 outline-none focus:border-[#2d5bff] focus:ring-2 focus:ring-[#2d5bff]/10 transition-all"
+                                            />
                                         </div>
-                                        <p className="text-[10px] text-slate-400 mt-[6px] ml-[4px]">Leave end date empty for single day.</p>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Filter Status</label>
-                                        <div className="relative">
-                                            <select
-                                                value={mailConfig.status}
-                                                onChange={(e) => setMailConfig({ ...mailConfig, status: e.target.value })}
-                                                className="w-full bg-slate-50 border border-slate-200 rounded-[12px] px-[16px] py-[12px] text-[12px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all font-['Outfit'] appearance-none cursor-pointer"
-                                            >
-                                                <option value="pending">Pending Only</option>
-                                                <option value="completed">Completed Only</option>
-                                                <option value="all">All Tasks</option>
-                                            </select>
-                                            <svg className="w-[12px] h-[12px] text-slate-400 absolute right-[16px] top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
-                                            </svg>
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[2px]">To Date</label>
+                                            <input
+                                                type="date"
+                                                value={mailConfig.endDate}
+                                                onChange={(e) => setMailConfig({ ...mailConfig, endDate: e.target.value })}
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-[12px] px-[12px] py-[10px] text-[12px] font-bold text-slate-700 outline-none focus:border-[#2d5bff] focus:ring-2 focus:ring-[#2d5bff]/10 transition-all"
+                                            />
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[8px] ml-[4px]">Custom Message / Note</label>
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[2px]">Filter Status</label>
+                                        <select
+                                            value={mailConfig.status}
+                                            onChange={(e) => setMailConfig({ ...mailConfig, status: e.target.value })}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-[12px] px-[12px] py-[10px] text-[12px] font-bold text-slate-700 outline-none focus:border-[#2d5bff] focus:ring-2 focus:ring-[#2d5bff]/10 transition-all cursor-pointer uppercase tracking-wider"
+                                        >
+                                            <option value="all">All Tasks</option>
+                                            <option value="pending">Pending Only</option>
+                                            <option value="completed">Completed Only</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[2px]">Custom Message (Optional)</label>
                                         <textarea
                                             value={mailConfig.customMessage}
                                             onChange={(e) => setMailConfig({ ...mailConfig, customMessage: e.target.value })}
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-[16px] py-[12px] text-[12px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all font-['Outfit'] h-[100px] resize-none"
-                                            placeholder="Add a personal note or instructions..."
-                                        ></textarea>
+                                            placeholder="Write something to the reporter..."
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-[12px] px-[12px] py-[10px] text-[12px] font-bold text-slate-700 outline-none focus:border-[#2d5bff] focus:ring-2 focus:ring-[#2d5bff]/10 transition-all min-h-[80px] sm:min-h-[100px] resize-none placeholder:text-slate-300"
+                                        />
                                     </div>
 
                                     <button
-                                        onClick={handleSendMail}
-                                        className="w-full py-[16px] rounded-[16px] font-black text-[14px] bg-[#2d5bff] text-white shadow-lg shadow-blue-500/20 hover:bg-blue-600 hover:shadow-xl transition-all active:scale-95 uppercase tracking-widest flex items-center justify-center gap-[12px]"
+                                        onClick={async () => {
+                                            if (!mailConfig.startDate) {
+                                                toast.error("Start date is required");
+                                                return;
+                                            }
+                                            try {
+                                                await triggerMissedAlert({
+                                                    ...mailConfig,
+                                                    sector: 'manufacturing'
+                                                });
+                                                toast.success("Missed task report sent!");
+                                                setShowMailModal(false);
+                                            } catch (err) {
+                                                console.error(err);
+                                                toast.error("Failed to send report");
+                                            }
+                                        }}
+                                        className="w-full bg-[#2d5bff] text-white py-[12px] sm:py-[16px] rounded-[12px] sm:rounded-[16px] text-xs sm:text-sm font-black uppercase tracking-[2px] hover:bg-[#254bdb] transition-all shadow-xl shadow-blue-500/30 flex items-center justify-center gap-3 active:scale-[0.98]"
                                     >
                                         <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -1068,4 +852,3 @@ const Reminders = () => {
 };
 
 export default Reminders;
-
