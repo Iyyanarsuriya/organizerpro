@@ -2,19 +2,18 @@ const Reminder = require('../../models/reminderModel');
 
 exports.getReminders = async (req, res) => {
     try {
-        const sector = 'manufacturing';
-        console.log("Fetching Manufacturing reminders for user:", req.user.data_owner_id);
+        const sector = 'it';
         const rows = await Reminder.getAllByUserId(req.user.data_owner_id, sector);
         res.json(rows);
     } catch (error) {
-        console.error("Error in Manufacturing getReminders:", error);
+        console.error("Error in IT getReminders:", error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
 
 exports.createReminder = async (req, res) => {
     try {
-        const sector = 'manufacturing';
+        const sector = 'it';
         const { title, description, due_date, priority, category } = req.body;
 
         const newReminder = await Reminder.create({
@@ -29,7 +28,7 @@ exports.createReminder = async (req, res) => {
 
         res.status(201).json(newReminder);
     } catch (error) {
-        console.error("Error in Manufacturing createReminder:", error);
+        console.error("Error in IT createReminder:", error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
@@ -37,7 +36,7 @@ exports.createReminder = async (req, res) => {
 exports.updateReminder = async (req, res) => {
     const { id } = req.params;
     const { is_completed, title, description, due_date, priority, category } = req.body;
-    const sector = 'manufacturing';
+    const sector = 'it';
 
     try {
         let updated = false;
@@ -61,33 +60,34 @@ exports.updateReminder = async (req, res) => {
         }
         res.json({ message: 'Reminder updated' });
     } catch (error) {
-        console.error("Error in Manufacturing updateReminder:", error);
+        console.error("Error in IT updateReminder:", error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
 
 exports.deleteReminder = async (req, res) => {
     const { id } = req.params;
-    const sector = 'manufacturing';
+    const sector = 'it';
     try {
         const success = await Reminder.delete(id, req.user.data_owner_id, sector);
         if (!success) return res.status(404).json({ error: 'Reminder not found' });
         res.json({ message: 'Reminder deleted' });
     } catch (error) {
-        console.error("Error in Manufacturing deleteReminder:", error);
+        console.error("Error in IT deleteReminder:", error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
 const { runMissedTaskCheck } = require('../../jobs/cronService');
 
 exports.sendMissedAlert = async (req, res) => {
     const { date, endDate, customMessage, status } = req.body;
-    const sector = 'manufacturing';
+    const sector = 'it';
     try {
         const result = await runMissedTaskCheck(req.user.data_owner_id, date, endDate, customMessage, status, sector);
-        res.json({ message: `Manufacturing report sent for ${date || 'today'}`, ...result });
+        res.json({ message: `IT report sent for ${date || 'today'}`, ...result });
     } catch (error) {
-        console.error('Manufacturing missed alert error:', error);
+        console.error('IT missed alert error:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };

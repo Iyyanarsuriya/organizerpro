@@ -4,7 +4,7 @@ export const getReminders = (params) => axiosInstance.get('/education-sector/rem
 export const createReminder = (data) => axiosInstance.post('/education-sector/reminders', data);
 export const updateReminder = (id, data) => axiosInstance.put(`/education-sector/reminders/${id}`, data);
 export const deleteReminder = (id, params) => axiosInstance.delete(`/education-sector/reminders/${id}`, { params });
-export const triggerMissedAlert = (payload) => axiosInstance.post('/reminders/send-missed-alert', payload);
+export const triggerMissedAlert = (payload) => axiosInstance.post('/education-sector/reminders/send-missed-alert', payload);
 
 export const getCategories = (params = { sector: 'education' }) => axiosInstance.get('/education-sector/categories', { params });
 export const createCategory = (categoryData) => axiosInstance.post('/education-sector/categories', { ...categoryData, sector: 'education' });
