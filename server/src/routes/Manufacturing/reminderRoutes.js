@@ -1,16 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const reminderController = require('../../controllers/Personal/reminderController');
+const reminderController = require('../../controllers/Manufacturing/reminderController');
 const { authenticateToken, requireOwner } = require('../../middlewares/authMiddleware');
-
-// Middleware to FORCE sector injection for ALL requests on this route
-router.use((req, res, next) => {
-    req.query.sector = 'manufacturing';
-    if (req.body) {
-        req.body.sector = 'manufacturing';
-    }
-    next();
-});
 
 router.use(authenticateToken);
 
