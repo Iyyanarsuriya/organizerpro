@@ -818,7 +818,7 @@ const PersonalExpenseTracker = () => {
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-[6px] md:mb-[8px] block">Date</label>
-                                        <input required type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} className="w-full bg-slate-50 border-none rounded-[12px] md:rounded-[16px] px-[16px] md:px-[20px] py-[12px] md:py-[16px] text-[13px] md:text-[14px] font-bold text-slate-800 focus:ring-2 focus:ring-[#2d5bff] transition-all" />
+                                        <input required type="date" max={getTodayString()} value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} className="w-full bg-slate-50 border-none rounded-[12px] md:rounded-[16px] px-[16px] md:px-[20px] py-[12px] md:py-[16px] text-[13px] md:text-[14px] font-bold text-slate-800 focus:ring-2 focus:ring-[#2d5bff] transition-all" />
                                     </div>
                                 </div>
 
@@ -901,7 +901,7 @@ const PersonalExpenseTracker = () => {
                                             onChange={(e) => setBudgetForm({ ...budgetForm, category: e.target.value })}
                                             className="appearance-none w-full bg-slate-50 border-none rounded-[12px] md:rounded-[16px] px-[16px] md:px-[20px] py-[12px] md:py-[16px] text-[13px] md:text-[14px] font-bold text-slate-800 focus:ring-2 focus:ring-[#2d5bff] transition-all cursor-pointer hover:bg-slate-100"
                                         >
-                                            <option value="General">General</option>
+
                                             {categories.map(c => (
                                                 <option key={c.id} value={c.name}>{c.name}</option>
                                             ))}

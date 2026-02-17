@@ -15,8 +15,9 @@ const getAllByUserId = async (userId, sector) => {
 
     let [rows] = await db.query(query, [userId]);
 
-    // Auto-seed for Personal Sector if empty
-    if (rows.length === 0 && (sector === 'personal' || !sector)) {
+    // Auto-seed for Personal Sector if empty or 'General' is missing
+    const hasGeneral = rows.some(r => r.name === 'General');
+    if ((sector === 'personal' || !sector) && (rows.length === 0 || !hasGeneral)) {
         await seed(userId, sector);
         [rows] = await db.query(query, [userId]);
     }
@@ -27,13 +28,7 @@ const getAllByUserId = async (userId, sector) => {
 const seed = async (userId, sector) => {
     const table = getTableName(sector);
     const defaults = [
-        { name: 'Food', color: '#f59e0b', type: 'expense' },
-        { name: 'Transport', color: '#2d5bff', type: 'expense' },
-        { name: 'Utilities', color: '#ef4444', type: 'expense' },
-        { name: 'Shopping', color: '#ec4899', type: 'expense' },
-        { name: 'Entertainment', color: '#8b5cf6', type: 'expense' },
-        { name: 'Health', color: '#10b981', type: 'expense' },
-        { name: 'Other', color: '#64748b', type: 'expense' },
+        { name: 'General', color: '#64748b', type: 'expense' },
         { name: 'Salary', color: '#2d5bff', type: 'income' },
         { name: 'Investment', color: '#10b981', type: 'income' }
     ];

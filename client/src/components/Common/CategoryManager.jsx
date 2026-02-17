@@ -84,7 +84,8 @@ const CategoryManager = ({ categories, onUpdate, onClose, onCreate, onDelete }) 
                                 </span>
                                 <button
                                     onClick={() => handleDeleteClick(cat.id, cat.name)}
-                                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                    disabled={cat.name === 'General'}
+                                    className={`p-2 rounded-lg transition-all ${cat.name === 'General' ? 'text-slate-200 cursor-not-allowed' : 'text-slate-400 hover:text-red-500 hover:bg-red-50'}`}
                                 >
                                     <Trash2 className="w-4 h-4" />
                                 </button>

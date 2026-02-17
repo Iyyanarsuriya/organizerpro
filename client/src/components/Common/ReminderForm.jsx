@@ -126,8 +126,7 @@ function ReminderForm({ onAdd, categories = [], onManageCategories, initialData 
                 onChange={(e) => setCategory(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-[8px] sm:rounded-[10px] md:rounded-[11px] px-[12px] sm:px-[14px] md:px-[15px] h-[32px] sm:h-[36px] md:h-[38px] text-slate-800 input-focus text-[11px] sm:text-[12px] md:text-[13px] font-medium appearance-none cursor-pointer outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
               >
-                <option value="General">General</option>
-                {Array.isArray(categories) && categories.filter(cat => cat.name !== 'General').map((cat) => (
+                {Array.isArray(categories) && categories.map((cat) => (
                   <option key={cat.id || cat.name} value={cat.name}>
                     {cat.name}
                   </option>

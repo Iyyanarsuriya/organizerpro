@@ -110,7 +110,12 @@ const EducationCategoryModel = {
 // --- PERSONAL (DEFAULT) SECTOR ---
 const PersonalCategoryModel = {
     getAll: async (userId) => {
-        const [rows] = await db.query(`SELECT * FROM personal_categories WHERE user_id = ? ORDER BY name ASC`, [userId]);
+        let [rows] = await db.query(`SELECT * FROM personal_categories WHERE user_id = ? ORDER BY name ASC`, [userId]);
+        const hasGeneral = rows.some(r => r.name === 'General');
+        if (rows.length === 0 || !hasGeneral) {
+            await PersonalCategoryModel.seed(userId);
+            [rows] = await db.query(`SELECT * FROM personal_categories WHERE user_id = ? ORDER BY name ASC`, [userId]);
+        }
         return rows;
     },
     create: async (data) => {
@@ -120,12 +125,7 @@ const PersonalCategoryModel = {
     },
     seed: async (userId) => {
         const defaults = [
-            { name: 'General', color: '#64748b' },
-            { name: 'Work', color: '#2d5bff' },
-            { name: 'Personal', color: '#00d1a0' },
-            { name: 'Health', color: '#ef4444' },
-            { name: 'Study', color: '#8b5cf6' },
-            { name: 'Finance', color: '#f59e0b' }
+            { name: 'General', color: '#64748b' }
         ];
         for (const cat of defaults) await PersonalCategoryModel.create({ user_id: userId, name: cat.name, color: cat.color });
     }
