@@ -10,6 +10,10 @@ export const createBudget = async (data) => {
     return await axios.post('/budgets', data);
 };
 
+export const updateBudget = async (id, data) => {
+    return await axios.put(`/budgets/${id}`, data);
+};
+
 export const deleteBudget = async (id) => {
     return await axios.delete(`/budgets/${id}`);
 };

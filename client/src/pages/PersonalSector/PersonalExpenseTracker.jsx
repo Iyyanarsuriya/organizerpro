@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, TrendingUp, TrendingDown, IndianRupee, Tag, Filter, LayoutDashboard, List, Calendar, X, Wallet, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, TrendingUp, TrendingDown, IndianRupee, Tag, Filter, LayoutDashboard, List, Calendar, X, Wallet, AlertTriangle, Edit2 } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import toast from 'react-hot-toast';
 import { getTransactions, createTransaction, updateTransaction, deleteTransaction, getExpenseCategories, createExpenseCategory, deleteExpenseCategory } from '../../api/Expense/personalExpense';
-import { getBudgetStatus, createBudget, deleteBudget } from '../../api/Expense/budget';
+import { getBudgetStatus, createBudget, updateBudget, deleteBudget } from '../../api/Expense/budget';
 import { formatAmount } from '../../utils/formatUtils';
 import CategoryManager from '../../components/Common/CategoryManager';
 import ExportButtons from '../../components/Common/ExportButtons';
@@ -49,6 +49,7 @@ const PersonalExpenseTracker = () => {
         amount_limit: '',
         period: 'monthly'
     });
+    const [editingBudgetId, setEditingBudgetId] = useState(null);
 
     const [editingId, setEditingId] = useState(null);
 
@@ -145,9 +146,16 @@ const PersonalExpenseTracker = () => {
     const handleSaveBudget = async (e) => {
         e.preventDefault();
         try {
-            await createBudget({ ...budgetForm, month: undefined, year: undefined }); // Pass undefined for global recurring
-            toast.success("Budget set successfully");
+            if (editingBudgetId) {
+                await updateBudget(editingBudgetId, { ...budgetForm });
+                toast.success("Budget updated successfully");
+            } else {
+                await createBudget({ ...budgetForm, month: undefined, year: undefined }); // Pass undefined for global recurring
+                toast.success("Budget set successfully");
+            }
             setShowBudgetModal(false);
+            setEditingBudgetId(null);
+            setBudgetForm({ category: 'General', amount_limit: '', period: 'monthly' }); // Reset form
             fetchData();
         } catch (error) {
             toast.error("Failed to set budget");
@@ -691,10 +699,21 @@ const PersonalExpenseTracker = () => {
                                 <div key={b.id} className="bg-white p-[24px] rounded-[24px] border border-slate-100 shadow-xl shadow-slate-200/50 relative overflow-hidden">
                                     <div className="flex justify-between items-start mb-[16px]">
                                         <div>
-                                            <h3 className="text-[18px] font-black text-slate-800 tracking-tight">{b.category}</h3>
                                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{b.period}</p>
                                         </div>
-                                        <button onClick={() => handleDeleteBudget(b.id)} className="text-slate-300 hover:text-rose-500 transition-colors"><Trash2 className="w-[16px] h-[16px]" /></button>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    setEditingBudgetId(b.id);
+                                                    setBudgetForm({ category: b.category, amount_limit: b.amount_limit, period: b.period });
+                                                    setShowBudgetModal(true);
+                                                }}
+                                                className="text-slate-300 hover:text-[#2d5bff] transition-colors"
+                                            >
+                                                <Edit2 className="w-[16px] h-[16px]" />
+                                            </button>
+                                            <button onClick={() => handleDeleteBudget(b.id)} className="text-slate-300 hover:text-rose-500 transition-colors"><Trash2 className="w-[16px] h-[16px]" /></button>
+                                        </div>
                                     </div>
 
                                     <div className="mb-[8px] flex justify-between items-end">
@@ -829,14 +848,18 @@ const PersonalExpenseTracker = () => {
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
                         <div className="bg-white rounded-[24px] md:rounded-[32px] w-full max-w-md p-[20px] md:p-[32px] shadow-2xl animate-in zoom-in-95 duration-200 scale-100 border border-slate-100 relative">
                             <button
-                                onClick={() => setShowBudgetModal(false)}
+                                onClick={() => {
+                                    setShowBudgetModal(false);
+                                    setEditingBudgetId(null);
+                                    setBudgetForm({ category: 'General', amount_limit: '', period: 'monthly' });
+                                }}
                                 className="absolute top-[16px] right-[16px] md:top-[24px] md:right-[24px] w-[32px] h-[32px] rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-rose-100 hover:text-rose-500 transition-colors cursor-pointer"
                             >
                                 <X className="w-[16px] h-[16px]" />
                             </button>
 
                             <div className="mb-[20px] md:mb-[32px]">
-                                <h2 className="text-[20px] md:text-[24px] font-black text-slate-800 tracking-tight">Set Budget Limit</h2>
+                                <h2 className="text-[20px] md:text-[24px] font-black text-slate-800 tracking-tight">{editingBudgetId ? 'Edit Budget' : 'Set Budget Limit'}</h2>
                             </div>
 
                             <form onSubmit={handleSaveBudget} className="space-y-[16px] md:space-y-[24px]">

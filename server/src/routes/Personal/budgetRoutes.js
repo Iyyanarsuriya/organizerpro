@@ -7,6 +7,7 @@ router.use(authenticateToken);
 
 router.get('/', budgetController.getBudgets);
 router.post('/', budgetController.setBudget);
+router.put('/:id', budgetController.updateBudget);
 router.delete('/:id', budgetController.deleteBudget);
 router.get('/status', budgetController.getBudgetStatus);
 

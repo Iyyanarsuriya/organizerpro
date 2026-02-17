@@ -15,6 +15,14 @@ const create = async (data) => {
     return { id: result.insertId || result.insertId === 0 ? result.insertId : null, ...data };
 };
 
+const update = async (id, userId, data) => {
+    const { amount_limit, category } = data;
+    // We only allow editing amount and category for simplicity, period/month/year usually set once or handled by create
+    const query = `UPDATE ${TABLE_NAME} SET amount_limit = ?, category = ? WHERE id = ? AND user_id = ?`;
+    const [result] = await db.query(query, [amount_limit, category, id, userId]);
+    return result.affectedRows > 0;
+};
+
 const getAllByUserId = async (userId, period = 'monthly', month = null, year = null) => {
     let query = `SELECT * FROM ${TABLE_NAME} WHERE user_id = ?`;
     const params = [userId];
@@ -59,6 +67,7 @@ const getBudgetForCategory = async (userId, category, month, year) => {
 
 module.exports = {
     create,
+    update,
     getAllByUserId,
     delete: deleteResult,
     getBudgetForCategory

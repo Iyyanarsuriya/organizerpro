@@ -30,6 +30,25 @@ exports.setBudget = async (req, res) => {
     }
 };
 
+exports.updateBudget = async (req, res) => {
+    const { id } = req.params;
+    const { category, amount_limit } = req.body;
+    try {
+        const success = await Budget.update(id, req.user.data_owner_id, { category, amount_limit });
+        if (!success) {
+            // It might not exist or belong to user
+            return res.status(404).json({ error: 'Budget not found' });
+        }
+        res.json({ message: 'Budget updated', id, category, amount_limit });
+    } catch (error) {
+        console.error("Update Budget Error:", error);
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(400).json({ error: 'Budget for this category already exists' });
+        }
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
 exports.deleteBudget = async (req, res) => {
     const { id } = req.params;
     try {
