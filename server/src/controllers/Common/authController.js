@@ -193,10 +193,14 @@ exports.updateProfile = async (req, res) => {
 const googleService = require('../../services/googleCalendarService');
 
 exports.googleAuth = (req, res) => {
-    // Pass the JWT as state so we can identify the user in the callback
-    const state = req.headers.authorization?.split(' ')[1];
-    const url = googleService.getAuthUrl(state);
-    res.json({ url });
+    try {
+        const state = req.headers.authorization?.split(' ')[1];
+        const url = googleService.getAuthUrl(state);
+        res.json({ url });
+    } catch (error) {
+        console.error('Google Auth Error:', error.message);
+        res.status(500).json({ error: error.message });
+    }
 };
 
 exports.googleCallback = async (req, res) => {

@@ -23,6 +23,9 @@ if (!process.env.GOOGLE_REDIRECT_URI && process.env.NODE_ENV === 'production') {
 const SCOPES = ['https://www.googleapis.com/auth/calendar.events', 'https://www.googleapis.com/auth/calendar.readonly'];
 
 exports.getAuthUrl = (state) => {
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+        throw new Error('Google Calendar credentials (CLIENT_ID/SECRET) are not configured on the server.');
+    }
     const oauth2Client = createOAuthClient();
     return oauth2Client.generateAuthUrl({
         access_type: 'offline',
@@ -44,8 +47,8 @@ exports.createEvent = async (refreshToken, reminder) => {
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
     const event = {
-        summary: reminder.title,
-        description: reminder.description || 'Reminder from ReminderApp',
+        summary: reminder.description ? `${reminder.title} - ${reminder.description}` : reminder.title,
+        description: reminder.description ? reminder.description : 'Reminder from OrganizerPro',
         start: {
             dateTime: new Date(reminder.due_date).toISOString(),
             timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -89,5 +92,23 @@ exports.deleteEvent = async (refreshToken, eventId) => {
     } catch (error) {
         console.error('Error deleting Google Calendar event:', error);
         return false;
+    }
+};
+
+exports.updateEvent = async (refreshToken, eventId, eventUpdates) => {
+    const oauth2Client = createOAuthClient();
+    oauth2Client.setCredentials({ refresh_token: refreshToken });
+    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+
+    try {
+        const response = await calendar.events.patch({
+            calendarId: 'primary',
+            eventId: eventId,
+            resource: eventUpdates,
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error updating Google Calendar event:', error);
+        return null;
     }
 };

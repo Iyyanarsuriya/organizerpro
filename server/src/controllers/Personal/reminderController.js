@@ -95,7 +95,40 @@ exports.updateReminder = async (req, res) => {
         // 1. Handle Status Update if present
         if (is_completed !== undefined) {
             const success = await Reminder.updateStatus(id, req.user.data_owner_id, is_completed, sector);
-            if (success) updated = true;
+            if (success) {
+                updated = true;
+
+                // Sync status change to Google Calendar
+                // We need to fetch the reminder first to get the google_event_id
+                const reminder = await Reminder.getById(id, req.user.data_owner_id, sector);
+                const user = await User.findById(req.user.data_owner_id);
+
+                if (reminder && reminder.google_event_id && user && user.google_refresh_token) {
+                    const isCompletedBool = is_completed == 1 || is_completed === true || is_completed === 'true';
+
+                    let baseTitle = reminder.title;
+                    if (reminder.description) {
+                        baseTitle = `${reminder.title} - ${reminder.description}`;
+                    }
+
+                    // Helper to make text look crossed out
+                    const strikeThrough = (text) => text.split('').map(char => char + '\u0336').join('');
+
+                    let newSummary = isCompletedBool ? `✅ ${strikeThrough(baseTitle)}` : baseTitle;
+
+                    // Google Calendar Colors: 8 = Grey (completed), null = default
+                    const eventUpdates = {
+                        summary: newSummary,
+                        colorId: isCompletedBool ? '8' : null
+                    };
+
+                    try {
+                        await googleService.updateEvent(user.google_refresh_token, reminder.google_event_id, eventUpdates);
+                    } catch (gErr) {
+                        console.error('Failed to update Google Event status:', gErr.message);
+                    }
+                }
+            }
         }
 
         // 2. Handle Content Update if any field is present
@@ -119,37 +152,4 @@ exports.updateReminder = async (req, res) => {
     }
 };
 
-const { runMissedTaskCheck } = require('../../jobs/cronService');
 
-exports.triggerMissedTaskEmail = async (req, res) => {
-    const { date, endDate, customMessage, status } = req.body;
-    try {
-        // Trigger the check specifically for this user and date
-        // Note: For email triggers, should it go to the Employee or the CEO?
-        // Usually CEO (Owner) configures the email.
-        const result = await runMissedTaskCheck(req.user.data_owner_id, date, endDate, customMessage, status);
-        res.json({ message: `Task report check ran for ${date || 'today'}`, ...result });
-    } catch (error) {
-        console.error('Manual trigger error:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-};
-
-exports.automatedMissedTaskJob = async (req, res) => {
-    const cronSecret = process.env.CRON_SECRET;
-    const clientSecret = req.headers['x-cron-secret'];
-
-    // Verify secret if it exists in env
-    if (cronSecret && cronSecret !== clientSecret) {
-        return res.status(401).json({ error: 'Unauthorized cron trigger' });
-    }
-
-    try {
-        // Run for all users
-        const result = await runMissedTaskCheck();
-        res.json({ message: 'Automated missed task check ran successfully', ...result });
-    } catch (error) {
-        console.error('Automated trigger error:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-};

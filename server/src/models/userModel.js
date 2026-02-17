@@ -51,8 +51,8 @@ exports.update = async (id, userData) => {
     const updates = [];
     const params = [];
 
-    if (username) { updates.push('username = ?'); params.push(username); }
-    if (email) { updates.push('email = ?'); params.push(email); }
+    if (username !== undefined) { updates.push('username = ?'); params.push(username); }
+    if (email !== undefined) { updates.push('email = ?'); params.push(email); }
     if (mobile_number !== undefined) { updates.push('mobile_number = ?'); params.push(mobile_number); }
     if (profile_image !== undefined) { updates.push('profile_image = ?'); params.push(profile_image); }
     if (google_refresh_token !== undefined) { updates.push('google_refresh_token = ?'); params.push(google_refresh_token); }

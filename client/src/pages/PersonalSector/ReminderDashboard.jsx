@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { IoArrowBack } from "react-icons/io5";
-import { getReminders } from '../../api/Reminder/personalReminder'; // Assuming personal sector context
+import { getReminders } from '../../api/Reminder/personalReminder';
+import { getGoogleAuthUrl, getMe, disconnectGoogle } from '../../api/authApi';
 import toast from 'react-hot-toast';
 import { exportReminderToCSV, exportReminderToTXT, exportReminderToPDF } from '../../utils/exportUtils/index.js';
 import ExportButtons from '../../components/Common/ExportButtons';
@@ -13,6 +14,7 @@ const ReminderDashboard = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [reminders, setReminders] = useState([]);
+    const [user, setUser] = useState(null);
     const [viewModalType, setViewModalType] = useState(null); // 'total', 'completed', 'remaining'
 
     // Filter State
@@ -27,7 +29,9 @@ const ReminderDashboard = () => {
     const fetchData = async () => {
         try {
             const res = await getReminders();
+            const userRes = await getMe();
             setReminders(res.data || []);
+            setUser(userRes.data);
         } catch (error) {
             console.error("Error fetching reminders", error);
             toast.error("Failed to load data");
@@ -86,8 +90,30 @@ const ReminderDashboard = () => {
         toast.success("Logged out successfully");
     };
 
-    const handleConnectCalendar = () => {
-        toast('Google Calendar integration coming soon!', { icon: '📅' });
+    const handleConnectCalendar = async () => {
+        try {
+            const res = await getGoogleAuthUrl();
+            if (res.data.url) {
+                window.location.href = res.data.url;
+            } else {
+                toast.error("Failed to get Google Auth URL");
+            }
+        } catch (error) {
+            console.error("Connect Calendar Error:", error);
+            toast.error("Failed to initiate connection");
+        }
+    };
+
+    const handleDisconnectCalendar = async () => {
+        if (!window.confirm("Are you sure you want to disconnect Google Calendar?")) return;
+        try {
+            await disconnectGoogle();
+            toast.success("Disconnected from Google Calendar");
+            fetchData(); // Refresh to update UI
+        } catch (error) {
+            console.error("Disconnect Error:", error);
+            toast.error("Failed to disconnect");
+        }
     };
 
     if (loading) {
@@ -226,20 +252,32 @@ const ReminderDashboard = () => {
                 <div className="bg-white rounded-[32px] p-4 sm:p-6 shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-6">
                     <div className="flex items-center gap-6">
                         <div className="w-16 h-16 rounded-full bg-white shadow-lg border border-slate-100 flex items-center justify-center shrink-0">
-                            <FaGoogle className="text-3xl text-blue-500" />
+                            <FaGoogle className={`text-3xl ${user?.google_refresh_token ? 'text-green-500' : 'text-blue-500'}`} />
                         </div>
                         <div className="text-center sm:text-left">
                             <h3 className="text-lg font-black text-slate-800">Google Calendar</h3>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Not Connected</p>
+                            <p className={`text-xs font-bold uppercase tracking-wide ${user?.google_refresh_token ? 'text-green-500' : 'text-slate-400'}`}>
+                                {user?.google_refresh_token ? 'Connected' : 'Not Connected'}
+                            </p>
                         </div>
                     </div>
-                    <button
-                        onClick={handleConnectCalendar}
-                        className="px-8 py-4 bg-[#2d5bff] hover:bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-500/30 transition-all active:scale-95 flex items-center gap-2"
-                    >
-                        <FaCalendarAlt />
-                        Connect Calendar
-                    </button>
+                    {user?.google_refresh_token ? (
+                        <button
+                            onClick={handleDisconnectCalendar}
+                            className="px-8 py-4 bg-red-50 hover:bg-red-100 text-red-500 border border-red-200 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-red-500/10 transition-all active:scale-95 flex items-center gap-2"
+                        >
+                            <FaTimes />
+                            Disconnect
+                        </button>
+                    ) : (
+                        <button
+                            onClick={handleConnectCalendar}
+                            className="px-8 py-4 bg-[#2d5bff] hover:bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-500/30 transition-all active:scale-95 flex items-center gap-2"
+                        >
+                            <FaCalendarAlt />
+                            Connect Calendar
+                        </button>
+                    )}
                 </div>
 
                 <div className="text-center pt-8 pb-4">
