@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, TrendingUp, TrendingDown, IndianRupee, Tag, Filter, LayoutDashboard, List, Calendar, X, Wallet, AlertTriangle, Edit2 } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
@@ -59,25 +59,55 @@ const PersonalExpenseTracker = () => {
     const [customRange, setCustomRange] = useState({ start: getTodayString(), end: '' });
     const [filterCategory, setFilterCategory] = useState('all');
 
-    const fetchData = async () => {
+    const lastFetchRef = useRef(0);
+
+    const fetchData = async (force = false) => {
+        // Throttle fetching: don't fetch if last fetch was less than 60s ago
+        const now = Date.now();
+        if (!force && now - lastFetchRef.current < 60000 && !loading) {
+            return;
+        }
+
+        // Request Deduplication (Handles StrictMode & Rapid Calls)
+        if (!force && window._personalExpenseFetchPromise) {
+            try {
+                const [transRes, catRes, budgetRes] = await window._personalExpenseFetchPromise;
+                setTransactions(transRes.data.data || []);
+                setCategories(catRes.data || []);
+                setBudgets(budgetRes.data || []);
+                lastFetchRef.current = Date.now();
+            } catch (error) {
+                console.error("Error joining existing fetch:", error);
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
+        const d = new Date();
+        const fetchPromise = Promise.all([
+            getTransactions({ sector: 'personal' }),
+            getExpenseCategories({ sector: 'personal' }),
+            getBudgetStatus({ month: d.getMonth() + 1, year: d.getFullYear() })
+        ]);
+
+        if (!force) {
+            window._personalExpenseFetchPromise = fetchPromise;
+        }
+
         try {
             setLoading(true);
-            const d = new Date();
-            const [transRes, catRes, budgetRes] = await Promise.all([
-                getTransactions({ sector: 'personal' }), // Fetches only personal transactions
-                getExpenseCategories({ sector: 'personal' }),
-                getBudgetStatus({ month: d.getMonth() + 1, year: d.getFullYear() }) // Explicitly fetch for current month/year
-            ]);
+            const [transRes, catRes, budgetRes] = await fetchPromise;
 
-            // Filter out complex manufacturing transactions (optional: could rely on category or project_id being null)
-            // For now, we'll just show all, but when creating we won't add project_id
             setTransactions(transRes.data.data || []);
             setCategories(catRes.data || []);
             setBudgets(budgetRes.data || []);
+            lastFetchRef.current = Date.now();
         } catch (error) {
             console.error("Failed to fetch expenses", error);
             toast.error("Failed to load data");
         } finally {
+            if (!force) window._personalExpenseFetchPromise = null;
             setLoading(false);
         }
     };
@@ -111,7 +141,7 @@ const PersonalExpenseTracker = () => {
             setShowAddModal(false);
             setEditingId(null);
             resetForm();
-            fetchData();
+            fetchData(true);
         } catch (error) {
             toast.error("Operation failed");
         } finally {
@@ -135,7 +165,7 @@ const PersonalExpenseTracker = () => {
                 await deleteBudget(id);
                 toast.success("Budget deleted");
             }
-            fetchData();
+            fetchData(true);
         } catch (error) {
             toast.error("Delete failed");
         } finally {
@@ -156,7 +186,7 @@ const PersonalExpenseTracker = () => {
             setShowBudgetModal(false);
             setEditingBudgetId(null);
             setBudgetForm({ category: 'General', amount_limit: '', period: 'monthly' }); // Reset form
-            fetchData();
+            fetchData(true);
         } catch (error) {
             toast.error("Failed to set budget");
         }
