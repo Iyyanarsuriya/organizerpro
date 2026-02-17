@@ -10,6 +10,8 @@ import { useNavigate } from 'react-router-dom';
 import ExportButtons from '../../components/Common/ExportButtons';
 import { generateCSV, generatePDF, generateTXT } from '../../utils/exportUtils/base';
 
+const activeRequests = {};
+
 const Notes = ({ isEmbedded = false, sector = 'personal' }) => {
     const apiMap = {
         personal: personalApi,
@@ -54,12 +56,31 @@ const Notes = ({ isEmbedded = false, sector = 'personal' }) => {
         { id: 'orange', bg: 'bg-orange-100', border: 'border-orange-200', text: 'text-orange-900', hover: 'hover:bg-orange-50' },
     ];
 
-    const fetchNotes = async () => {
+    const fetchNotes = async (force = false) => {
+        // Prevent duplicate requests (e.g. Double-invocation in StrictMode)
+        if (!force && activeRequests[sector]) {
+            try {
+                const res = await activeRequests[sector];
+                setNotes(res.data.data);
+                return;
+            } catch (err) {
+                // If shared promise failed, valid retry might be needed, but usually handled by initiator
+            }
+        }
+
         try {
-            const res = await getNotes();
+            const request = getNotes();
+            activeRequests[sector] = request;
+
+            const res = await request;
             setNotes(res.data.data);
         } catch (error) {
             toast.error("Failed to load notes");
+        } finally {
+            // Remove from active directory once complete so future calls can fetch fresh data
+            if (activeRequests[sector]) {
+                delete activeRequests[sector];
+            }
         }
     };
 
@@ -102,7 +123,7 @@ const Notes = ({ isEmbedded = false, sector = 'personal' }) => {
             }
             setShowModal(false);
             resetForm();
-            fetchNotes();
+            fetchNotes(true);
         } catch (error) {
             toast.error("Failed to save note");
         }
@@ -118,7 +139,7 @@ const Notes = ({ isEmbedded = false, sector = 'personal' }) => {
         try {
             await deleteNote(noteToDelete);
             toast.success("Note deleted");
-            fetchNotes();
+            fetchNotes(true);
             setShowDeleteModal(false);
             setNoteToDelete(null);
             // If deleting from the edit modal, close it too
