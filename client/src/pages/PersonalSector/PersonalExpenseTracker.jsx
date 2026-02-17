@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, TrendingUp, TrendingDown, IndianRupee, Tag, Filter, LayoutDashboard, List, Calendar, X, Wallet } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, TrendingUp, TrendingDown, IndianRupee, Tag, Filter, LayoutDashboard, List, Calendar, X, Wallet, AlertTriangle } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import toast from 'react-hot-toast';
 import { getTransactions, createTransaction, updateTransaction, deleteTransaction, getExpenseCategories, createExpenseCategory, deleteExpenseCategory } from '../../api/Expense/personalExpense';
@@ -365,6 +365,21 @@ const PersonalExpenseTracker = () => {
                     </div>
                 </div>
 
+
+                {/* Budget Alert Banner */}
+                {budgets.some(b => b.spent > b.amount_limit) && (
+                    <div className="mb-[24px] p-[16px] rounded-[20px] bg-rose-50 border border-rose-100 flex items-start gap-[12px] shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
+                        <div className="p-[8px] bg-white text-rose-500 rounded-full shrink-0 shadow-sm border border-rose-100">
+                            <AlertTriangle className="w-[20px] h-[20px]" />
+                        </div>
+                        <div>
+                            <h3 className="text-[13px] font-black text-rose-700 uppercase tracking-widest leading-tight mb-[4px]">Budget Alert</h3>
+                            <p className="text-[12px] font-medium text-rose-600 leading-relaxed">
+                                You have exceeded the budget limit for <span className="font-black text-rose-700">{budgets.filter(b => b.spent > b.amount_limit).map(b => `${b.category} (by ₹${formatAmount(b.spent - b.amount_limit)})`).join(', ')}</span>.
+                            </p>
+                        </div>
+                    </div>
+                )}
 
                 {/* Filters & Actions: Only show for List/Analytics */}
                 {activeTab !== 'budgets' && (
