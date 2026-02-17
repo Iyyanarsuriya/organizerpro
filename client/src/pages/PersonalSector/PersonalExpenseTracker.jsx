@@ -450,6 +450,7 @@ const PersonalExpenseTracker = () => {
                                         <div className="relative flex-1 sm:flex-none group min-w-0">
                                             <input
                                                 type="date"
+                                                max={getTodayString()}
                                                 value={customRange.start}
                                                 onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })}
                                                 className="w-full sm:w-auto bg-slate-50 border border-slate-200 text-slate-600 text-[10px] sm:text-[12px] font-bold rounded-[8px] md:rounded-[16px] px-[8px] md:px-[16px] py-[8px] md:py-[12px] pl-[32px] md:pl-[40px] focus:outline-none focus:border-[#2d5bff] focus:ring-4 focus:ring-blue-500/10 cursor-pointer transition-all hover:bg-white hover:border-slate-300 hover:shadow-sm"
@@ -462,6 +463,7 @@ const PersonalExpenseTracker = () => {
                                                 <div className="relative flex-1 sm:flex-none group min-w-0">
                                                     <input
                                                         type="date"
+                                                        max={getTodayString()}
                                                         value={customRange.end}
                                                         onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })}
                                                         className="w-full sm:w-auto bg-slate-50 border border-slate-200 text-slate-600 text-[10px] sm:text-[12px] font-bold rounded-[8px] md:rounded-[16px] px-[8px] md:px-[16px] py-[8px] md:py-[12px] pl-[32px] md:pl-[40px] focus:outline-none focus:border-[#2d5bff] focus:ring-4 focus:ring-blue-500/10 cursor-pointer transition-all hover:bg-white hover:border-slate-300 hover:shadow-sm"
