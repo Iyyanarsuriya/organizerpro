@@ -2,7 +2,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Trash2, X, Calendar, Clock, AlertCircle, Repeat, Tag, CheckSquare, Square, Edit } from 'lucide-react';
 
-function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selectedIds, onSelect, onEdit }) {
+function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selectedIds, onSelect, onEdit, readOnly = false }) {
   const [selectedReminder, setSelectedReminder] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
 
@@ -83,11 +83,15 @@ function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selected
                     </div>
                   ) : (
                     <button
-                      onClick={(e) => { e.stopPropagation(); onToggle(reminder.id, reminder.is_completed); }}
-                      className={`mt-[2px] sm:mt-[4px] shrink-0 w-[20px] h-[20px] sm:w-[24px] sm:h-[24px] rounded-full border-2 transition-all flex items-center justify-center shadow-sm z-10 cursor-pointer ${reminder.is_completed
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!readOnly) onToggle(reminder.id, reminder.is_completed);
+                      }}
+                      className={`mt-[2px] sm:mt-[4px] shrink-0 w-[20px] h-[20px] sm:w-[24px] sm:h-[24px] rounded-full border-2 transition-all flex items-center justify-center shadow-sm z-10 ${readOnly ? 'cursor-default' : 'cursor-pointer'} ${reminder.is_completed
                         ? 'bg-[#2d5bff] border-[#2d5bff] shadow-blue-500/30'
                         : 'border-slate-300 hover:border-[#2d5bff] bg-white'
                         }`}
+                      disabled={readOnly}
                     >
                       {!!reminder.is_completed && (
                         <div className="w-[8px] h-[8px] sm:w-[10px] sm:h-[10px] bg-white rounded-full"></div>
@@ -96,9 +100,9 @@ function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selected
                   )}
 
                   <div
-                    className="flex-1 min-w-0 cursor-pointer"
+                    className={`flex-1 min-w-0 ${!readOnly ? 'cursor-pointer' : ''}`}
                     onClick={() => {
-                      if (!isSelectionMode) setSelectedReminder(reminder);
+                      if (!isSelectionMode && !readOnly) setSelectedReminder(reminder);
                     }}
                   >
                     <div className="flex items-center gap-[4px] sm:gap-[8px] mb-[2px] sm:mb-[4px]">
@@ -151,17 +155,19 @@ function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selected
                 </div>
 
                 {/* Action Menu (Delete) - Highlighted Red */}
-                <button
-                  onClick={() => reminder.is_completed && setDeleteId(reminder.id)}
-                  disabled={!reminder.is_completed}
-                  className={`p-[6px] sm:p-[10px] rounded-[8px] sm:rounded-[12px] transition-all duration-200 ${reminder.is_completed
-                    ? 'text-white bg-[#ff4d4d] opacity-100 cursor-pointer shadow-lg shadow-red-500/30 hover:bg-[#ff3333] hover:shadow-xl hover:shadow-red-500/40 sm:hover:scale-110'
-                    : 'text-slate-300 opacity-40 pointer-events-none cursor-default'
-                    }`}
-                  title={reminder.is_completed ? "Delete" : "Complete task to delete"}
-                >
-                  <Trash2 className="w-[16px] h-[16px] sm:w-[20px] sm:h-[20px]" />
-                </button>
+                {!readOnly && (
+                  <button
+                    onClick={() => reminder.is_completed && setDeleteId(reminder.id)}
+                    disabled={!reminder.is_completed}
+                    className={`p-[6px] sm:p-[10px] rounded-[8px] sm:rounded-[12px] transition-all duration-200 ${reminder.is_completed
+                      ? 'text-white bg-[#ff4d4d] opacity-100 cursor-pointer shadow-lg shadow-red-500/30 hover:bg-[#ff3333] hover:shadow-xl hover:shadow-red-500/40 sm:hover:scale-110'
+                      : 'text-slate-300 opacity-40 pointer-events-none cursor-default'
+                      }`}
+                    title={reminder.is_completed ? "Delete" : "Complete task to delete"}
+                  >
+                    <Trash2 className="w-[16px] h-[16px] sm:w-[20px] sm:h-[20px]" />
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -169,184 +175,190 @@ function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selected
       })}
 
       {/* Modal for Reminder Details */}
-      {selectedReminder && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
-          onClick={() => setSelectedReminder(null)}
-        >
+      {
+        selectedReminder && (
           <div
-            className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200 custom-scrollbar"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={() => setSelectedReminder(null)}
           >
-            {/* Modal Header - Blue Theme */}
-            <div className="relative p-[16px] sm:p-[24px] md:p-[32px] rounded-t-[12px] sm:rounded-t-[16px] bg-linear-to-r from-[#2d5bff] via-[#4a69ff] to-[#6366f1]">
-              <button
-                onClick={() => setSelectedReminder(null)}
-                className="absolute top-[12px] right-[12px] sm:top-[16px] sm:right-[16px] p-[6px] sm:p-[8px] rounded-full bg-white/20 hover:bg-white/30 transition-all text-white cursor-pointer"
-              >
-                <X className="w-[16px] h-[16px] sm:w-[20px] sm:h-[20px]" />
-              </button>
+            <div
+              className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200 custom-scrollbar"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header - Blue Theme */}
+              <div className="relative p-[16px] sm:p-[24px] md:p-[32px] rounded-t-[12px] sm:rounded-t-[16px] bg-linear-to-r from-[#2d5bff] via-[#4a69ff] to-[#6366f1]">
+                <button
+                  onClick={() => setSelectedReminder(null)}
+                  className="absolute top-[12px] right-[12px] sm:top-[16px] sm:right-[16px] p-[6px] sm:p-[8px] rounded-full bg-white/20 hover:bg-white/30 transition-all text-white cursor-pointer"
+                >
+                  <X className="w-[16px] h-[16px] sm:w-[20px] sm:h-[20px]" />
+                </button>
 
-              <div className="flex items-start gap-[12px] sm:gap-[16px] pr-[32px] sm:pr-[40px]">
-                <div className="flex-1">
-                  <div className="flex flex-wrap items-center gap-[8px] mb-[8px] sm:mb-[12px]">
-                    <span className={`px-[8px] sm:px-[12px] py-[2px] sm:py-[4px] rounded-full text-[10px] sm:text-[12px] font-bold uppercase tracking-wider ${selectedReminder.priority === 'high'
-                      ? 'bg-red-100 text-red-700'
-                      : selectedReminder.priority === 'medium'
-                        ? 'bg-amber-100 text-amber-700'
-                        : 'bg-blue-100 text-blue-700'
-                      }`}>
-                      {selectedReminder.priority} Priority
-                    </span>
-                    {!!selectedReminder.is_completed && (
-                      <span className="px-[8px] sm:px-[12px] py-[2px] sm:py-[4px] rounded-full text-[10px] sm:text-[12px] font-bold uppercase tracking-wider bg-green-100 text-green-700">
-                        Completed
+                <div className="flex items-start gap-[12px] sm:gap-[16px] pr-[32px] sm:pr-[40px]">
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-[8px] mb-[8px] sm:mb-[12px]">
+                      <span className={`px-[8px] sm:px-[12px] py-[2px] sm:py-[4px] rounded-full text-[10px] sm:text-[12px] font-bold uppercase tracking-wider ${selectedReminder.priority === 'high'
+                        ? 'bg-red-100 text-red-700'
+                        : selectedReminder.priority === 'medium'
+                          ? 'bg-amber-100 text-amber-700'
+                          : 'bg-blue-100 text-blue-700'
+                        }`}>
+                        {selectedReminder.priority} Priority
                       </span>
-                    )}
-                    {selectedReminder.category && (
-                      <span className={`px-[8px] sm:px-[12px] py-[2px] sm:py-[4px] rounded-full text-[10px] sm:text-[12px] font-bold uppercase tracking-wider bg-white/20 text-white`}>
-                        {selectedReminder.category}
-                      </span>
-                    )}
-                  </div>
-                  <h2 className={`text-[20px] sm:text-[24px] md:text-[30px] font-black text-white mb-[4px] ${selectedReminder.is_completed ? 'line-through ' : ''}`}>
-                    {selectedReminder.title}
-                  </h2>
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6">
-              {/* Description */}
-              {selectedReminder.description && (
-                <div>
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
-                    <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Description
-                  </h3>
-                  <p className="text-sm sm:text-base md:text-lg text-slate-700 leading-relaxed whitespace-pre-wrap">
-                    {selectedReminder.description}
-                  </p>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Due Date */}
-                {selectedReminder.due_date && (
-                  <div>
-                    <h3 className="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
-                      <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                      Due Date
-                    </h3>
-                    <div className={`flex flex-wrap items-center gap-2 text-sm sm:text-base md:text-lg font-semibold ${isOverdue(selectedReminder.due_date, selectedReminder.is_completed)
-                      ? 'text-red-600'
-                      : 'text-slate-700'
-                      }`}>
-                      <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
-                      <span>{formatDate(selectedReminder.due_date)}</span>
-                      {isOverdue(selectedReminder.due_date, selectedReminder.is_completed) && (
-                        <span className="px-2 py-0.5 bg-red-100 text-red-700 text-[10px] sm:text-xs font-bold rounded-full">
-                          OVERDUE
+                      {!!selectedReminder.is_completed && (
+                        <span className="px-[8px] sm:px-[12px] py-[2px] sm:py-[4px] rounded-full text-[10px] sm:text-[12px] font-bold uppercase tracking-wider bg-green-100 text-green-700">
+                          Completed
+                        </span>
+                      )}
+                      {selectedReminder.category && (
+                        <span className={`px-[8px] sm:px-[12px] py-[2px] sm:py-[4px] rounded-full text-[10px] sm:text-[12px] font-bold uppercase tracking-wider bg-white/20 text-white`}>
+                          {selectedReminder.category}
                         </span>
                       )}
                     </div>
+                    <h2 className={`text-[20px] sm:text-[24px] md:text-[30px] font-black text-white mb-[4px] ${selectedReminder.is_completed ? 'line-through ' : ''}`}>
+                      {selectedReminder.title}
+                    </h2>
                   </div>
-                )}
+                </div>
+              </div>
 
-                {/* Recurrence */}
-                {selectedReminder.recurrence_type && selectedReminder.recurrence_type !== 'none' && (
+              {/* Modal Body */}
+              <div className="p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6">
+                {/* Description */}
+                {selectedReminder.description && (
                   <div>
                     <h3 className="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
-                      <Repeat className="w-3 h-3 sm:w-4 sm:h-4" />
-                      Repeats
+                      <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                      Description
                     </h3>
-                    <div className="text-sm sm:text-base md:text-lg text-slate-700 font-semibold capitalize">
-                      {selectedReminder.recurrence_type}
+                    <p className="text-sm sm:text-base md:text-lg text-slate-700 leading-relaxed whitespace-pre-wrap">
+                      {selectedReminder.description}
+                    </p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Due Date */}
+                  {selectedReminder.due_date && (
+                    <div>
+                      <h3 className="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+                        Due Date
+                      </h3>
+                      <div className={`flex flex-wrap items-center gap-2 text-sm sm:text-base md:text-lg font-semibold ${isOverdue(selectedReminder.due_date, selectedReminder.is_completed)
+                        ? 'text-red-600'
+                        : 'text-slate-700'
+                        }`}>
+                        <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <span>{formatDate(selectedReminder.due_date)}</span>
+                        {isOverdue(selectedReminder.due_date, selectedReminder.is_completed) && (
+                          <span className="px-2 py-0.5 bg-red-100 text-red-700 text-[10px] sm:text-xs font-bold rounded-full">
+                            OVERDUE
+                          </span>
+                        )}
+                      </div>
                     </div>
+                  )}
+
+                  {/* Recurrence */}
+                  {selectedReminder.recurrence_type && selectedReminder.recurrence_type !== 'none' && (
+                    <div>
+                      <h3 className="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                        <Repeat className="w-3 h-3 sm:w-4 sm:h-4" />
+                        Repeats
+                      </h3>
+                      <div className="text-sm sm:text-base md:text-lg text-slate-700 font-semibold capitalize">
+                        {selectedReminder.recurrence_type}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions */}
+                {!readOnly && (
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-slate-200">
+                    <button
+                      onClick={() => {
+                        onToggle(selectedReminder.id, selectedReminder.is_completed);
+                        setSelectedReminder(null);
+                      }}
+                      className={`flex-1 py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer ${selectedReminder.is_completed
+                        ? 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                        : 'bg-[#2d5bff] text-white hover:bg-[#1e4bd8]'
+                        }`}
+                    >
+                      {selectedReminder.is_completed ? 'Mark as Incomplete' : 'Mark as Complete'}
+                    </button>
+
+                    {!selectedReminder.is_completed && onEdit && (
+                      <button
+                        onClick={() => {
+                          onEdit(selectedReminder);
+                          setSelectedReminder(null);
+                        }}
+                        className="flex-1 py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm bg-blue-50 text-[#2d5bff] hover:bg-blue-100 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Edit className="w-4 h-4" />
+                        Edit
+                      </button>
+                    )}
+
+                    {!!selectedReminder.is_completed && (
+                      <button
+                        onClick={() => {
+                          setDeleteId(selectedReminder.id);
+                          setSelectedReminder(null);
+                        }}
+                        className="flex-1 sm:flex-none py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm bg-[#ff4d4d] text-white hover:bg-[#ff3333] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                        Delete
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
-
-              {/* Actions */}
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-slate-200">
-                <button
-                  onClick={() => {
-                    onToggle(selectedReminder.id, selectedReminder.is_completed);
-                    setSelectedReminder(null);
-                  }}
-                  className={`flex-1 py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer ${selectedReminder.is_completed
-                    ? 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-                    : 'bg-[#2d5bff] text-white hover:bg-[#1e4bd8]'
-                    }`}
-                >
-                  {selectedReminder.is_completed ? 'Mark as Incomplete' : 'Mark as Complete'}
-                </button>
-
-                {!selectedReminder.is_completed && onEdit && (
+            </div>
+          </div>
+        )
+      }
+      {/* Delete Confirmation Modal */}
+      {
+        deleteId && (
+          <div className="fixed inset-0 z-110 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+            <div className="bg-white rounded-[32px] p-6 sm:p-8 w-full max-w-[400px] shadow-2xl animate-in zoom-in-95 duration-200 border border-white">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-6 border border-red-100 shadow-lg shadow-red-500/10">
+                  <Trash2 className="w-8 h-8 text-[#ff4d4d] animate-bounce" />
+                </div>
+                <h3 className="text-xl font-black text-slate-800 mb-2 uppercase tracking-tighter">Are you sure?</h3>
+                <p className="text-slate-500 text-sm font-medium mb-8">
+                  This action cannot be undone. This reminder will be permanently deleted from your timeline.
+                </p>
+                <div className="flex w-full gap-3">
                   <button
-                    onClick={() => {
-                      onEdit(selectedReminder);
-                      setSelectedReminder(null);
-                    }}
-                    className="flex-1 py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm bg-blue-50 text-[#2d5bff] hover:bg-blue-100 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    onClick={() => setDeleteId(null)}
+                    className="flex-1 py-3 px-6 rounded-xl font-black text-[13px] tracking-widest uppercase border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
                   >
-                    <Edit className="w-4 h-4" />
-                    Edit
+                    Cancel
                   </button>
-                )}
-
-                {!!selectedReminder.is_completed && (
                   <button
                     onClick={() => {
-                      setDeleteId(selectedReminder.id);
-                      setSelectedReminder(null);
+                      onDelete(deleteId);
+                      setDeleteId(null);
                     }}
-                    className="flex-1 sm:flex-none py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm bg-[#ff4d4d] text-white hover:bg-[#ff3333] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    className="flex-1 py-3 px-6 rounded-xl font-black text-[13px] tracking-widest uppercase bg-[#ff4d4d] text-white shadow-lg shadow-red-500/20 hover:bg-[#ff3333] hover:shadow-xl transition-all active:scale-95 cursor-pointer"
                   >
-                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                     Delete
                   </button>
-                )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-      {/* Delete Confirmation Modal */}
-      {deleteId && (
-        <div className="fixed inset-0 z-110 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-white rounded-[32px] p-6 sm:p-8 w-full max-w-[400px] shadow-2xl animate-in zoom-in-95 duration-200 border border-white">
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-6 border border-red-100 shadow-lg shadow-red-500/10">
-                <Trash2 className="w-8 h-8 text-[#ff4d4d] animate-bounce" />
-              </div>
-              <h3 className="text-xl font-black text-slate-800 mb-2 uppercase tracking-tighter">Are you sure?</h3>
-              <p className="text-slate-500 text-sm font-medium mb-8">
-                This action cannot be undone. This reminder will be permanently deleted from your timeline.
-              </p>
-              <div className="flex w-full gap-3">
-                <button
-                  onClick={() => setDeleteId(null)}
-                  className="flex-1 py-3 px-6 rounded-xl font-black text-[13px] tracking-widest uppercase border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    onDelete(deleteId);
-                    setDeleteId(null);
-                  }}
-                  className="flex-1 py-3 px-6 rounded-xl font-black text-[13px] tracking-widest uppercase bg-[#ff4d4d] text-white shadow-lg shadow-red-500/20 hover:bg-[#ff3333] hover:shadow-xl transition-all active:scale-95 cursor-pointer"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }
 
