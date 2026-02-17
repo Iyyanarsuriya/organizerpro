@@ -31,6 +31,7 @@ const PersonalExpenseTracker = () => {
     const [showBudgetModal, setShowBudgetModal] = useState(false);
     const [pendingExport, setPendingExport] = useState(null); // { type: 'CSV' | 'PDF' | 'TXT', action: () => void }
     const [budgets, setBudgets] = useState([]);
+    const [deleteConfirmation, setDeleteConfirmation] = useState({ show: false, id: null, type: null }); // type: 'transaction' | 'budget'
 
     // Form State
     const [formData, setFormData] = useState({
@@ -117,14 +118,27 @@ const PersonalExpenseTracker = () => {
         }
     };
 
-    const handleDelete = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this?")) return;
+    const handleDelete = (id) => {
+        setDeleteConfirmation({ show: true, id, type: 'transaction' });
+    };
+
+    const confirmDelete = async () => {
+        const { id, type } = deleteConfirmation;
+        if (!id) return;
+
         try {
-            await deleteTransaction(id, 'personal');
-            toast.success("Deleted successfully");
+            if (type === 'transaction') {
+                await deleteTransaction(id, 'personal');
+                toast.success("Deleted successfully");
+            } else if (type === 'budget') {
+                await deleteBudget(id);
+                toast.success("Budget deleted");
+            }
             fetchData();
         } catch (error) {
             toast.error("Delete failed");
+        } finally {
+            setDeleteConfirmation({ show: false, id: null, type: null });
         }
     };
 
@@ -140,16 +154,9 @@ const PersonalExpenseTracker = () => {
         }
     };
 
-    const handleDeleteBudget = async (id) => {
-        if (!window.confirm("Delete this budget limit?")) return;
-        try {
-            await deleteBudget(id);
-            toast.success("Budget deleted");
-            fetchData();
-        } catch (error) {
-            toast.error("Failed to delete budget");
-        }
-    }
+    const handleDeleteBudget = (id) => {
+        setDeleteConfirmation({ show: true, id, type: 'budget' });
+    };
 
     const resetForm = () => {
         setFormData({
@@ -857,6 +864,32 @@ const PersonalExpenseTracker = () => {
                         onCreate={(data) => createExpenseCategory({ ...data, sector: 'personal' })}
                         onDelete={(id) => deleteExpenseCategory(id, 'personal')}
                     />
+                )}
+
+                {/* Delete Confirmation Modal */}
+                {deleteConfirmation.show && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+                        <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl animate-in zoom-in-95 duration-200 scale-100 border border-slate-100">
+                            <h3 className="text-lg font-black text-slate-800 mb-2">Confirm Delete</h3>
+                            <p className="text-sm font-medium text-slate-500 mb-6">
+                                Are you sure you want to delete this {deleteConfirmation.type}? This action cannot be undone.
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setDeleteConfirmation({ show: false, id: null, type: null })}
+                                    className="flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-wider text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    className="flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20 transition-colors"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 )}
 
             </div>
