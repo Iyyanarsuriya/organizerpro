@@ -101,20 +101,6 @@
 
 SET FOREIGN_KEY_CHECKS = 0;
 
--- LEGACY TABLES CLEANUP (Pre-Sector Isolation)
-DROP TABLE IF EXISTS `attendance`;
-DROP TABLE IF EXISTS `categories`;
-DROP TABLE IF EXISTS `members`;
-DROP TABLE IF EXISTS `notes`;
-DROP TABLE IF EXISTS `projects`;
-DROP TABLE IF EXISTS `reminders`;
-DROP TABLE IF EXISTS `transactions`;
-DROP TABLE IF EXISTS `daily_work_logs`;
-DROP TABLE IF EXISTS `vehicle_logs`;
-DROP TABLE IF EXISTS `member_roles`;
-DROP TABLE IF EXISTS `work_types`;
-DROP TABLE IF EXISTS `audit_logs`;
-
 -- ==========================================
 -- SHARED TABLES
 -- ==========================================
@@ -227,6 +213,20 @@ CREATE TABLE `personal_categories` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_user_pcat` (`user_id`,`name`),
   CONSTRAINT `fk_personal_cat_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Personal Expense Categories
+DROP TABLE IF EXISTS `personal_expense_categories`;
+CREATE TABLE `personal_expense_categories` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `color` varchar(20) DEFAULT '#2d5bff',
+  `type` enum('income','expense') DEFAULT 'expense',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_personal_cat` (`user_id`,`name`,`type`),
+  CONSTRAINT `fk_personal_exp_cat_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
