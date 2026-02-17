@@ -26,6 +26,8 @@ const Notes = ({ isEmbedded = false, sector = 'personal' }) => {
     const api = apiMap[sector] || personalApi;
     const { getNotes, createNote, updateNote, deleteNote } = api;
 
+    const isPersonal = sector === 'personal';
+
     const navigate = useNavigate();
     const [notes, setNotes] = useState([]);
     const [showModal, setShowModal] = useState(false);
@@ -282,7 +284,7 @@ const Notes = ({ isEmbedded = false, sector = 'personal' }) => {
             )}
 
             {/* Content Container with internal scroll */}
-            <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-24 custom-scrollbar">
+            <div className={`flex-1 overflow-y-auto pb-24 custom-scrollbar ${isPersonal ? 'px-[16px] md:px-[32px]' : 'px-4 sm:px-6'}`}>
 
                 {/* Search Bar - Modern & Floating Look */}
                 <div className="sticky top-0 z-20 pt-2 pb-6">
@@ -309,7 +311,7 @@ const Notes = ({ isEmbedded = false, sector = 'personal' }) => {
                                 <button
                                     key={type}
                                     onClick={() => setPeriodType(type)}
-                                    className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all ${periodType === type ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                    className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all ${periodType === type ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'} ${isPersonal ? 'md:px-[16px] md:py-[8px] md:text-[12px]' : ''}`}
                                 >
                                     {type}
                                 </button>
@@ -321,13 +323,13 @@ const Notes = ({ isEmbedded = false, sector = 'personal' }) => {
                                 type={periodType === 'year' ? 'number' : periodType === 'month' ? 'month' : 'date'}
                                 value={selectedDate}
                                 onChange={(e) => setSelectedDate(e.target.value)}
-                                className="bg-white border border-slate-200 text-slate-700 font-bold h-[36px] sm:h-[40px] px-3 sm:px-4 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 text-xs sm:text-sm w-full sm:w-auto"
+                                className={`bg-white border border-slate-200 text-slate-700 font-bold px-3 sm:px-4 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 text-xs sm:text-sm w-full sm:w-auto ${isPersonal ? 'h-[36px] md:h-[42px]' : 'h-[36px] sm:h-[40px]'}`}
                                 placeholder={periodType === 'year' ? 'YYYY' : ''}
                                 min={periodType === 'year' ? '2000' : undefined}
                                 max={periodType === 'year' ? '2100' : undefined}
                             />
                         ) : (
-                            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 h-[36px] sm:h-[40px] w-full sm:w-auto overflow-x-auto no-scrollbar">
+                            <div className={`flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 w-full sm:w-auto overflow-x-auto no-scrollbar ${isPersonal ? 'h-[36px] md:h-[42px]' : 'h-[36px] sm:h-[40px]'}`}>
                                 <input
                                     type="date"
                                     value={dateRange.start}
@@ -347,11 +349,11 @@ const Notes = ({ isEmbedded = false, sector = 'personal' }) => {
                 </div>
 
                 {/* Notes Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 max-w-[1600px] mx-auto">
+                <div className={`grid grid-cols-1 ${isPersonal ? 'md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[16px] md:gap-[24px]' : 'sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6'} max-w-[1600px] mx-auto`}>
                     {/* Add New Note Card - Visible at start of grid on desktop */}
                     <button
                         onClick={handleCreate}
-                        className="hidden sm:flex flex-col items-center justify-center min-h-[200px] border-2 border-dashed border-slate-200 rounded-[24px] text-slate-400 hover:text-[#2d5bff] hover:border-[#2d5bff]/30 hover:bg-blue-50/50 transition-all group cursor-pointer"
+                        className={`hidden sm:flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-[24px] text-slate-400 hover:text-[#2d5bff] hover:border-[#2d5bff]/30 hover:bg-blue-50/50 transition-all group cursor-pointer ${isPersonal ? 'min-h-[200px] md:min-h-[240px]' : 'min-h-[200px]'}`}
                     >
                         <div className="w-12 h-12 rounded-full bg-slate-50 group-hover:bg-white group-hover:shadow-md flex items-center justify-center mb-3 transition-all">
                             <FaPlus className="w-5 h-5 group-hover:scale-110 transition-transform" />
@@ -378,7 +380,7 @@ const Notes = ({ isEmbedded = false, sector = 'personal' }) => {
                                 <div
                                     key={note.id}
                                     onClick={() => handleEdit(note)}
-                                    className={`${style.bg} border-t-4 ${style.border} p-5 rounded-[24px] shadow-sm cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative group flex flex-col min-h-[180px]`}
+                                    className={`${style.bg} border-t-4 ${style.border} p-5 rounded-[24px] shadow-sm cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative group flex flex-col ${isPersonal ? 'min-h-[180px] md:min-h-[200px]' : 'min-h-[180px]'}`}
                                 >
                                     <div className="flex justify-between items-start mb-3">
                                         <h3 className={`text-[16px] sm:text-lg font-black ${style.text} pr-6 leading-tight line-clamp-2`}>{note.title}</h3>
@@ -431,7 +433,7 @@ const Notes = ({ isEmbedded = false, sector = 'personal' }) => {
                     <div onClick={() => setShowModal(false)} className="absolute inset-0"></div>
                     <form
                         onSubmit={handleSave}
-                        className="bg-white w-[350px] sm:w-[512px] h-[500px] sm:h-auto sm:max-h-[90vh] rounded-[32px] p-[24px] sm:p-[32px] shadow-2xl shadow-slate-900/50 animate-in slide-in-from-bottom-10 zoom-in-95 duration-300 relative flex flex-col"
+                        className={`bg-white rounded-[32px] p-[24px] sm:p-[32px] shadow-2xl shadow-slate-900/50 animate-in slide-in-from-bottom-10 zoom-in-95 duration-300 relative flex flex-col ${isPersonal ? 'w-[320px] md:w-[600px] h-[500px] md:h-auto md:max-h-[85vh]' : 'w-[350px] sm:w-[512px] h-[500px] sm:h-auto sm:max-h-[90vh]'}`}
                     >
 
                         <div className="flex justify-between items-start mb-6 shrink-0">

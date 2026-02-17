@@ -318,7 +318,7 @@ const PersonalReminders = () => {
                                 toast.dismiss(t.id);
                                 setHasShownAgenda(true);
                             }}
-                            className="w-full border border-transparent rounded-none rounded-r-[24px] sm:rounded-r-[32px] p-4 sm:p-6 flex items-center justify-center text-xs sm:text-sm font-black text-[#2d5bff] hover:bg-slate-50 transition-all uppercase tracking-widest cursor-pointer"
+                            className="w-full border border-transparent rounded-none rounded-r-[24px] sm:rounded-r-[32px] p-[16px] sm:p-[24px] flex items-center justify-center text-[12px] sm:text-[14px] font-black text-[#2d5bff] hover:bg-slate-50 transition-all uppercase tracking-widest cursor-pointer"
                         >
                             Got it
                         </button>
@@ -505,20 +505,20 @@ const PersonalReminders = () => {
                     <div className="flex items-center gap-[12px] sm:gap-[16px]">
                         <button
                             onClick={() => navigate('/personal')}
-                            className="w-8 h-8 sm:w-10 sm:h-10 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center text-white transition-all active:scale-95 backdrop-blur-sm cursor-pointer border border-white/10"
+                            className="w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] bg-white/10 hover:bg-white/20 rounded-[10px] sm:rounded-[12px] flex items-center justify-center text-white transition-all active:scale-95 backdrop-blur-sm cursor-pointer border border-white/10"
                         >
-                            <FaArrowLeft className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <FaArrowLeft className="w-[12px] h-[12px] sm:w-[16px] sm:h-[16px]" />
                         </button>
-                        <div className="flex bg-blue-700/30 rounded-xl p-1 border border-blue-400/30 backdrop-blur-sm">
+                        <div className="flex bg-blue-700/30 rounded-[10px] sm:rounded-[12px] p-[4px] border border-blue-400/30 backdrop-blur-sm">
                             <button
                                 onClick={() => setActiveTab('tasks')}
-                                className={`px-4 py-2 rounded-lg text-[10px] sm:text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'tasks' ? 'bg-white text-[#2d5bff] shadow-lg' : 'text-blue-100 hover:bg-white/10'}`}
+                                className={`px-[12px] py-[6px] sm:px-[16px] sm:py-[8px] rounded-[8px] text-[10px] sm:text-[14px] font-black uppercase tracking-widest transition-all ${activeTab === 'tasks' ? 'bg-white text-[#2d5bff] shadow-lg' : 'text-blue-100 hover:bg-white/10'}`}
                             >
                                 Tasks
                             </button>
                             <button
                                 onClick={() => setActiveTab('notes')}
-                                className={`px-4 py-2 rounded-lg text-[10px] sm:text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'notes' ? 'bg-white text-[#2d5bff] shadow-lg' : 'text-blue-100 hover:bg-white/10'}`}
+                                className={`px-[12px] py-[6px] sm:px-[16px] sm:py-[8px] rounded-[8px] text-[10px] sm:text-[14px] font-black uppercase tracking-widest transition-all ${activeTab === 'notes' ? 'bg-white text-[#2d5bff] shadow-lg' : 'text-blue-100 hover:bg-white/10'}`}
                             >
                                 Notes
                             </button>
@@ -672,8 +672,8 @@ const PersonalReminders = () => {
                                                 {/* 📅 Date Search Filter */}
                                                 {/* 📅 Period Filter */}
                                                 <div className="relative shrink-0">
-                                                    <div className="flex items-center gap-2 bg-white border border-slate-200 p-1 rounded-xl shadow-sm">
-                                                        <span className="hidden sm:inline text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-wide ml-2">Period:</span>
+                                                    <div className="flex items-center gap-[8px] bg-white border border-slate-200 p-[4px] rounded-[12px] shadow-sm">
+                                                        <span className="hidden sm:inline text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-wide ml-[8px]">Period:</span>
                                                         <select
                                                             value={periodType}
                                                             onChange={(e) => {
@@ -682,7 +682,7 @@ const PersonalReminders = () => {
                                                                 if (val === 'today') setFilterDate(new Date().toISOString().split('T')[0]);
                                                                 else setFilterDate('');
                                                             }}
-                                                            className="bg-transparent text-[10px] sm:text-xs font-bold text-slate-700 outline-none cursor-pointer uppercase tracking-wider px-2"
+                                                            className="bg-transparent text-[10px] sm:text-[12px] font-bold text-slate-700 outline-none cursor-pointer uppercase tracking-wider px-[8px]"
                                                         >
                                                             <option value="today">Today</option>
                                                             <option value="all">All Time</option>
@@ -694,24 +694,24 @@ const PersonalReminders = () => {
                                                                 type="date"
                                                                 value={filterDate}
                                                                 onChange={(e) => setFilterDate(e.target.value)}
-                                                                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[10px] font-bold text-slate-600 outline-none"
+                                                                className="bg-slate-50 border border-slate-200 rounded-[8px] px-[8px] py-[4px] text-[10px] font-bold text-slate-600 outline-none h-[24px] sm:h-[28px]"
                                                             />
                                                         )}
 
                                                         {periodType === 'range' && (
-                                                            <div className="flex items-center gap-1">
+                                                            <div className="flex items-center gap-[4px]">
                                                                 <input
                                                                     type="date"
                                                                     value={customRange.start}
                                                                     onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })}
-                                                                    className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[10px] font-bold text-slate-600 outline-none w-[90px]"
+                                                                    className="bg-slate-50 border border-slate-200 rounded-[8px] px-[8px] py-[4px] text-[10px] font-bold text-slate-600 outline-none w-[90px] h-[24px] sm:h-[28px]"
                                                                 />
                                                                 <span className="text-slate-400 font-bold">-</span>
                                                                 <input
                                                                     type="date"
                                                                     value={customRange.end}
                                                                     onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })}
-                                                                    className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[10px] font-bold text-slate-600 outline-none w-[90px]"
+                                                                    className="bg-slate-50 border border-slate-200 rounded-[8px] px-[8px] py-[4px] text-[10px] font-bold text-slate-600 outline-none w-[90px] h-[24px] sm:h-[28px]"
                                                                 />
                                                             </div>
                                                         )}
@@ -819,10 +819,10 @@ const PersonalReminders = () => {
                                                                 onClick={() => setFilterPriority('')}
                                                                 className="text-slate-400 hover:text-[#ff4d4d] transition-colors cursor-pointer"
                                                             >
-                                                                <FaTimes className="w-2.5 h-2.5" />
+                                                                <FaTimes className="w-[10px] h-[10px]" />
                                                             </button>
                                                         ) : (
-                                                            <svg className="w-3 h-3 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <svg className="w-[12px] h-[12px] text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
                                                             </svg>
                                                         )}
@@ -869,8 +869,8 @@ const PersonalReminders = () => {
                                         />
                                         {processedReminders.length === 0 && (
                                             <div className="h-full flex flex-col items-center justify-center p-12 text-center opacity-60">
-                                                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
-                                                    <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <div className="w-[64px] h-[64px] bg-slate-50 rounded-full flex items-center justify-center mb-[16px] border border-slate-100">
+                                                    <svg className="w-[32px] h-[32px] text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                     </svg>
                                                 </div>
@@ -986,7 +986,7 @@ const PersonalReminders = () => {
                                         Send Email Report
                                     </h3>
                                     <button onClick={() => setShowMailModal(false)} className="text-slate-400 hover:text-slate-800 transition-colors">
-                                        <FaTimes className="w-5 h-5" />
+                                        <FaTimes className="w-[20px] h-[20px]" />
                                     </button>
                                 </div>
 
