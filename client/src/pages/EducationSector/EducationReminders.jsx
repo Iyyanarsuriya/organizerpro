@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { getReminders, createReminder, updateReminder, deleteReminder, triggerMissedAlert, getCategories, createCategory, deleteCategory } from '../../api/Reminder/eduReminder';
+import { getReminders, createReminder, updateReminder, deleteReminder, getCategories, createCategory, deleteCategory } from '../../api/Reminder/eduReminder';
 import { getMe } from '../../api/authApi';
 import { API_URL } from '../../api/axiosInstance';
 import ReminderForm from '../../components/Common/ReminderForm';
@@ -42,14 +42,7 @@ const EducationReminders = () => {
     const [activeTab, setActiveTab] = useState('tasks'); // 'tasks' | 'notes'
     const [editingReminder, setEditingReminder] = useState(null);
 
-    // Email Modal State
-    const [showMailModal, setShowMailModal] = useState(false);
-    const [mailConfig, setMailConfig] = useState({
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: '',
-        customMessage: '',
-        status: 'pending'
-    });
+
 
     const lastFetchRef = useRef(0);
 
@@ -338,30 +331,9 @@ const EducationReminders = () => {
         }
     }, [notifications.length, loading, hasShownAgenda]);
 
-    const handleTriggerMissedAlert = async () => {
-        // Legacy direct trigger, now replaced by modal usually, but kept for Fallback
-        try {
-            await triggerMissedAlert({ date: filterDate });
-            toast.success(`Checking missed tasks for ${filterDate || 'today'}...`);
-        } catch (error) {
-            toast.error("Failed to trigger missed task check");
-        }
-    };
 
-    const handleSendMail = async () => {
-        try {
-            await triggerMissedAlert({
-                date: mailConfig.startDate,
-                endDate: mailConfig.endDate,
-                customMessage: mailConfig.customMessage,
-                status: mailConfig.status
-            });
-            toast.success("Email report sent successfully!");
-            setShowMailModal(false);
-        } catch (error) {
-            toast.error("Failed to send email report");
-        }
-    };
+
+
     const handleAdd = useCallback(async (reminderData) => {
         try {
             const res = await createReminder({ ...reminderData, sector: SECTOR });
@@ -595,16 +567,7 @@ const EducationReminders = () => {
                             )}
                         </div>
 
-                        {/* ✉️ Trigger Missed Alert Button (Mobile/Dev) */}
-                        <button
-                            onClick={() => setShowMailModal(true)}
-                            title="Test Missed Task Notifications"
-                            className="bg-white/10 hover:bg-white/20 text-white p-[8px] rounded-[8px] transition-all active:scale-95 flex items-center justify-center shrink-0"
-                        >
-                            <svg className="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                            </svg>
-                        </button>
+
 
                         {/* 📊 Dashboard Shortcut Button */}
                         <Link
@@ -965,73 +928,7 @@ const EducationReminders = () => {
                 </div>
             )}
 
-            {/* Email Report Modal */}
-            {showMailModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-[24px] p-[24px] max-w-md w-full shadow-2xl border border-white/20">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
-                                <span className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-500">📧</span>
-                                Email Report
-                            </h3>
-                            <button onClick={() => setShowMailModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-50 text-slate-400 hover:text-red-500 transition-colors">
-                                <FaTimes />
-                            </button>
-                        </div>
 
-                        <div className="space-y-4">
-                            <div>
-                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Start Date</label>
-                                <input
-                                    type="date"
-                                    value={mailConfig.startDate}
-                                    onChange={(e) => setMailConfig({ ...mailConfig, startDate: e.target.value })}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1 block">End Date (Optional)</label>
-                                <input
-                                    type="date"
-                                    value={mailConfig.endDate}
-                                    onChange={(e) => setMailConfig({ ...mailConfig, endDate: e.target.value })}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Task Status</label>
-                                <select
-                                    value={mailConfig.status}
-                                    onChange={(e) => setMailConfig({ ...mailConfig, status: e.target.value })}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer"
-                                >
-                                    <option value="all">All Tasks</option>
-                                    <option value="pending">Pending</option>
-                                    <option value="completed">Completed</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Custom Message (Optional)</label>
-                                <textarea
-                                    value={mailConfig.customMessage}
-                                    onChange={(e) => setMailConfig({ ...mailConfig, customMessage: e.target.value })}
-                                    rows="3"
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-300 resize-none"
-                                    placeholder="Add a note to the report..."
-                                />
-                            </div>
-
-                            <button
-                                onClick={handleSendMail}
-                                className="w-full bg-[#2d5bff] hover:bg-blue-600 text-white font-bold py-3 text-sm rounded-xl shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4"
-                            >
-                                <span>Send Report</span>
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
