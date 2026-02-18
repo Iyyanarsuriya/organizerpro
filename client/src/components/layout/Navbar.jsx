@@ -122,7 +122,12 @@ const Navbar = ({
                                             {(user?.role === 'admin' || user?.role === 'owner') && location.pathname !== '/' && (
                                                 <button
                                                     onClick={() => {
-                                                        navigate('/team');
+                                                        const teamPath = user?.sector === 'it' ? '/it-sector/team' :
+                                                            user?.sector === 'education' ? '/education-sector/team' :
+                                                                user?.sector === 'hotel' ? '/hotel-sector/team' :
+                                                                    user?.sector === 'manufacturing' ? '/manufacturing/team' : '/team';
+
+                                                        navigate(teamPath);
                                                         setShowProfileDropdown(false);
                                                     }}
                                                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-colors"
