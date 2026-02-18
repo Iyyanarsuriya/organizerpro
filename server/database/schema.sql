@@ -123,7 +123,7 @@ CREATE TABLE `users` (
   `role` enum('admin','user','owner','manager','staff') DEFAULT 'user',
   `owner_id` int DEFAULT NULL,
   `local_id` int DEFAULT NULL,
-  `sector` varchar(50) DEFAULT 'personal',
+  `sector` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`),
