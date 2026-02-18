@@ -1,7 +1,7 @@
 import axiosInstance from '../axiosInstance';
 
 // General Reminders
-export const getReminders = (params) => axiosInstance.get('/reminders', { params });
+export const getReminders = (params, config = {}) => axiosInstance.get('/reminders', { params, ...config });
 export const createReminder = (data) => axiosInstance.post('/reminders', data);
 export const updateReminder = (id, data) => axiosInstance.put(`/reminders/${id}`, data);
 export const deleteReminder = (id, params) => axiosInstance.delete(`/reminders/${id}`, { params });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { IoArrowBack } from "react-icons/io5";
@@ -22,21 +22,36 @@ const ReminderDashboard = () => {
     const [customRange, setCustomRange] = useState({ start: '', end: '' });
     const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'completed', 'pending'
 
+    const fetchRef = useRef(false);
+
     useEffect(() => {
-        fetchData();
+        if (fetchRef.current) return;
+        fetchRef.current = true;
+
+        const controller = new AbortController();
+        fetchData(controller.signal);
+
+        return () => {
+            controller.abort();
+            fetchRef.current = false;
+        };
     }, []);
 
-    const fetchData = async () => {
+    const fetchData = async (signal) => {
         try {
-            const res = await getReminders();
-            const userRes = await getMe();
+            const res = await getReminders(null, { signal });
+            const userRes = await getMe({ signal });
             setReminders(res.data || []);
             setUser(userRes.data);
         } catch (error) {
-            console.error("Error fetching reminders", error);
-            toast.error("Failed to load data");
+            if (error.name !== 'CanceledError') {
+                console.error("Error fetching reminders", error);
+                toast.error("Failed to load data");
+            }
         } finally {
-            setLoading(false);
+            if (!signal?.aborted) {
+                setLoading(false);
+            }
         }
     };
 

@@ -8,8 +8,8 @@ export const signup = async (userData) => {
     return await axiosInstance.post('/auth/signup', userData);
 };
 
-export const getMe = async () => {
-    return await axiosInstance.get('/auth/me');
+export const getMe = async (config = {}) => {
+    return await axiosInstance.get('/auth/me', config);
 };
 
 export const updateProfile = async (userData) => {
