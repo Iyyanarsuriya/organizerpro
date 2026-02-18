@@ -49,13 +49,19 @@ const Reminders = () => {
             return;
         }
 
+        // If forced, clear existing promise to allow a fresh one
+        if (force) {
+            window._mfgFetchPromise = null;
+        }
+
         // Request Deduplication (Handles StrictMode & Rapid Calls)
         if (!force && window._mfgFetchPromise) {
             try {
                 const [remindersRes, userRes, categoriesRes] = await window._mfgFetchPromise;
                 setReminders(Array.isArray(remindersRes.data) ? remindersRes.data : []);
                 setUser(userRes.data);
-                setCategories(categoriesRes.data && Array.isArray(categoriesRes.data.data) ? categoriesRes.data.data : []);
+                const fetchedCategories = categoriesRes.data?.data || categoriesRes.data || [];
+                setCategories(Array.isArray(fetchedCategories) ? fetchedCategories : []);
                 localStorage.setItem('user', JSON.stringify(userRes.data));
                 lastFetchRef.current = Date.now();
             } catch (error) {
@@ -80,7 +86,11 @@ const Reminders = () => {
             const [remindersRes, userRes, categoriesRes] = await fetchPromise;
             setReminders(Array.isArray(remindersRes.data) ? remindersRes.data : []);
             setUser(userRes.data);
-            setCategories(categoriesRes.data && Array.isArray(categoriesRes.data.data) ? categoriesRes.data.data : []);
+
+            // Safer category check
+            const fetchedCategories = categoriesRes.data?.data || categoriesRes.data || [];
+            setCategories(Array.isArray(fetchedCategories) ? fetchedCategories : []);
+
             localStorage.setItem('user', JSON.stringify(userRes.data));
             lastFetchRef.current = Date.now();
         } catch (error) {

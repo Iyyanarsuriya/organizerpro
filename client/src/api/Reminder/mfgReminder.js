@@ -6,9 +6,9 @@ export const updateReminder = (id, data) => axiosInstance.put(`/manufacturing-se
 export const deleteReminder = (id, params) => axiosInstance.delete(`/manufacturing-sector/reminders/${id}`, { params });
 export const triggerMissedAlert = (payload) => axiosInstance.post('/manufacturing-sector/reminders/send-missed-alert', payload);
 
-export const getCategories = (params = { sector: 'manufacturing' }) => axiosInstance.get('/categories', { params });
-export const createCategory = (categoryData) => axiosInstance.post('/categories', { ...categoryData, sector: 'manufacturing' });
-export const deleteCategory = (id, params = { sector: 'manufacturing' }) => axiosInstance.delete(`/categories/${id}`, { params });
+export const getCategories = (params) => axiosInstance.get('/manufacturing-sector/reminder-categories', { params });
+export const createCategory = (categoryData) => axiosInstance.post('/manufacturing-sector/reminder-categories', categoryData);
+export const deleteCategory = (id, params) => axiosInstance.delete(`/manufacturing-sector/reminder-categories/${id}`, { params });
 
 // Notes
 // Notes

@@ -5,7 +5,7 @@ const TABLE_MAP = {
     it: 'it_categories',
     education: 'education_categories',
     hotel: 'hotel_categories',
-    manufacturing: 'manufacturing_categories', // Added manufacturing categories
+    manufacturing: 'manufacturing_reminder_categories', // Updated to specific reminder categories table
     personal: 'personal_categories'
 };
 
@@ -52,12 +52,12 @@ const HotelCategoryModel = {
 // --- MANUFACTURING SECTOR ---
 const ManufacturingCategoryModel = {
     getAll: async (userId) => {
-        const [rows] = await db.query(`SELECT * FROM manufacturing_categories WHERE user_id = ? ORDER BY name ASC`, [userId]);
+        const [rows] = await db.query(`SELECT * FROM manufacturing_reminder_categories WHERE user_id = ? ORDER BY name ASC`, [userId]);
         return rows;
     },
     create: async (data) => {
         const { user_id, name, color } = data;
-        const [res] = await db.query(`INSERT INTO manufacturing_categories (user_id, name, color) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE name=name`, [user_id, name, color || '#2d5bff']);
+        const [res] = await db.query(`INSERT INTO manufacturing_reminder_categories (user_id, name, color) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE name=name`, [user_id, name, color || '#2d5bff']);
         return { id: res.insertId, ...data };
     },
     seed: async (userId) => {

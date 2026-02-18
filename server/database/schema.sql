@@ -31,7 +31,7 @@
 --  11. manufacturing_attendance - Manufacturing employee attendance
 --  12. manufacturing_work_logs - Daily work logs for manufacturing
 --  13. manufacturing_expense_categories - Manufacturing expense categories
---  14. manufacturing_categories - Manufacturing reminder categories
+--  14. manufacturing_reminder_categories - Manufacturing reminder categories
 --  15. manufacturing_vehicle_logs - Vehicle tracking for manufacturing
 --  16. manufacturing_member_roles - Manufacturing employee roles
 --  17. manufacturing_work_types - Manufacturing work type definitions
@@ -395,17 +395,17 @@ CREATE TABLE `manufacturing_expense_categories` (
   CONSTRAINT `fk_man_cat_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Manufacturing Categories (Reminders/General)
-DROP TABLE IF EXISTS `manufacturing_categories`;
-CREATE TABLE `manufacturing_categories` (
+-- Manufacturing Reminder Categories
+DROP TABLE IF EXISTS `manufacturing_reminder_categories`;
+CREATE TABLE `manufacturing_reminder_categories` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
   `name` varchar(50) NOT NULL,
   `color` varchar(20) DEFAULT '#2d5bff',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_user_mfgcat` (`user_id`,`name`),
-  CONSTRAINT `fk_man_cat_gen_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+  UNIQUE KEY `unique_user_mfg_rem_cat` (`user_id`,`name`),
+  CONSTRAINT `fk_man_rem_cat_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Manufacturing Vehicle Logs

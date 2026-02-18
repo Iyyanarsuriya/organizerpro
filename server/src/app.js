@@ -48,6 +48,7 @@ const withSector = (sector) => (req, res, next) => {
 const mfgRouter = express.Router();
 mfgRouter.use(withSector('manufacturing'));
 mfgRouter.use('/reminders', require("./routes/Manufacturing/reminderRoutes"));
+mfgRouter.use('/reminder-categories', require("./routes/Manufacturing/reminderCategoryRoutes"));
 mfgRouter.use('/transactions', transactionRoutes);
 mfgRouter.use('/members', require("./routes/Common/memberRoutes"));
 mfgRouter.use('/member-roles', require("./routes/Common/memberRoleRoutes"));
