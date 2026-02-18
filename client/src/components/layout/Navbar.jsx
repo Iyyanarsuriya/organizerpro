@@ -189,7 +189,12 @@ const Navbar = ({
                                                             key={notif.id}
                                                             onClick={() => {
                                                                 setShowNotifDropdown(false);
-                                                                navigate('/reminders');
+                                                                const path = user?.sector === 'personal' ? '/personal/reminders' :
+                                                                    user?.sector === 'it' ? '/it-sector/reminders' :
+                                                                        user?.sector === 'manufacturing' ? '/manufacturing/reminders' :
+                                                                            user?.sector === 'education' ? '/education-sector/reminders' :
+                                                                                user?.sector === 'hotel' ? '/hotel-sector/reminders' : '/reminders';
+                                                                navigate(path);
                                                             }}
                                                             className="w-full text-left p-[16px] border-b border-slate-50 hover:bg-blue-50/50 transition-colors group cursor-pointer"
                                                         >
@@ -218,7 +223,12 @@ const Navbar = ({
                                                 <button
                                                     onClick={() => {
                                                         setShowNotifDropdown(false);
-                                                        navigate('/reminders');
+                                                        const path = user?.sector === 'personal' ? '/personal/reminders' :
+                                                            user?.sector === 'it' ? '/it-sector/reminders' :
+                                                                user?.sector === 'manufacturing' ? '/manufacturing/reminders' :
+                                                                    user?.sector === 'education' ? '/education-sector/reminders' :
+                                                                        user?.sector === 'hotel' ? '/hotel-sector/reminders' : '/reminders';
+                                                        navigate(path);
                                                     }}
                                                     className="w-full py-4 text-center text-[11px] font-black text-blue-500 uppercase tracking-widest hover:bg-blue-50 transition-colors"
                                                 >
