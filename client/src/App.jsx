@@ -251,7 +251,22 @@ const AppContent = () => {
           </div>
         }>
           <Routes>
-            <Route path="/" element={token ? <Home onProfileClick={() => setShowProfileModal(true)} /> : <LandingPage onSignupClick={() => setShowSignupModal(true)} />} />
+            <Route path="/" element={
+              token ? (
+                user?.sector ? (
+                  user.sector === 'personal' ? <Navigate to="/personal" replace /> :
+                    user.sector === 'manufacturing' ? <Navigate to="/manufacturing" replace /> :
+                      user.sector === 'it' ? <Navigate to="/it-sector" replace /> :
+                        user.sector === 'education' ? <Navigate to="/education-sector" replace /> :
+                          user.sector === 'hotel' ? <Navigate to="/hotel-sector" replace /> :
+                            <Home onProfileClick={() => setShowProfileModal(true)} />
+                ) : (
+                  <Home onProfileClick={() => setShowProfileModal(true)} />
+                )
+              ) : (
+                <LandingPage onSignupClick={() => setShowSignupModal(true)} />
+              )
+            } />
 
             {/* Personal Sector Routes */}
             <Route path="/personal" element={<ProtectedRoute><PersonalSectorHome /></ProtectedRoute>} />

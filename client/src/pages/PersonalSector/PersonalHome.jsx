@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import {
     Bell,
     Wallet,
@@ -14,14 +15,86 @@ import {
     Instagram,
     UserCheck
 } from 'lucide-react';
-
+import { updateProfile } from '../../api/authApi';
+import toast from 'react-hot-toast';
 
 const PersonalHome = ({ onProfileClick }) => {
+    const navigate = useNavigate();
+    const [isSelecting, setIsSelecting] = useState(false);
+    const [confirmModal, setConfirmModal] = useState({ show: false, sector: '', path: '', label: '' });
+
     // Get user from localStorage for a quick greet
     const user = JSON.parse(localStorage.getItem('user') || '{}');
 
+    const handleConfirmSelection = async () => {
+        const { sector, path, label } = confirmModal;
+        if (!sector || !path) return;
+
+        try {
+            setIsSelecting(true);
+            setConfirmModal(prev => ({ ...prev, show: false }));
+            toast.loading("Setting up your workspace...", { id: 'sector-select' });
+
+            // Update sector in database
+            await updateProfile({ sector });
+
+            // Update local storage
+            const updatedUser = { ...user, sector };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+
+            // Notify app state (especially App.jsx and Navbar)
+            window.dispatchEvent(new Event('storage'));
+
+            toast.success(`Welcome to your ${label} workspace!`, { id: 'sector-select', duration: 3000 });
+            navigate(path);
+        } catch (error) {
+            console.error("Failed to select sector:", error);
+            toast.error("Failed to select workspace. Please try again.", { id: 'sector-select' });
+        } finally {
+            setIsSelecting(false);
+        }
+    };
+
+    const triggerConfirm = (sector, path, label) => {
+        setConfirmModal({ show: true, sector, path, label });
+    };
+
     return (
-        <div className="bg-[#f8fafc] min-h-screen font-['Outfit',sans-serif] text-slate-800 overflow-x-hidden">
+        <div className={`bg-[#f8fafc] min-h-screen font-['Outfit',sans-serif] text-slate-800 overflow-x-hidden ${isSelecting ? 'pointer-events-none opacity-80' : ''}`}>
+
+            {/* Confirmation Modal */}
+            {confirmModal.show && (
+                <div className="fixed inset-0 z-200 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+                        <div className="p-8 text-center">
+                            <div className="w-20 h-20 bg-blue-50 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm border border-blue-100/50">
+                                <LayoutDashboard className="w-10 h-10 text-blue-600" />
+                            </div>
+                            <h3 className="text-2xl font-black text-slate-900 mb-2">Enter Workspace?</h3>
+                            <p className="text-slate-500 font-medium mb-8 leading-relaxed px-4">
+                                You are about to enter the <span className="text-blue-600 font-bold">{confirmModal.label}</span> workspace. This will become your default view.
+                            </p>
+
+                            <div className="flex flex-col gap-3">
+                                <button
+                                    onClick={handleConfirmSelection}
+                                    disabled={isSelecting}
+                                    className="w-full bg-[#2d5bff] hover:bg-blue-700 text-white font-black py-4 rounded-2xl transition-all active:scale-95 shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 cursor-pointer"
+                                >
+                                    Confirm & Proceed
+                                    <ArrowRight className="w-5 h-5" />
+                                </button>
+                                <button
+                                    onClick={() => setConfirmModal({ show: false, sector: '', path: '', label: '' })}
+                                    className="w-full bg-slate-50 hover:bg-slate-100 text-slate-500 font-black py-4 rounded-2xl transition-all cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Hero Section - Welcome Back */}
             <section className="pt-12 lg:pt-20 pb-20 px-4 sm:px-6 relative overflow-hidden">
@@ -40,55 +113,55 @@ const PersonalHome = ({ onProfileClick }) => {
                             <div className="flex flex-col gap-6 mb-12">
                                 <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Select your workspace:</p>
                                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <Link
-                                        to="/personal"
-                                        className="p-4 rounded-2xl border border-slate-200 hover:border-[#2d5bff] hover:bg-blue-50 transition-all group text-left"
+                                    <button
+                                        onClick={() => triggerConfirm('personal', '/personal', 'Personal Use')}
+                                        className="p-4 rounded-2xl border border-slate-200 hover:border-[#2d5bff] hover:bg-blue-50 transition-all group text-left cursor-pointer"
                                     >
                                         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                                             <svg className="w-4 h-4 text-[#2d5bff]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                                         </div>
                                         <div className="font-bold text-slate-700 text-sm">Personal Use</div>
-                                    </Link>
+                                    </button>
 
-                                    <Link
-                                        to="/education-sector"
-                                        className="p-4 rounded-2xl border border-slate-200 hover:border-orange-500 hover:bg-orange-50 transition-all group text-left"
+                                    <button
+                                        onClick={() => triggerConfirm('education', '/education-sector', 'School/College')}
+                                        className="p-4 rounded-2xl border border-slate-200 hover:border-orange-500 hover:bg-orange-50 transition-all group text-left cursor-pointer"
                                     >
                                         <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                                             <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /></svg>
                                         </div>
                                         <div className="font-bold text-slate-700 text-sm">School/College</div>
-                                    </Link>
+                                    </button>
 
-                                    <Link
-                                        to="/it-sector"
-                                        className="p-4 rounded-2xl border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all group text-left"
+                                    <button
+                                        onClick={() => triggerConfirm('it', '/it-sector', 'IT Sector')}
+                                        className="p-4 rounded-2xl border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all group text-left cursor-pointer"
                                     >
                                         <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                                             <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                                         </div>
                                         <div className="font-bold text-slate-700 text-sm">IT Sector</div>
-                                    </Link>
+                                    </button>
 
-                                    <Link
-                                        to="/manufacturing"
-                                        className="p-4 rounded-2xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50 transition-all group text-left"
+                                    <button
+                                        onClick={() => triggerConfirm('manufacturing', '/manufacturing', 'Manufacturing')}
+                                        className="p-4 rounded-2xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50 transition-all group text-left cursor-pointer"
                                     >
                                         <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                                             <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
                                         </div>
                                         <div className="font-bold text-slate-700 text-sm">Manufacturing</div>
-                                    </Link>
+                                    </button>
 
-                                    <Link
-                                        to="/hotel-sector"
-                                        className="p-4 rounded-2xl border border-slate-200 hover:border-rose-500 hover:bg-rose-50 transition-all group text-left col-span-2 lg:col-span-1"
+                                    <button
+                                        onClick={() => triggerConfirm('hotel', '/hotel-sector', 'Hotel Sector')}
+                                        className="p-4 rounded-2xl border border-slate-200 hover:border-rose-500 hover:bg-rose-50 transition-all group text-left col-span-2 lg:col-span-1 cursor-pointer"
                                     >
                                         <div className="w-8 h-8 rounded-full bg-linear-to-br from-rose-100 to-rose-200 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                                             <svg className="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                                         </div>
                                         <div className="font-bold text-slate-700 text-sm">Hotel Sector</div>
-                                    </Link>
+                                    </button>
                                 </div>
                             </div>
 

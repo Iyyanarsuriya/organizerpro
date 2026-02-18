@@ -69,6 +69,19 @@ const Login = ({ setToken, onClose, onSwitch }) => {
 
       if (onClose) {
         onClose();
+      }
+
+      // Handle Redirection based on sector
+      if (user.sector === 'personal') {
+        navigate("/personal");
+      } else if (user.sector === 'manufacturing') {
+        navigate("/manufacturing");
+      } else if (user.sector === 'it') {
+        navigate("/it-sector");
+      } else if (user.sector === 'education') {
+        navigate("/education-sector");
+      } else if (user.sector === 'hotel') {
+        navigate("/hotel-sector");
       } else {
         navigate("/");
       }

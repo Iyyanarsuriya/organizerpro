@@ -46,7 +46,7 @@ exports.delete = async (id, ownerId) => {
 };
 
 exports.update = async (id, userData) => {
-    const { username, email, mobile_number, profile_image, google_refresh_token } = userData;
+    const { username, email, mobile_number, profile_image, google_refresh_token, sector } = userData;
     let query = 'UPDATE users SET ';
     const updates = [];
     const params = [];
@@ -56,6 +56,7 @@ exports.update = async (id, userData) => {
     if (mobile_number !== undefined) { updates.push('mobile_number = ?'); params.push(mobile_number); }
     if (profile_image !== undefined) { updates.push('profile_image = ?'); params.push(profile_image); }
     if (google_refresh_token !== undefined) { updates.push('google_refresh_token = ?'); params.push(google_refresh_token); }
+    if (sector !== undefined) { updates.push('sector = ?'); params.push(sector); }
 
     if (updates.length === 0) return true;
 

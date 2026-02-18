@@ -149,7 +149,7 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
 
-        res.json({ token, user: { id: user.id, username: user.username, email: user.email, profile_image: user.profile_image, role: user.role, owner_id: user.owner_id } });
+        res.json({ token, user: { id: user.id, username: user.username, email: user.email, profile_image: user.profile_image, role: user.role, owner_id: user.owner_id, sector: user.sector } });
     } catch (error) {
         console.error('Login error details:', error);
         res.status(500).json({ error: 'Internal Server Error', details: error.message });
@@ -168,11 +168,11 @@ exports.getMe = async (req, res) => {
 };
 
 exports.updateProfile = async (req, res) => {
-    const { username, email, mobile_number } = req.body;
+    const { username, email, mobile_number, sector } = req.body;
     const profile_image = req.file ? `/uploads/${req.file.filename}` : undefined;
 
     try {
-        const updateData = { username, email, mobile_number };
+        const updateData = { username, email, mobile_number, sector };
         if (profile_image) {
             updateData.profile_image = profile_image;
         }

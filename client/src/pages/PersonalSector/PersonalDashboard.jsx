@@ -2,8 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
     Bell,
     Wallet,
-    ArrowRight,
-    ArrowLeft
+    ArrowRight
 } from 'lucide-react';
 
 const PersonalDashboard = () => {
@@ -14,13 +13,7 @@ const PersonalDashboard = () => {
 
             <div className="max-w-7xl mx-auto space-y-8">
                 {/* Header with Back Button */}
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => navigate('/')}
-                        className="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-500 hover:text-[#2d5bff] hover:border-[#2d5bff] transition-all shadow-sm hover:shadow-md active:scale-95 shrink-0 cursor-pointer"
-                    >
-                        <ArrowLeft className="w-5 h-5" />
-                    </button>
+                <div className="flex items-center">
                     <div>
                         <h1 className="text-2xl sm:text-3xl font-black text-[#1a1c21] tracking-tight">Personal Sector</h1>
                         <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Manage your daily life</p>

@@ -119,7 +119,7 @@ const Navbar = ({
                                                 My Profile
                                             </button>
 
-                                            {(user?.role === 'admin' || user?.role === 'owner') && (
+                                            {(user?.role === 'admin' || user?.role === 'owner') && location.pathname !== '/' && (
                                                 <button
                                                     onClick={() => {
                                                         navigate('/team');

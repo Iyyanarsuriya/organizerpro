@@ -49,18 +49,7 @@ const Signup = ({ onClose, onSwitch }) => {
       if (onSwitch) {
         onSwitch(); // Go to login after signup
       } else {
-        // Redirection based on sector
-        if (sector === 'hotel_restaurant') {
-          navigate("/expenses");
-        } else if (sector === 'education') {
-          navigate("/attendance");
-        } else if (sector === 'it') {
-          navigate("/reminders");
-        } else if (sector === 'production') {
-          navigate("/team");
-        } else {
-          navigate("/");
-        }
+        navigate("/");
       }
     } catch (error) {
       toast.dismiss();
