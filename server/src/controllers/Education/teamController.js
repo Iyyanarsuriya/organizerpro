@@ -9,10 +9,10 @@ exports.getSubUsers = async (req, res) => {
         }
 
         // Fetch users specifically for the Education sector
-        const subUsers = await User.findByOwnerId(req.user.id, 'education');
+        const subUsers = await User.findByOwnerId(req.user.data_owner_id, 'education');
 
         // Fetch members to get extra info if needed (e.g. department, though user doesn't strictly have it)
-        const members = await Member.getAllByUserId(req.user.id, null, 'education');
+        const members = await Member.getAllByUserId(req.user.data_owner_id, null, 'education');
 
         // Create a map of email to member for quick lookup
         const memberMap = {};
@@ -53,29 +53,31 @@ exports.createSubUser = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const localId = await User.getNextLocalId(req.user.id);
+        const localId = await User.getNextLocalId(req.user.data_owner_id);
 
         const userId = await User.create({
             username,
             email,
             password: hashedPassword,
             role: role || 'user',
-            owner_id: req.user.id,
+            owner_id: req.user.data_owner_id,
             local_id: localId,
-            sector: 'education' // Explicitly set sector to Education
+            sector: 'education', // Explicitly set sector to Education
+            created_by: req.user.username
         });
 
         // Automatically create a Member entry for Attendance tracking/Expenses
         try {
             await Member.create({
-                user_id: req.user.id, // Linked to the Owner
+                user_id: req.user.data_owner_id, // Linked to the Workspace Owner
                 name: username,
                 role: role || 'teacher', // Default to teacher or staff
                 email: email,
                 status: 'active',
                 sector: 'education',
-                member_type: role === 'admin' || role === 'manager' ? 'employee' : 'employee', // Education usually implies employees
-                department: department || null
+                member_type: 'employee',
+                department: department || null,
+                created_by: req.user.username
             });
         } catch (memberError) {
             console.error('Failed to auto-create member for user:', memberError);
@@ -94,12 +96,12 @@ exports.createSubUser = async (req, res) => {
 
 exports.deleteSubUser = async (req, res) => {
     try {
-        if (req.user.role !== 'admin' && req.user.role !== 'owner') {
+        if (req.user.role !== 'owner') {
             return res.status(403).json({ error: 'Only the Workspace Owner can remove team members.' });
         }
 
         const { id } = req.params;
-        const success = await User.delete(id, req.user.id);
+        const success = await User.delete(id, req.user.data_owner_id);
 
         if (!success) {
             return res.status(404).json({ error: 'User not found or you do not have permission to delete them.' });

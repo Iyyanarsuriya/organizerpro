@@ -11,16 +11,16 @@ exports.findById = async (id) => {
 };
 
 exports.create = async (userData) => {
-    const { username, email, password, mobile_number, role, owner_id, local_id, sector } = userData;
+    const { username, email, password, mobile_number, role, owner_id, local_id, sector, created_by } = userData;
     const [result] = await db.query(
-        'INSERT INTO users (username, email, password, mobile_number, role, owner_id, local_id, sector) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [username, email, password, mobile_number || null, role || 'owner', owner_id || null, local_id || null, sector || null]
+        'INSERT INTO users (username, email, password, mobile_number, role, owner_id, local_id, sector, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [username, email, password, mobile_number || null, role || 'owner', owner_id || null, local_id || null, sector || null, created_by || null]
     );
     return result.insertId;
 };
 
 exports.findByOwnerId = async (ownerId, sector) => {
-    let query = 'SELECT id, local_id, username, email, mobile_number, role, sector, created_at FROM users WHERE owner_id = ?';
+    let query = 'SELECT id, local_id, username, email, mobile_number, role, sector, created_by, created_at FROM users WHERE owner_id = ?';
     const params = [ownerId];
 
     if (sector) {

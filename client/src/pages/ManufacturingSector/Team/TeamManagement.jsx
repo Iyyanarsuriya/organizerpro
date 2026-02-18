@@ -12,6 +12,7 @@ const TeamManagement = () => {
     const [formData, setFormData] = useState({ username: '', email: '', password: '', role: 'staff' });
     const [showModal, setShowModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
+    const [currentUser, setCurrentUser] = useState(() => JSON.parse(localStorage.getItem('user')));
     const location = useLocation();
 
     const token = localStorage.getItem('token');
@@ -174,12 +175,17 @@ const TeamManagement = () => {
                                                             <p className="text-[12px] text-slate-500 font-medium leading-tight">{user.email}</p>
                                                         </div>
                                                     </div>
-                                                    <button
-                                                        onClick={() => handleDelete(user.id)}
-                                                        className="w-[32px] h-[32px] flex items-center justify-center rounded-[8px] text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors"
-                                                    >
-                                                        <FaTrash className="text-[12px]" />
-                                                    </button>
+                                                    {currentUser?.role === 'owner' && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleDelete(user.id);
+                                                            }}
+                                                            className="w-[32px] h-[32px] flex items-center justify-center rounded-[8px] text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors"
+                                                        >
+                                                            <FaTrash className="text-[12px]" />
+                                                        </button>
+                                                    )}
                                                 </div>
 
                                                 {/* Middle Row: Details */}
@@ -190,6 +196,9 @@ const TeamManagement = () => {
                                                                 'bg-slate-100 text-slate-600'
                                                         }`}>
                                                         {user.role}
+                                                    </span>
+                                                    <span className="inline-flex items-center gap-1.5 px-[10px] py-[4px] rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest border border-blue-100">
+                                                        By: {user.created_by || 'Owner'}
                                                     </span>
                                                     <span className="text-[11px] text-slate-400 font-bold flex items-center gap-[4px]">
                                                         <FaCalendar className="text-[10px]" />
@@ -217,6 +226,7 @@ const TeamManagement = () => {
                                                 <th className="px-[32px] py-[20px] text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">User Profile</th>
                                                 <th className="px-[32px] py-[20px] text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Role & Access</th>
                                                 <th className="px-[32px] py-[20px] text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Joined Date</th>
+                                                <th className="px-[32px] py-[20px] text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Created By</th>
                                                 <th className="px-[32px] py-[20px] text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none text-right">Actions</th>
                                             </tr>
                                         </thead>
@@ -248,6 +258,11 @@ const TeamManagement = () => {
                                                             {new Date(user.created_at).toLocaleDateString()}
                                                         </span>
                                                     </td>
+                                                    <td className="px-[32px] py-[20px]">
+                                                        <span className="text-[12px] font-bold text-slate-500 italic">
+                                                            {user.created_by || 'Owner'}
+                                                        </span>
+                                                    </td>
                                                     <td className="px-[32px] py-[20px] text-right">
                                                         <div className="flex items-center justify-end gap-[12px]">
                                                             <button
@@ -256,13 +271,18 @@ const TeamManagement = () => {
                                                             >
                                                                 View Details
                                                             </button>
-                                                            <button
-                                                                onClick={() => handleDelete(user.id)}
-                                                                className="w-[32px] h-[32px] flex items-center justify-center rounded-[12px] text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-                                                                title="Delete User"
-                                                            >
-                                                                <FaTrash className="text-[12px]" />
-                                                            </button>
+                                                            {currentUser?.role === 'owner' && (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleDelete(user.id);
+                                                                    }}
+                                                                    className="w-[32px] h-[32px] flex items-center justify-center rounded-[12px] text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                                                                    title="Delete User"
+                                                                >
+                                                                    <FaTrash className="text-[12px]" />
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -339,11 +359,13 @@ const TeamManagement = () => {
                             </div>
                         </div>
 
-                        <div className="mt-[32px] pt-[24px] border-t border-slate-100 flex justify-end">
-                            <button onClick={() => { if (window.confirm('Delete user?')) { handleDelete(selectedUser.id); setSelectedUser(null); } }} className="text-red-500 text-[12px] font-black uppercase tracking-widest hover:text-red-600 flex items-center gap-[8px] px-[16px] py-[8px] hover:bg-red-50 rounded-[10px] transition-colors">
-                                <FaTrash /> Remove Member
-                            </button>
-                        </div>
+                        {currentUser?.role === 'owner' && (
+                            <div className="mt-[32px] pt-[24px] border-t border-slate-100 flex justify-end">
+                                <button onClick={() => { if (window.confirm('Delete user?')) { handleDelete(selectedUser.id); setSelectedUser(null); } }} className="text-red-500 text-[12px] font-black uppercase tracking-widest hover:text-red-600 flex items-center gap-[8px] px-[16px] py-[8px] hover:bg-red-50 rounded-[10px] transition-colors">
+                                    <FaTrash /> Remove Member
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

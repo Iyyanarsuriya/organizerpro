@@ -21,6 +21,7 @@ const HotelTeam = () => {
 
     const [deleteModal, setDeleteModal] = useState({ show: false, id: null, type: 'user' });
     const [selectedItem, setSelectedItem] = useState(null);
+    const [currentUser, setCurrentUser] = useState(() => JSON.parse(localStorage.getItem('user')));
     const location = useLocation();
 
     const token = localStorage.getItem('token');
@@ -255,6 +256,7 @@ const HotelTeam = () => {
                                             <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">{activeTab === 'sub-users' ? 'User Identity' : 'Staff Member'}</th>
                                             <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">{activeTab === 'sub-users' ? 'Access Level' : 'Designation'}</th>
                                             <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">{activeTab === 'sub-users' ? 'Department' : 'Contact / Salary'}</th>
+                                            {activeTab === 'sub-users' && <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Created By</th>}
                                             <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
                                         </tr>
                                     </thead>
@@ -288,9 +290,20 @@ const HotelTeam = () => {
                                                         </div>
                                                     )}
                                                 </td>
-                                                <td className="px-8 py-5 text-right flex items-center justify-end gap-3">
-                                                    <button onClick={() => setSelectedItem(item)} className="px-4 py-2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-800 transition-all shadow-sm">Details</button>
-                                                    <button onClick={() => setDeleteModal({ show: true, id: item.id, type: activeTab === 'sub-users' ? 'user' : 'staff' })} className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-300 hover:bg-red-50 hover:text-red-500 transition-all"><FaTrash size={14} /></button>
+                                                {activeTab === 'sub-users' && (
+                                                    <td className="px-8 py-5">
+                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-tight italic">
+                                                            {item.created_by || 'Owner'}
+                                                        </span>
+                                                    </td>
+                                                )}
+                                                <td className="px-8 py-5 text-right">
+                                                    <div className="flex items-center justify-end gap-3">
+                                                        <button onClick={() => setSelectedItem(item)} className="px-4 py-2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-800 transition-all shadow-sm">Details</button>
+                                                        {currentUser?.role === 'owner' && (
+                                                            <button onClick={() => setDeleteModal({ show: true, id: item.id, type: activeTab === 'sub-users' ? 'user' : 'staff' })} className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-300 hover:bg-red-50 hover:text-red-500 transition-all"><FaTrash size={14} /></button>
+                                                        )}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}

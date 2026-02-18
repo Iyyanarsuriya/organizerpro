@@ -9,10 +9,10 @@ exports.getSubUsers = async (req, res) => {
         }
 
         // Fetch users specifically for the Hotel sector
-        const subUsers = await User.findByOwnerId(req.user.id, 'hotel');
+        const subUsers = await User.findByOwnerId(req.user.data_owner_id, 'hotel');
 
         // Fetch members to get department info
-        const members = await Member.getAllByUserId(req.user.id, null, 'hotel');
+        const members = await Member.getAllByUserId(req.user.data_owner_id, null, 'hotel');
 
         // Create a map of email to member for quick lookup
         const memberMap = {};
@@ -54,29 +54,31 @@ exports.createSubUser = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const localId = await User.getNextLocalId(req.user.id);
+        const localId = await User.getNextLocalId(req.user.data_owner_id);
 
         const userId = await User.create({
             username,
             email,
             password: hashedPassword,
             role: role || 'user',
-            owner_id: req.user.id,
+            owner_id: req.user.data_owner_id,
             local_id: localId,
-            sector: 'hotel'
+            sector: 'hotel',
+            created_by: req.user.username
         });
 
         // Automatically create a Member entry for Attendance tracking
         try {
             await Member.create({
-                user_id: req.user.id,
+                user_id: req.user.data_owner_id,
                 name: username,
                 role: role || 'staff',
                 email: email,
                 status: 'active',
                 sector: 'hotel',
                 member_type: 'staff',
-                project_id: project_id || null
+                project_id: project_id || null,
+                created_by: req.user.username
             });
         } catch (memberError) {
             console.error('Failed to auto-create member for user:', memberError);
@@ -94,12 +96,12 @@ exports.createSubUser = async (req, res) => {
 
 exports.deleteSubUser = async (req, res) => {
     try {
-        if (req.user.role !== 'admin' && req.user.role !== 'owner') {
+        if (req.user.role !== 'owner') {
             return res.status(403).json({ error: 'Only the Workspace Owner can remove team members.' });
         }
 
         const { id } = req.params;
-        const success = await User.delete(id, req.user.id);
+        const success = await User.delete(id, req.user.data_owner_id);
 
         if (!success) {
             return res.status(404).json({ error: 'User not found or you do not have permission to delete them.' });

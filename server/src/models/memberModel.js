@@ -13,11 +13,11 @@ const getTables = (sector) => TABLE_MAP[sector] || TABLE_MAP.manufacturing;
 // --- IT SECTOR ---
 const ITMemberModel = {
     create: async (data) => {
-        const { user_id, name, role, phone, email, status, project_id, employment_type, expected_hours, work_location, is_billable, reporting_manager_id } = data;
+        const { user_id, name, role, phone, email, status, project_id, employment_type, expected_hours, work_location, is_billable, reporting_manager_id, created_by } = data;
         const [res] = await db.query(
-            `INSERT INTO it_members (user_id, name, role, phone, email, status, project_id, employment_type, expected_hours, work_location, is_billable, reporting_manager_id) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [user_id, name, role, phone, email, status || 'active', project_id, employment_type || 'Full-time', expected_hours || 8.0, work_location || 'Office', is_billable ? 1 : 0, reporting_manager_id]
+            `INSERT INTO it_members (user_id, name, role, phone, email, status, project_id, employment_type, expected_hours, work_location, is_billable, reporting_manager_id, created_by) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [user_id, name, role, phone, email, status || 'active', project_id, employment_type || 'Full-time', expected_hours || 8.0, work_location || 'Office', is_billable ? 1 : 0, reporting_manager_id, created_by]
         );
         return { id: res.insertId, ...data };
     },
@@ -47,11 +47,11 @@ const ITMemberModel = {
 // --- HOTEL SECTOR ---
 const HotelMemberModel = {
     create: async (data) => {
-        const { user_id, name, role, phone, email, status, project_id, wage_type, daily_wage, default_shift_id, employment_nature, primary_work_area, monthly_salary, hourly_rate, overtime_rate, allow_overtime, allow_late, max_hours_per_day, auto_mark_absent } = data;
+        const { user_id, name, role, phone, email, status, project_id, wage_type, daily_wage, default_shift_id, employment_nature, primary_work_area, monthly_salary, hourly_rate, overtime_rate, allow_overtime, allow_late, max_hours_per_day, auto_mark_absent, created_by } = data;
         const [res] = await db.query(
-            `INSERT INTO hotel_members (user_id, name, role, phone, email, status, project_id, wage_type, daily_wage, default_shift_id, employment_nature, primary_work_area, monthly_salary, hourly_rate, overtime_rate, allow_overtime, allow_late, max_hours_per_day, auto_mark_absent) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [user_id, name, role, phone, email, status || 'active', project_id || null, wage_type || 'daily', daily_wage || 0, default_shift_id || null, employment_nature || 'Permanent', primary_work_area || 'Rooms', monthly_salary || 0, hourly_rate || 0, overtime_rate || 0, allow_overtime ? 1 : 0, allow_late ? 1 : 0, max_hours_per_day || 12, auto_mark_absent ? 1 : 0]
+            `INSERT INTO hotel_members (user_id, name, role, phone, email, status, project_id, wage_type, daily_wage, default_shift_id, employment_nature, primary_work_area, monthly_salary, hourly_rate, overtime_rate, allow_overtime, allow_late, max_hours_per_day, auto_mark_absent, created_by) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [user_id, name, role, phone, email, status || 'active', project_id || null, wage_type || 'daily', daily_wage || 0, default_shift_id || null, employment_nature || 'Permanent', primary_work_area || 'Rooms', monthly_salary || 0, hourly_rate || 0, overtime_rate || 0, allow_overtime ? 1 : 0, allow_late ? 1 : 0, max_hours_per_day || 12, auto_mark_absent ? 1 : 0, created_by]
         );
         return { id: res.insertId, ...data };
     },
@@ -78,11 +78,11 @@ const HotelMemberModel = {
 // --- MANUFACTURING SECTOR ---
 const ManufacturingMemberModel = {
     create: async (data) => {
-        const { user_id, name, role, phone, email, status, project_id, wage_type, daily_wage, member_type } = data;
+        const { user_id, name, role, phone, email, status, project_id, wage_type, daily_wage, member_type, created_by } = data;
         const [res] = await db.query(
-            `INSERT INTO manufacturing_members (user_id, name, role, phone, email, status, project_id, wage_type, daily_wage, member_type) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [user_id, name, role, phone, email, status || 'active', project_id, wage_type || 'daily', daily_wage || 0, member_type || 'worker']
+            `INSERT INTO manufacturing_members (user_id, name, role, phone, email, status, project_id, wage_type, daily_wage, member_type, created_by) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [user_id, name, role, phone, email, status || 'active', project_id, wage_type || 'daily', daily_wage || 0, member_type || 'worker', created_by]
         );
         return { id: res.insertId, ...data };
     },
@@ -125,9 +125,9 @@ const EducationMemberModel = {
         }
 
         const [res] = await db.query(
-            `INSERT INTO education_members (user_id, name, role, phone, email, status, staff_id, department, subjects, gender, profile_image, employment_type, date_of_joining, reporting_manager_id, shift_start_time, shift_end_time, cl_balance, sl_balance, el_balance) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [user_id, name, role, phone, email, status || 'active', staff_id, department, subjects, gender, profile_image, employment_type || 'permanent', date_of_joining, reporting_manager_id, shift_start_time, shift_end_time, cl_balance || 0, sl_balance || 0, el_balance || 0]
+            `INSERT INTO education_members (user_id, name, role, phone, email, status, staff_id, department, subjects, gender, profile_image, employment_type, date_of_joining, reporting_manager_id, shift_start_time, shift_end_time, cl_balance, sl_balance, el_balance, created_by) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [user_id, name, role, phone, email, status || 'active', staff_id, department, subjects, gender, profile_image, employment_type || 'permanent', date_of_joining, reporting_manager_id, shift_start_time, shift_end_time, cl_balance || 0, sl_balance || 0, el_balance || 0, data.created_by]
         );
         return { id: res.insertId, ...data };
     },
