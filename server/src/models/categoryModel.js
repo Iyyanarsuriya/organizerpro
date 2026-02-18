@@ -24,11 +24,7 @@ const ITCategoryModel = {
     },
     seed: async (userId) => {
         const defaults = [
-            { name: 'Development', color: '#2d5bff' },
-            { name: 'Testing', color: '#00d1a0' },
-            { name: 'Infrastructure', color: '#64748b' },
-            { name: 'Meeting', color: '#f59e0b' },
-            { name: 'Client Call', color: '#ef4444' }
+            { name: 'General', color: '#64748b' }
         ];
         for (const cat of defaults) await ITCategoryModel.create({ user_id: userId, name: cat.name, color: cat.color });
     }
@@ -47,17 +43,7 @@ const HotelCategoryModel = {
     },
     seed: async (userId) => {
         const defaults = [
-            { name: 'Housekeeping', color: '#10b981' },
-            { name: 'Staff Salary', color: '#2d5bff' },
-            { name: 'Maintenance', color: '#f59e0b' },
-            { name: 'Utilities', color: '#ef4444' },
-            { name: 'Laundry', color: '#8b5cf6' },
-            { name: 'Food Supplies', color: '#ec4899' },
-            { name: 'OTA Commission', color: '#f59e0b' },
-            { name: 'Marketing', color: '#06b6d4' },
-            { name: 'Rent/EMI', color: '#64748b' },
-            { name: 'Internet', color: '#3b82f6' },
-            { name: 'Miscellaneous', color: '#94a3b8' }
+            { name: 'General', color: '#64748b' }
         ];
         for (const cat of defaults) await HotelCategoryModel.create({ user_id: userId, name: cat.name, color: cat.color });
     }
@@ -76,10 +62,7 @@ const ManufacturingCategoryModel = {
     },
     seed: async (userId) => {
         const defaults = [
-            { name: 'Production', color: '#2d5bff' },
-            { name: 'Maintenance', color: '#f59e0b' },
-            { name: 'Order Material', color: '#ef4444' },
-            { name: 'Delivery', color: '#10b981' }
+            { name: 'General', color: '#64748b' }
         ];
         for (const cat of defaults) await ManufacturingCategoryModel.create({ user_id: userId, name: cat.name, color: cat.color });
     }
@@ -98,10 +81,7 @@ const EducationCategoryModel = {
     },
     seed: async (userId) => {
         const defaults = [
-            { name: 'Tuition', color: '#2d5bff' },
-            { name: 'Exam Fees', color: '#8b5cf6' },
-            { name: 'Library', color: '#00d1a0' },
-            { name: 'Stationery', color: '#f59e0b' }
+            { name: 'General', color: '#64748b' }
         ];
         for (const cat of defaults) await EducationCategoryModel.create({ user_id: userId, name: cat.name, color: cat.color });
     }
