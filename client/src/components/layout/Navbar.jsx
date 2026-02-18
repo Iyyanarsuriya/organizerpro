@@ -119,7 +119,7 @@ const Navbar = ({
                                                 My Profile
                                             </button>
 
-                                            {(user?.role === 'admin' || user?.role === 'owner') && location.pathname !== '/' && (
+                                            {(user?.role === 'admin' || user?.role === 'owner') && location.pathname !== '/' && user?.sector !== 'personal' && (
                                                 <button
                                                     onClick={() => {
                                                         const teamPath = user?.sector === 'it' ? '/it-sector/team' :
