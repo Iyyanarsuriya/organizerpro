@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { getReminders, createReminder, updateReminder, deleteReminder, triggerMissedAlert, getCategories, createCategory, deleteCategory } from '../../../api/Reminder/mfgReminder';
+import { getReminders, createReminder, updateReminder, deleteReminder, getCategories, createCategory, deleteCategory } from '../../../api/Reminder/mfgReminder';
 import { getMe } from '../../../api/authApi';
 import { API_URL } from '../../../api/axiosInstance';
 import ReminderForm from '../../../components/Common/ReminderForm';
@@ -38,14 +38,7 @@ const Reminders = () => {
     const [showCategoryManager, setShowCategoryManager] = useState(false);
     const [activeTab, setActiveTab] = useState('tasks'); // 'tasks' | 'notes'
 
-    // Email Modal State
-    const [showMailModal, setShowMailModal] = useState(false);
-    const [mailConfig, setMailConfig] = useState({
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: '',
-        customMessage: '',
-        status: 'pending'
-    });
+
 
     const lastFetchRef = useRef(0);
 
@@ -546,16 +539,7 @@ const Reminders = () => {
                             )}
                         </div>
 
-                        {/* ✉️ Trigger Missed Alert Button (Mobile/Dev) */}
-                        <button
-                            onClick={() => setShowMailModal(true)}
-                            title="Test Missed Task Notifications"
-                            className="bg-white/10 hover:bg-white/20 text-white p-[8px] rounded-[8px] transition-all active:scale-95 flex items-center justify-center shrink-0"
-                        >
-                            <svg className="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                            </svg>
-                        </button>
+
 
                         {/* 📊 Dashboard Shortcut Button */}
                         <Link
@@ -803,97 +787,7 @@ const Reminders = () => {
                     </div>
                 )}
 
-                {/* Email Modal */}
-                {
-                    showMailModal && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowMailModal(false)}></div>
-                            <div className="bg-white rounded-[24px] w-full max-w-[448px] p-[24px] sm:p-[32px] relative z-10 shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100">
-                                <div className="flex justify-between items-center mb-[24px] sm:mb-[32px]">
-                                    <h3 className="text-[18px] sm:text-[22px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-3">
-                                        <div className="w-[4px] h-[20px] bg-[#2d5bff] rounded-full"></div>
-                                        Mail Report
-                                    </h3>
-                                    <button onClick={() => setShowMailModal(false)} className="bg-slate-50 hover:bg-slate-100 p-2 rounded-full transition-colors">
-                                        <FaTimes className="text-slate-400" />
-                                    </button>
-                                </div>
 
-                                <div className="space-y-[16px] sm:space-y-[20px]">
-                                    <div className="grid grid-cols-2 gap-[12px] sm:gap-[16px]">
-                                        <div className="space-y-2">
-                                            <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[2px]">From Date</label>
-                                            <input
-                                                type="date"
-                                                value={mailConfig.startDate}
-                                                onChange={(e) => setMailConfig({ ...mailConfig, startDate: e.target.value })}
-                                                className="w-full bg-slate-50 border border-slate-200 rounded-[12px] px-[12px] py-[10px] text-[12px] font-bold text-slate-700 outline-none focus:border-[#2d5bff] focus:ring-2 focus:ring-[#2d5bff]/10 transition-all"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[2px]">To Date</label>
-                                            <input
-                                                type="date"
-                                                value={mailConfig.endDate}
-                                                onChange={(e) => setMailConfig({ ...mailConfig, endDate: e.target.value })}
-                                                className="w-full bg-slate-50 border border-slate-200 rounded-[12px] px-[12px] py-[10px] text-[12px] font-bold text-slate-700 outline-none focus:border-[#2d5bff] focus:ring-2 focus:ring-[#2d5bff]/10 transition-all"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[2px]">Filter Status</label>
-                                        <select
-                                            value={mailConfig.status}
-                                            onChange={(e) => setMailConfig({ ...mailConfig, status: e.target.value })}
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-[12px] px-[12px] py-[10px] text-[12px] font-bold text-slate-700 outline-none focus:border-[#2d5bff] focus:ring-2 focus:ring-[#2d5bff]/10 transition-all cursor-pointer uppercase tracking-wider"
-                                        >
-                                            <option value="all">All Tasks</option>
-                                            <option value="pending">Pending Only</option>
-                                            <option value="completed">Completed Only</option>
-                                        </select>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[2px]">Custom Message (Optional)</label>
-                                        <textarea
-                                            value={mailConfig.customMessage}
-                                            onChange={(e) => setMailConfig({ ...mailConfig, customMessage: e.target.value })}
-                                            placeholder="Write something to the reporter..."
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-[12px] px-[12px] py-[10px] text-[12px] font-bold text-slate-700 outline-none focus:border-[#2d5bff] focus:ring-2 focus:ring-[#2d5bff]/10 transition-all min-h-[80px] sm:min-h-[100px] resize-none placeholder:text-slate-300"
-                                        />
-                                    </div>
-
-                                    <button
-                                        onClick={async () => {
-                                            if (!mailConfig.startDate) {
-                                                toast.error("Start date is required");
-                                                return;
-                                            }
-                                            try {
-                                                await triggerMissedAlert({
-                                                    ...mailConfig,
-                                                    sector: 'manufacturing'
-                                                });
-                                                toast.success("Missed task report sent!");
-                                                setShowMailModal(false);
-                                            } catch (err) {
-                                                console.error(err);
-                                                toast.error("Failed to send report");
-                                            }
-                                        }}
-                                        className="w-full bg-[#2d5bff] text-white py-[12px] sm:py-[16px] rounded-[12px] sm:rounded-[16px] text-xs sm:text-sm font-black uppercase tracking-[2px] hover:bg-[#254bdb] transition-all shadow-xl shadow-blue-500/30 flex items-center justify-center gap-3 active:scale-[0.98]"
-                                    >
-                                        <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                        </svg>
-                                        Send Email
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )
-                }
 
                 {/* Category Manager Modal */}
                 {

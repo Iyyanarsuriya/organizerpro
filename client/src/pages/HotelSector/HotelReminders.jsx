@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { getReminders, createReminder, updateReminder, deleteReminder, triggerMissedAlert, getCategories, createCategory, deleteCategory } from '../../api/Reminder/hotelReminder';
+import { getReminders, createReminder, updateReminder, deleteReminder, getCategories, createCategory, deleteCategory } from '../../api/Reminder/hotelReminder';
 import { getMe } from '../../api/authApi';
 import ReminderForm from '../../components/Common/ReminderForm';
 import ReminderList from '../../components/Common/ReminderList';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { FaBell, FaTimes, FaChevronLeft, FaCalendarAlt, FaArrowLeft } from 'react-icons/fa';
+import { FaBell, FaChevronLeft, FaCalendarAlt, FaArrowLeft } from 'react-icons/fa';
 import { LayoutDashboard } from 'lucide-react';
 
 import CategoryManager from '../../components/Common/CategoryManager';
@@ -40,14 +40,7 @@ const HotelReminders = () => {
     const [showCategoryManager, setShowCategoryManager] = useState(false);
     const [activeTab, setActiveTab] = useState('tasks'); // 'tasks' | 'notes'
 
-    // Email Modal State
-    const [showMailModal, setShowMailModal] = useState(false);
-    const [mailConfig, setMailConfig] = useState({
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: '',
-        customMessage: '',
-        status: 'pending'
-    });
+
 
     const lastFetchRef = useRef(0);
 
@@ -387,7 +380,7 @@ const HotelReminders = () => {
                             <FaBell className={`text-[18px] sm:text-[24px] md:text-[30px] cursor-pointer transition-colors ${showNotifications ? 'text-yellow-300' : 'text-white/80 hover:text-white'}`} onClick={() => setShowNotifications(!showNotifications)} />
                             {notifications.length > 0 && <span className="absolute -top-[4px] sm:-top-[8px] -right-[4px] sm:-right-[8px] bg-[#ff4d4d] w-[14px] h-[14px] sm:w-[20px] sm:h-[20px] text-[7px] sm:text-[10px] flex items-center justify-center rounded-full font-bold text-white shadow-lg animate-pulse">{notifications.length}</span>}
                         </div>
-                        <button onClick={() => setShowMailModal(true)} className="bg-white/10 hover:bg-white/20 text-white p-[8px] rounded-[8px] transition-all"><svg className="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg></button>
+
                         <Link to="/hotel-sector/reminder-dashboard" className="bg-white/10 hover:bg-white/20 text-white p-[8px] rounded-[8px] transition-all"><LayoutDashboard className="w-[20px] h-[20px]" /></Link>
                     </div>
                 </div>
@@ -547,117 +540,7 @@ const HotelReminders = () => {
                 />
             )}
 
-            {showMailModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[32px] w-full max-w-[480px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-300">
-                        {/* Header */}
-                        <div className="px-8 py-6 border-b border-slate-50 flex justify-between items-center bg-white">
-                            <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                                    <svg className="w-5 h-5 text-[#2d5bff]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                    </svg>
-                                </div>
-                                <h3 className="font-black text-slate-800 text-[18px] tracking-tight">Email Report</h3>
-                            </div>
-                            <button onClick={() => setShowMailModal(false)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all">
-                                <FaTimes className="text-sm" />
-                            </button>
-                        </div>
 
-                        {/* Form Body */}
-                        <div className="p-8 space-y-6">
-                            {/* Start Date */}
-                            <div className="space-y-2">
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Start Date</label>
-                                <div className="relative">
-                                    <input
-                                        type="date"
-                                        value={mailConfig.startDate}
-                                        onChange={e => setMailConfig({ ...mailConfig, startDate: e.target.value })}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-5 py-4 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none cursor-pointer"
-                                    />
-                                    <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none">
-                                        <FaCalendarAlt className="text-slate-400 w-4 h-4" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* End Date */}
-                            <div className="space-y-2">
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">End Date (Optional)</label>
-                                <div className="relative">
-                                    <input
-                                        type="date"
-                                        value={mailConfig.endDate}
-                                        onChange={e => setMailConfig({ ...mailConfig, endDate: e.target.value })}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-5 py-4 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none cursor-pointer"
-                                        placeholder="dd/mm/yyyy"
-                                    />
-                                    <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none">
-                                        <FaCalendarAlt className="text-slate-400 w-4 h-4" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Task Status */}
-                            <div className="space-y-2">
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Task Status</label>
-                                <div className="relative">
-                                    <select
-                                        value={mailConfig.status}
-                                        onChange={e => setMailConfig({ ...mailConfig, status: e.target.value })}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-[16px] px-5 py-4 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none cursor-pointer"
-                                    >
-                                        <option value="pending">Pending</option>
-                                        <option value="completed">Completed</option>
-                                        <option value="all">All Tasks</option>
-                                    </select>
-                                    <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none">
-                                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" /></svg>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Custom Message */}
-                            <div className="space-y-2">
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Custom Message (Optional)</label>
-                                <textarea
-                                    placeholder="Add a note to the report..."
-                                    value={mailConfig.customMessage}
-                                    onChange={e => setMailConfig({ ...mailConfig, customMessage: e.target.value })}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-[20px] px-5 py-4 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all h-[120px] resize-none placeholder:text-slate-400/60"
-                                />
-                            </div>
-
-                            {/* Action Button */}
-                            <button
-                                onClick={async () => {
-                                    try {
-                                        await triggerMissedAlert({
-                                            date: mailConfig.startDate,
-                                            endDate: mailConfig.endDate,
-                                            status: mailConfig.status,
-                                            customMessage: mailConfig.customMessage,
-                                            sector: SECTOR
-                                        });
-                                        toast.success("Report email sent successfully!");
-                                        setShowMailModal(false);
-                                    } catch (e) {
-                                        toast.error("Failed to send report");
-                                    }
-                                }}
-                                className="w-full bg-[#2d5bff] text-white font-black py-5 rounded-[20px] shadow-xl shadow-blue-500/30 hover:bg-blue-600 active:scale-95 transition-all text-sm uppercase tracking-widest flex items-center justify-center gap-4 group"
-                            >
-                                Send Report
-                                <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
