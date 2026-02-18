@@ -1,6 +1,6 @@
 import axiosInstance from '../axiosInstance';
 
-export const getReminders = (params) => axiosInstance.get('/education-sector/reminders', { params });
+export const getReminders = (params, config = {}) => axiosInstance.get('/education-sector/reminders', { params, ...config });
 export const createReminder = (data) => axiosInstance.post('/education-sector/reminders', data);
 export const updateReminder = (id, data) => axiosInstance.put(`/education-sector/reminders/${id}`, data);
 export const deleteReminder = (id, params) => axiosInstance.delete(`/education-sector/reminders/${id}`, { params });
