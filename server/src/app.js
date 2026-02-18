@@ -101,6 +101,7 @@ app.use('/api/education-sector', eduRouter);
 const hotelRouter = express.Router();
 hotelRouter.use(withSector('hotel'));
 hotelRouter.use('/reminders', require("./routes/Hotel/reminderRoutes"));
+hotelRouter.use('/reminder-categories', require("./routes/Hotel/reminderCategoryRoutes"));
 hotelRouter.use('/notes', require("./routes/Hotel/noteRoutes"));
 hotelRouter.use('/transactions', transactionRoutes);
 hotelRouter.use('/categories', categoryRoutes);

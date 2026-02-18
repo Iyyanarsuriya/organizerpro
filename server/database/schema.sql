@@ -2,7 +2,7 @@
 -- OrganizerPro Database Schema V2.2
 -- ==========================================
 -- Last Updated: February 16, 2026
--- Total Tables: 72 (2 Shared + 5 Personal + 19 Manufacturing + 13 IT + 16 Education + 17 Hotel)
+-- Total Tables: 73 (2 Shared + 5 Personal + 19 Manufacturing + 13 IT + 16 Education + 18 Hotel)
 -- 
 -- ARCHITECTURE:
 -- - Sector-based isolation for data organization
@@ -78,7 +78,7 @@
 --  54. education_shifts - Education staff shifts
 --  55. education_audit_logs - Education sector audit trails
 --
--- HOTEL SECTOR (17):
+-- HOTEL SECTOR (18):
 --  56. hotel_projects - Hotel projects
 --  57. hotel_members - Hotel staff members
 --  58. hotel_holidays - Hotel holidays
@@ -89,13 +89,14 @@
 --  63. hotel_notes - Hotel sector notes
 --  64. hotel_member_roles - Hotel staff roles
 --  65. hotel_categories - Hotel expense categories
---  66. hotel_settings - Hotel property settings
---  67. hotel_units - Hotel rooms/accomodations
---  68. hotel_guests - Hotel guest profiles
---  69. hotel_bookings - Hotel room bookings
---  70. hotel_payments - Hotel booking payments
---  71. hotel_maintenance - Hotel unit maintenance
---  72. hotel_shifts - Hotel staff shifts
+--  66. hotel_reminder_categories - Hotel reminder categories
+--  67. hotel_settings - Hotel property settings
+--  68. hotel_units - Hotel rooms/accomodations
+--  69. hotel_guests - Hotel guest profiles
+--  70. hotel_bookings - Hotel room bookings
+--  71. hotel_payments - Hotel booking payments
+--  72. hotel_maintenance - Hotel unit maintenance
+--  73. hotel_shifts - Hotel staff shifts
 -- ==========================================
 
 
@@ -1462,6 +1463,19 @@ CREATE TABLE `hotel_categories` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_hotel_cat` (`user_id`,`name`,`type`),
   CONSTRAINT `fk_hotel_cat_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Hotel Reminder Categories
+DROP TABLE IF EXISTS `hotel_reminder_categories`;
+CREATE TABLE `hotel_reminder_categories` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `name` varchar(50) NOT NULL,
+  `color` varchar(20) DEFAULT '#2d5bff',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_user_hotel_rem_cat` (`user_id`,`name`),
+  CONSTRAINT `fk_hotel_rem_cat_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ============================================

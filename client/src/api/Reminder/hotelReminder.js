@@ -10,9 +10,9 @@ export const deleteReminder = (id, params) => axiosInstance.delete(`${BASE_URL}/
 export const triggerMissedAlert = (payload) => axiosInstance.post(`${BASE_URL}/reminders/send-missed-alert`, payload);
 
 // Categories
-export const getCategories = (params = { sector: 'hotel' }) => axiosInstance.get('/categories', { params });
-export const createCategory = (categoryData) => axiosInstance.post('/categories', { ...categoryData, sector: 'hotel' });
-export const deleteCategory = (id, params = { sector: 'hotel' }) => axiosInstance.delete(`/categories/${id}`, { params });
+export const getCategories = (params) => axiosInstance.get(`${BASE_URL}/reminder-categories`, { params });
+export const createCategory = (categoryData) => axiosInstance.post(`${BASE_URL}/reminder-categories`, categoryData);
+export const deleteCategory = (id, params) => axiosInstance.delete(`${BASE_URL}/reminder-categories/${id}`, { params });
 
 // Notes
 // Notes

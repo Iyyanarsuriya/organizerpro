@@ -50,13 +50,19 @@ const HotelReminders = () => {
             return;
         }
 
+        // If forced, clear existing promise to allow a fresh one
+        if (force) {
+            window._hotelFetchPromise = null;
+        }
+
         // Request Deduplication
         if (!force && window._hotelFetchPromise) {
             try {
                 const [remindersRes, userRes, categoriesRes] = await window._hotelFetchPromise;
-                setReminders(remindersRes.data);
+                setReminders(Array.isArray(remindersRes.data) ? remindersRes.data : []);
                 setUser(userRes.data);
-                setCategories(categoriesRes.data.data || []);
+                const fetchedCategories = categoriesRes.data?.data || categoriesRes.data || [];
+                setCategories(Array.isArray(fetchedCategories) ? fetchedCategories : []);
                 localStorage.setItem('user', JSON.stringify(userRes.data));
                 lastFetchRef.current = Date.now();
             } catch (error) {
@@ -79,9 +85,10 @@ const HotelReminders = () => {
 
         try {
             const [remindersRes, userRes, categoriesRes] = await fetchPromise;
-            setReminders(remindersRes.data);
+            setReminders(Array.isArray(remindersRes.data) ? remindersRes.data : []);
             setUser(userRes.data);
-            setCategories(categoriesRes.data.data || []);
+            const fetchedCategories = categoriesRes.data?.data || categoriesRes.data || [];
+            setCategories(Array.isArray(fetchedCategories) ? fetchedCategories : []);
             localStorage.setItem('user', JSON.stringify(userRes.data));
             lastFetchRef.current = Date.now();
         } catch (error) {
@@ -535,8 +542,8 @@ const HotelReminders = () => {
                     categories={categories}
                     onUpdate={() => fetchData(true)}
                     onClose={() => setShowCategoryManager(false)}
-                    onCreate={(data) => createCategory({ name: data, sector: SECTOR }).then(() => fetchData(true))}
-                    onDelete={(id) => deleteCategory(id, { sector: SECTOR }).then(() => fetchData(true))}
+                    onCreate={createCategory}
+                    onDelete={deleteCategory}
                 />
             )}
 
