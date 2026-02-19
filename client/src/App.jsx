@@ -269,19 +269,15 @@ const AppContent = () => {
           <Routes>
             <Route path="/" element={
               token ? (
-                (user?.owner_id === null) ? (
-                  <Home onProfileClick={() => setShowProfileModal(true)} />
+                (user?.sector && !location.search.includes('switch=true')) ? (
+                  user.sector === 'personal' ? <Navigate to="/personal" replace /> :
+                    user.sector === 'manufacturing' ? <Navigate to="/manufacturing" replace /> :
+                      user.sector === 'it' ? <Navigate to="/it-sector" replace /> :
+                        user.sector === 'education' ? <Navigate to="/education-sector" replace /> :
+                          user.sector === 'hotel' ? <Navigate to="/hotel-sector" replace /> :
+                            <Home onProfileClick={() => setShowProfileModal(true)} />
                 ) : (
-                  user?.sector ? (
-                    user.sector === 'personal' ? <Navigate to="/personal" replace /> :
-                      user.sector === 'manufacturing' ? <Navigate to="/manufacturing" replace /> :
-                        user.sector === 'it' ? <Navigate to="/it-sector" replace /> :
-                          user.sector === 'education' ? <Navigate to="/education-sector" replace /> :
-                            user.sector === 'hotel' ? <Navigate to="/hotel-sector" replace /> :
-                              <Home onProfileClick={() => setShowProfileModal(true)} />
-                  ) : (
-                    <Home onProfileClick={() => setShowProfileModal(true)} />
-                  )
+                  <Home onProfileClick={() => setShowProfileModal(true)} />
                 )
               ) : (
                 <LandingPage onSignupClick={() => setShowSignupModal(true)} />

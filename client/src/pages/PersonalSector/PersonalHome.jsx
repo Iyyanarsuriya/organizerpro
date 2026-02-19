@@ -26,9 +26,10 @@ const PersonalHome = ({ onProfileClick }) => {
     // Get user from localStorage for a quick greet
     const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-    // Protect Sector Selector: Only Owners should be here
+    // Protect Sector Selector Hub
     useEffect(() => {
         // user.owner_id is non-null for sub-users
+        // Sub-users must ALWAYS be in their assigned sector
         if (user.owner_id !== undefined && user.owner_id !== null && user.sector) {
             const sectorPaths = {
                 personal: '/personal',

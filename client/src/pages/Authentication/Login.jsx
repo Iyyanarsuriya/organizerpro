@@ -72,20 +72,16 @@ const Login = ({ setToken, setUser, onClose, onSwitch }) => {
         onClose();
       }
 
-      // Handle Redirection: Owners/Admins (owner_id is NULL) go to Selector, others go to their sector
-      const isOwner = user.owner_id === null;
-
-      if (isOwner) {
-        // Owners land on the sector selection page
-        navigate("/");
-      } else {
-        // Sub-users land directly in their assigned sector
+      // Handle Redirection: If user has a sector, go there. Otherwise, go to hub.
+      if (user.sector) {
         if (user.sector === 'personal') navigate("/personal");
         else if (user.sector === 'manufacturing') navigate("/manufacturing");
         else if (user.sector === 'it') navigate("/it-sector");
         else if (user.sector === 'education') navigate("/education-sector");
         else if (user.sector === 'hotel') navigate("/hotel-sector");
         else navigate("/");
+      } else {
+        navigate("/");
       }
     } catch (error) {
       toast.error(error.response?.data?.error || "Login failed", { id: 'login-error' });
