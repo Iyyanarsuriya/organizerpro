@@ -69,14 +69,20 @@ const Navbar = ({
                         <div className="flex items-center gap-4 sm:gap-[24px]">
                             {!isLandingPage && (
                                 <button
-                                    onClick={() => navigate('/?switch=true')}
+                                    onClick={() => {
+                                        const homePath = user?.sector === 'it' ? '/it-sector' :
+                                            user?.sector === 'education' ? '/education-sector' :
+                                                user?.sector === 'hotel' ? '/hotel-sector' :
+                                                    user?.sector === 'manufacturing' ? '/manufacturing' :
+                                                        user?.sector === 'personal' ? '/personal' : '/';
+                                        navigate(homePath);
+                                    }}
                                     className="w-[34px] h-[34px] sm:w-[40px] sm:h-[40px] bg-white/10 hover:bg-white text-white hover:text-black rounded-[10px] sm:rounded-[12px] flex items-center justify-center transition-all duration-300 active:scale-90 shadow-lg shadow-white/5 group"
-                                    title="Switch Workspace"
+                                    title="Sector Home"
                                 >
                                     <Home className="w-5 h-5 sm:w-6 sm:h-6 transition-transform group-hover:scale-110" />
                                 </button>
                             )}
-
                             {/* Profile Icon (Before Bell) */}
                             {/* Profile Dropdown */}
                             <div
@@ -134,6 +140,19 @@ const Navbar = ({
                                                 >
                                                     <Users className="w-4 h-4" />
                                                     Team Management
+                                                </button>
+                                            )}
+
+                                            {user?.owner_id === null && location.pathname !== '/' && (
+                                                <button
+                                                    onClick={() => {
+                                                        navigate('/?switch=true');
+                                                        setShowProfileDropdown(false);
+                                                    }}
+                                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-colors"
+                                                >
+                                                    <Home className="w-4 h-4" />
+                                                    Switch Workspace
                                                 </button>
                                             )}
 
