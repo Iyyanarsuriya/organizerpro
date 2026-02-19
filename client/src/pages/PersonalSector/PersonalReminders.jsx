@@ -611,7 +611,7 @@ const PersonalReminders = () => {
 
                             {/* RIGHT SIDE: LIST - SCROLLABLE SECTION */}
                             <div className="flex-1 min-h-0 w-full mb-[24px] lg:mb-0">
-                                <div className="glass rounded-[16px] sm:rounded-[20px] md:rounded-[24px] p-[12px] sm:p-[16px] md:p-[20px] shadow-2xl flex flex-col h-auto sm:min-h-[440px] border border-white/20">
+                                <div className="glass rounded-[16px] sm:rounded-[20px] md:rounded-[24px] p-[12px] sm:p-[16px] md:p-[20px] shadow-2xl flex flex-col h-auto lg:h-[600px] border border-white/20">
                                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-[12px] sm:gap-[16px] mb-[16px] sm:mb-[24px] shrink-0">
                                         <div className="flex flex-wrap items-center gap-[8px] sm:gap-[16px]">
                                             <h2 className="text-[14px] sm:text-[16px] md:text-[18px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-[8px]">
