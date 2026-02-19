@@ -857,7 +857,7 @@ const EducationReminders = () => {
 
             {/* CONFIRMATION MODALS */}
             {confirmToggle && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="fixed inset-0 z-1100 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-white rounded-[24px] p-8 max-w-sm w-full shadow-2xl border border-white/20 scale-100 animate-in zoom-in-95 duration-200">
                         <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
                             <span className="text-3xl">🎉</span>
@@ -873,7 +873,7 @@ const EducationReminders = () => {
             )}
 
             {confirmBulkDelete && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="fixed inset-0 z-1100 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-white rounded-[24px] p-8 max-w-sm w-full shadow-2xl border border-white/20">
                         <h3 className="text-xl font-black text-center text-slate-800 mb-2">Delete All?</h3>
                         <p className="text-center text-slate-500 font-medium mb-8 text-sm">Delete {selectedIds.length} tasks irreversibly?</p>
@@ -913,7 +913,7 @@ const EducationReminders = () => {
 
             {/* Edit Reminder Modal */}
             {editingReminder && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="fixed inset-0 z-1100 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-white rounded-[24px] p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-white/20 animate-in zoom-in-95 duration-200">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xl font-black text-slate-800">Edit Task</h3>

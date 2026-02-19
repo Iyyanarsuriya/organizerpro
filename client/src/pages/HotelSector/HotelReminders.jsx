@@ -524,7 +524,7 @@ const HotelReminders = () => {
             </div>
 
             {confirmToggle && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+                <div className="fixed inset-0 z-1100 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
                     <div className="bg-white rounded-[32px] p-8 max-w-sm w-full text-center shadow-2xl border border-white/20 animate-in zoom-in-95 duration-200">
                         <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">🎉</div>
                         <h3 className="text-xl font-black text-slate-800 mb-2">Mark as Complete?</h3>

@@ -67,10 +67,10 @@ function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selected
             className={`group relative flex flex-col gap-[8px] sm:gap-[16px] p-[4px] rounded-[16px] sm:rounded-[24px] transition-all duration-300 bg-white border shadow-sm hover:shadow-xl sm:hover:scale-[1.01] ${isSelectionMode && selectedIds?.includes(reminder.id) ? 'border-[#2d5bff] ring-2 ring-[#2d5bff]/20' : 'border-slate-200'
               } ${isSelectionMode ? 'cursor-pointer' : ''}`}
           >
-            <div className={`flex flex-col gap-[8px] sm:gap-[16px] p-[12px] sm:p-[16px] rounded-[14px] sm:rounded-[20px] ${contentStyle}`}>
+            <div className={`flex flex-col gap-[12px] sm:gap-[20px] p-[14px] sm:p-[20px] rounded-[14px] sm:rounded-[22px] ${contentStyle}`}>
               {/* Priority Pulse Indicator (Side) */}
               {!reminder.is_completed && (
-                <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 sm:w-1.5 h-1/2 rounded-r-full ${priorityColors[reminder.priority]?.bg || 'bg-slate-200'}`} />
+                <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-[4px] sm:w-[6px] h-1/2 rounded-r-full ${priorityColors[reminder.priority]?.bg || 'bg-slate-200'}`} />
               )}
 
               <div className="flex items-start justify-between gap-[8px] sm:gap-[16px]">
@@ -100,44 +100,41 @@ function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selected
                   )}
 
                   <div
-                    className={`flex-1 min-w-0 ${!readOnly ? 'cursor-pointer' : ''}`}
+                    className="flex-1 min-w-0"
                     onClick={() => {
                       if (!isSelectionMode && !readOnly) setSelectedReminder(reminder);
                     }}
                   >
-                    <div className="flex items-center gap-[4px] sm:gap-[8px] mb-[2px] sm:mb-[4px]">
-                      <h3 className={`text-[14px] sm:text-[16px] md:text-[18px] font-black tracking-tight truncate ${reminder.is_completed ? 'text-slate-400 line-through' : 'text-slate-800'
+                    <div className="flex items-center gap-[6px] sm:gap-[10px] mb-[4px] sm:mb-[6px]">
+                      <h3 className={`text-[15px] sm:text-[18px] md:text-[20px] font-black tracking-tight truncate ${reminder.is_completed ? 'text-slate-400 line-through' : 'text-slate-800'
                         }`}>
                         {reminder.title}
                       </h3>
                       {/* Recurrence Icon */}
                       {reminder.recurrence_type && reminder.recurrence_type !== 'none' && (
-                        <Repeat className="w-[12px] h-[12px] text-slate-400" />
+                        <Repeat className="w-[14px] h-[14px] text-slate-400" />
                       )}
                     </div>
 
                     {reminder.description && (
-                      <p className={`text-[10px] sm:text-[12px] font-medium leading-relaxed mb-[8px] sm:mb-[16px] line-clamp-2 ${reminder.is_completed ? 'text-slate-300' : 'text-slate-500'
+                      <p className={`text-[12px] sm:text-[13px] font-medium leading-[1.6] mb-[12px] sm:mb-[20px] line-clamp-2 ${reminder.is_completed ? 'text-slate-300' : 'text-slate-500'
                         }`}>
                         {reminder.description}
                       </p>
                     )}
 
-                    <div className="flex flex-wrap items-center gap-[6px] sm:gap-[12px]">
+                    <div className="flex flex-wrap items-center gap-[8px] sm:gap-[12px]">
                       {/* Date Badge */}
                       {reminder.due_date && (
-                        <div className={`flex items-center gap-[4px] sm:gap-[8px] px-[8px] sm:px-[12px] py-[4px] sm:py-[6px] rounded-[8px] sm:rounded-[12px] border text-[9px] sm:text-[11px] font-black uppercase tracking-wider ${overdue ? 'bg-red-50 border-red-100 text-[#ff4d4d]' : 'bg-slate-50 border-slate-100 text-slate-500'
+                        <div className={`flex items-center gap-[6px] sm:gap-[8px] px-[10px] sm:px-[14px] py-[5px] sm:py-[7px] rounded-[10px] sm:rounded-[14px] border text-[10px] sm:text-[11px] font-black uppercase tracking-wider ${overdue ? 'bg-red-50 border-red-100 text-[#ff4d4d]' : 'bg-white/80 border-slate-100 text-slate-500'
                           }`}>
-                          <svg className="w-[10px] h-[10px] sm:w-[14px] sm:h-[14px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
+                          <Calendar className="w-[12px] h-[12px] sm:w-[15px] sm:h-[15px] shrink-0" />
                           <span className="truncate">{formatDate(reminder.due_date)}</span>
-                          {overdue && <span className="ml-[4px] opacity-70 hidden xs:inline">(Overdue)</span>}
                         </div>
                       )}
 
                       {/* Priority Badge */}
-                      <span className={`px-[8px] sm:px-[12px] py-[4px] sm:py-[6px] rounded-[8px] sm:rounded-[12px] border text-[8px] sm:text-[10px] font-black uppercase tracking-widest ${reminder.priority === 'high' ? 'bg-red-50 text-[#ff4d4d] border-red-100' :
+                      <span className={`px-[10px] sm:px-[14px] py-[5px] sm:py-[7px] rounded-[10px] sm:rounded-[14px] border text-[9px] sm:text-[11px] font-black uppercase tracking-widest shadow-sm ${reminder.priority === 'high' ? 'bg-red-50 text-[#ff4d4d] border-red-100' :
                         reminder.priority === 'medium' ? 'bg-amber-50 text-[#ffb800] border-amber-100' :
                           'bg-blue-50 text-[#2d5bff] border-blue-100'
                         }`}>
@@ -146,7 +143,7 @@ function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selected
 
                       {/* Category Badge */}
                       {reminder.category && (
-                        <span className={`px-[8px] sm:px-[12px] py-[4px] sm:py-[6px] rounded-[8px] sm:rounded-[12px] border text-[8px] sm:text-[10px] font-black uppercase tracking-widest ${categoryColors[reminder.category] || categoryColors.General}`}>
+                        <span className={`px-[10px] sm:px-[14px] py-[5px] sm:py-[7px] rounded-[10px] sm:rounded-[14px] border text-[9px] sm:text-[11px] font-black uppercase tracking-widest shadow-sm ${categoryColors[reminder.category] || categoryColors.General}`}>
                           {reminder.category}
                         </span>
                       )}
@@ -178,117 +175,134 @@ function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selected
       {
         selectedReminder && (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
+            className="fixed inset-0 z-1000 flex items-center justify-center p-[12px] sm:p-[24px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300"
             onClick={() => setSelectedReminder(null)}
           >
             <div
-              className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200 custom-scrollbar"
+              className="bg-white rounded-[24px] sm:rounded-[32px] shadow-2xl max-w-[580px] w-full max-h-[88vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Modal Header - Blue Theme */}
-              <div className="relative p-[16px] sm:p-[24px] md:p-[32px] rounded-t-[12px] sm:rounded-t-[16px] bg-linear-to-r from-[#2d5bff] via-[#4a69ff] to-[#6366f1]">
+              {/* Modal Header - Premium Blue Theme */}
+              <div className="relative p-[24px] sm:p-[32px] shrink-0 bg-linear-to-r from-[#2d5bff] via-[#4a69ff] to-[#6366f1] overflow-hidden">
+                {/* Decorative background circle */}
+                <div className="absolute top-0 right-0 w-[120px] h-[120px] bg-white/10 rounded-full -mr-[60px] -mt-[60px] blur-[80px] pointer-events-none"></div>
+
                 <button
-                  onClick={() => setSelectedReminder(null)}
-                  className="absolute top-[12px] right-[12px] sm:top-[16px] sm:right-[16px] p-[6px] sm:p-[8px] rounded-full bg-white/20 hover:bg-white/30 transition-all text-white cursor-pointer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setSelectedReminder(null);
+                  }}
+                  className="absolute top-[12px] right-[12px] sm:top-[20px] sm:right-[20px] w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] rounded-full bg-white/10 hover:bg-white/30 active:scale-95 transition-all text-white flex items-center justify-center cursor-pointer z-100 border border-white/20"
+                  aria-label="Close modal"
                 >
-                  <X className="w-[16px] h-[16px] sm:w-[20px] sm:h-[20px]" />
+                  <X className="w-[18px] h-[18px] sm:w-[22px] sm:h-[22px]" />
                 </button>
 
-                <div className="flex items-start gap-[12px] sm:gap-[16px] pr-[32px] sm:pr-[40px]">
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center gap-[8px] mb-[8px] sm:mb-[12px]">
-                      <span className={`px-[8px] sm:px-[12px] py-[2px] sm:py-[4px] rounded-full text-[10px] sm:text-[12px] font-bold uppercase tracking-wider ${selectedReminder.priority === 'high'
-                        ? 'bg-red-100 text-red-700'
-                        : selectedReminder.priority === 'medium'
-                          ? 'bg-amber-100 text-amber-700'
-                          : 'bg-blue-100 text-blue-700'
-                        }`}>
-                        {selectedReminder.priority} Priority
+                <div className="relative z-10">
+                  <div className="flex flex-wrap items-center gap-[6px] mb-[12px]">
+                    <span className={`px-[10px] py-[3px] rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-[0.1em] ${selectedReminder.priority === 'high'
+                      ? 'bg-red-500 text-white shadow-lg shadow-red-500/20'
+                      : selectedReminder.priority === 'medium'
+                        ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20'
+                        : 'bg-blue-500 text-white shadow-lg shadow-blue-500/20'
+                      }`}>
+                      {selectedReminder.priority}
+                    </span>
+                    {!!selectedReminder.is_completed && (
+                      <span className="px-[10px] py-[3px] rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-[0.1em] bg-emerald-500 text-white shadow-lg shadow-emerald-500/20">
+                        Done
                       </span>
-                      {!!selectedReminder.is_completed && (
-                        <span className="px-[8px] sm:px-[12px] py-[2px] sm:py-[4px] rounded-full text-[10px] sm:text-[12px] font-bold uppercase tracking-wider bg-green-100 text-green-700">
-                          Completed
-                        </span>
-                      )}
-                      {selectedReminder.category && (
-                        <span className={`px-[8px] sm:px-[12px] py-[2px] sm:py-[4px] rounded-full text-[10px] sm:text-[12px] font-bold uppercase tracking-wider bg-white/20 text-white`}>
-                          {selectedReminder.category}
-                        </span>
-                      )}
+                    )}
+                    {selectedReminder.category && (
+                      <span className="px-[10px] py-[3px] rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-[0.1em] bg-white/20 text-white border border-white/10 backdrop-blur-md">
+                        {selectedReminder.category}
+                      </span>
+                    )}
+                  </div>
+                  <div className="h-[2px] w-[32px] bg-white/40 rounded-full mb-[12px]"></div>
+                  <h2 className={`text-[22px] sm:text-[28px] font-black text-white leading-[1.1] wrap-break-word ${selectedReminder.is_completed ? 'line-through opacity-80' : ''}`}>
+                    {selectedReminder.title}
+                  </h2>
+                </div>
+              </div>
+
+              {/* Modal Body - Scrollable */}
+              <div className="p-[20px] sm:p-[28px] overflow-y-auto custom-scrollbar flex-1 bg-slate-50/30">
+                <div className="space-y-[24px]">
+                  {/* Description Section */}
+                  {selectedReminder.description && (
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-[8px] flex items-center gap-[6px]">
+                        <AlertCircle className="w-[14px] h-[14px] text-[#2d5bff]" />
+                        Description
+                      </h3>
+                      <div className="bg-white rounded-[16px] p-[16px] sm:p-[20px] border border-slate-100 max-h-[220px] overflow-y-auto custom-scrollbar shadow-sm">
+                        <p className="text-[13px] sm:text-[15px] text-slate-600 leading-relaxed whitespace-pre-wrap font-medium wrap-break-word">
+                          {selectedReminder.description}
+                        </p>
+                      </div>
                     </div>
-                    <h2 className={`text-[20px] sm:text-[24px] md:text-[30px] font-black text-white mb-[4px] ${selectedReminder.is_completed ? 'line-through ' : ''}`}>
-                      {selectedReminder.title}
-                    </h2>
+                  )}
+
+                  {/* Metadata Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-[12px] sm:gap-[16px]">
+                    {/* Due Date */}
+                    {selectedReminder.due_date && (
+                      <div className="bg-white rounded-[16px] p-[16px] border border-slate-100 shadow-sm hover:border-[#2d5bff]/20 transition-colors group/meta">
+                        <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-[6px] flex items-center gap-[8px]">
+                          <Calendar className="w-[12px] h-[12px] text-[#ff4d4d] group-hover/meta:scale-110 transition-transform" />
+                          Due Date
+                        </h3>
+                        <div className={`text-[13px] sm:text-[15px] font-black flex items-center flex-wrap gap-[8px] ${isOverdue(selectedReminder.due_date, selectedReminder.is_completed)
+                          ? 'text-[#ff4d4d]'
+                          : 'text-slate-800'
+                          }`}>
+                          {formatDate(selectedReminder.due_date)}
+                          {isOverdue(selectedReminder.due_date, selectedReminder.is_completed) && (
+                            <span className="px-[6px] py-[1.5px] bg-red-50 text-red-500 text-[9px] font-black rounded-[4px] uppercase tracking-wider border border-red-100">
+                              Overdue
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Recurrence */}
+                    {selectedReminder.recurrence_type && selectedReminder.recurrence_type !== 'none' && (
+                      <div className="bg-white rounded-[16px] p-[16px] border border-slate-100 shadow-sm hover:border-[#2d5bff]/20 transition-colors group/meta">
+                        <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-[6px] flex items-center gap-[8px]">
+                          <Repeat className="w-[12px] h-[12px] text-[#2d5bff] group-hover/meta:scale-110 transition-transform" />
+                          Repeats
+                        </h3>
+                        <div className="text-[13px] sm:text-[15px] font-black text-slate-800 capitalize">
+                          {selectedReminder.recurrence_type}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Modal Body */}
-              <div className="p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6">
-                {/* Description */}
-                {selectedReminder.description && (
-                  <div>
-                    <h3 className="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
-                      <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                      Description
-                    </h3>
-                    <p className="text-sm sm:text-base md:text-lg text-slate-700 leading-relaxed whitespace-pre-wrap">
-                      {selectedReminder.description}
-                    </p>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Due Date */}
-                  {selectedReminder.due_date && (
-                    <div>
-                      <h3 className="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
-                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                        Due Date
-                      </h3>
-                      <div className={`flex flex-wrap items-center gap-2 text-sm sm:text-base md:text-lg font-semibold ${isOverdue(selectedReminder.due_date, selectedReminder.is_completed)
-                        ? 'text-red-600'
-                        : 'text-slate-700'
-                        }`}>
-                        <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
-                        <span>{formatDate(selectedReminder.due_date)}</span>
-                        {isOverdue(selectedReminder.due_date, selectedReminder.is_completed) && (
-                          <span className="px-2 py-0.5 bg-red-100 text-red-700 text-[10px] sm:text-xs font-bold rounded-full">
-                            OVERDUE
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Recurrence */}
-                  {selectedReminder.recurrence_type && selectedReminder.recurrence_type !== 'none' && (
-                    <div>
-                      <h3 className="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
-                        <Repeat className="w-3 h-3 sm:w-4 sm:h-4" />
-                        Repeats
-                      </h3>
-                      <div className="text-sm sm:text-base md:text-lg text-slate-700 font-semibold capitalize">
-                        {selectedReminder.recurrence_type}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Actions */}
+              {/* Modal Footer - Fixed Actions */}
+              <div className="p-[20px] sm:p-[24px] shrink-0 bg-white border-t border-slate-100">
                 {!readOnly && (
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-slate-200">
+                  <div className="flex items-center gap-[10px]">
                     <button
                       onClick={() => {
                         onToggle(selectedReminder.id, selectedReminder.is_completed);
                         setSelectedReminder(null);
                       }}
-                      className={`flex-1 py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer ${selectedReminder.is_completed
-                        ? 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-                        : 'bg-[#2d5bff] text-white hover:bg-[#1e4bd8]'
+                      className={`flex-1 py-[12px] px-[16px] rounded-[14px] font-black text-[11px] sm:text-[12px] transition-all shadow-lg active:scale-[0.97] cursor-pointer tracking-wider flex items-center justify-center gap-[8px] ${selectedReminder.is_completed
+                        ? 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                        : 'bg-linear-to-r from-[#2d5bff] to-[#4a69ff] text-white hover:shadow-blue-500/25'
                         }`}
                     >
-                      {selectedReminder.is_completed ? 'Mark as Incomplete' : 'Mark as Complete'}
+                      {selectedReminder.is_completed ? (
+                        <>MARK AS ACTIVE</>
+                      ) : (
+                        <>MARK AS COMPLETE</>
+                      )}
                     </button>
 
                     {!selectedReminder.is_completed && onEdit && (
@@ -297,10 +311,10 @@ function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selected
                           onEdit(selectedReminder);
                           setSelectedReminder(null);
                         }}
-                        className="flex-1 py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm bg-blue-50 text-[#2d5bff] hover:bg-blue-100 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                        className="flex-1 py-[12px] px-[16px] rounded-[14px] font-black text-[11px] sm:text-[12px] bg-white text-[#2d5bff] border border-[#2d5bff]/20 hover:border-[#2d5bff] hover:bg-blue-50 transition-all flex items-center justify-center gap-[6px] shadow-sm active:scale-[0.97] cursor-pointer uppercase tracking-wider"
                       >
-                        <Edit className="w-4 h-4" />
-                        Edit
+                        <Edit className="w-[14px] h-[14px]" />
+                        EDIT
                       </button>
                     )}
 
@@ -310,10 +324,10 @@ function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selected
                           setDeleteId(selectedReminder.id);
                           setSelectedReminder(null);
                         }}
-                        className="flex-1 sm:flex-none py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm bg-[#ff4d4d] text-white hover:bg-[#ff3333] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                        className="py-[12px] px-[20px] rounded-[14px] font-black text-[11px] sm:text-[12px] bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-[6px] shadow-sm active:scale-[0.97] cursor-pointer"
                       >
-                        <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                        Delete
+                        <Trash2 className="w-[14px] h-[14px]" />
+                        DELETE
                       </button>
                     )}
                   </div>
@@ -326,20 +340,20 @@ function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selected
       {/* Delete Confirmation Modal */}
       {
         deleteId && (
-          <div className="fixed inset-0 z-110 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
-            <div className="bg-white rounded-[32px] p-6 sm:p-8 w-full max-w-[400px] shadow-2xl animate-in zoom-in-95 duration-200 border border-white">
+          <div className="fixed inset-0 z-1100 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+            <div className="bg-white rounded-[32px] p-[24px] sm:p-[32px] w-full max-w-[380px] shadow-2xl animate-in zoom-in-95 duration-200 border border-white">
               <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-6 border border-red-100 shadow-lg shadow-red-500/10">
-                  <Trash2 className="w-8 h-8 text-[#ff4d4d] animate-bounce" />
+                <div className="w-[64px] h-[64px] bg-red-50 rounded-full flex items-center justify-center mb-[24px] border border-red-100 shadow-lg shadow-red-500/10">
+                  <Trash2 className="w-[32px] h-[32px] text-[#ff4d4d] animate-bounce" />
                 </div>
-                <h3 className="text-xl font-black text-slate-800 mb-2 uppercase tracking-tighter">Are you sure?</h3>
-                <p className="text-slate-500 text-sm font-medium mb-8">
+                <h3 className="text-[20px] font-black text-slate-800 mb-[8px] uppercase tracking-tighter">Are you sure?</h3>
+                <p className="text-slate-500 text-[13px] font-medium mb-[32px]">
                   This action cannot be undone. This reminder will be permanently deleted from your timeline.
                 </p>
-                <div className="flex w-full gap-3">
+                <div className="flex w-full gap-[12px]">
                   <button
                     onClick={() => setDeleteId(null)}
-                    className="flex-1 py-3 px-6 rounded-xl font-black text-[13px] tracking-widest uppercase border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
+                    className="flex-1 py-[12px] px-[20px] rounded-[16px] font-black text-[12px] tracking-widest uppercase border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -348,7 +362,7 @@ function ReminderList({ reminders, onToggle, onDelete, isSelectionMode, selected
                       onDelete(deleteId);
                       setDeleteId(null);
                     }}
-                    className="flex-1 py-3 px-6 rounded-xl font-black text-[13px] tracking-widest uppercase bg-[#ff4d4d] text-white shadow-lg shadow-red-500/20 hover:bg-[#ff3333] hover:shadow-xl transition-all active:scale-95 cursor-pointer"
+                    className="flex-1 py-[12px] px-[20px] rounded-[16px] font-black text-[12px] tracking-widest uppercase bg-[#ff4d4d] text-white shadow-lg shadow-red-500/20 hover:bg-[#ff3333] hover:shadow-xl transition-all active:scale-95 cursor-pointer"
                   >
                     Delete
                   </button>

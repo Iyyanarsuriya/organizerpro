@@ -252,17 +252,17 @@ const Notes = ({ isEmbedded = false, sector = 'personal' }) => {
 
             {/* Header Section */}
             {!isEmbedded && (
-                <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-4 sm:px-6 py-4 flex items-center justify-between shadow-sm">
-                    <div className="flex items-center gap-4">
+                <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-[16px] sm:px-[24px] py-[16px] flex items-center justify-between shadow-sm">
+                    <div className="flex items-center gap-[16px]">
                         <button
                             onClick={() => navigate('/')}
-                            className="p-2.5 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors text-slate-600 active:scale-95"
+                            className="p-[10px] bg-slate-100 rounded-[12px] hover:bg-slate-200 transition-colors text-slate-600 active:scale-95 cursor-pointer"
                         >
                             <FaArrowLeft size={16} />
                         </button>
                         <div>
-                            <h1 className="text-[20px] sm:text-2xl font-black text-slate-900 tracking-tight">My Notes</h1>
-                            <p className="hidden sm:block text-xs font-bold text-slate-400 uppercase tracking-widest">Capture your thoughts</p>
+                            <h1 className="text-[20px] sm:text-[24px] font-black text-slate-900 tracking-tight">My Notes</h1>
+                            <p className="hidden sm:block text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-[2px]">Capture your thoughts</p>
                         </div>
                     </div>
                 </div>
@@ -287,31 +287,30 @@ const Notes = ({ isEmbedded = false, sector = 'personal' }) => {
             <div className={`flex-1 overflow-y-auto pb-24 custom-scrollbar ${isPersonal ? 'px-[16px] md:px-[32px]' : 'px-4 sm:px-6'}`}>
 
                 {/* Search Bar - Modern & Floating Look */}
-                <div className="sticky top-0 z-20 pt-2 pb-6">
-                    <div className="relative max-w-2xl mx-auto group">
-                        <div className="absolute inset-0 bg-blue-500/5 rounded-2xl blur-lg group-hover:bg-blue-500/10 transition-all"></div>
-                        <div className="relative bg-white/80 backdrop-blur-md border border-white/50 shadow-lg rounded-2xl flex items-center p-1 transition-all focus-within:ring-2 focus-within:ring-[#2d5bff]/20 focus-within:border-[#2d5bff]/30">
-                            <div className="pl-4 text-slate-400">
-                                <FaSearch className="w-4 h-4" />
+                <div className="sticky top-0 z-20 pt-[8px] pb-[24px]">
+                    <div className="relative max-w-[640px] mx-auto group">
+                        <div className="absolute inset-0 bg-blue-500/5 rounded-[20px] blur-md group-hover:bg-blue-500/10 transition-all"></div>
+                        <div className="relative bg-white/80 backdrop-blur-md border border-white rounded-[20px] flex items-center p-[4px] transition-all focus-within:ring-4 focus-within:ring-[#2d5bff]/10 focus-within:border-[#2d5bff]/20 shadow-lg shadow-slate-200/50">
+                            <div className="pl-[20px] text-slate-400">
+                                <FaSearch className="w-[16px] h-[16px]" />
                             </div>
                             <input
                                 type="text"
                                 placeholder="Search your sparks of genius..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-transparent border-none px-4 py-3 outline-none text-sm font-bold text-slate-700 placeholder:text-slate-400 placeholder:font-medium"
+                                className="w-full bg-transparent border-none px-[16px] py-[14px] outline-none text-[14px] font-bold text-slate-700 placeholder:text-slate-400 placeholder:font-medium"
                             />
                         </div>
                     </div>
 
-                    {/* Date Filters */}
-                    <div className="flex flex-wrap items-center justify-center gap-4 mt-6">
-                        <div className="bg-slate-100 p-1 rounded-xl flex items-center">
+                    <div className="flex flex-wrap items-center justify-center gap-[16px] mt-[24px]">
+                        <div className="bg-slate-100 p-[4px] rounded-[14px] flex items-center">
                             {['day', 'month', 'year', 'range'].map((type) => (
                                 <button
                                     key={type}
                                     onClick={() => setPeriodType(type)}
-                                    className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all ${periodType === type ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'} ${isPersonal ? 'md:px-[16px] md:py-[8px] md:text-[12px]' : ''}`}
+                                    className={`px-[16px] py-[8px] sm:px-[20px] sm:py-[10px] rounded-[10px] text-[10px] sm:text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${periodType === type ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
                                 >
                                     {type}
                                 </button>
@@ -323,25 +322,25 @@ const Notes = ({ isEmbedded = false, sector = 'personal' }) => {
                                 type={periodType === 'year' ? 'number' : periodType === 'month' ? 'month' : 'date'}
                                 value={selectedDate}
                                 onChange={(e) => setSelectedDate(e.target.value)}
-                                className={`bg-white border border-slate-200 text-slate-700 font-bold px-3 sm:px-4 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 text-xs sm:text-sm w-full sm:w-auto ${isPersonal ? 'h-[36px] md:h-[42px]' : 'h-[36px] sm:h-[40px]'}`}
+                                className="bg-white border border-slate-200 text-slate-700 font-black px-[16px] h-[44px] sm:h-[48px] rounded-[14px] outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/20 text-[13px] sm:text-[14px] w-full sm:w-auto shadow-sm"
                                 placeholder={periodType === 'year' ? 'YYYY' : ''}
                                 min={periodType === 'year' ? '2000' : undefined}
                                 max={periodType === 'year' ? '2100' : undefined}
                             />
                         ) : (
-                            <div className={`flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 w-full sm:w-auto overflow-x-auto no-scrollbar ${isPersonal ? 'h-[36px] md:h-[42px]' : 'h-[36px] sm:h-[40px]'}`}>
+                            <div className="flex items-center gap-[12px] bg-white border border-slate-200 rounded-[14px] px-[16px] h-[44px] sm:h-[48px] w-full sm:w-auto shadow-sm">
                                 <input
                                     type="date"
                                     value={dateRange.start}
                                     onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-                                    className="outline-none text-slate-700 font-bold text-xs sm:text-sm bg-transparent min-w-[80px]"
+                                    className="outline-none text-slate-700 font-black text-[13px] sm:text-[14px] bg-transparent"
                                 />
-                                <span className="text-slate-400">-</span>
+                                <span className="text-slate-300 font-black">—</span>
                                 <input
                                     type="date"
                                     value={dateRange.end}
                                     onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-                                    className="outline-none text-slate-700 font-bold text-xs sm:text-sm bg-transparent min-w-[80px]"
+                                    className="outline-none text-slate-700 font-black text-[13px] sm:text-[14px] bg-transparent"
                                 />
                             </div>
                         )}

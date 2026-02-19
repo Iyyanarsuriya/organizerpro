@@ -471,24 +471,24 @@ const PersonalReminders = () => {
         <div className="flex flex-col items-center h-full px-[8px] sm:px-[16px] relative lg:overflow-hidden">
             <div className="w-full max-w-[1280px] flex flex-col h-full pt-[16px] pb-[8px] sm:py-[16px] md:py-[32px]">
 
-                <div className="flex justify-between items-center mb-[16px] sm:mb-[24px] shrink-0 bg-linear-to-r from-[#2d5bff] via-[#4a69ff] to-[#6366f1] p-[10px] sm:p-[16px] rounded-[12px] sm:rounded-[16px] border border-blue-400/30 shadow-xl shadow-blue-500/20 relative z-20">
+                <div className="flex justify-between items-center mb-[20px] sm:mb-[32px] shrink-0 bg-linear-to-r from-[#2d5bff] via-[#4a69ff] to-[#6366f1] p-[10px] sm:p-[14px] rounded-[16px] sm:rounded-[20px] border border-blue-400/30 shadow-xl shadow-blue-500/20 relative z-20">
                     <div className="flex items-center gap-[12px] sm:gap-[16px]">
                         <button
                             onClick={() => navigate('/personal')}
-                            className="w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] bg-white/10 hover:bg-white/20 rounded-[10px] sm:rounded-[12px] flex items-center justify-center text-white transition-all active:scale-95 backdrop-blur-sm cursor-pointer border border-white/10"
+                            className="w-[36px] h-[36px] sm:w-[44px] sm:h-[44px] bg-white/10 hover:bg-white/20 rounded-[12px] sm:rounded-[14px] flex items-center justify-center text-white transition-all active:scale-95 backdrop-blur-sm cursor-pointer border border-white/10 group"
                         >
-                            <FaArrowLeft className="w-[12px] h-[12px] sm:w-[16px] sm:h-[16px]" />
+                            <FaArrowLeft className="w-[14px] h-[14px] sm:w-[18px] sm:h-[18px] group-hover:-translate-x-0.5 transition-transform" />
                         </button>
-                        <div className="flex bg-blue-700/30 rounded-[10px] sm:rounded-[12px] p-[4px] border border-blue-400/30 backdrop-blur-sm">
+                        <div className="flex bg-blue-700/30 rounded-[12px] sm:rounded-[14px] p-[4px] border border-blue-400/30 backdrop-blur-sm">
                             <button
                                 onClick={() => setActiveTab('tasks')}
-                                className={`px-[12px] py-[6px] sm:px-[16px] sm:py-[8px] rounded-[8px] text-[10px] sm:text-[14px] font-black uppercase tracking-widest transition-all ${activeTab === 'tasks' ? 'bg-white text-[#2d5bff] shadow-lg' : 'text-blue-100 hover:bg-white/10'}`}
+                                className={`px-[16px] py-[8px] sm:px-[20px] sm:py-[10px] rounded-[10px] text-[11px] sm:text-[13px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${activeTab === 'tasks' ? 'bg-white text-[#2d5bff] shadow-lg shadow-blue-500/20 scale-100' : 'text-blue-100 hover:bg-white/10 hover:text-white'}`}
                             >
                                 Tasks
                             </button>
                             <button
                                 onClick={() => setActiveTab('notes')}
-                                className={`px-[12px] py-[6px] sm:px-[16px] sm:py-[8px] rounded-[8px] text-[10px] sm:text-[14px] font-black uppercase tracking-widest transition-all ${activeTab === 'notes' ? 'bg-white text-[#2d5bff] shadow-lg' : 'text-blue-100 hover:bg-white/10'}`}
+                                className={`px-[16px] py-[8px] sm:px-[20px] sm:py-[10px] rounded-[10px] text-[11px] sm:text-[13px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${activeTab === 'notes' ? 'bg-white text-[#2d5bff] shadow-lg shadow-blue-500/20 scale-100' : 'text-blue-100 hover:bg-white/10 hover:text-white'}`}
                             >
                                 Notes
                             </button>
@@ -496,15 +496,17 @@ const PersonalReminders = () => {
                     </div>
 
 
-                    <div className="flex items-center gap-[8px] sm:gap-[16px]">
+                    <div className="flex items-center gap-[10px] sm:gap-[14px]">
                         {/* 🔔 Notification Icon */}
-                        <div className="relative">
-                            <FaBell
-                                className={`text-[18px] sm:text-[24px] md:text-[30px] cursor-pointer transition-colors ${showNotifications ? 'text-yellow-300' : 'text-white/80 hover:text-white'}`}
+                        <div className="relative group/notif">
+                            <button
                                 onClick={() => setShowNotifications(!showNotifications)}
-                            />
+                                className={`w-[36px] h-[36px] sm:w-[44px] sm:h-[44px] rounded-[12px] sm:rounded-[14px] flex items-center justify-center transition-all duration-300 border backdrop-blur-sm ${showNotifications ? 'bg-yellow-400 border-yellow-300 text-slate-900 shadow-lg shadow-yellow-500/40' : 'bg-white/10 border-white/10 text-white hover:bg-white/20'}`}
+                            >
+                                <FaBell className={`text-[16px] sm:text-[20px] ${showNotifications ? 'animate-bounce' : 'group-hover/notif:rotate-12 transition-transform'}`} />
+                            </button>
                             {notifications.length > 0 && (
-                                <span className="absolute -top-[4px] sm:-top-[8px] -right-[4px] sm:-right-[8px] bg-[#ff4d4d] w-[14px] h-[14px] sm:w-[20px] sm:h-[20px] text-[7px] sm:text-[10px] flex items-center justify-center rounded-full font-bold text-white shadow-lg animate-pulse">
+                                <span className="absolute -top-[5px] -right-[5px] bg-[#ff4d4d] w-[18px] h-[18px] sm:w-[22px] sm:h-[22px] text-[9px] sm:text-[11px] flex items-center justify-center rounded-full font-black text-white shadow-xl border-2 border-[#4a69ff] animate-pulse">
                                     {notifications.length}
                                 </span>
                             )}
@@ -548,9 +550,9 @@ const PersonalReminders = () => {
                         <Link
                             to="/reminder-dashboard"
                             title="Go to Dashboard"
-                            className="bg-white/10 hover:bg-white/20 text-white p-[8px] rounded-[8px] transition-all active:scale-95 flex items-center justify-center shrink-0"
+                            className="w-[36px] h-[36px] sm:w-[44px] sm:h-[44px] bg-white/10 hover:bg-white text-white hover:text-[#2d5bff] rounded-[12px] sm:rounded-[14px] transition-all active:scale-95 flex items-center justify-center shrink-0 border border-white/10 shadow-lg group"
                         >
-                            <LayoutDashboard className="w-[20px] h-[20px]" />
+                            <LayoutDashboard className="w-[16px] h-[16px] sm:w-[20px] sm:h-[20px] group-hover:scale-110 transition-transform" />
                         </Link>
                     </div>
                 </div>
@@ -597,19 +599,19 @@ const PersonalReminders = () => {
                         <div className="flex flex-col lg:flex-row gap-[16px] sm:gap-[24px] md:gap-[32px] h-full min-h-0 items-start overflow-y-auto lg:overflow-visible custom-scrollbar pb-[40px] lg:pb-0">
 
                             {/* LEFT SIDE: ADD REMINDER */}
-                            <div className="w-full lg:w-[400px] xl:w-[448px] shrink-0">
-                                <div className="glass rounded-[16px] sm:rounded-[24px] md:rounded-[32px] p-[16px] sm:p-[20px] md:p-[24px] shadow-2xl h-auto transition-all">
-                                    <h2 className="text-[14px] sm:text-[16px] md:text-[18px] font-black mb-[16px] sm:mb-[24px] text-slate-800 uppercase tracking-widest flex items-center gap-[8px]">
-                                        <div className="w-[4px] h-[16px] bg-blue-500 rounded-full"></div>
-                                        New task
+                            <div className="w-full lg:w-[340px] xl:w-[360px] shrink-0">
+                                <div className="glass rounded-[16px] sm:rounded-[20px] md:rounded-[24px] p-[12px] sm:p-[16px] md:p-[20px] shadow-2xl h-auto transition-all border border-white/20">
+                                    <h2 className="text-[13px] sm:text-[14px] md:text-[15px] font-black mb-[12px] sm:mb-[16px] text-slate-900 uppercase tracking-widest flex items-center gap-[8px]">
+                                        <div className="w-[3px] h-[16px] bg-[#2d5bff] rounded-full shadow-[0_0_6px_rgba(45,91,255,0.2)]"></div>
+                                        New Task
                                     </h2>
                                     <ReminderForm onAdd={handleAdd} categories={categories} onManageCategories={() => setShowCategoryManager(true)} />
                                 </div>
                             </div>
 
                             {/* RIGHT SIDE: LIST - SCROLLABLE SECTION */}
-                            <div className="flex-1 min-h-0 w-full mb-[40px] lg:mb-0">
-                                <div className="glass rounded-[16px] sm:rounded-[24px] md:rounded-[32px] p-[16px] sm:p-[20px] md:p-[24px] shadow-2xl flex flex-col h-auto sm:min-h-[516px]">
+                            <div className="flex-1 min-h-0 w-full mb-[24px] lg:mb-0">
+                                <div className="glass rounded-[16px] sm:rounded-[20px] md:rounded-[24px] p-[12px] sm:p-[16px] md:p-[20px] shadow-2xl flex flex-col h-auto sm:min-h-[440px] border border-white/20">
                                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-[12px] sm:gap-[16px] mb-[16px] sm:mb-[24px] shrink-0">
                                         <div className="flex flex-wrap items-center gap-[8px] sm:gap-[16px]">
                                             <h2 className="text-[14px] sm:text-[16px] md:text-[18px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-[8px]">
@@ -857,7 +859,7 @@ const PersonalReminders = () => {
                 {/* Completion Confirmation Modal */}
                 {
                     confirmToggle && (
-                        <div className="fixed inset-0 z-120 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+                        <div className="fixed inset-0 z-1100 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
                             <div className="bg-white rounded-[32px] p-[24px] sm:p-[32px] w-full max-w-[400px] shadow-2xl animate-in zoom-in-95 duration-200 border border-white">
                                 <div className="flex flex-col items-center text-center">
                                     <div className="w-[64px] h-[64px] bg-blue-50 rounded-full flex items-center justify-center mb-[24px] border border-blue-100 shadow-lg shadow-blue-500/10">
@@ -893,7 +895,7 @@ const PersonalReminders = () => {
                 {/* Bulk Delete Confirmation Modal */}
                 {
                     confirmBulkDelete && (
-                        <div className="fixed inset-0 z-120 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+                        <div className="fixed inset-0 z-1100 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
                             <div className="bg-white rounded-[32px] p-[24px] sm:p-[32px] w-full max-w-[400px] shadow-2xl animate-in zoom-in-95 duration-200 border border-white">
                                 <div className="flex flex-col items-center text-center">
                                     <div className="w-[64px] h-[64px] bg-red-50 rounded-full flex items-center justify-center mb-[24px] border border-red-100 shadow-lg shadow-red-500/10">

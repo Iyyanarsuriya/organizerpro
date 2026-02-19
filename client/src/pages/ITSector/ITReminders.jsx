@@ -880,7 +880,7 @@ const ITReminders = () => {
                 {/* Completion Confirmation Modal */}
                 {
                     confirmToggle && (
-                        <div className="fixed inset-0 z-120 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+                        <div className="fixed inset-0 z-1100 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
                             <div className="bg-white rounded-[32px] p-[24px] sm:p-[32px] w-full max-w-[400px] shadow-2xl animate-in zoom-in-95 duration-200 border border-white">
                                 <div className="flex flex-col items-center text-center">
                                     <div className="w-[64px] h-[64px] bg-blue-50 rounded-full flex items-center justify-center mb-[24px] border border-blue-100 shadow-lg shadow-blue-500/10">
@@ -916,7 +916,7 @@ const ITReminders = () => {
                 {/* Bulk Delete Confirmation Modal */}
                 {
                     confirmBulkDelete && (
-                        <div className="fixed inset-0 z-120 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+                        <div className="fixed inset-0 z-1100 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
                             <div className="bg-white rounded-[32px] p-[24px] sm:p-[32px] w-full max-w-[400px] shadow-2xl animate-in zoom-in-95 duration-200 border border-white">
                                 <div className="flex flex-col items-center text-center">
                                     <div className="w-[64px] h-[64px] bg-red-50 rounded-full flex items-center justify-center mb-[24px] border border-red-100 shadow-lg shadow-red-500/10">

@@ -799,6 +799,52 @@ const Reminders = () => {
 
 
 
+                {
+                    confirmBulkDelete && (
+                        <div className="fixed inset-0 z-1100 flex items-center justify-center p-[16px] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+                            <div className="bg-white rounded-[32px] p-[24px] sm:p-[32px] w-full max-w-[400px] shadow-2xl animate-in zoom-in-95 duration-200 border border-white">
+                                <div className="flex flex-col items-center text-center">
+                                    <div className="w-[64px] h-[64px] bg-red-50 rounded-full flex items-center justify-center mb-[24px] border border-red-100 shadow-lg shadow-red-500/10">
+                                        <div className="w-[32px] h-[32px] bg-[#ff4d4d] rounded-full flex items-center justify-center animate-pulse">
+                                            <svg className="w-[20px] h-[20px] text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <h3 className="text-[20px] font-black text-slate-800 mb-[8px] uppercase tracking-tighter">Delete {selectedIds.length} Tasks?</h3>
+                                    <p className="text-slate-500 text-[14px] font-medium mb-[32px]">
+                                        Are you sure you want to delete these tasks? This action cannot be undone! 🗑️
+                                    </p>
+                                    <div className="flex w-full gap-[12px]">
+                                        <button
+                                            onClick={() => setConfirmBulkDelete(false)}
+                                            className="flex-1 py-[12px] px-[24px] rounded-[12px] font-black text-[11px] tracking-widest uppercase border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={async () => {
+                                                try {
+                                                    await Promise.all(selectedIds.map(id => deleteReminder(id)));
+                                                    setReminders(prev => prev.filter(r => !selectedIds.includes(r.id)));
+                                                    window.dispatchEvent(new Event('refresh-reminders'));
+                                                    toast.success("Tasks deleted");
+                                                    setSelectedIds([]);
+                                                    setIsSelectionMode(false);
+                                                } catch (e) { toast.error("Delete failed"); }
+                                                finally { setConfirmBulkDelete(false); }
+                                            }}
+                                            className="flex-1 py-[12px] px-[24px] rounded-[12px] font-black text-[11px] tracking-widest uppercase bg-[#ff4d4d] text-white shadow-lg shadow-red-500/20 hover:bg-red-600 hover:shadow-xl transition-all active:scale-95 cursor-pointer"
+                                        >
+                                            Yes, Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }
+
                 {/* Category Manager Modal */}
                 {
                     showCategoryManager && (
