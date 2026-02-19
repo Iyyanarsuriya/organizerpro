@@ -41,7 +41,7 @@ const Navbar = ({
             <div className="max-w-[1440px] mx-auto px-[20px] sm:px-[40px] h-[72px] sm:h-[80px] flex items-center justify-between">
 
                 {/* Left: Branding */}
-                <div className="flex items-center gap-[8px] sm:gap-[12px] group cursor-pointer" onClick={() => navigate('/')}>
+                <div className="flex items-center gap-[8px] sm:gap-[12px] group cursor-pointer" >
                     <div className={`w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] rounded-[10px] sm:rounded-[12px] flex items-center justify-center shadow-lg transition-transform group-hover:scale-110 ${isLandingPage ? 'bg-slate-900 shadow-slate-200/50' : 'bg-linear-to-br from-[#2d5bff] to-[#6366f1] shadow-blue-500/20'}`}>
                         <LayoutDashboard className="text-white w-[20px] h-[20px] sm:w-[24px] sm:h-[24px]" />
                     </div>
