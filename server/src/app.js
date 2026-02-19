@@ -83,6 +83,7 @@ app.use('/api/it-sector', itRouter);
 const eduRouter = express.Router();
 eduRouter.use(withSector('education'));
 eduRouter.use('/reminders', require("./routes/Education/reminderRoutes"));
+eduRouter.use('/reminder-categories', require("./routes/Education/reminderCategoryRoutes"));
 eduRouter.use('/notes', require("./routes/Education/noteRoutes"));
 eduRouter.use('/transactions', transactionRoutes);
 eduRouter.use('/categories', categoryRoutes);

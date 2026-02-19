@@ -53,13 +53,19 @@ const EducationReminders = () => {
             return;
         }
 
+        // If forced, clear existing promise to allow a fresh one
+        if (force) {
+            window._eduFetchPromise = null;
+        }
+
         // Request Deduplication (Handles StrictMode & Rapid Calls)
         if (!force && window._eduFetchPromise) {
             try {
                 const [remindersRes, userRes, categoriesRes] = await window._eduFetchPromise;
                 setReminders(Array.isArray(remindersRes.data) ? remindersRes.data : []);
                 setUser(userRes.data);
-                setCategories(categoriesRes.data && Array.isArray(categoriesRes.data.data) ? categoriesRes.data.data : []);
+                const fetchedCategories = categoriesRes.data?.data || categoriesRes.data || [];
+                setCategories(Array.isArray(fetchedCategories) ? fetchedCategories : []);
                 localStorage.setItem('user', JSON.stringify(userRes.data));
                 lastFetchRef.current = Date.now();
             } catch (error) {
@@ -71,9 +77,9 @@ const EducationReminders = () => {
         }
 
         const fetchPromise = Promise.all([
-            getReminders({ sector: SECTOR }),
+            getReminders(),
             getMe(),
-            getCategories({ sector: SECTOR })
+            getCategories()
         ]);
 
         if (!force) {
@@ -84,7 +90,11 @@ const EducationReminders = () => {
             const [remindersRes, userRes, categoriesRes] = await fetchPromise;
             setReminders(Array.isArray(remindersRes.data) ? remindersRes.data : []);
             setUser(userRes.data);
-            setCategories(categoriesRes.data && Array.isArray(categoriesRes.data.data) ? categoriesRes.data.data : []);
+
+            // Safer category check
+            const fetchedCategories = categoriesRes.data?.data || categoriesRes.data || [];
+            setCategories(Array.isArray(fetchedCategories) ? fetchedCategories : []);
+
             localStorage.setItem('user', JSON.stringify(userRes.data));
             lastFetchRef.current = Date.now();
         } catch (error) {
@@ -892,17 +902,13 @@ const EducationReminders = () => {
 
             {/* Category Manager Modal */}
             {showCategoryManager && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-[24px] w-full max-w-md shadow-2xl border border-white/20 animate-in zoom-in-95 duration-200 overflow-hidden relative">
-                        <CategoryManager
-                            onClose={() => setShowCategoryManager(false)}
-                            categories={categories}
-                            onUpdate={fetchData}
-                            onCreate={async (data) => await createCategory({ ...data, sector: SECTOR })}
-                            onDelete={async (id) => await deleteCategory(id, { sector: SECTOR })}
-                        />
-                    </div>
-                </div>
+                <CategoryManager
+                    categories={categories}
+                    onUpdate={() => fetchData(true)}
+                    onClose={() => setShowCategoryManager(false)}
+                    onCreate={createCategory}
+                    onDelete={deleteCategory}
+                />
             )}
 
             {/* Edit Reminder Modal */}

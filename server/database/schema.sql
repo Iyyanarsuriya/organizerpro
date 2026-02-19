@@ -68,7 +68,7 @@
 --  44. education_notes - Education sector notes
 --  45. education_member_roles - Education staff/student roles
 --  46. education_transactions - Education sector financial transactions
---  47. education_categories - Education reminder categories
+--  47. education_reminder_categories - Education reminder categories
 --  48. education_expense_categories - Education expense categories
 --  49. education_departments - Education departments
 --  50. education_vendors - Education vendors
@@ -1091,17 +1091,17 @@ CREATE TABLE `education_transactions` (
   CONSTRAINT `fk_edu_trans_dept` FOREIGN KEY (`department_id`) REFERENCES `education_departments` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Education Categories
-DROP TABLE IF EXISTS `education_categories`;
-CREATE TABLE `education_categories` (
+-- Education Reminder Categories
+DROP TABLE IF EXISTS `education_reminder_categories`;
+CREATE TABLE `education_reminder_categories` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
   `name` varchar(50) NOT NULL,
   `color` varchar(20) DEFAULT '#2d5bff',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_user_educat` (`user_id`,`name`),
-  CONSTRAINT `fk_edu_cat_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+  UNIQUE KEY `unique_user_edu_rem_cat` (`user_id`,`name`),
+  CONSTRAINT `fk_edu_rem_cat_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Education Expense Categories
