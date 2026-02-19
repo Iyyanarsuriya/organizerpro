@@ -644,7 +644,7 @@ const EducationReminders = () => {
 
                             {/* RIGHT SIDE: LIST - SCROLLABLE SECTION */}
                             <div className="flex-1 min-h-0 w-full mb-[40px] lg:mb-0">
-                                <div className="glass rounded-[16px] sm:rounded-[24px] md:rounded-[32px] p-[16px] sm:p-[20px] md:p-[24px] shadow-2xl flex flex-col h-auto sm:min-h-[516px]">
+                                <div className="glass rounded-[16px] sm:rounded-[24px] md:rounded-[32px] p-[16px] sm:p-[20px] md:p-[24px] shadow-2xl flex flex-col h-auto lg:h-[600px] border border-white/20">
                                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-[12px] sm:gap-[16px] mb-[16px] sm:mb-[24px] shrink-0">
                                         <div className="flex flex-wrap items-center gap-[8px] sm:gap-[16px]">
                                             <h2 className="text-[14px] sm:text-[16px] md:text-[18px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-[8px]">
@@ -827,20 +827,22 @@ const EducationReminders = () => {
                                     )}
 
                                     {/* LIST COMPONENT */}
-                                    <ReminderList
-                                        reminders={processedReminders}
-                                        onToggle={handleToggle}
-                                        onDelete={handleDelete}
-                                        isSelectionMode={isSelectionMode}
-                                        selectedIds={selectedIds}
-                                        onSelect={(id) => {
-                                            setSelectedIds(prev =>
-                                                prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-                                            );
-                                        }}
-                                        SECTOR={SECTOR}
-                                        onEdit={(reminder) => setEditingReminder(reminder)}
-                                    />
+                                    <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                                        <ReminderList
+                                            reminders={processedReminders}
+                                            onToggle={handleToggle}
+                                            onDelete={handleDelete}
+                                            isSelectionMode={isSelectionMode}
+                                            selectedIds={selectedIds}
+                                            onSelect={(id) => {
+                                                setSelectedIds(prev =>
+                                                    prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+                                                );
+                                            }}
+                                            SECTOR={SECTOR}
+                                            onEdit={(reminder) => setEditingReminder(reminder)}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
