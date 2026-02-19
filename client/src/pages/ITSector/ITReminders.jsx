@@ -52,13 +52,22 @@ const ITReminders = () => {
             return;
         }
 
+        // If forced, clear existing promise to allow a fresh one
+        if (force) {
+            window._itFetchPromise = null;
+        }
+
         // Request Deduplication (Handles StrictMode & Rapid Calls)
         if (!force && window._itFetchPromise) {
             try {
                 const [remindersRes, userRes, categoriesRes] = await window._itFetchPromise;
                 setReminders(Array.isArray(remindersRes.data) ? remindersRes.data : []);
                 setUser(userRes.data);
-                setCategories(categoriesRes.data && Array.isArray(categoriesRes.data.data) ? categoriesRes.data.data : []);
+
+                // Safer category check
+                const fetchedCategories = categoriesRes.data?.data || categoriesRes.data || [];
+                setCategories(Array.isArray(fetchedCategories) ? fetchedCategories : []);
+
                 localStorage.setItem('user', JSON.stringify(userRes.data));
                 lastFetchRef.current = Date.now();
             } catch (error) {
@@ -70,9 +79,9 @@ const ITReminders = () => {
         }
 
         const fetchPromise = Promise.all([
-            getReminders({ sector: SECTOR }),
+            getReminders(),
             getMe(),
-            getCategories({ sector: SECTOR })
+            getCategories()
         ]);
 
         if (!force) {
@@ -83,7 +92,11 @@ const ITReminders = () => {
             const [remindersRes, userRes, categoriesRes] = await fetchPromise;
             setReminders(Array.isArray(remindersRes.data) ? remindersRes.data : []);
             setUser(userRes.data);
-            setCategories(categoriesRes.data && Array.isArray(categoriesRes.data.data) ? categoriesRes.data.data : []);
+
+            // Safer category check
+            const fetchedCategories = categoriesRes.data?.data || categoriesRes.data || [];
+            setCategories(Array.isArray(fetchedCategories) ? fetchedCategories : []);
+
             localStorage.setItem('user', JSON.stringify(userRes.data));
             lastFetchRef.current = Date.now();
         } catch (error) {
@@ -954,8 +967,8 @@ const ITReminders = () => {
                         <CategoryManager
                             categories={categories}
                             onUpdate={() => fetchData(true)}
-                            onCreate={(data) => createCategory({ ...data, sector: SECTOR })}
-                            onDelete={(id) => deleteCategory(id, { sector: SECTOR })}
+                            onCreate={createCategory}
+                            onDelete={deleteCategory}
                             onClose={() => setShowCategoryManager(false)}
                         />
                     )

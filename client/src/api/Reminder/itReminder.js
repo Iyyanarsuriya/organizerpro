@@ -6,9 +6,11 @@ export const updateReminder = (id, data) => axiosInstance.put(`/it-sector/remind
 export const deleteReminder = (id, params) => axiosInstance.delete(`/it-sector/reminders/${id}`, { params });
 export const triggerMissedAlert = (payload) => axiosInstance.post('/it-sector/reminders/send-missed-alert', payload);
 
-export const getCategories = (params = { sector: 'it' }) => axiosInstance.get('/categories', { params });
-export const createCategory = (categoryData) => axiosInstance.post('/categories', { ...categoryData, sector: 'it' });
-export const deleteCategory = (id, params = { sector: 'it' }) => axiosInstance.delete(`/categories/${id}`, { params });
+const BASE_URL = '/it-sector';
+
+export const getCategories = (params) => axiosInstance.get(`${BASE_URL}/reminder-categories`, { params });
+export const createCategory = (categoryData) => axiosInstance.post(`${BASE_URL}/reminder-categories`, categoryData);
+export const deleteCategory = (id, params) => axiosInstance.delete(`${BASE_URL}/reminder-categories/${id}`, { params });
 
 // Notes
 // Notes

@@ -2,7 +2,7 @@ const db = require('../config/db');
 
 // --- SECTOR MAP ---
 const TABLE_MAP = {
-    it: 'it_categories',
+    it: 'it_reminder_categories', // Updated to specific reminder categories table
     education: 'education_reminder_categories', // Updated to specific reminder categories table
     hotel: 'hotel_reminder_categories', // Updated to specific reminder categories table
     manufacturing: 'manufacturing_reminder_categories', // Updated to specific reminder categories table
@@ -14,12 +14,12 @@ const getTableName = (sector) => TABLE_MAP[sector] || TABLE_MAP.personal;
 // --- IT SECTOR ---
 const ITCategoryModel = {
     getAll: async (userId) => {
-        const [rows] = await db.query(`SELECT * FROM it_categories WHERE user_id = ? ORDER BY name ASC`, [userId]);
+        const [rows] = await db.query(`SELECT * FROM it_reminder_categories WHERE user_id = ? ORDER BY name ASC`, [userId]);
         return rows;
     },
     create: async (data) => {
         const { user_id, name, color } = data;
-        const [res] = await db.query(`INSERT INTO it_categories (user_id, name, color) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE name=name`, [user_id, name, color || '#2d5bff']);
+        const [res] = await db.query(`INSERT INTO it_reminder_categories (user_id, name, color) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE name=name`, [user_id, name, color || '#2d5bff']);
         return { id: res.insertId, ...data };
     },
     seed: async (userId) => {

@@ -56,7 +56,7 @@
 --  34. it_leaves - IT leave management
 --  35. it_audit_logs - IT audit logs
 --  36. it_transactions - IT sector financial transactions
---  37. it_categories - IT expense/transaction categories
+--  37. it_reminder_categories - IT reminder categories
 --  38. it_holidays - IT sector holidays
 --  39. it_shifts - IT sector shifts
 --
@@ -864,20 +864,20 @@ CREATE TABLE `it_transactions` (
   CONSTRAINT `fk_it_trans_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_it_trans_proj` FOREIGN KEY (`project_id`) REFERENCES `it_projects` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_it_trans_memb` FOREIGN KEY (`member_id`) REFERENCES `it_members` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `fk_it_trans_cat` FOREIGN KEY (`category_id`) REFERENCES `it_categories` (`id`) ON DELETE SET NULL
+  CONSTRAINT `fk_it_trans_cat` FOREIGN KEY (`category_id`) REFERENCES `it_reminder_categories` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- IT Categories
-DROP TABLE IF EXISTS `it_categories`;
-CREATE TABLE `it_categories` (
+-- IT Reminder Categories
+DROP TABLE IF EXISTS `it_reminder_categories`;
+CREATE TABLE `it_reminder_categories` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
   `name` varchar(50) NOT NULL,
   `color` varchar(20) DEFAULT '#2d5bff',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_user_itcat` (`user_id`,`name`),
-  CONSTRAINT `fk_it_cat_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+  UNIQUE KEY `unique_user_it_rem_cat` (`user_id`,`name`),
+  CONSTRAINT `fk_it_rem_cat_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- IT Holidays
