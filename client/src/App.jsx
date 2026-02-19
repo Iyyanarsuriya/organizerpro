@@ -1,7 +1,11 @@
 import { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster, useToasterStore, toast } from 'react-hot-toast';
-import { getReminders } from './api/Reminder/personalReminder';
+import { getReminders as getPersonalReminders } from './api/Reminder/personalReminder';
+import { getReminders as getITReminders } from './api/Reminder/itReminder';
+import { getReminders as getEduReminders } from './api/Reminder/eduReminder';
+import { getReminders as getHotelReminders } from './api/Reminder/hotelReminder';
+import { getReminders as getMfgReminders } from './api/Reminder/mfgReminder';
 import { updateProfile, getMe } from './api/authApi';
 
 // Components
@@ -98,9 +102,17 @@ const AppContent = () => {
   const fetchTodayReminders = async () => {
     if (!token) return;
     try {
-      const res = await getReminders();
+      let res;
+      const sector = user?.sector || 'personal';
+
+      if (sector === 'it') res = await getITReminders();
+      else if (sector === 'education') res = await getEduReminders();
+      else if (sector === 'hotel') res = await getHotelReminders();
+      else if (sector === 'manufacturing') res = await getMfgReminders();
+      else res = await getPersonalReminders();
+
       // Ensure res.data is an array before setting state
-      setReminders(Array.isArray(res.data) ? res.data : []);
+      setReminders(Array.isArray(res?.data) ? res.data : []);
     } catch (error) {
       console.error("Failed to fetch reminders for header", error);
     }
@@ -131,7 +143,7 @@ const AppContent = () => {
         window.removeEventListener('refresh-reminders', handleRefresh);
       };
     }
-  }, [token]);
+  }, [token, user?.sector]);
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -203,6 +215,9 @@ const AppContent = () => {
   };
 
   const todayReminders = reminders.filter(r => {
+    // If on the root selection page, don't show notifications
+    if (location.pathname === '/') return false;
+
     if (r.is_completed) return false;
     const today = new Date().toISOString().split('T')[0];
     return r.due_date && r.due_date.startsWith(today);
@@ -242,6 +257,7 @@ const AppContent = () => {
         user={user}
         handleLogout={handleLogout}
         setToken={setToken}
+        setUser={setUser}
       />
 
       <main className="pt-[72px] sm:pt-[80px] overflow-x-hidden">
@@ -253,15 +269,19 @@ const AppContent = () => {
           <Routes>
             <Route path="/" element={
               token ? (
-                user?.sector ? (
-                  user.sector === 'personal' ? <Navigate to="/personal" replace /> :
-                    user.sector === 'manufacturing' ? <Navigate to="/manufacturing" replace /> :
-                      user.sector === 'it' ? <Navigate to="/it-sector" replace /> :
-                        user.sector === 'education' ? <Navigate to="/education-sector" replace /> :
-                          user.sector === 'hotel' ? <Navigate to="/hotel-sector" replace /> :
-                            <Home onProfileClick={() => setShowProfileModal(true)} />
-                ) : (
+                (user?.owner_id === null) ? (
                   <Home onProfileClick={() => setShowProfileModal(true)} />
+                ) : (
+                  user?.sector ? (
+                    user.sector === 'personal' ? <Navigate to="/personal" replace /> :
+                      user.sector === 'manufacturing' ? <Navigate to="/manufacturing" replace /> :
+                        user.sector === 'it' ? <Navigate to="/it-sector" replace /> :
+                          user.sector === 'education' ? <Navigate to="/education-sector" replace /> :
+                            user.sector === 'hotel' ? <Navigate to="/hotel-sector" replace /> :
+                              <Home onProfileClick={() => setShowProfileModal(true)} />
+                  ) : (
+                    <Home onProfileClick={() => setShowProfileModal(true)} />
+                  )
                 )
               ) : (
                 <LandingPage onSignupClick={() => setShowSignupModal(true)} />

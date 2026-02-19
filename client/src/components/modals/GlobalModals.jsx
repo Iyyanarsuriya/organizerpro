@@ -22,7 +22,8 @@ const GlobalModals = ({
     setPreviewImage,
     user,
     handleLogout,
-    setToken
+    setToken,
+    setUser
 }) => {
     const [imgErr, setImgErr] = useState(false);
 
@@ -37,6 +38,7 @@ const GlobalModals = ({
                             onClose={() => setShowLoginModal(false)}
                             onSwitch={() => { setShowLoginModal(false); setShowSignupModal(true); }}
                             setToken={setToken}
+                            setUser={setUser}
                         />
                     </div>
                 </div>

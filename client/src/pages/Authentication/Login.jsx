@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { login } from '../../api/authApi';
 import toast from 'react-hot-toast';
 
-const Login = ({ setToken, onClose, onSwitch }) => {
+const Login = ({ setToken, setUser, onClose, onSwitch }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -64,6 +64,7 @@ const Login = ({ setToken, onClose, onSwitch }) => {
         localStorage.removeItem('rememberedEmail');
       }
 
+      if (setUser) setUser(user);
       setToken(token);
       toast.success("Login successful", { id: 'login-success', duration: 2000 });
 
@@ -71,19 +72,20 @@ const Login = ({ setToken, onClose, onSwitch }) => {
         onClose();
       }
 
-      // Handle Redirection based on sector
-      if (user.sector === 'personal') {
-        navigate("/personal");
-      } else if (user.sector === 'manufacturing') {
-        navigate("/manufacturing");
-      } else if (user.sector === 'it') {
-        navigate("/it-sector");
-      } else if (user.sector === 'education') {
-        navigate("/education-sector");
-      } else if (user.sector === 'hotel') {
-        navigate("/hotel-sector");
-      } else {
+      // Handle Redirection: Owners/Admins (owner_id is NULL) go to Selector, others go to their sector
+      const isOwner = user.owner_id === null;
+
+      if (isOwner) {
+        // Owners land on the sector selection page
         navigate("/");
+      } else {
+        // Sub-users land directly in their assigned sector
+        if (user.sector === 'personal') navigate("/personal");
+        else if (user.sector === 'manufacturing') navigate("/manufacturing");
+        else if (user.sector === 'it') navigate("/it-sector");
+        else if (user.sector === 'education') navigate("/education-sector");
+        else if (user.sector === 'hotel') navigate("/hotel-sector");
+        else navigate("/");
       }
     } catch (error) {
       toast.error(error.response?.data?.error || "Login failed", { id: 'login-error' });

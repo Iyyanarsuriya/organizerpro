@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
     Bell,
@@ -25,6 +25,21 @@ const PersonalHome = ({ onProfileClick }) => {
 
     // Get user from localStorage for a quick greet
     const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    // Protect Sector Selector: Only Owners should be here
+    useEffect(() => {
+        // user.owner_id is non-null for sub-users
+        if (user.owner_id !== undefined && user.owner_id !== null && user.sector) {
+            const sectorPaths = {
+                personal: '/personal',
+                manufacturing: '/manufacturing',
+                it: '/it-sector',
+                education: '/education-sector',
+                hotel: '/hotel-sector'
+            };
+            navigate(sectorPaths[user.sector] || '/');
+        }
+    }, [user, navigate]);
 
     const handleConfirmSelection = async () => {
         const { sector, path, label } = confirmModal;
