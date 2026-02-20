@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import ConfirmModal from '../../../components/modals/ConfirmModal';
 import {
@@ -167,7 +167,41 @@ const AttendanceTracker = () => {
         }
     }
 
-    const fetchData = async () => {
+    const lastFetchRef = useRef(0);
+
+    const fetchData = async (force = false) => {
+        const now = Date.now();
+        // Throttle fetching (60s cache/throttle)
+        if (!force && now - lastFetchRef.current < 60000 && !loading) {
+            return;
+        }
+
+        if (force) {
+            window._mfgAttendanceFetchPromise = null;
+        }
+
+        // Request Deduplication
+        if (!force && window._mfgAttendanceFetchPromise) {
+            try {
+                const [attRes, statsRes, summaryRes, projRes, membersRes, roleRes, holidaysRes, shiftsRes] = await window._mfgAttendanceFetchPromise;
+                // Safe data access with fallbacks
+                setAttendances(attRes?.data?.data || []);
+                setStats(statsRes?.data?.data || []);
+                setMemberSummary(summaryRes?.data?.data || []);
+                setProjects(projRes?.data?.data || []);
+                setMembers(membersRes?.data?.data || []);
+                setRoles(roleRes?.data?.data || []);
+                setHolidays(holidaysRes?.data?.data || []);
+                setShifts(shiftsRes?.data?.data || []);
+                lastFetchRef.current = Date.now();
+            } catch (error) {
+                console.error("Error joining existing fetch:", error);
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
         try {
             const isRange = periodType === 'range';
             const rangeStart = isRange ? customRange.start : null;
@@ -175,7 +209,7 @@ const AttendanceTracker = () => {
 
             if (isRange && (!rangeStart || !rangeEnd)) return;
 
-            const [attRes, statsRes, summaryRes, projRes, membersRes, roleRes, holidaysRes, shiftsRes] = await Promise.all([
+            const fetchPromise = Promise.all([
                 getAttendances({
                     projectId: filterProject,
                     memberId: filterMember,
@@ -203,6 +237,12 @@ const AttendanceTracker = () => {
                 getShifts({ sector: 'manufacturing' })
             ]);
 
+            if (!force) {
+                window._mfgAttendanceFetchPromise = fetchPromise;
+            }
+
+            const [attRes, statsRes, summaryRes, projRes, membersRes, roleRes, holidaysRes, shiftsRes] = await fetchPromise;
+
             // Safe data access with fallbacks
             setAttendances(attRes?.data?.data || []);
             setStats(statsRes?.data?.data || []);
@@ -212,6 +252,7 @@ const AttendanceTracker = () => {
             setRoles(roleRes?.data?.data || []);
             setHolidays(holidaysRes?.data?.data || []);
             setShifts(shiftsRes?.data?.data || []);
+            lastFetchRef.current = Date.now();
             setLoading(false);
         } catch (error) {
             console.error("Fetch error:", error);
@@ -226,6 +267,8 @@ const AttendanceTracker = () => {
             setHolidays([]);
             setShifts([]);
             setLoading(false);
+        } finally {
+            if (!force) window._mfgAttendanceFetchPromise = null;
         }
     };
 
