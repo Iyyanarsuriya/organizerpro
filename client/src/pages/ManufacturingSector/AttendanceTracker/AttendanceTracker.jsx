@@ -171,8 +171,8 @@ const AttendanceTracker = () => {
 
     const fetchData = async (force = false) => {
         const now = Date.now();
-        // Throttle fetching (60s cache/throttle)
-        if (!force && now - lastFetchRef.current < 60000 && !loading) {
+        // Throttle fetching (2s cache/throttle)
+        if (!force && now - lastFetchRef.current < 2000 && !loading) {
             return;
         }
 
@@ -386,7 +386,7 @@ const AttendanceTracker = () => {
             });
 
             toast.success("Bulk update successful");
-            fetchData();
+            fetchData(true);
         } catch (error) {
             console.error(error);
             toast.error("Failed to update bulk attendance");
@@ -416,7 +416,7 @@ const AttendanceTracker = () => {
             try {
                 await deleteAttendance(confirmModal.id);
                 toast.success("Record deleted");
-                fetchData();
+                fetchData(true);
             } catch (error) {
                 toast.error("Failed to delete record");
             }
@@ -991,8 +991,8 @@ const AttendanceTracker = () => {
                                             <p className="text-sm font-black text-blue-600">
                                                 {(() => {
                                                     const data = Array.isArray(memberSummary) ? memberSummary : [];
-                                                    const totalPresent = data.reduce((acc, curr) => acc + (curr.present || 0) + (curr.half_day || 0) * 0.5, 0);
-                                                    const totalDays = data.reduce((acc, curr) => acc + (curr.total || 0), 0);
+                                                    const totalPresent = data.reduce((acc, curr) => acc + (Number(curr.present) || 0) + (Number(curr.half_day) || 0) * 0.5, 0);
+                                                    const totalDays = data.reduce((acc, curr) => acc + (Number(curr.total) || 0), 0);
                                                     return totalDays > 0 ? ((totalPresent / totalDays) * 100).toFixed(0) : '0';
                                                 })()}%
                                             </p>
@@ -1158,11 +1158,11 @@ const AttendanceTracker = () => {
                         shifts={shifts}
                         onAdd={async (data) => {
                             await createShift({ ...data, sector: 'manufacturing' });
-                            fetchData();
+                            fetchData(true);
                         }}
                         onDelete={async (id) => {
                             await deleteShift(id);
-                            fetchData();
+                            fetchData(true);
                         }}
                     />
                 ) : activeTab === 'approvals' ? (
@@ -1188,11 +1188,11 @@ const AttendanceTracker = () => {
                         holidays={holidays}
                         onAdd={async (data) => {
                             await createHoliday({ ...data, sector: 'manufacturing' });
-                            fetchData();
+                            fetchData(true);
                         }}
                         onDelete={async (id) => {
                             await deleteHoliday(id);
-                            fetchData();
+                            fetchData(true);
                         }}
                     />
                 ) : (
