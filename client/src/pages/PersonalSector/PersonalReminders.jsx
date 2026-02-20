@@ -471,6 +471,9 @@ const PersonalReminders = () => {
         <div className="flex flex-col items-center h-full px-[8px] sm:px-[16px] relative lg:overflow-hidden">
             <div className="w-full max-w-[1280px] flex flex-col h-full pt-[16px] pb-[8px] sm:py-[16px] md:py-[32px]">
 
+                <h1 className="text-[20px] sm:text-[24px] md:text-[30px] font-black text-slate-800 mb-[16px] sm:mb-[24px] uppercase tracking-widest text-center transition-all duration-300">
+                    Personal Reminders
+                </h1>
                 <div className="flex justify-between items-center mb-[20px] sm:mb-[32px] shrink-0 bg-linear-to-r from-[#2d5bff] via-[#4a69ff] to-[#6366f1] p-[10px] sm:p-[14px] rounded-[16px] sm:rounded-[20px] border border-blue-400/30 shadow-xl shadow-blue-500/20 relative z-20">
                     <div className="flex items-center gap-[12px] sm:gap-[16px]">
                         <button

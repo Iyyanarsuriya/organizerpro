@@ -374,6 +374,9 @@ const HotelReminders = () => {
     return (
         <div className="flex flex-col items-center h-full px-[8px] sm:px-[16px] relative lg:overflow-hidden">
             <div className="w-full max-w-[1280px] flex flex-col h-full pt-[16px] pb-[8px] sm:py-[16px] md:py-[32px]">
+                <h1 className="text-[20px] sm:text-[24px] md:text-[30px] font-black text-slate-800 mb-[16px] sm:mb-[24px] uppercase tracking-widest text-center transition-all duration-300">
+                    Hotel Reminders
+                </h1>
                 <div className="flex justify-between items-center mb-[16px] sm:mb-[24px] shrink-0 bg-linear-to-r from-[#2d5bff] via-[#4a69ff] to-[#6366f1] p-[10px] sm:p-[16px] rounded-[12px] sm:rounded-[16px] border border-blue-400/30 shadow-xl shadow-blue-500/20 relative z-20">
                     <div className="flex items-center gap-[12px] sm:gap-[16px]">
                         <button onClick={() => navigate('/hotel-sector')} className="w-8 h-8 md:w-10 md:h-10 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center text-white transition-all cursor-pointer"><FaChevronLeft className="w-5 h-5" /></button>
