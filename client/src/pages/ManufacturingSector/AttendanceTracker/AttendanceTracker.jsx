@@ -322,7 +322,8 @@ const AttendanceTracker = () => {
             }
 
             await quickMarkAttendance(payload);
-            fetchData();
+            toast.success(status ? `Marked as ${status.replace('_', ' ')}` : 'Attendance Updated');
+            fetchData(true);
         } catch (error) {
             toast.error("Failed to update");
         }
@@ -1252,33 +1253,17 @@ const AttendanceTracker = () => {
                                                         </td>
                                                         <td className="px-4 py-6 text-center">
                                                             <div className="flex flex-col gap-2">
-                                                                <div className="flex items-center justify-center gap-1">
-                                                                    {['present', 'absent', 'half-day', 'late'].map(status => {
-                                                                        const option = statusOptions.find(o => o.id === status);
-                                                                        return (
-                                                                            <button
-                                                                                key={status}
-                                                                                className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black uppercase transition-all ${currentStatus === status ? `${option.bg} ${option.color} ring-2 ring-offset-1 ring-${option.color.split('-')[1]}-200` : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
-                                                                                onClick={() => handleQuickMark(w.id, status)}
-                                                                            >
-                                                                                {status === 'present' ? 'P' : status === 'absent' ? 'A' : status === 'half-day' ? 'H' : 'L'}
-                                                                            </button>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                                <div className="flex items-center justify-center gap-1">
-                                                                    {['CL', 'SL', 'EL', 'OD'].map(status => {
-                                                                        const option = statusOptions.find(o => o.id === status);
-                                                                        return (
-                                                                            <button
-                                                                                key={status}
-                                                                                className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black uppercase transition-all ${currentStatus === status ? `${option.bg} ${option.color} ring-2 ring-offset-1 ring-${option.color.split('-')[1]}-200` : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
-                                                                                onClick={() => handleQuickMark(w.id, status)}
-                                                                            >
-                                                                                {status}
-                                                                            </button>
-                                                                        );
-                                                                    })}
+                                                                <div className="flex flex-wrap items-center justify-center gap-1 max-w-[180px] mx-auto">
+                                                                    {statusOptions.map(option => (
+                                                                        <button
+                                                                            key={option.id}
+                                                                            onClick={() => handleQuickMark(w.id, option.id)}
+                                                                            className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black uppercase transition-all ${currentStatus === option.id ? `${option.bg} ${option.color} ring-2 ring-offset-1 ring-${option.color.split('-')[1]}-200 shadow-sm border ${option.border}` : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100 hover:border-slate-200'}`}
+                                                                            title={option.label}
+                                                                        >
+                                                                            {['present', 'absent', 'half-day', 'late'].includes(option.id) ? option.id === 'present' ? 'P' : option.id === 'absent' ? 'A' : option.id === 'half-day' ? 'H' : 'L' : option.id}
+                                                                        </button>
+                                                                    ))}
                                                                 </div>
                                                             </div>
                                                         </td>
