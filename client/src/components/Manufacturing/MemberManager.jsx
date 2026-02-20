@@ -8,9 +8,11 @@ import ExportButtons from '../Common/ExportButtons';
 import { generateCSV, generatePDF, generateTXT } from '../../utils/exportUtils/base.js';
 import { useState, useEffect, useRef } from 'react';
 
-const MemberManager = ({ onClose, onUpdate, sector }) => {
+const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles }) => {
     const [members, setMembers] = useState([]);
-    const [roles, setRoles] = useState([]); // ROLES STATE
+    const [localRoles, setLocalRoles] = useState([]); // Internal roles state
+    const roles = propRoles || localRoles; // Use prop if available, else local
+
     const [showRoleManager, setShowRoleManager] = useState(false); // MANAGER STATE
     const [loading, setLoading] = useState(true);
     const [formData, setFormData] = useState({
@@ -56,7 +58,7 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
                 const guests = (Array.isArray(guestRes?.data?.data) ? guestRes.data.data : []).map(g => ({ ...g, isGuest: true }));
                 const membersRaw = Array.isArray(memRes?.data?.data) ? memRes.data.data : [];
                 setMembers([...membersRaw, ...guests]);
-                setRoles(Array.isArray(roleRes?.data?.data) ? roleRes.data.data : []);
+                if (!propRoles) setLocalRoles(Array.isArray(roleRes?.data?.data) ? roleRes.data.data : []);
                 lastFetchRef.current = Date.now();
             } catch (error) {
                 console.error("Error joining existing fetch:", error);
@@ -68,7 +70,7 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
 
         const fetchPromise = Promise.all([
             getMembers({ sector }),
-            getMemberRoles({ sector }),
+            !propRoles ? getMemberRoles({ sector }) : Promise.resolve({ data: { data: [] } }),
             getGuests({ sector })
         ]);
 
@@ -81,7 +83,7 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
             const guests = (Array.isArray(guestRes?.data?.data) ? guestRes.data.data : []).map(g => ({ ...g, isGuest: true }));
             const membersRaw = Array.isArray(memRes?.data?.data) ? memRes.data.data : [];
             setMembers([...membersRaw, ...guests]);
-            setRoles(Array.isArray(roleRes?.data?.data) ? roleRes.data.data : []);
+            if (!propRoles) setLocalRoles(Array.isArray(roleRes?.data?.data) ? roleRes.data.data : []);
             lastFetchRef.current = Date.now();
         } catch (error) {
             toast.error("Failed to fetch data");
@@ -565,8 +567,12 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
                         roles={roles}
                         onCreate={(data) => createMemberRole({ ...data, sector })}
                         onDelete={(id) => deleteMemberRole(id, { sector })}
-                        onClose={() => { setShowRoleManager(false); fetchMembers(); }}
-                        onRefresh={() => getMemberRoles({ sector }).then(res => setRoles(res.data.data))}
+                        onClose={() => {
+                            setShowRoleManager(false);
+                            fetchMembers(true);
+                            if (onUpdate) onUpdate();
+                        }}
+                        onRefresh={() => propRoles ? onUpdate() : getMemberRoles({ sector }).then(res => setLocalRoles(res.data.data))}
                     />
                 )
             }

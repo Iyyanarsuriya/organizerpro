@@ -1118,7 +1118,7 @@ const AttendanceTracker = () => {
                         </div>
                     </div>
                 ) : activeTab === 'members' ? (
-                    <MemberManager onClose={() => setActiveTab('records')} onUpdate={fetchData} />
+                    <MemberManager onClose={() => setActiveTab('records')} onUpdate={() => fetchData(true)} roles={roles} sector="manufacturing" />
                 ) : activeTab === 'shifts' ? (
                     <ShiftManager
                         shifts={shifts}
@@ -1498,7 +1498,7 @@ const AttendanceTracker = () => {
                     projects={projects}
                     onCreate={createProject}
                     onDelete={deleteProject}
-                    onClose={() => { setShowProjectManager(false); fetchData(); }}
+                    onClose={() => { setShowProjectManager(false); fetchData(true); }}
                     onRefresh={() => getProjects().then(res => setProjects(res.data.data))}
                 />
             )
@@ -1509,7 +1509,7 @@ const AttendanceTracker = () => {
                         roles={roles}
                         onCreate={createMemberRole}
                         onDelete={deleteMemberRole}
-                        onClose={() => { setShowRoleManager(false); fetchData(); }}
+                        onClose={() => { setShowRoleManager(false); fetchData(true); }}
                         onRefresh={() => getMemberRoles().then(res => setRoles(res.data.data))}
                     />
                 )
