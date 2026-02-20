@@ -261,6 +261,7 @@ CREATE TABLE `manufacturing_projects` (
   `user_id` int NOT NULL,
   `name` varchar(255) NOT NULL,
   `description` text,
+  `status` enum('ongoing','completed','on-hold') DEFAULT 'ongoing',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),

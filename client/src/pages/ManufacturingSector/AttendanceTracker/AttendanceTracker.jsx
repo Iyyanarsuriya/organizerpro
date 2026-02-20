@@ -318,7 +318,7 @@ const AttendanceTracker = () => {
 
             const payload = {
                 member_id: memberId,
-                status,
+                status: status || existing?.status || 'present',
                 date,
                 project_id: filterProject || null,
                 subject: `Daily Attendance`,
@@ -423,6 +423,9 @@ const AttendanceTracker = () => {
         } else if (confirmModal.type === 'CSV') handleExportCSV(attendances);
         else if (confirmModal.type === 'PDF') handleExportPDF(attendances);
         else if (confirmModal.type === 'TXT') handleExportTXT(attendances);
+        else if (confirmModal.type === 'BULK_MARK') {
+            if (confirmModal.onConfirm) confirmModal.onConfirm();
+        }
 
         setConfirmModal({ show: false, type: null, label: '', id: null });
     };
@@ -986,7 +989,12 @@ const AttendanceTracker = () => {
                                         <div className="px-4 py-2 flex flex-col items-center justify-center min-w-[70px]">
                                             <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider">AVG</p>
                                             <p className="text-sm font-black text-blue-600">
-                                                {((Array.isArray(memberSummary) ? memberSummary : []).reduce((acc, curr) => acc + (curr.total > 0 ? ((curr.present + curr.half_day * 0.5) / curr.total) * 100 : 0), 0) / (memberSummary.length || 1)).toFixed(0)}%
+                                                {(() => {
+                                                    const data = Array.isArray(memberSummary) ? memberSummary : [];
+                                                    const totalPresent = data.reduce((acc, curr) => acc + (curr.present || 0) + (curr.half_day || 0) * 0.5, 0);
+                                                    const totalDays = data.reduce((acc, curr) => acc + (curr.total || 0), 0);
+                                                    return totalDays > 0 ? ((totalPresent / totalDays) * 100).toFixed(0) : '0';
+                                                })()}%
                                             </p>
                                         </div>
                                     </div>
@@ -1789,9 +1797,9 @@ const AttendanceTracker = () => {
                 isOpen={confirmModal.show}
                 onCancel={() => setConfirmModal({ show: false, type: null, label: '', id: null })}
                 onConfirm={handleModalConfirm}
-                title={confirmModal.type === 'DELETE' ? 'Delete Record' : `Export ${confirmModal.label}`}
-                message={confirmModal.type === 'DELETE' ? 'Are you sure you want to delete this attendance record?' : `Do you want to download the ${confirmModal.label}?`}
-                confirmText={confirmModal.type === 'DELETE' ? "Delete" : "Download"}
+                title={confirmModal.type === 'DELETE' ? 'Delete Record' : confirmModal.type === 'BULK_MARK' ? 'Confirm Action' : `Export ${confirmModal.label}`}
+                message={confirmModal.message || (confirmModal.type === 'DELETE' ? 'Are you sure you want to delete this attendance record?' : `Do you want to download the ${confirmModal.label}?`)}
+                confirmText={confirmModal.type === 'DELETE' ? "Delete" : confirmModal.type === 'BULK_MARK' ? 'Confirm' : "Download"}
                 type={confirmModal.type === 'DELETE' ? 'danger' : 'success'}
             />
         </div >
