@@ -253,15 +253,7 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles }) => {
                 </div>
                 <div className="flex items-center gap-3">
                     <ExportButtons onExportCSV={handleExportCSV} onExportPDF={handleExportPDF} onExportTXT={handleExportTXT} />
-                    <button
-                        onClick={() => setShowRoleManager(true)}
-                        className="group flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:border-purple-300 hover:text-purple-600 transition-all shadow-sm hover:shadow-md"
-                    >
-                        <div className="w-6 h-6 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <FaTag size={10} />
-                        </div>
-                        <span className="hidden sm:inline">Categories</span>
-                    </button>
+
                 </div>
             </div>
 
