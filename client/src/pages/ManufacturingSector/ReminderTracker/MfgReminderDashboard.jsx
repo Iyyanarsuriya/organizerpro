@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaCalendarAlt, FaGoogle, FaTimes } from 'react-icons/fa';
 import { IoArrowBack } from "react-icons/io5";
@@ -20,21 +20,55 @@ const MfgReminderDashboard = () => {
     const [customRange, setCustomRange] = useState({ start: '', end: '' });
     const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'completed', 'pending'
 
-    useEffect(() => {
-        fetchData();
-    }, []);
+    const lastFetchRef = useRef(0);
 
-    const fetchData = async () => {
+    const fetchData = async (force = false) => {
+        const now = Date.now();
+        // Throttle fetching (60s cache/throttle)
+        if (!force && now - lastFetchRef.current < 60000 && !loading) {
+            return;
+        }
+
+        if (force) {
+            window._mfgDashboardFetchPromise = null;
+        }
+
+        // Request Deduplication
+        if (!force && window._mfgDashboardFetchPromise) {
+            try {
+                const res = await window._mfgDashboardFetchPromise;
+                setReminders(res.data || []);
+                lastFetchRef.current = Date.now();
+            } catch (error) {
+                console.error("Error joining existing fetch:", error);
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
+        const fetchPromise = getReminders({ sector: 'manufacturing' });
+
+        if (!force) {
+            window._mfgDashboardFetchPromise = fetchPromise;
+        }
+
         try {
-            const res = await getReminders({ sector: 'manufacturing' });
+            const res = await fetchPromise;
             setReminders(res.data || []);
+            lastFetchRef.current = Date.now();
         } catch (error) {
             console.error("Error fetching reminders", error);
             toast.error("Failed to load data");
         } finally {
+            if (!force) window._mfgDashboardFetchPromise = null;
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
 
     // Filter Logic
     const processedReminders = useMemo(() => {
