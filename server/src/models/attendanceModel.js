@@ -593,10 +593,10 @@ const quickMark = async (data) => {
 };
 
 const bulkMark = async (data) => {
-    const { user_id, member_ids, date, status, sector, updated_by } = data;
+    const { user_id, member_ids, date, status, sector, updated_by, check_in } = data;
     if (!member_ids || member_ids.length === 0) return { count: 0 };
     const model = getSectorModel(sector);
-    const promises = member_ids.map(mid => model.quickMark({ user_id, member_id: mid, date, status, sector, updated_by }));
+    const promises = member_ids.map(mid => model.quickMark({ user_id, member_id: mid, date, status, sector, updated_by, check_in }));
     await Promise.all(promises);
     return { count: member_ids.length };
 };

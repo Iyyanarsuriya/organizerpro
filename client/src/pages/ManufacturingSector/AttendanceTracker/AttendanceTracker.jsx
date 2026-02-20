@@ -298,6 +298,24 @@ const AttendanceTracker = () => {
     const handleQuickMark = async (memberId, status = null, permission_duration = null, note = null, permission_start_time = null, permission_end_time = null, permission_reason = null, overtimeData = null, check_in = null, check_out = null, total_hours = null, work_mode = null) => {
         try {
             const date = periodType === 'day' ? currentPeriod : new Date().toISOString().split('T')[0];
+            const existing = activeMembersAttendanceRecords[memberId];
+
+            let finalCheckIn = check_in || existing?.check_in || null;
+            let finalCheckOut = check_out || existing?.check_out || null;
+            let finalTotalHours = total_hours || existing?.total_hours || null;
+            let finalWorkMode = work_mode || existing?.work_mode || null;
+
+            // Auto-fill check_in if marking present and it's empty
+            if (status === 'present' && !finalCheckIn) {
+                const now = new Date();
+                finalCheckIn = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            }
+
+            // Recalculate total hours if both in and out exist
+            if (finalCheckIn && finalCheckOut && (!total_hours)) {
+                finalTotalHours = calculateDuration(finalCheckIn, finalCheckOut);
+            }
+
             const payload = {
                 member_id: memberId,
                 status,
@@ -305,15 +323,15 @@ const AttendanceTracker = () => {
                 project_id: filterProject || null,
                 subject: `Daily Attendance`,
                 permission_duration,
-                note,
+                note: note !== null ? note : (existing?.note || null),
                 permission_start_time,
                 permission_end_time,
                 permission_reason,
                 sector: 'manufacturing',
-                check_in,
-                check_out,
-                total_hours,
-                work_mode
+                check_in: finalCheckIn,
+                check_out: finalCheckOut,
+                total_hours: finalTotalHours,
+                work_mode: finalWorkMode
             };
 
             if (overtimeData) {
@@ -350,6 +368,12 @@ const AttendanceTracker = () => {
                 return;
             }
 
+            let check_in = null;
+            if (status === 'present') {
+                const now = new Date();
+                check_in = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            }
+
             await bulkMarkAttendance({
                 user_id: currentUser.id,
                 member_ids: activeMemberIds,
@@ -357,7 +381,8 @@ const AttendanceTracker = () => {
                 status: status === 'week_off' ? 'week_off' : status === 'holiday' ? 'holiday' : 'present',
                 subject: status === 'week_off' ? 'Weekend' : status === 'holiday' ? 'Holiday' : 'Daily Attendance',
                 note: '',
-                sector: 'manufacturing'
+                sector: 'manufacturing',
+                check_in
             });
 
             toast.success("Bulk update successful");
