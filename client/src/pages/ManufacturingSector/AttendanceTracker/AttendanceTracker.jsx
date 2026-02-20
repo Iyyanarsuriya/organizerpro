@@ -989,7 +989,7 @@ const AttendanceTracker = () => {
                                             return matchesRole && matchesSearch && matchesMember;
                                         })
                                         .map((w) => {
-                                            const rate = w.total > 0 ? ((w.present + w.half_day * 0.5) / w.total * 100) : 0;
+                                            const rate = w.total > 0 ? (((Number(w.present) || 0) + (Number(w.late) || 0) + (Number(w.permission) || 0) + (Number(w.OD) || 0) + (Number(w.half_day) || 0) * 0.5) / w.total * 100) : 0;
                                             return (
                                                 <tr key={w.id} className="hover:bg-slate-50/80 transition-colors group">
                                                     <td className="px-8 py-5">
@@ -1017,8 +1017,8 @@ const AttendanceTracker = () => {
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-5 text-center">
-                                                        <span className="font-black text-amber-500 text-xs">
-                                                            0%
+                                                        <span className={`font-black text-xs ${rate >= 90 ? 'text-emerald-500' : rate >= 75 ? 'text-blue-500' : 'text-amber-500'}`}>
+                                                            {rate.toFixed(0)}%
                                                         </span>
                                                     </td>
                                                     <td className="px-8 py-5 text-right w-1/4">
@@ -1046,7 +1046,7 @@ const AttendanceTracker = () => {
                                     return matchesRole && matchesSearch && matchesMember;
                                 })
                                 .map((w) => {
-                                    const rate = w.total > 0 ? ((w.present + w.half_day * 0.5) / w.total * 100) : 0;
+                                    const rate = w.total > 0 ? (((Number(w.present) || 0) + (Number(w.late) || 0) + (Number(w.permission) || 0) + (Number(w.OD) || 0) + (Number(w.half_day) || 0) * 0.5) / w.total * 100) : 0;
                                     return (
                                         <div key={w.id} className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
                                             <div className="flex items-center justify-between mb-5">
@@ -1220,6 +1220,7 @@ const AttendanceTracker = () => {
                                             <th className="px-4 py-5 font-black uppercase tracking-widest text-slate-400">Name</th>
                                             <th className="px-4 py-5 font-black uppercase tracking-widest text-slate-400 text-center">Status</th>
                                             <th className="px-4 py-5 font-black uppercase tracking-widest text-slate-400 text-center">Time Log</th>
+                                            <th className="px-4 py-5 font-black uppercase tracking-widest text-slate-400 text-center">Quick Extras</th>
                                             <th className="px-4 py-5 font-black uppercase tracking-widest text-slate-400">Work Details</th>
                                             <th className="px-4 py-5 font-black uppercase tracking-widest text-slate-400 text-right">Current</th>
                                         </tr>
@@ -1312,6 +1313,50 @@ const AttendanceTracker = () => {
                                                                     </span>
                                                                 </div>
                                                             )}
+                                                        </td>
+                                                        <td className="px-4 py-6">
+                                                            <div className="flex items-center justify-center gap-2">
+                                                                <button
+                                                                    disabled={!canEdit || !isPresentOrPerm}
+                                                                    onClick={() => {
+                                                                        const [startStr, endStr] = (attendance?.permission_duration || '09:00 AM - 10:00 AM').split(' - ');
+                                                                        const parseTime = (str) => {
+                                                                            const [time, period] = (str || '').split(' ');
+                                                                            const [h, m] = (time || '09:00').split(':');
+                                                                            return { h: h || '09', m: m || '00', p: period || 'AM' };
+                                                                        };
+                                                                        const start = parseTime(startStr);
+                                                                        const end = parseTime(endStr);
+                                                                        setPermissionModalData({
+                                                                            member_id: w.id, member_name: w.name, status: 'permission',
+                                                                            start_hour: start.h, start_minute: start.m, start_period: start.p,
+                                                                            end_hour: end.h, end_minute: end.m, end_period: end.p,
+                                                                            reason: attendance?.permission_reason || '', attendance_id: attendance?.id
+                                                                        });
+                                                                        setShowPermissionModal(true);
+                                                                    }}
+                                                                    className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase flex items-center gap-2 transition-all ${currentStatus === 'permission' ? 'bg-purple-500 text-white shadow-md' : isPresentOrPerm ? 'bg-purple-50 text-purple-600 border border-purple-100 hover:bg-purple-100' : 'bg-slate-50 text-slate-300 border border-slate-50 cursor-not-allowed'}`}
+                                                                    title={attendance?.permission_duration ? `Perm: ${attendance.permission_duration}` : 'Add Permission'}
+                                                                >
+                                                                    <FaClock /> PER
+                                                                </button>
+                                                                <button
+                                                                    disabled={!canEdit || !isPresentOrPerm}
+                                                                    onClick={() => {
+                                                                        setOvertimeModalData({
+                                                                            member_id: w.id, member_name: w.name, status: 'overtime',
+                                                                            start_hour: '05', start_minute: '00', start_period: 'PM',
+                                                                            end_hour: '07', end_minute: '00', end_period: 'PM',
+                                                                            reason: attendance?.overtime_reason || '', attendance_id: attendance?.id
+                                                                        });
+                                                                        setShowOvertimeModal(true);
+                                                                    }}
+                                                                    className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase flex items-center gap-2 transition-all ${attendance?.overtime_duration ? 'bg-orange-500 text-white shadow-md' : isPresentOrPerm ? 'bg-orange-50 text-orange-600 border border-orange-100 hover:bg-orange-100' : 'bg-slate-50 text-slate-300 border border-slate-50 cursor-not-allowed'}`}
+                                                                    title={attendance?.overtime_duration ? `OT: ${attendance.overtime_duration}` : 'Add Overtime'}
+                                                                >
+                                                                    <FaBusinessTime /> OT
+                                                                </button>
+                                                            </div>
                                                         </td>
                                                         <td className="px-8 py-6">
                                                             <div

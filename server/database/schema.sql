@@ -2,7 +2,7 @@
 -- OrganizerPro Database Schema V2.2
 -- ==========================================
 -- Last Updated: February 16, 2026
--- Total Tables: 73 (2 Shared + 5 Personal + 19 Manufacturing + 13 IT + 16 Education + 18 Hotel)
+-- Total Tables: 74 (2 Shared + 5 Personal + 20 Manufacturing + 13 IT + 16 Education + 18 Hotel)
 -- 
 -- ARCHITECTURE:
 -- - Sector-based isolation for data organization
@@ -279,7 +279,11 @@ CREATE TABLE `manufacturing_members` (
   `status` enum('active','inactive') DEFAULT 'active',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `wage_type` enum('daily','monthly','piece_rate') DEFAULT 'daily',
+  `monthly_salary` decimal(15,2) DEFAULT '0.00',
   `daily_wage` decimal(15,2) DEFAULT '0.00',
+  `cl_balance` decimal(5,2) DEFAULT '0.00',
+  `sl_balance` decimal(5,2) DEFAULT '0.00',
+  `el_balance` decimal(5,2) DEFAULT '0.00',
   `member_type` enum('employee','worker') DEFAULT 'worker',
   `project_id` int DEFAULT NULL,
   `shift_id` int DEFAULT NULL,
@@ -651,6 +655,26 @@ CREATE TABLE `manufacturing_payroll_settings` (
     PRIMARY KEY (`id`),
     UNIQUE KEY `unique_settings` (`user_id`),
     CONSTRAINT `fk_man_set_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Manufacturing Attendance Locks
+DROP TABLE IF EXISTS `manufacturing_attendance_locks`;
+CREATE TABLE `manufacturing_attendance_locks` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `month` int NOT NULL,
+  `year` int NOT NULL,
+  `locked_by` varchar(100) NOT NULL,
+  `locked_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `unlocked_by` varchar(100) DEFAULT NULL,
+  `unlocked_at` datetime DEFAULT NULL,
+  `lock_reason` varchar(255) DEFAULT 'Attendance finalized',
+  `status` enum('locked','unlocked') DEFAULT 'locked',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_mfg_att_lock` (`user_id`,`month`,`year`),
+  CONSTRAINT `fk_mfg_att_lock_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 

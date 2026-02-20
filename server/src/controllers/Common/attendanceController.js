@@ -37,6 +37,12 @@ const ManufacturingAttendanceController = {
     },
     quickMark: async (req, res) => {
         const { status, member_id, date } = req.body;
+
+        // Check if attendance is locked for this date
+        if (await ManufacturingAttendanceController.checkLock(req.user.data_owner_id, date)) {
+            return res.status(403).json({ success: false, message: "Attendance is locked for this period." });
+        }
+
         if (['CL', 'SL', 'EL'].includes(status)) {
             const [member] = await db.query('SELECT cl_balance, sl_balance, el_balance FROM manufacturing_members WHERE id = ?', [member_id]);
             if (member.length > 0) {
