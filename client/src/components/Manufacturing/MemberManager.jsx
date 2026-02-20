@@ -6,7 +6,7 @@ import ConfirmModal from '../modals/ConfirmModal';
 import RoleManager from './RoleManager'; // IMPORT
 import ExportButtons from '../Common/ExportButtons';
 import { generateCSV, generatePDF, generateTXT } from '../../utils/exportUtils/base.js';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const MemberManager = ({ onClose, onUpdate, sector }) => {
     const [members, setMembers] = useState([]);
@@ -36,20 +36,57 @@ const MemberManager = ({ onClose, onUpdate, sector }) => {
     const [payments, setPayments] = useState([]);
     const [paymentsLoading, setPaymentsLoading] = useState(false);
 
-    const fetchMembers = async () => {
+    const lastFetchRef = useRef(0);
+
+    const fetchMembers = async (force = false) => {
+        const now = Date.now();
+        // Throttle (30s cache)
+        if (!force && now - lastFetchRef.current < 30000 && !loading && members.length > 0) {
+            return;
+        }
+
+        if (force) {
+            window._mfgMemberFetchPromise = null;
+        }
+
+        // Request Deduplication
+        if (!force && window._mfgMemberFetchPromise) {
+            try {
+                const [memRes, roleRes, guestRes] = await window._mfgMemberFetchPromise;
+                const guests = (Array.isArray(guestRes?.data?.data) ? guestRes.data.data : []).map(g => ({ ...g, isGuest: true }));
+                const membersRaw = Array.isArray(memRes?.data?.data) ? memRes.data.data : [];
+                setMembers([...membersRaw, ...guests]);
+                setRoles(Array.isArray(roleRes?.data?.data) ? roleRes.data.data : []);
+                lastFetchRef.current = Date.now();
+            } catch (error) {
+                console.error("Error joining existing fetch:", error);
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
+        const fetchPromise = Promise.all([
+            getMembers({ sector }),
+            getMemberRoles({ sector }),
+            getGuests({ sector })
+        ]);
+
+        if (!force) {
+            window._mfgMemberFetchPromise = fetchPromise;
+        }
+
         try {
-            const [memRes, roleRes, guestRes] = await Promise.all([
-                getMembers({ sector }),
-                getMemberRoles({ sector }),
-                getGuests({ sector })
-            ]);
+            const [memRes, roleRes, guestRes] = await fetchPromise;
             const guests = (Array.isArray(guestRes?.data?.data) ? guestRes.data.data : []).map(g => ({ ...g, isGuest: true }));
             const membersRaw = Array.isArray(memRes?.data?.data) ? memRes.data.data : [];
             setMembers([...membersRaw, ...guests]);
             setRoles(Array.isArray(roleRes?.data?.data) ? roleRes.data.data : []);
-            setLoading(false);
+            lastFetchRef.current = Date.now();
         } catch (error) {
             toast.error("Failed to fetch data");
+        } finally {
+            if (!force) window._mfgMemberFetchPromise = null;
             setLoading(false);
         }
     };
