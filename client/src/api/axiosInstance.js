@@ -22,7 +22,7 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {
-        if ((error.response?.status === 401 || error.response?.status === 403) && !window.location.pathname.includes('/login')) {
+        if (error.response?.status === 401 && !window.location.pathname.includes('/login')) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             sessionStorage.removeItem('token');

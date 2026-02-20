@@ -44,6 +44,7 @@ const ShiftManager = ({ shifts, onAdd, onDelete }) => {
                             <div>
                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Name</label>
                                 <input
+                                    id="shift-name"
                                     type="text"
                                     value={newShift.name}
                                     onChange={e => setNewShift({ ...newShift, name: e.target.value })}
@@ -55,6 +56,7 @@ const ShiftManager = ({ shifts, onAdd, onDelete }) => {
                                 <div>
                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Start</label>
                                     <input
+                                        id="shift-start"
                                         type="time"
                                         value={newShift.start_time}
                                         onChange={e => setNewShift({ ...newShift, start_time: e.target.value })}
@@ -64,6 +66,7 @@ const ShiftManager = ({ shifts, onAdd, onDelete }) => {
                                 <div>
                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">End</label>
                                     <input
+                                        id="shift-end"
                                         type="time"
                                         value={newShift.end_time}
                                         onChange={e => setNewShift({ ...newShift, end_time: e.target.value })}

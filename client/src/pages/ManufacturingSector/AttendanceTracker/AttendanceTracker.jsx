@@ -1225,6 +1225,7 @@ const AttendanceTracker = () => {
                             <div className="px-8 py-6 border-b border-slate-100 flex flex-wrap items-center gap-4 bg-slate-50/30">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Quick Actions:</label>
                                 <button
+                                    id="mark-all-present"
                                     onClick={() => handleBulkMark('present')}
                                     className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 shadow-sm transition-all flex items-center gap-2"
                                 >

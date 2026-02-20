@@ -44,6 +44,7 @@ const CalendarManager = ({ holidays, onAdd, onDelete }) => {
                             <div>
                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Name</label>
                                 <input
+                                    id="holiday-name"
                                     type="text"
                                     value={newHoliday.name}
                                     onChange={e => setNewHoliday({ ...newHoliday, name: e.target.value })}
@@ -54,6 +55,7 @@ const CalendarManager = ({ holidays, onAdd, onDelete }) => {
                             <div>
                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Date</label>
                                 <input
+                                    id="holiday-date"
                                     type="date"
                                     value={newHoliday.date}
                                     onChange={e => setNewHoliday({ ...newHoliday, date: e.target.value })}
