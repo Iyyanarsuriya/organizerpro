@@ -3,11 +3,12 @@ import { FaPlus, FaTrash, FaTimes, FaTag } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../modals/ConfirmModal';
 
-const RoleManager = ({ roles = [], onCreate, onDelete, onClose, onRefresh }) => {
+const RoleManager = ({ roles = [], members = [], onCreate, onDelete, onClose, onRefresh }) => {
     const [newRoleName, setNewRoleName] = useState('');
     const [loading, setLoading] = useState(false);
 
     const [deleteModal, setDeleteModal] = useState({ show: false, id: null });
+    const [warningModal, setWarningModal] = useState({ show: false, message: '' });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -26,8 +27,16 @@ const RoleManager = ({ roles = [], onCreate, onDelete, onClose, onRefresh }) => 
         }
     };
 
-    const handleDeleteClick = (id) => {
-        setDeleteModal({ show: true, id });
+    const handleDeleteClick = (role) => {
+        const memberCount = members.filter(m => m.role === role.name).length;
+        if (memberCount > 0) {
+            setWarningModal({
+                show: true,
+                message: `Cannot delete '${role.name}'. It is currently assigned to ${memberCount} member(s). Please reassign them before deleting.`
+            });
+            return;
+        }
+        setDeleteModal({ show: true, id: role.id });
     };
 
     const confirmDelete = async () => {
@@ -87,10 +96,13 @@ const RoleManager = ({ roles = [], onCreate, onDelete, onClose, onRefresh }) => 
                                 </div>
                                 <div>
                                     <p className="font-bold text-slate-800 text-sm">{role.name}</p>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                        {members.filter(m => m.role === role.name).length} Members
+                                    </p>
                                 </div>
                             </div>
                             <button
-                                onClick={() => handleDeleteClick(role.id)}
+                                onClick={() => handleDeleteClick(role)}
                                 className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors opacity-0 group-hover:opacity-100"
                             >
                                 <FaTrash />
@@ -105,12 +117,27 @@ const RoleManager = ({ roles = [], onCreate, onDelete, onClose, onRefresh }) => 
                 <ConfirmModal
                     isOpen={deleteModal.show}
                     title="Delete Category?"
-                    message="This will remove the category from the list, but existing members with this category will remain unchanged."
+                    message="This will remove the category from the list."
                     onConfirm={confirmDelete}
                     onCancel={() => setDeleteModal({ show: false, id: null })}
                     confirmText="Delete"
                     cancelText="Cancel"
                     type="danger"
+                    zIndex="z-120"
+                />
+
+                {/* Warning Modal */}
+                <ConfirmModal
+                    isOpen={warningModal.show}
+                    title="Cannot Delete Category"
+                    message={warningModal.message}
+                    onConfirm={() => setWarningModal({ show: false, message: '' })}
+                    onCancel={() => setWarningModal({ show: false, message: '' })}
+                    confirmText="OK"
+                    cancelText=""
+                    type="info"
+                    singleButton={true}
+                    zIndex="z-120"
                 />
             </div>
         </div>

@@ -1507,6 +1507,7 @@ const AttendanceTracker = () => {
                 showRoleManager && (
                     <RoleManager
                         roles={roles}
+                        members={members}
                         onCreate={createMemberRole}
                         onDelete={deleteMemberRole}
                         onClose={() => { setShowRoleManager(false); fetchData(true); }}

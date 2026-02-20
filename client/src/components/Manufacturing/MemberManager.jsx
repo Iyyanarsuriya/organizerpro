@@ -557,6 +557,7 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles }) => {
                 showRoleManager && (
                     <RoleManager
                         roles={roles}
+                        members={members}
                         onCreate={(data) => createMemberRole({ ...data, sector })}
                         onDelete={(id) => deleteMemberRole(id, { sector })}
                         onClose={() => {
