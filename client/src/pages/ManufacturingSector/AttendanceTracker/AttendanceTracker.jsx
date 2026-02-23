@@ -149,7 +149,9 @@ const AttendanceTracker = () => {
         { id: 'CL', label: 'CL', icon: FaTag, color: 'text-cyan-600', bg: 'bg-cyan-50', border: 'border-cyan-200' },
         { id: 'SL', label: 'SL', icon: FaTag, color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-200' },
         { id: 'EL', label: 'EL', icon: FaTag, color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-200' },
-        { id: 'OD', label: 'OD', icon: FaTag, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200' }
+        { id: 'OD', label: 'OD', icon: FaTag, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200' },
+        { id: 'holiday', label: 'Holiday', icon: FaTag, color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-200' },
+        { id: 'week_off', label: 'Weekend', icon: FaCalendarAlt, color: 'text-slate-500', bg: 'bg-slate-50', border: 'border-slate-200' }
     ];
 
     function getHexColor(status) {
@@ -163,6 +165,8 @@ const AttendanceTracker = () => {
             case 'SL': return '#f43f5e';
             case 'EL': return '#8b5cf6';
             case 'OD': return '#6366f1';
+            case 'holiday': return '#f43f5e';
+            case 'week_off': return '#94a3b8';
             default: return '#94a3b8';
         }
     }
@@ -562,6 +566,15 @@ const AttendanceTracker = () => {
         return today;
     }, [periodType, currentPeriod, customRange.end]);
 
+    const activeHoliday = useMemo(() => {
+        if (!activeTargetDate || !Array.isArray(holidays)) return null;
+        return holidays.find(h => {
+            const d = new Date(h.date);
+            const hDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            return hDate === activeTargetDate;
+        });
+    }, [activeTargetDate, holidays]);
+
     const canEdit = useMemo(() => {
         const today = new Date().toISOString().split('T')[0];
         const isPastDate = activeTargetDate < today;
@@ -634,14 +647,14 @@ const AttendanceTracker = () => {
     );
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] font-['Outfit'] text-slate-900 overflow-x-hidden">
+        <div className="min-h-screen bg-[#f8fafc] font-['Outfit'] text-slate-900 overflow-x-hidden w-full">
             {/* Glossy Header Background */}
-            <div className="fixed top-0 left-0 w-full h-80 bg-linear-to-b from-blue-50/50 to-transparent pointer-events-none -z-10"></div>
+            <div className="fixed top-0 left-0 w-full h-[320px] bg-linear-to-b from-blue-50/50 to-transparent pointer-events-none -z-10"></div>
 
             {/* Header */}
             <header className="bg-white/80 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-40 transition-all duration-300">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+                    <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6">
                         <div className="flex items-center gap-4">
                             <Link
                                 to="/manufacturing"
@@ -649,23 +662,23 @@ const AttendanceTracker = () => {
                             >
                                 <FaChevronLeft className="w-4 h-4" />
                             </Link>
-                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-linear-to-br from-blue-500 to-indigo-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
+                            <div className="w-10 h-10 sm:w-[48px] sm:h-[48px] bg-linear-to-br from-blue-500 to-indigo-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
                                 <FaUserCheck className="text-white text-lg sm:text-xl" />
                             </div>
                             <div>
                                 <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Attendance</h1>
-                                <p className="text-slate-500 text-[10px] sm:text-xs font-bold uppercase tracking-widest">Consistency is key</p>
+                                <p className="text-slate-500 text-[10px] sm:text-xs font-bold uppercase tracking-widest leading-none">Consistency is key</p>
                             </div>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                             {/* Period Selector - Now scrollable on mobile */}
-                            <div className="flex-1 min-w-[140px] sm:flex-none h-[38px] flex items-center p-1 bg-slate-50 border border-slate-200 rounded-xl shadow-sm overflow-x-auto custom-scrollbar no-scrollbar">
+                            <div className="w-full lg:w-auto h-[38px] flex items-center p-1 bg-slate-50 border border-slate-200 rounded-xl shadow-sm overflow-x-auto no-scrollbar">
                                 {['day', 'month', 'year', 'range'].map((type) => (
                                     <button
                                         key={type}
                                         onClick={() => setPeriodType(type)}
-                                        className={`flex-1 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${periodType === type ? 'bg-white text-blue-600 shadow-sm border border-blue-100' : 'text-slate-400 hover:text-slate-600'}`}
+                                        className={`flex-1 lg:flex-none px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${periodType === type ? 'bg-white text-blue-600 shadow-sm border border-blue-100' : 'text-slate-400 hover:text-slate-600'}`}
                                     >
                                         {type}
                                     </button>
@@ -673,7 +686,7 @@ const AttendanceTracker = () => {
                             </div>
 
                             {/* Date Input - Balanced for mobile */}
-                            <div className="flex-1 min-w-[140px] sm:min-w-[160px] h-[38px] flex items-center bg-white border border-slate-200 px-3 rounded-xl shadow-sm hover:border-blue-500 transition-colors">
+                            <div className="w-full lg:w-[180px] h-[38px] flex items-center bg-white border border-slate-200 px-3 rounded-xl shadow-sm hover:border-blue-500 transition-colors">
                                 {periodType === 'day' ? (
                                     <input
                                         type="date"
@@ -840,7 +853,7 @@ const AttendanceTracker = () => {
                                     <FaChartBar className="text-blue-500" />
                                     {periodType.charAt(0).toUpperCase() + periodType.slice(1)} Stats
                                 </h3>
-                                <div className="h-64">
+                                <div className="h-[256px]">
                                     {stats.length > 0 ? (
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
@@ -911,11 +924,11 @@ const AttendanceTracker = () => {
                                                                         <span className="flex items-center gap-1">
                                                                             <FaCalendarAlt /> {new Date(item.date).toLocaleDateString('en-GB')}
                                                                         </span>
-                                                                        <span className="w-1 h-1 rounded-full bg-slate-300" />
+                                                                        <span className="w-[1px] h-[1px] rounded-full bg-slate-300" />
                                                                         <span className="text-amber-500 font-black">{item.member_name}</span>
                                                                         {item.created_by && (
                                                                             <>
-                                                                                <span className="w-1 h-1 rounded-full bg-slate-300" />
+                                                                                <span className="w-[1px] h-[1px] rounded-full bg-slate-300" />
                                                                                 <span className="text-purple-400">CREATED: {item.created_by}</span>
                                                                             </>
                                                                         )}
@@ -991,9 +1004,11 @@ const AttendanceTracker = () => {
                                             <p className="text-sm font-black text-blue-600">
                                                 {(() => {
                                                     const data = Array.isArray(memberSummary) ? memberSummary : [];
-                                                    const totalPresent = data.reduce((acc, curr) => acc + (Number(curr.present) || 0) + (Number(curr.half_day) || 0) * 0.5, 0);
                                                     const totalDays = data.reduce((acc, curr) => acc + (Number(curr.total) || 0), 0);
-                                                    return totalDays > 0 ? ((totalPresent / totalDays) * 100).toFixed(0) : '0';
+                                                    const totalPresentValue = data.reduce((acc, curr) => {
+                                                        return acc + (Number(curr.present) || 0) + (Number(curr.late) || 0) + (Number(curr.permission) || 0) + (Number(curr.OD) || 0) + (Number(curr.holiday) || 0) + (Number(curr.week_off) || 0) + (Number(curr.half_day) || 0) * 0.5;
+                                                    }, 0);
+                                                    return totalDays > 0 ? ((totalPresentValue / totalDays) * 100).toFixed(0) : '0';
                                                 })()}%
                                             </p>
                                         </div>
@@ -1003,12 +1018,12 @@ const AttendanceTracker = () => {
                         </div>
 
                         {/* Desktop Summary View */}
-                        <div className="hidden md:block overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
+                        <div className="hidden md:block overflow-x-auto custom-scrollbar">
+                            <table className="w-full min-w-[1000px] text-left border-collapse">
                                 <thead>
                                     <tr className="bg-slate-50/50">
                                         <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">MEMBER</th>
-                                        <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-center">STATS (DAYS/P/A/L/H/PER)</th>
+                                        <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-center">STATS (D/P/A/L/H/HO/WO/Pr)</th>
                                         <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-center">UTIL. %</th>
                                         <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-right">PROGRESS</th>
                                     </tr>
@@ -1022,7 +1037,9 @@ const AttendanceTracker = () => {
                                             return matchesRole && matchesSearch && matchesMember;
                                         })
                                         .map((w) => {
-                                            const rate = w.total > 0 ? (((Number(w.present) || 0) + (Number(w.late) || 0) + (Number(w.permission) || 0) + (Number(w.OD) || 0) + (Number(w.half_day) || 0) * 0.5) / w.total * 100) : 0;
+                                            const totalRelevantDays = w.total || 0;
+                                            const presentValue = (Number(w.present) || 0) + (Number(w.late) || 0) + (Number(w.permission) || 0) + (Number(w.OD) || 0) + (Number(w.holiday) || 0) + (Number(w.week_off) || 0) + (Number(w.half_day) || 0) * 0.5;
+                                            const rate = totalRelevantDays > 0 ? (presentValue / totalRelevantDays * 100) : 0;
                                             return (
                                                 <tr key={w.id} className="hover:bg-slate-50/80 transition-colors group">
                                                     <td className="px-8 py-5">
@@ -1039,14 +1056,16 @@ const AttendanceTracker = () => {
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-5">
-                                                        <div className="flex items-center justify-center gap-1.5">
-                                                            <span className="w-8 h-8 flex items-center justify-center bg-slate-900 text-white rounded-lg font-black text-[10px]" title="Total Days">{w.total || 0}</span>
-                                                            <span className="w-8 h-8 flex items-center justify-center bg-emerald-50 text-emerald-600 rounded-lg font-black text-[10px] border border-emerald-100" title="Present">{w.present}</span>
-                                                            <span className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 rounded-lg font-black text-[10px] border border-red-100" title="Absent">{w.absent}</span>
-                                                            <span className="w-8 h-8 flex items-center justify-center bg-amber-50 text-amber-600 rounded-lg font-black text-[10px] border border-amber-100" title="Late">{w.late}</span>
-                                                            <span className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg font-black text-[10px] border border-blue-100" title="Half Day">{w.half_day}</span>
-                                                            <span className="w-8 h-8 flex items-center justify-center bg-purple-50 text-purple-600 rounded-lg font-black text-[10px] border border-purple-100" title="Permission">{w.permission || 0}</span>
+                                                    <td className="px-6 py-5 text-center">
+                                                        <div className="flex items-center justify-center gap-1.5 flex-wrap max-w-[320px] mx-auto">
+                                                            <span className="w-8 h-8 flex items-center justify-center bg-slate-900 text-white rounded-lg font-black text-[10px] shrink-0" title="Total Days">{w.total || 0}</span>
+                                                            <span className="w-8 h-8 flex items-center justify-center bg-emerald-50 text-emerald-600 rounded-lg font-black text-[10px] border border-emerald-100 shrink-0" title="Present">{w.present}</span>
+                                                            <span className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 rounded-lg font-black text-[10px] border border-red-100 shrink-0" title="Absent">{w.absent}</span>
+                                                            <span className="w-8 h-8 flex items-center justify-center bg-amber-50 text-amber-600 rounded-lg font-black text-[10px] border border-amber-100 shrink-0" title="Late">{w.late}</span>
+                                                            <span className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg font-black text-[10px] border border-blue-100 shrink-0" title="Half Day">{w.half_day}</span>
+                                                            <span className="w-8 h-8 flex items-center justify-center bg-rose-50 text-rose-600 rounded-lg font-black text-[10px] border border-rose-100 shrink-0" title="Holiday">{w.holiday || 0}</span>
+                                                            <span className="w-8 h-8 flex items-center justify-center bg-slate-50 text-slate-500 rounded-lg font-black text-[10px] border border-slate-100 shrink-0" title="Week Off/Weekend">{w.week_off || 0}</span>
+                                                            <span className="w-8 h-8 flex items-center justify-center bg-purple-50 text-purple-600 rounded-lg font-black text-[10px] border border-purple-100 shrink-0" title="Permission">{w.permission || 0}</span>
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-5 text-center">
@@ -1079,7 +1098,9 @@ const AttendanceTracker = () => {
                                     return matchesRole && matchesSearch && matchesMember;
                                 })
                                 .map((w) => {
-                                    const rate = w.total > 0 ? (((Number(w.present) || 0) + (Number(w.late) || 0) + (Number(w.permission) || 0) + (Number(w.OD) || 0) + (Number(w.half_day) || 0) * 0.5) / w.total * 100) : 0;
+                                    const totalRelevantDays = w.total || 0;
+                                    const presentValue = (Number(w.present) || 0) + (Number(w.late) || 0) + (Number(w.permission) || 0) + (Number(w.OD) || 0) + (Number(w.holiday) || 0) + (Number(w.week_off) || 0) + (Number(w.half_day) || 0) * 0.5;
+                                    const rate = totalRelevantDays > 0 ? (presentValue / totalRelevantDays * 100) : 0;
                                     return (
                                         <div key={w.id} className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
                                             <div className="flex items-center justify-between mb-5">
@@ -1120,8 +1141,8 @@ const AttendanceTracker = () => {
                                                     <div className="w-full aspect-square bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-xs font-black">{w.half_day}</div>
                                                 </div>
                                                 <div className="text-center">
-                                                    <p className="text-[9px] font-black text-purple-500 uppercase mb-1">Pr</p>
-                                                    <div className="w-full aspect-square bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-xs font-black">{w.permission || 0}</div>
+                                                    <p className="text-[9px] font-black text-rose-500 uppercase mb-1">Hol</p>
+                                                    <div className="w-full aspect-square bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center text-xs font-black">{w.holiday || 0}</div>
                                                 </div>
                                             </div>
 
@@ -1137,7 +1158,7 @@ const AttendanceTracker = () => {
                                                 </div>
                                                 <div className="text-center px-4 border-l border-slate-100">
                                                     <p className="text-[9px] font-black text-slate-400 uppercase mb-0.5">Util.</p>
-                                                    <p className="text-sm font-black text-amber-500">0%</p>
+                                                    <p className={`text-sm font-black ${rate >= 90 ? 'text-emerald-500' : rate >= 75 ? 'text-blue-500' : 'text-amber-500'}`}>{rate.toFixed(0)}%</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -1197,32 +1218,38 @@ const AttendanceTracker = () => {
                     />
                 ) : (
                     <div className="bg-white rounded-[40px] shadow-xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="p-8 sm:p-12 border-b border-slate-100 bg-linear-to-br from-slate-900 to-slate-800 text-white">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                        <div className="p-6 sm:p-10 border-b border-slate-100 bg-linear-to-br from-slate-900 to-slate-800 text-white">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div>
-                                    <h3 className="text-2xl font-black mb-2 font-['Outfit']">Daily Attendance Sheet</h3>
-                                    <div className="flex items-center gap-3">
-                                        <FaCalendarAlt className="text-blue-400" />
-                                        <span className="text-slate-400 font-bold uppercase tracking-widest text-xs font-['Outfit']">
+                                    <h3 className="text-xl sm:text-2xl font-black mb-1.5 font-['Outfit']">Daily Attendance Sheet</h3>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <FaCalendarAlt className="text-blue-400 text-[12px]" />
+                                        <span className="text-slate-400 font-bold uppercase tracking-widest text-[9px] sm:text-[10px] font-['Outfit']">
                                             {(() => {
                                                 try {
                                                     return new Date(activeTargetDate).toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
                                                 } catch (e) { return 'Invalid Date'; }
                                             })()}
                                         </span>
+                                        {activeHoliday && (
+                                            <div className="flex items-center gap-2 px-3 py-1 bg-rose-500/20 border border-rose-500/30 rounded-full">
+                                                <FaTag className="text-rose-400 text-[9px]" />
+                                                <span className="text-rose-200 text-[9px] font-black uppercase tracking-widest">{activeHoliday.name} (HOLIDAY)</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 {periodType === 'day' && (
-                                    <div className="bg-white/10 px-6 py-3 rounded-2xl border border-white/10 backdrop-blur-md">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-300 mb-1 font-['Outfit']">Marking Mode</p>
-                                        <p className="text-sm font-black font-['Outfit']">Single Click Upsert</p>
+                                    <div className="bg-white/10 px-4 py-2 sm:px-6 sm:py-3 rounded-2xl border border-white/10 backdrop-blur-md self-start sm:self-center">
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-blue-300 mb-0.5 font-['Outfit']">Marking Mode</p>
+                                        <p className="text-xs sm:text-sm font-black font-['Outfit']">Quick Upsert</p>
                                     </div>
                                 )}
                             </div>
                         </div>
 
                         <div className="p-0">
-                            <div className="px-8 py-6 border-b border-slate-100 flex flex-wrap items-center gap-4 bg-slate-50/30">
+                            <div className="px-6 py-4 sm:px-8 sm:py-6 border-b border-slate-100 flex flex-wrap items-center gap-3 sm:gap-4 bg-slate-50/30">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Quick Actions:</label>
                                 <button
                                     id="mark-all-present"
@@ -1231,7 +1258,7 @@ const AttendanceTracker = () => {
                                 >
                                     <FaCheckCircle className="text-sm" /> MARK ALL PRESENT
                                 </button>
-                                <div className="w-px h-6 bg-slate-200 hidden sm:block" />
+                                <div className="w-[1px] h-[24px] bg-slate-200 hidden sm:block" />
                                 <button
                                     onClick={() => handleBulkMark('week_off')}
                                     className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 hover:border-slate-300 shadow-sm transition-all flex items-center gap-2"
@@ -1288,17 +1315,28 @@ const AttendanceTracker = () => {
                                                         </td>
                                                         <td className="px-4 py-6 text-center">
                                                             <div className="flex flex-col gap-2">
-                                                                <div className="flex flex-wrap items-center justify-center gap-1 max-w-[180px] mx-auto">
-                                                                    {statusOptions.map(option => (
-                                                                        <button
-                                                                            key={option.id}
-                                                                            onClick={() => handleQuickMark(w.id, option.id)}
-                                                                            className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black uppercase transition-all ${currentStatus === option.id ? `${option.bg} ${option.color} ring-2 ring-offset-1 ring-${option.color.split('-')[1]}-200 shadow-sm border ${option.border}` : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100 hover:border-slate-200'}`}
-                                                                            title={option.label}
-                                                                        >
-                                                                            {['present', 'absent', 'half-day', 'late'].includes(option.id) ? option.id === 'present' ? 'P' : option.id === 'absent' ? 'A' : option.id === 'half-day' ? 'H' : 'L' : option.id}
-                                                                        </button>
-                                                                    ))}
+                                                                <div className="flex flex-wrap items-center justify-center gap-[6px] max-w-[220px] mx-auto">
+                                                                    {statusOptions.map(option => {
+                                                                        const getDisplayLabel = (id) => {
+                                                                            if (id === 'present') return 'P';
+                                                                            if (id === 'absent') return 'A';
+                                                                            if (id === 'half-day') return 'H';
+                                                                            if (id === 'late') return 'L';
+                                                                            if (id === 'holiday') return 'HO';
+                                                                            if (id === 'week_off') return 'WO';
+                                                                            return id;
+                                                                        };
+                                                                        return (
+                                                                            <button
+                                                                                key={option.id}
+                                                                                onClick={() => handleQuickMark(w.id, option.id)}
+                                                                                className={`w-[32px] h-[32px] rounded-lg flex items-center justify-center text-[10px] font-black uppercase transition-all ${currentStatus === option.id ? `${option.bg} ${option.color} ring-2 ring-offset-1 ring-${option.color.split('-')[1]}-200 shadow-sm border ${option.border}` : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100 hover:border-slate-200'}`}
+                                                                                title={option.label}
+                                                                            >
+                                                                                {getDisplayLabel(option.id)}
+                                                                            </button>
+                                                                        );
+                                                                    })}
                                                                 </div>
                                                             </div>
                                                         </td>
