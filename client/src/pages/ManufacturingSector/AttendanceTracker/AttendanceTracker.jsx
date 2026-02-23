@@ -825,24 +825,26 @@ const AttendanceTracker = () => {
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* View Selector */}
-                <div className="flex bg-slate-100 p-1 rounded-xl shadow-inner border border-slate-200 w-full mb-8 overflow-x-auto custom-scrollbar">
-                    {[
-                        { id: 'records', label: 'Records' },
-                        { id: 'summary', label: 'Summary' },
-                        { id: 'quick', label: 'Daily Sheet' },
-                        { id: 'members', label: 'Members' },
-                        { id: 'shifts', label: 'Shifts & Rules' },
-                        { id: 'approvals', label: 'Approvals' },
-                        { id: 'calendar', label: 'Calendar' }
-                    ].map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`flex-1 sm:flex-none px-4 sm:px-6 py-2.5 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white text-slate-900 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-800'}`}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
+                <div className="flex bg-slate-100 p-1 rounded-xl shadow-inner border border-slate-200 w-full mb-8 overflow-x-auto no-scrollbar custom-scrollbar">
+                    <div className="flex flex-nowrap min-w-max gap-1">
+                        {[
+                            { id: 'records', label: 'Records' },
+                            { id: 'summary', label: 'Summary' },
+                            { id: 'quick', label: 'Daily Sheet' },
+                            { id: 'members', label: 'Members' },
+                            { id: 'shifts', label: 'Shifts & Rules' },
+                            { id: 'approvals', label: 'Approvals' },
+                            { id: 'calendar', label: 'Calendar' }
+                        ].map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`px-4 sm:px-6 py-2.5 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white text-slate-900 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-800'}`}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {activeTab === 'records' ? (
@@ -1022,10 +1024,10 @@ const AttendanceTracker = () => {
                             <table className="w-full min-w-[1000px] text-left border-collapse">
                                 <thead>
                                     <tr className="bg-slate-50/50">
-                                        <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">MEMBER</th>
+                                        <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">MEMBER</th>
                                         <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-center">STATS (D/P/A/L/H/HO/WO/Pr)</th>
                                         <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-center">UTIL. %</th>
-                                        <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-right">PROGRESS</th>
+                                        <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-right">PROGRESS</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
@@ -1042,7 +1044,7 @@ const AttendanceTracker = () => {
                                             const rate = totalRelevantDays > 0 ? (presentValue / totalRelevantDays * 100) : 0;
                                             return (
                                                 <tr key={w.id} className="hover:bg-slate-50/80 transition-colors group">
-                                                    <td className="px-8 py-5">
+                                                    <td className="px-6 py-5">
                                                         <div className="flex items-center gap-3">
                                                             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xs shrink-0 shadow-md shadow-blue-500/20">
                                                                 {w.name ? w.name.charAt(0) : '?'}
@@ -1073,7 +1075,7 @@ const AttendanceTracker = () => {
                                                             {rate.toFixed(0)}%
                                                         </span>
                                                     </td>
-                                                    <td className="px-8 py-5 text-right w-1/4">
+                                                    <td className="px-6 py-5 text-right w-1/4">
                                                         <div className="flex items-center justify-end gap-4">
                                                             <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
                                                                 <div className={`h-full rounded-full transition-all duration-1000 ${rate >= 90 ? 'bg-emerald-500' : rate >= 75 ? 'bg-blue-500' : 'bg-amber-500'}`} style={{ width: `${rate}%` }} />
@@ -1274,16 +1276,16 @@ const AttendanceTracker = () => {
                             </div>
 
                             {/* Desktop Table View */}
-                            <div className="hidden md:block overflow-x-auto">
-                                <table className="w-full text-left">
+                            <div className="hidden md:block overflow-x-auto custom-scrollbar">
+                                <table className="w-full min-w-[1024px] text-left">
                                     <thead>
                                         <tr className="bg-slate-50/50 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                            <th className="px-4 py-5 font-black uppercase tracking-widest text-slate-400">Name</th>
-                                            <th className="px-4 py-5 font-black uppercase tracking-widest text-slate-400 text-center">Status</th>
-                                            <th className="px-4 py-5 font-black uppercase tracking-widest text-slate-400 text-center">Time Log</th>
-                                            <th className="px-4 py-5 font-black uppercase tracking-widest text-slate-400 text-center">Quick Extras</th>
-                                            <th className="px-4 py-5 font-black uppercase tracking-widest text-slate-400">Work Details</th>
-                                            <th className="px-4 py-5 font-black uppercase tracking-widest text-slate-400 text-right">Current</th>
+                                            <th className="px-6 py-5">Name</th>
+                                            <th className="px-6 py-5 text-center">Status</th>
+                                            <th className="px-6 py-5 text-center">Time Log</th>
+                                            <th className="px-6 py-5 text-center">Quick Extras</th>
+                                            <th className="px-6 py-5">Work Details</th>
+                                            <th className="px-6 py-5 text-right">Current</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
@@ -1302,7 +1304,7 @@ const AttendanceTracker = () => {
 
                                                 return (
                                                     <tr key={w.id} className="hover:bg-slate-50/50 transition-colors group">
-                                                        <td className="px-8 py-6">
+                                                        <td className="px-6 py-6">
                                                             <div className="flex items-center gap-4">
                                                                 <div className="w-10 h-10 bg-white rounded-xl border border-slate-100 items-center justify-center text-slate-400 group-hover:text-blue-500 shadow-sm transition-all shrink-0 flex">
                                                                     <FaUserCheck />
@@ -1313,9 +1315,9 @@ const AttendanceTracker = () => {
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td className="px-4 py-6 text-center">
+                                                        <td className="px-6 py-6 text-center">
                                                             <div className="flex flex-col gap-2">
-                                                                <div className="flex flex-wrap items-center justify-center gap-[6px] max-w-[220px] mx-auto">
+                                                                <div className="flex flex-wrap items-center justify-center gap-[6px] max-w-[320px] mx-auto">
                                                                     {statusOptions.map(option => {
                                                                         const getDisplayLabel = (id) => {
                                                                             if (id === 'present') return 'P';
@@ -1340,7 +1342,7 @@ const AttendanceTracker = () => {
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td className="px-4 py-6 text-center">
+                                                        <td className="px-6 py-6 text-center">
                                                             <div className="flex items-center justify-center gap-2">
                                                                 <div className="flex flex-col items-center gap-1">
                                                                     <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg p-1.5 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
@@ -1386,7 +1388,7 @@ const AttendanceTracker = () => {
                                                                 </div>
                                                             )}
                                                         </td>
-                                                        <td className="px-4 py-6">
+                                                        <td className="px-6 py-6">
                                                             <div className="flex items-center justify-center gap-2">
                                                                 <button
                                                                     disabled={!canEdit || !isPresentOrPerm}
@@ -1430,7 +1432,7 @@ const AttendanceTracker = () => {
                                                                 </button>
                                                             </div>
                                                         </td>
-                                                        <td className="px-8 py-6">
+                                                        <td className="px-6 py-6">
                                                             <div
                                                                 onClick={() => { if (!isPresentOrPerm || !canEdit) return; setWorkDoneModalData({ member_id: w.id, member_name: w.name, status: currentStatus || 'present', note: attendance?.note || '', attendance_id: attendance?.id }); setShowWorkDoneModal(true); }}
                                                                 className={`cursor-pointer transition-all duration-300 ${isPresentOrPerm ? (canEdit ? 'opacity-100' : 'opacity-70 cursor-not-allowed') : 'opacity-30 pointer-events-none'}`}
@@ -1441,7 +1443,7 @@ const AttendanceTracker = () => {
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td className="px-8 py-6 text-right">
+                                                        <td className="px-6 py-6 text-right">
                                                             {option && (
                                                                 <div className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${option.bg} ${option.color} border ${option.border}`}>
                                                                     <option.icon className="text-xs" />
@@ -1490,31 +1492,34 @@ const AttendanceTracker = () => {
                                                     )}
                                                 </div>
 
-                                                <div className="grid grid-cols-3 gap-1 mb-3">
+                                                <div className="grid grid-cols-4 gap-1 mb-3">
                                                     <button
                                                         disabled={!canEdit}
                                                         onClick={(e) => { e.stopPropagation(); handleQuickMark(w.id, 'present'); }}
-                                                        className={`h-[42px] rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${!canEdit ? 'opacity-50 cursor-not-allowed bg-slate-50 border border-slate-100' : (currentStatus === 'present' || currentStatus === 'permission') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}
+                                                        className={`h-[42px] rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1 transition-all ${!canEdit ? 'opacity-50 cursor-not-allowed bg-slate-50 border border-slate-100' : (currentStatus === 'present' || currentStatus === 'permission') ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}
                                                     >
-                                                        <FaCheckCircle className="text-xs" /> Pre
+                                                        Pre
                                                     </button>
                                                     <button
                                                         disabled={!canEdit}
                                                         onClick={(e) => { e.stopPropagation(); handleQuickMark(w.id, 'absent'); }}
-                                                        className={`h-[42px] rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${!canEdit ? 'opacity-50 cursor-not-allowed bg-slate-50 border border-slate-100' : currentStatus === 'absent' ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}
+                                                        className={`h-[42px] rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1 transition-all ${!canEdit ? 'opacity-50 cursor-not-allowed bg-slate-50 border border-slate-100' : currentStatus === 'absent' ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}
                                                     >
-                                                        <FaTimesCircle className="text-xs" /> Abs
+                                                        Abs
                                                     </button>
                                                     <button
                                                         disabled={!canEdit}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setHalfDayModalData({ member_id: w.id, member_name: w.name, period: 'AM' });
-                                                            setShowHalfDayModal(true);
-                                                        }}
-                                                        className={`h-[42px] rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${!canEdit ? 'opacity-50 cursor-not-allowed bg-slate-50 border border-slate-100' : currentStatus === 'half-day' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}
+                                                        onClick={(e) => { e.stopPropagation(); handleQuickMark(w.id, 'holiday'); }}
+                                                        className={`h-[42px] rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1 transition-all ${!canEdit ? 'opacity-50 cursor-not-allowed bg-slate-50 border border-slate-100' : currentStatus === 'holiday' ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/20' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}
                                                     >
-                                                        <FaBusinessTime className="text-xs" /> Half
+                                                        HO
+                                                    </button>
+                                                    <button
+                                                        disabled={!canEdit}
+                                                        onClick={(e) => { e.stopPropagation(); handleQuickMark(w.id, 'week_off'); }}
+                                                        className={`h-[42px] rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1 transition-all ${!canEdit ? 'opacity-50 cursor-not-allowed bg-slate-50 border border-slate-100' : currentStatus === 'week_off' ? 'bg-slate-500 text-white shadow-lg shadow-slate-500/20' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}
+                                                    >
+                                                        WO
                                                     </button>
                                                 </div>
 
