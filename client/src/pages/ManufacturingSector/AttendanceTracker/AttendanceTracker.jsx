@@ -17,10 +17,7 @@ import {
     createShift,
     deleteShift,
     getProjects,
-    deleteProject,
-    getApprovals,
-    createApproval,
-    updateApprovalStatus
+    deleteProject
 } from '../../../api/Attendance/mfgAttendance';
 import { getActiveMembers } from '../../../api/TeamManagement/mfgTeam';
 import toast from 'react-hot-toast';
@@ -48,7 +45,6 @@ const AttendanceTracker = () => {
     const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
     const [attendances, setAttendances] = useState([]);
     const [stats, setStats] = useState([]);
-    const [approvals, setApprovals] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const [projects, setProjects] = useState([]);
@@ -190,7 +186,7 @@ const AttendanceTracker = () => {
         // Request Deduplication
         if (!force && window._mfgAttendanceFetchPromise) {
             try {
-                const [attRes, statsRes, summaryRes, projRes, membersRes, roleRes, holidaysRes, shiftsRes, approvalsRes] = await window._mfgAttendanceFetchPromise;
+                const [attRes, statsRes, summaryRes, projRes, membersRes, roleRes, holidaysRes, shiftsRes] = await window._mfgAttendanceFetchPromise;
                 // Safe data access with fallbacks
                 setAttendances(attRes?.data?.data || []);
                 setStats(statsRes?.data?.data || []);
@@ -200,7 +196,6 @@ const AttendanceTracker = () => {
                 setRoles(roleRes?.data?.data || []);
                 setHolidays(holidaysRes?.data?.data || []);
                 setShifts(shiftsRes?.data?.data || []);
-                setApprovals(approvalsRes?.data?.data || []);
                 lastFetchRef.current = Date.now();
             } catch (error) {
                 console.error("Error joining existing fetch:", error);
@@ -242,15 +237,14 @@ const AttendanceTracker = () => {
                 getActiveMembers(),
                 getMemberRoles(),
                 getHolidays({ sector: 'manufacturing' }),
-                getShifts({ sector: 'manufacturing' }),
-                getApprovals({ entity_type: 'attendance', status: 'pending' })
+                getShifts({ sector: 'manufacturing' })
             ]);
 
             if (!force) {
                 window._mfgAttendanceFetchPromise = fetchPromise;
             }
 
-            const [attRes, statsRes, summaryRes, projRes, membersRes, roleRes, holidaysRes, shiftsRes, approvalsRes] = await fetchPromise;
+            const [attRes, statsRes, summaryRes, projRes, membersRes, roleRes, holidaysRes, shiftsRes] = await fetchPromise;
 
             // Safe data access with fallbacks
             setAttendances(attRes?.data?.data || []);
@@ -261,7 +255,6 @@ const AttendanceTracker = () => {
             setRoles(roleRes?.data?.data || []);
             setHolidays(holidaysRes?.data?.data || []);
             setShifts(shiftsRes?.data?.data || []);
-            setApprovals(approvalsRes?.data?.data || []);
             lastFetchRef.current = Date.now();
             setLoading(false);
         } catch (error) {
@@ -276,7 +269,6 @@ const AttendanceTracker = () => {
             setRoles([]);
             setHolidays([]);
             setShifts([]);
-            setApprovals([]);
             setLoading(false);
         } finally {
             if (!force) window._mfgAttendanceFetchPromise = null;
@@ -858,7 +850,6 @@ const AttendanceTracker = () => {
                             { id: 'quick', label: 'Daily Sheet' },
                             { id: 'members', label: 'Members' },
                             { id: 'shifts', label: 'Shifts & Rules' },
-                            { id: 'approvals', label: 'Approvals' },
                             { id: 'calendar', label: 'Calendar' }
                         ].map(tab => (
                             <button
@@ -1213,82 +1204,6 @@ const AttendanceTracker = () => {
                             fetchData(true);
                         }}
                     />
-                ) : activeTab === 'approvals' ? (
-                    <div className="bg-white rounded-[40px] shadow-xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="p-6 sm:p-10 border-b border-slate-100 bg-linear-to-br from-slate-900 to-slate-800 text-white">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                <div>
-                                    <h3 className="text-xl sm:text-2xl font-black mb-1.5 ">Approvals & Exceptions</h3>
-                                    <p className="text-slate-400 font-bold text-sm">Review and approve overtime requests, leave applications.</p>
-                                </div>
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={async () => {
-                                            const reason = prompt("Enter dummy Overtime or Leave request to test:");
-                                            if (reason) {
-                                                await createApproval({
-                                                    entity_type: 'attendance',
-                                                    entity_id: 1,
-                                                    title: 'Overtime Request',
-                                                    description: reason,
-                                                    requested_by: currentUser.username
-                                                });
-                                                fetchData(true);
-                                                toast.success("Test request created");
-                                            }
-                                        }}
-                                        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-xs font-bold transition-colors"
-                                    >
-                                        + Test Request
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="p-6">
-                            {approvals.length === 0 ? (
-                                <div className="text-center py-12">
-                                    <p className="text-slate-500">No pending approvals.</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {approvals.map(appr => (
-                                        <div key={appr.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                            <div>
-                                                <h4 className="font-bold text-slate-900">{appr.title}</h4>
-                                                <p className="text-sm text-slate-500">{appr.description}</p>
-                                                <p className="text-[10px] text-slate-400 mt-1">Requested by: {appr.requested_by}</p>
-                                            </div>
-                                            <div className="flex gap-2 mt-4 sm:mt-0">
-                                                <button
-                                                    onClick={async () => {
-                                                        await updateApprovalStatus(appr.id, { status: 'approved' });
-                                                        toast.success("Approved!");
-                                                        fetchData(true);
-                                                    }}
-                                                    className="px-4 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-xl text-xs font-bold transition-colors"
-                                                >
-                                                    Approve
-                                                </button>
-                                                <button
-                                                    onClick={async () => {
-                                                        const reason = prompt("Rejection Reason:");
-                                                        if (reason !== null) {
-                                                            await updateApprovalStatus(appr.id, { status: 'rejected', rejection_reason: reason });
-                                                            toast.error("Rejected");
-                                                            fetchData(true);
-                                                        }
-                                                    }}
-                                                    className="px-4 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-xl text-xs font-bold transition-colors"
-                                                >
-                                                    Reject
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
                 ) : activeTab === 'calendar' ? (
                     <CalendarManager
                         holidays={holidays}
