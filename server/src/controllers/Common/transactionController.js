@@ -89,8 +89,8 @@ exports.deleteTransaction = async (req, res) => {
 
 exports.getTransactionStats = async (req, res) => {
     try {
-        const { period, projectId, memberId, memberType, startDate, endDate, sector, propertyType, unitId, vendorId, paymentMode, categoryId } = req.query;
-        const filters = { memberType, sector, propertyType, unitId, vendorId, paymentMode, categoryId };
+        const { period, projectId, memberId, memberType, startDate, endDate, sector, propertyType, unitId, vendorId, paymentMode, categoryId, excludeCategory } = req.query;
+        const filters = { memberType, sector, propertyType, unitId, vendorId, paymentMode, categoryId, excludeCategory };
         const summary = await Transaction.getStats(req.user.data_owner_id, period, projectId, startDate, endDate, memberId, filters);
         const categories = await Transaction.getCategoryStats(req.user.data_owner_id, period, projectId, startDate, endDate, memberId, filters);
         res.json({ data: { summary, categories } });

@@ -230,7 +230,12 @@ const SalaryCalculator = ({
                             <tbody>
                                 {Array.isArray(filteredMembers) && filteredMembers.length > 0 ? (
                                     filteredMembers.map(member => {
-                                        const mTrans = (Array.isArray(transactions) ? transactions : []).filter(t => t.member_id == member.id);
+                                        const mTrans = (Array.isArray(transactions) ? transactions : []).filter(t => {
+                                            if (member.isGuest) {
+                                                return t.member_id === null && t.guest_name === member.name;
+                                            }
+                                            return t.member_id == member.id;
+                                        });
                                         const earned = mTrans.filter(t => t.category === 'Salary Pot').reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
                                         const paid = mTrans.filter(t => ['Salary', 'Advance'].includes(t.category)).reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
                                         const balance = earned - paid;

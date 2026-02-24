@@ -126,6 +126,7 @@ const ExpenseTrackerMain = () => {
     const COLORS = ['#2d5bff', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
 
     const fetchData = async () => {
+        setLoading(true);
         try {
             const isRange = periodType === 'range';
             const rangeStart = isRange ? customRange.start : null;
@@ -144,7 +145,7 @@ const ExpenseTrackerMain = () => {
 
             const [transRes, statsRes, catRes, projRes, membersRes, roleRes, guestRes, vehicleRes] = await Promise.all([
                 getTransactions(params),
-                getTransactionStats(params),
+                getTransactionStats({ ...params, excludeCategory: !filterMember ? 'Salary Pot' : null }),
                 getExpenseCategories({ sector: 'manufacturing' }),
                 getProjects(),
                 getMembers(),
@@ -185,12 +186,6 @@ const ExpenseTrackerMain = () => {
                 adjustedStats.summary.total_expense = (parseFloat(adjustedStats.summary.total_expense || 0) + vehicleExpense);
             }
 
-            if (!filterMember) {
-                const transArr = transRes.data.data || [];
-                const potsOnly = transArr.filter(t => t.category === 'Salary Pot' && t.type === 'expense');
-                const potsTotal = potsOnly.reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
-                adjustedStats.summary.total_expense = Math.max(0, parseFloat(adjustedStats.summary.total_expense) - potsTotal);
-            }
             setStats(adjustedStats);
 
             setCategories(catRes.data.data || []);

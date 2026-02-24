@@ -188,30 +188,49 @@ const PersonalTransactionModel = {
     }
 };
 
-// --- SHARED QUERY EXECUTIONER ---
-const executeFilteredQuery = async (query, params, filters) => {
+// --- SHARED QUERY BUILDER ---
+const buildFilters = (query, params, filters) => {
     if (filters.projectId) { query += ' AND t.project_id = ?'; params.push(filters.projectId); }
     if (filters.memberId) {
         if (filters.memberId === 'guest') query += ' AND t.member_id IS NULL AND t.guest_name IS NOT NULL';
-        else { query += ' AND t.member_id = ?'; params.push(filters.memberId); }
+        else if (filters.memberId !== 'all') { query += ' AND t.member_id = ?'; params.push(filters.memberId); }
     }
-    if (filters.memberType && filters.memberType !== 'all') { query += ' AND (t.member_id IN (SELECT id FROM ' + getTableName(filters.sector).replace('transactions', 'members') + ' WHERE member_type = ?) OR (t.member_id IS NULL AND ? = "guest"))'; params.push(filters.memberType, filters.memberType); }
-    if (filters.period) {
-        if (filters.period.length === 10) { query += " AND DATE(t.date) = ?"; params.push(filters.period); }
-        else if (filters.period.length === 7) { query += " AND DATE_FORMAT(t.date, '%Y-%m') = ?"; params.push(filters.period); }
+    if (filters.memberType && filters.memberType !== 'all') {
+        const membersTable = getTableName(filters.sector).replace('transactions', 'members');
+        query += ` AND (t.member_id IN (SELECT id FROM ${membersTable} WHERE member_type = ?) OR (t.member_id IS NULL AND ? = "guest"))`;
+        params.push(filters.memberType, filters.memberType);
     }
     if (filters.startDate && filters.endDate) { query += " AND DATE(t.date) BETWEEN ? AND ?"; params.push(filters.startDate, filters.endDate); }
+    else if (filters.period) {
+        if (filters.period.length === 10) { query += " AND DATE(t.date) = ?"; params.push(filters.period); }
+        else if (filters.period.length === 7) { query += " AND DATE_FORMAT(t.date, '%Y-%m') = ?"; params.push(filters.period); }
+        else if (filters.period.length === 4) { query += " AND YEAR(t.date) = ?"; params.push(filters.period); }
+    }
 
-    // Hotel specific filters
     if (filters.propertyType) { query += ' AND t.property_type = ?'; params.push(filters.propertyType); }
     if (filters.paymentMode) { query += ' AND t.payment_mode = ?'; params.push(filters.paymentMode); }
     if (filters.unitId) { query += ' AND t.unit_id = ?'; params.push(filters.unitId); }
     if (filters.bookingId) { query += ' AND t.booking_id = ?'; params.push(filters.bookingId); }
     if (filters.vendorId) { query += ' AND t.vendor_id = ?'; params.push(filters.vendorId); }
     if (filters.categoryId) { query += ' AND t.category_id = ?'; params.push(filters.categoryId); }
+    if (filters.excludeCategory) {
+        if (filters.sector === 'personal' || filters.sector === 'manufacturing') {
+            query += ' AND t.category != ?';
+        } else {
+            query += ' AND t.category_id != ?';
+        }
+        params.push(filters.excludeCategory);
+    }
 
-    query += ' ORDER BY t.date DESC, t.created_at DESC LIMIT 500';
-    const [rows] = await db.query(query, params);
+    return { query, params };
+};
+
+// --- SHARED QUERY EXECUTIONER ---
+const executeFilteredQuery = async (query, params, filters) => {
+    const built = buildFilters(query, params, filters);
+    let finalQuery = built.query;
+    finalQuery += ' ORDER BY t.date DESC, t.created_at DESC LIMIT 500';
+    const [rows] = await db.query(finalQuery, built.params);
     return rows;
 };
 
@@ -247,30 +266,11 @@ const deleteTransaction = async (id, userId, sector) => {
 
 const getStats = async (userId, period, projectId, startDate, endDate, memberId, filters = {}) => {
     const table = getTableName(filters.sector);
-    let query = `SELECT SUM(CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END) as total_income, SUM(CASE WHEN t.type = 'expense' THEN t.amount ELSE 0 END) as total_expense FROM ${table} t WHERE t.user_id = ?`;
+    let baseQuery = `SELECT SUM(CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END) as total_income, SUM(CASE WHEN t.type = 'expense' THEN t.amount ELSE 0 END) as total_expense FROM ${table} t WHERE t.user_id = ?`;
     const params = [userId];
 
-    if (startDate && endDate) {
-        query += " AND DATE(t.date) BETWEEN ? AND ?";
-        params.push(startDate, endDate);
-    } else if (period) {
-        if (period.length === 10) { query += " AND DATE(t.date) = ?"; params.push(period); }
-        else if (period.length === 7) { query += " AND DATE_FORMAT(t.date, '%Y-%m') = ?"; params.push(period); }
-        else if (period.length === 4) { query += " AND YEAR(t.date) = ?"; params.push(period); }
-    }
-
-    if (projectId && table !== 'personal_transactions') { query += " AND t.project_id = ?"; params.push(projectId); }
-    if (memberId && memberId !== 'all') { query += " AND t.member_id = ?"; params.push(memberId); }
-
-    // Hotel specific filters
-    if (filters.propertyType) { query += ' AND t.property_type = ?'; params.push(filters.propertyType); }
-    if (filters.paymentMode) { query += ' AND t.payment_mode = ?'; params.push(filters.paymentMode); }
-    if (filters.unitId) { query += ' AND t.unit_id = ?'; params.push(filters.unitId); }
-    if (filters.bookingId) { query += ' AND t.booking_id = ?'; params.push(filters.bookingId); }
-    if (filters.vendorId) { query += ' AND t.vendor_id = ?'; params.push(filters.vendorId); }
-    if (filters.categoryId) { query += ' AND t.category_id = ?'; params.push(filters.categoryId); }
-
-    const [rows] = await db.query(query, params);
+    const built = buildFilters(baseQuery, params, { ...filters, period, projectId, startDate, endDate, memberId });
+    const [rows] = await db.query(built.query, built.params);
     return rows[0];
 };
 
@@ -285,48 +285,29 @@ module.exports = {
         const sector = filters.sector || 'personal';
         const table = getTableName(sector);
 
-        let query = "";
+        let baseQuery = "";
         let params = [userId];
 
         if (sector === 'personal' || sector === 'manufacturing') {
-            query = `SELECT category, type, SUM(amount) as total FROM ${table} t WHERE t.user_id = ?`;
+            baseQuery = `SELECT category, type, SUM(amount) as total FROM ${table} t WHERE t.user_id = ?`;
         } else {
             const catTable = table.replace('_transactions', '_categories');
-            query = `SELECT c.name as category, t.type, SUM(t.amount) as total 
+            baseQuery = `SELECT c.name as category, t.type, SUM(t.amount) as total 
                       FROM ${table} t 
                       LEFT JOIN ${catTable} c ON t.category_id = c.id 
                       WHERE t.user_id = ?`;
         }
 
-        if (startDate && endDate) {
-            query += " AND DATE(t.date) BETWEEN ? AND ?";
-            params.push(startDate, endDate);
-        } else if (period) {
-            if (period.length === 10) { query += " AND DATE(t.date) = ?"; params.push(period); }
-            else if (period.length === 7) { query += " AND DATE_FORMAT(t.date, '%Y-%m') = ?"; params.push(period); }
-            else if (period.length === 4) { query += " AND YEAR(t.date) = ?"; params.push(period); }
-        }
+        const built = buildFilters(baseQuery, params, { ...filters, period, projectId, startDate, endDate, memberId });
 
-        if (projectId && table !== 'personal_transactions') {
-            query += " AND t.project_id = ?";
-            params.push(projectId);
-        }
-
-        // Hotel specific filters
-        if (filters.propertyType) { query += ' AND t.property_type = ?'; params.push(filters.propertyType); }
-        if (filters.paymentMode) { query += ' AND t.payment_mode = ?'; params.push(filters.paymentMode); }
-        if (filters.unitId) { query += ' AND t.unit_id = ?'; params.push(filters.unitId); }
-        if (filters.bookingId) { query += ' AND t.booking_id = ?'; params.push(filters.bookingId); }
-        if (filters.vendorId) { query += ' AND t.vendor_id = ?'; params.push(filters.vendorId); }
-        if (filters.categoryId) { query += ' AND t.category_id = ?'; params.push(filters.categoryId); }
-
+        let finalQuery = built.query;
         if (sector === 'personal' || sector === 'manufacturing') {
-            query += " GROUP BY category, type";
+            finalQuery += " GROUP BY category, type";
         } else {
-            query += " GROUP BY c.name, t.type";
+            finalQuery += " GROUP BY c.name, t.type";
         }
 
-        const [rows] = await db.query(query, params);
+        const [rows] = await db.query(finalQuery, built.params);
         return rows;
     },
     getMemberExpenseSummary: async () => [] // Simplified
