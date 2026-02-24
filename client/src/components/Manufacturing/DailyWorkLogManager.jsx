@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getWorkLogs, createWorkLog, updateWorkLog, deleteWorkLog, getMonthlyTotal, getWorkTypes, createWorkType, deleteWorkType } from '../../api/Attendance/mfgAttendance';
 import { getActiveMembers } from '../../api/TeamManagement/mfgTeam';
 import toast from 'react-hot-toast';
@@ -22,15 +22,15 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
     const [logFilterType, setLogFilterType] = useState('all'); // 'all', 'member', 'guest'
     const [dateFilter, setDateFilter] = useState({ start: selectedDate, end: selectedDate });
 
-    const filteredLogs = workLogs.filter(log => {
+    const filteredLogs = (workLogs || []).filter(log => {
         const matchesSearch =
             (log.member_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
             (log.guest_name?.toLowerCase() || '').includes(searchTerm.toLowerCase());
 
         const matchesType =
             logFilterType === 'all' ? true :
-                logFilterType === 'guest' ? (log.member_id === null || log.member_id === undefined) :
-                    logFilterType === 'member' ? (log.member_id !== null && log.member_id !== undefined) : true;
+                logFilterType === 'guest' ? (!log.member_id) :
+                    logFilterType === 'member' ? (!!log.member_id) : true;
 
         return matchesSearch && matchesType;
     });
@@ -48,22 +48,69 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
     const [viewMode, setViewMode] = useState('daily');
     const [confirmModal, setConfirmModal] = useState({ show: false, id: null });
 
-    const fetchData = async () => {
+    const lastFetchRef = useRef(0);
+
+    const fetchData = async (force = false) => {
+        const now = Date.now();
+        // Throttle fetching (60s cache/throttle)
+        if (!force && now - lastFetchRef.current < 60000 && !loading) {
+            return;
+        }
+
+        // Request Deduplication
+        const currentParamsKey = JSON.stringify({
+            startDate: dateFilter.start,
+            endDate: dateFilter.end,
+            viewMode
+        });
+
+        if (!force && window._mfgWorkLogFetchPromise && window._mfgWorkLogParamsKey === currentParamsKey) {
+            try {
+                const [logsRes, membersRes, typesRes] = await window._mfgWorkLogFetchPromise;
+                setWorkLogs(logsRes.data.data);
+                setMembers(membersRes.data.data);
+                setWorkTypes(typesRes.data.data);
+                lastFetchRef.current = Date.now();
+            } catch (error) {
+                console.error("Error joining existing fetch:", error);
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
+        if (force) {
+            window._mfgWorkLogFetchPromise = null;
+        }
+
+        const fetchPromise = Promise.all([
+            getWorkLogs({
+                startDate: dateFilter.start,
+                endDate: dateFilter.end
+            }),
+            getActiveMembers(),
+            getWorkTypes()
+        ]);
+
+        if (!force) {
+            window._mfgWorkLogFetchPromise = fetchPromise;
+            window._mfgWorkLogParamsKey = currentParamsKey;
+        }
+
+        setLoading(true);
         try {
-            const [logsRes, membersRes, typesRes] = await Promise.all([
-                getWorkLogs({
-                    startDate: dateFilter.start,
-                    endDate: dateFilter.end
-                }),
-                getActiveMembers(),
-                getWorkTypes()
-            ]);
-            setWorkLogs(logsRes.data.data);
-            setMembers(membersRes.data.data);
-            setWorkTypes(typesRes.data.data);
-            setLoading(false);
+            const [logsRes, membersRes, typesRes] = await fetchPromise;
+            setWorkLogs(logsRes.data?.data || []);
+            setMembers(membersRes.data?.data || []);
+            setWorkTypes(typesRes.data?.data || []);
+            lastFetchRef.current = Date.now();
         } catch (error) {
+            console.error("Failed to fetch data", error);
             toast.error("Failed to fetch data");
+        } finally {
+            if (!force) {
+                window._mfgWorkLogFetchPromise = null;
+            }
             setLoading(false);
         }
     };

@@ -27,17 +27,59 @@ const ManufacturingPayroll = () => {
     const [payrolls, setPayrolls] = useState([]);
     const [summary, setSummary] = useState({ total_amount: 0, status_counts: {} });
     const [searchTerm, setSearchTerm] = useState('');
+    const lastFetchRef = React.useRef(0);
 
     useEffect(() => {
         fetchPayrolls();
     }, [selectedDate]);
 
-    const fetchPayrolls = async () => {
+    const fetchPayrolls = async (force = false) => {
+        const now = Date.now();
+        const month = selectedDate.getMonth() + 1;
+        const year = selectedDate.getFullYear();
+
+        // Throttle fetching (60s cache/throttle)
+        if (!force && now - lastFetchRef.current < 60000 && !loading) {
+            return;
+        }
+
+        // Request Deduplication
+        const currentParamsKey = JSON.stringify({ month, year });
+
+        if (!force && window._mfgPayrollFetchPromise && window._mfgPayrollParamsKey === currentParamsKey) {
+            try {
+                const res = await window._mfgPayrollFetchPromise;
+                if (res.data.success) {
+                    const records = Array.isArray(res.data.data) ? res.data.data : (res.data.data.records || []);
+                    setPayrolls(records);
+                    const total = records.reduce((acc, p) => acc + parseFloat(p.net_amount || 0), 0);
+                    const approved = records.filter(p => p.status === 'approved' || p.status === 'paid').length;
+                    const pending = records.filter(p => p.status === 'draft' || p.status === 'pending_approval').length;
+                    setSummary({ total_amount: total, status_counts: { approved, pending } });
+                }
+                lastFetchRef.current = Date.now();
+            } catch (error) {
+                console.error("Error joining existing fetch:", error);
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
+        if (force) {
+            window._mfgPayrollFetchPromise = null;
+        }
+
         setLoading(true);
+        const fetchPromise = getMfgPayroll({ month, year });
+
+        if (!force) {
+            window._mfgPayrollFetchPromise = fetchPromise;
+            window._mfgPayrollParamsKey = currentParamsKey;
+        }
+
         try {
-            const month = selectedDate.getMonth() + 1;
-            const year = selectedDate.getFullYear();
-            const res = await getMfgPayroll({ month, year });
+            const res = await fetchPromise;
 
             if (res.data.success) {
                 // Backend returns array for list, object for generate
@@ -53,10 +95,14 @@ const ManufacturingPayroll = () => {
                     total_amount: total,
                     status_counts: { approved, pending }
                 });
+                lastFetchRef.current = Date.now();
             }
         } catch (error) {
             toast.error('Failed to load payroll data');
         } finally {
+            if (!force) {
+                window._mfgPayrollFetchPromise = null;
+            }
             setLoading(false);
         }
     };

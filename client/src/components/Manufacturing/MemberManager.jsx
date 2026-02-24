@@ -9,12 +9,22 @@ import ExportButtons from '../Common/ExportButtons';
 import { generateCSV, generatePDF, generateTXT } from '../../utils/exportUtils/base.js';
 import { useState, useEffect, useRef } from 'react';
 
-const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: propShifts }) => {
+const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: propShifts, members: propMembers }) => {
     const [localShifts, setLocalShifts] = useState([]);
     const shifts = propShifts || localShifts;
-    const [members, setMembers] = useState([]);
+    const [localMembers, setLocalMembers] = useState(propMembers || []);
+    const members = propMembers || localMembers;
     const [localRoles, setLocalRoles] = useState([]); // Internal roles state
     const roles = propRoles || localRoles; // Use prop if available, else local
+
+    useEffect(() => {
+        if (propMembers) {
+            setLocalMembers(propMembers);
+            setLoading(false);
+        } else {
+            fetchMembers();
+        }
+    }, [propMembers]);
 
     const [showRoleManager, setShowRoleManager] = useState(false); // MANAGER STATE
     const [loading, setLoading] = useState(true);
@@ -99,9 +109,6 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: pr
         }
     };
 
-    useEffect(() => {
-        fetchMembers();
-    }, []);
 
     // Set default shift for new members
     useEffect(() => {
@@ -203,8 +210,8 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: pr
                 toast.success("Member added!");
             }
             resetForm();
-            fetchMembers();
-            if (onUpdate) onUpdate();
+            fetchMembers(true);
+            if (onUpdate) onUpdate(true);
         } catch (error) {
             toast.error(editingId ? "Failed to update member" : "Failed to add member");
         }
@@ -234,8 +241,8 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: pr
             await deleteMember(deleteModal.id, { sector });
             toast.success("Member deleted");
             setDeleteModal({ show: false, id: null });
-            fetchMembers();
-            if (onUpdate) onUpdate();
+            fetchMembers(true);
+            if (onUpdate) onUpdate(true);
         } catch (error) {
             toast.error("Failed to delete member");
         }

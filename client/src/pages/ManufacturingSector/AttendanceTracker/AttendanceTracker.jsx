@@ -175,17 +175,22 @@ const AttendanceTracker = () => {
 
     const fetchData = async (force = false) => {
         const now = Date.now();
-        // Throttle fetching (2s cache/throttle)
-        if (!force && now - lastFetchRef.current < 2000 && !loading) {
+        // Throttle fetching (60s cache/throttle)
+        if (!force && now - lastFetchRef.current < 60000 && !loading) {
             return;
         }
 
-        if (force) {
-            window._mfgAttendanceFetchPromise = null;
-        }
-
         // Request Deduplication
-        if (!force && window._mfgAttendanceFetchPromise) {
+        const isRange = periodType === 'range';
+        const rangeStart = isRange ? customRange.start : null;
+        const rangeEnd = isRange ? customRange.end : null;
+
+        const currentParamsKey = JSON.stringify({
+            filterProject, filterMember, activeTab, currentPeriod, periodType,
+            rangeStart, rangeEnd
+        });
+
+        if (!force && window._mfgAttendanceFetchPromise && window._mfgAttendanceParamsKey === currentParamsKey) {
             try {
                 const [attRes, statsRes, summaryRes, projRes, membersRes, roleRes, holidaysRes, shiftsRes] = await window._mfgAttendanceFetchPromise;
                 // Safe data access with fallbacks
@@ -206,45 +211,47 @@ const AttendanceTracker = () => {
             return;
         }
 
+        if (force) {
+            window._mfgAttendanceFetchPromise = null;
+        }
+
+        if (isRange && (!rangeStart || !rangeEnd)) return;
+
+        setLoading(true);
+        const fetchPromise = Promise.all([
+            getAttendances({
+                projectId: filterProject,
+                memberId: filterMember,
+                period: isRange ? null : currentPeriod,
+                startDate: rangeStart,
+                endDate: rangeEnd
+            }),
+            getAttendanceStats({
+                projectId: filterProject,
+                memberId: filterMember,
+                period: isRange ? null : currentPeriod,
+                startDate: rangeStart,
+                endDate: rangeEnd
+            }),
+            getMemberSummary({
+                projectId: filterProject,
+                period: isRange ? null : currentPeriod,
+                startDate: rangeStart,
+                endDate: rangeEnd
+            }),
+            getProjects(),
+            getActiveMembers(),
+            getMemberRoles(),
+            getHolidays({ sector: 'manufacturing' }),
+            getShifts({ sector: 'manufacturing' })
+        ]);
+
+        if (!force) {
+            window._mfgAttendanceFetchPromise = fetchPromise;
+            window._mfgAttendanceParamsKey = currentParamsKey;
+        }
+
         try {
-            const isRange = periodType === 'range';
-            const rangeStart = isRange ? customRange.start : null;
-            const rangeEnd = isRange ? customRange.end : null;
-
-            if (isRange && (!rangeStart || !rangeEnd)) return;
-
-            const fetchPromise = Promise.all([
-                getAttendances({
-                    projectId: filterProject,
-                    memberId: filterMember,
-                    period: isRange ? null : currentPeriod,
-                    startDate: rangeStart,
-                    endDate: rangeEnd
-                }),
-                getAttendanceStats({
-                    projectId: filterProject,
-                    memberId: filterMember,
-                    period: isRange ? null : currentPeriod,
-                    startDate: rangeStart,
-                    endDate: rangeEnd
-                }),
-                getMemberSummary({
-                    projectId: filterProject,
-                    period: isRange ? null : currentPeriod,
-                    startDate: rangeStart,
-                    endDate: rangeEnd
-                }),
-                getProjects(),
-                getActiveMembers(),
-                getMemberRoles(),
-                getHolidays({ sector: 'manufacturing' }),
-                getShifts({ sector: 'manufacturing' })
-            ]);
-
-            if (!force) {
-                window._mfgAttendanceFetchPromise = fetchPromise;
-            }
-
             const [attRes, statsRes, summaryRes, projRes, membersRes, roleRes, holidaysRes, shiftsRes] = await fetchPromise;
 
             // Safe data access with fallbacks
@@ -257,7 +264,6 @@ const AttendanceTracker = () => {
             setHolidays(holidaysRes?.data?.data || []);
             setShifts(shiftsRes?.data?.data || []);
             lastFetchRef.current = Date.now();
-            setLoading(false);
         } catch (error) {
             console.error("Fetch error:", error);
             toast.error("Failed to fetch attendance data");
@@ -270,9 +276,11 @@ const AttendanceTracker = () => {
             setRoles([]);
             setHolidays([]);
             setShifts([]);
-            setLoading(false);
         } finally {
-            if (!force) window._mfgAttendanceFetchPromise = null;
+            if (!force) {
+                window._mfgAttendanceFetchPromise = null;
+            }
+            setLoading(false);
         }
     };
 

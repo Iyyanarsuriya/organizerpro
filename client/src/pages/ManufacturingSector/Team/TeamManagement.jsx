@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -18,14 +18,51 @@ const TeamManagement = () => {
     const token = localStorage.getItem('token');
     const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api/manufacturing-sector/team`;
 
-    const fetchTeam = async () => {
+    const lastFetchRef = useRef(0);
+
+    const fetchTeam = async (force = false) => {
+        const now = Date.now();
+        // Throttle fetching (60s cache/throttle)
+        if (!force && now - lastFetchRef.current < 60000 && !loading) {
+            return;
+        }
+
+        // Request Deduplication
+        if (!force && window._mfgTeamFetchPromise) {
+            try {
+                const res = await window._mfgTeamFetchPromise;
+                setTeam(res.data);
+                lastFetchRef.current = Date.now();
+            } catch (error) {
+                console.error("Error joining existing fetch:", error);
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
+        if (force) {
+            window._mfgTeamFetchPromise = null;
+        }
+
+        setLoading(true);
+        const fetchPromise = axios.get(API_URL, { headers: { Authorization: `Bearer ${token}` } });
+
+        if (!force) {
+            window._mfgTeamFetchPromise = fetchPromise;
+        }
+
         try {
-            const res = await axios.get(API_URL, { headers: { Authorization: `Bearer ${token}` } });
+            const res = await fetchPromise;
             setTeam(res.data);
+            lastFetchRef.current = Date.now();
         } catch (error) {
             console.error("Fetch team error", error);
             // toast.error("Failed to fetch team members");
         } finally {
+            if (!force) {
+                window._mfgTeamFetchPromise = null;
+            }
             setLoading(false);
         }
     };

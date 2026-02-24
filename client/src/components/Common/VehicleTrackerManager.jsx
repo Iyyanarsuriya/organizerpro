@@ -6,9 +6,9 @@ import ConfirmModal from '../modals/ConfirmModal';
 import ExportButtons from './ExportButtons';
 import { exportVehicleLogToCSV, exportVehicleLogToTXT, exportVehicleLogToPDF } from '../../utils/exportUtils/index.js';
 
-const VehicleTrackerManager = () => {
-    const [logs, setLogs] = useState([]);
-    const [loading, setLoading] = useState(true);
+const VehicleTrackerManager = ({ data: externalData, onUpdate }) => {
+    const [logs, setLogs] = useState(externalData || []);
+    const [loading, setLoading] = useState(!externalData);
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
     const [searchVehicle, setSearchVehicle] = useState('');
 
@@ -44,16 +44,58 @@ const VehicleTrackerManager = () => {
     const [confirmModal, setConfirmModal] = useState({ show: false, id: null });
 
     useEffect(() => {
-        fetchLogs();
-    }, []);
+        if (externalData) {
+            setLogs(externalData);
+            setLoading(false);
+        } else {
+            fetchLogs();
+        }
+    }, [externalData]);
 
-    const fetchLogs = async () => {
+    const lastFetchRef = React.useRef(0);
+
+    const fetchLogs = async (force = false) => {
+        const now = Date.now();
+        // Throttle fetching (60s cache/throttle)
+        if (!force && now - lastFetchRef.current < 60000 && !loading) {
+            return;
+        }
+
+        // Request Deduplication
+        if (!force && window._mfgVehicleLogFetchPromise) {
+            try {
+                const res = await window._mfgVehicleLogFetchPromise;
+                setLogs(res.data || []);
+                lastFetchRef.current = Date.now();
+            } catch (error) {
+                console.error("Error joining existing fetch:", error);
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
+        if (force) {
+            window._mfgVehicleLogFetchPromise = null;
+        }
+
+        setLoading(true);
+        const fetchPromise = getVehicleLogs();
+
+        if (!force) {
+            window._mfgVehicleLogFetchPromise = fetchPromise;
+        }
+
         try {
-            const data = await getVehicleLogs();
+            const data = await fetchPromise;
             setLogs(data?.data || []);
+            lastFetchRef.current = Date.now();
         } catch (error) {
             toast.error('Failed to load vehicle logs');
         } finally {
+            if (!force) {
+                window._mfgVehicleLogFetchPromise = null;
+            }
             setLoading(false);
         }
     };
@@ -81,7 +123,11 @@ const VehicleTrackerManager = () => {
                 notes: ''
             });
             setEditingId(null);
-            fetchLogs();
+            if (onUpdate) {
+                onUpdate(true);
+            } else {
+                fetchLogs(true);
+            }
         } catch (error) {
             toast.error('Operation failed');
             console.error(error);
@@ -109,7 +155,11 @@ const VehicleTrackerManager = () => {
             try {
                 await deleteVehicleLog(confirmModal.id);
                 toast.success('Log deleted');
-                fetchLogs();
+                if (onUpdate) {
+                    onUpdate(true);
+                } else {
+                    fetchLogs(true);
+                }
             } catch (error) {
                 toast.error('Failed to delete');
             } finally {

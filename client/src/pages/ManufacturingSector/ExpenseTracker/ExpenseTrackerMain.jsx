@@ -143,12 +143,54 @@ const ExpenseTrackerMain = () => {
         if (!force && window._mfgExpenseFetchPromise && window._mfgExpenseParamsKey === currentParamsKey) {
             try {
                 const results = await window._mfgExpenseFetchPromise;
-                // We'll let the second call join and wait, but only the first one should really manage state if they are identical
-                // Actually, if we are here, the first call is already processing. 
-                // We can just return if it's identical to avoid double state updates too.
-                return;
+                const [transRes, statsRes, catRes, projRes, membersRes, roleRes, guestRes, vehicleRes] = results;
+
+                setTransactions(transRes.data.data || []);
+                setVehicleLogs(vehicleRes?.data || []);
+
+                // PROCESS VEHICLE LOGS
+                const isRange = periodType === 'range';
+                const rangeStart = isRange ? customRange.start : null;
+                const rangeEnd = isRange ? customRange.end : null;
+                const vLogsRaw = vehicleRes?.data || [];
+                const filteredVehicleLogs = (Array.isArray(vLogsRaw) ? vLogsRaw : []).filter(log => {
+                    const logDate = (log.out_time || log.created_at || '').split('T')[0];
+                    if (!logDate) return false;
+                    if (periodType === 'range') return (!rangeStart || logDate >= rangeStart) && (!rangeEnd || logDate <= rangeEnd);
+                    if (periodType === 'day') return logDate === currentPeriod;
+                    if (periodType === 'month') return logDate.startsWith(currentPeriod);
+                    if (periodType === 'year') return logDate.startsWith(currentPeriod);
+                    return false;
+                });
+
+                const vehicleIncome = filteredVehicleLogs.reduce((acc, log) => acc + (parseFloat(log.income_amount) || 0), 0);
+                const vehicleExpense = filteredVehicleLogs.reduce((acc, log) => acc + (parseFloat(log.expense_amount) || 0), 0);
+
+                const rawStats = statsRes?.data?.data || { summary: { total_income: 0, total_expense: 0 }, categories: [] };
+                const adjustedStats = {
+                    ...rawStats,
+                    summary: rawStats.summary || { total_income: 0, total_expense: 0 },
+                    categories: Array.isArray(rawStats.categories) ? rawStats.categories : []
+                };
+
+                if (adjustedStats.summary) {
+                    adjustedStats.summary.total_income = (parseFloat(adjustedStats.summary.total_income || 0) + vehicleIncome);
+                    adjustedStats.summary.total_expense = (parseFloat(adjustedStats.summary.total_expense || 0) + vehicleExpense);
+                }
+                setStats(adjustedStats);
+
+                setCategories(catRes.data.data || []);
+                setProjects(projRes.data?.data || []);
+                const rawMembers = Array.isArray(membersRes.data?.data) ? membersRes.data.data : [];
+                const guests = Array.isArray(guestRes.data?.data) ? guestRes.data.data.map(g => ({ ...g, isGuest: true })) : [];
+                setMembers([...rawMembers, ...guests]);
+                setRoles(Array.isArray(roleRes.data?.data) ? roleRes.data.data : []);
+
+                lastFetchRef.current = Date.now();
             } catch (error) {
                 console.error("Error joining existing fetch:", error);
+            } finally {
+                setLoading(false);
             }
             return;
         }
@@ -172,6 +214,10 @@ const ExpenseTrackerMain = () => {
                 endDate: rangeEnd,
                 sector: 'manufacturing'
             };
+
+            if (force) {
+                window._mfgExpenseFetchPromise = null;
+            }
 
             const fetchPromise = Promise.all([
                 getTransactions(params),
@@ -203,13 +249,12 @@ const ExpenseTrackerMain = () => {
                 if (periodType === 'day') return logDate === currentPeriod;
                 if (periodType === 'month') return logDate.startsWith(currentPeriod);
                 if (periodType === 'year') return logDate.startsWith(currentPeriod);
-                return false; // Skip for 'week' or unknown types for now to avoid errors
+                return false;
             });
 
             const vehicleIncome = filteredVehicleLogs.reduce((acc, log) => acc + (parseFloat(log.income_amount) || 0), 0);
             const vehicleExpense = filteredVehicleLogs.reduce((acc, log) => acc + (parseFloat(log.expense_amount) || 0), 0);
 
-            // Adjust Stats: Exclude 'Salary Pot' from total_expense for the main business summary
             const rawStats = statsRes?.data?.data || { summary: { total_income: 0, total_expense: 0 }, categories: [] };
             const adjustedStats = {
                 ...rawStats,
@@ -217,7 +262,6 @@ const ExpenseTrackerMain = () => {
                 categories: Array.isArray(rawStats.categories) ? rawStats.categories : []
             };
 
-            // Add Vehicle Stats
             if (adjustedStats.summary) {
                 adjustedStats.summary.total_income = (parseFloat(adjustedStats.summary.total_income || 0) + vehicleIncome);
                 adjustedStats.summary.total_expense = (parseFloat(adjustedStats.summary.total_expense || 0) + vehicleExpense);
@@ -265,7 +309,6 @@ const ExpenseTrackerMain = () => {
         } finally {
             if (!force) {
                 window._mfgExpenseFetchPromise = null;
-                window._mfgExpenseParamsKey = null;
             }
         }
     };
@@ -958,7 +1001,7 @@ const ExpenseTrackerMain = () => {
                         setActiveTab={setActiveTab} formatCurrency={formatCurrency}
                     />
                 ) : activeTab === 'Members' ? (
-                    <MemberManager onUpdate={fetchData} />
+                    <MemberManager onUpdate={fetchData} members={members} roles={roles} sector="manufacturing" />
                 ) : activeTab === 'Transactions' ? (
                     <Transactions
                         filteredTransactions={filteredTransactions} searchQuery={searchQuery} setSearchQuery={setSearchQuery}
@@ -1000,7 +1043,7 @@ const ExpenseTrackerMain = () => {
                         setShowAddModal={setShowAddModal} transactions={transactions}
                     />
                 ) : activeTab === 'Vehicle Log' ? (
-                    <VehicleTrackerManager />
+                    <VehicleTrackerManager data={vehicleLogs} onUpdate={fetchData} />
                 ) : (
                     <DailyWorkLogManager />
                 )}
