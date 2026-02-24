@@ -58,12 +58,10 @@ const HotelReminders = () => {
         // Request Deduplication
         if (!force && window._hotelFetchPromise) {
             try {
-                const [remindersRes, userRes, categoriesRes] = await window._hotelFetchPromise;
+                const [remindersRes, categoriesRes] = await window._hotelFetchPromise;
                 setReminders(Array.isArray(remindersRes.data) ? remindersRes.data : []);
-                setUser(userRes.data);
                 const fetchedCategories = categoriesRes.data?.data || categoriesRes.data || [];
                 setCategories(Array.isArray(fetchedCategories) ? fetchedCategories : []);
-                localStorage.setItem('user', JSON.stringify(userRes.data));
                 lastFetchRef.current = Date.now();
             } catch (error) {
                 console.error("Error joining existing fetch:", error);
@@ -75,7 +73,6 @@ const HotelReminders = () => {
 
         const fetchPromise = Promise.all([
             getReminders({ sector: SECTOR }),
-            getMe(),
             getCategories({ sector: SECTOR })
         ]);
 
@@ -84,12 +81,10 @@ const HotelReminders = () => {
         }
 
         try {
-            const [remindersRes, userRes, categoriesRes] = await fetchPromise;
+            const [remindersRes, categoriesRes] = await fetchPromise;
             setReminders(Array.isArray(remindersRes.data) ? remindersRes.data : []);
-            setUser(userRes.data);
             const fetchedCategories = categoriesRes.data?.data || categoriesRes.data || [];
             setCategories(Array.isArray(fetchedCategories) ? fetchedCategories : []);
-            localStorage.setItem('user', JSON.stringify(userRes.data));
             lastFetchRef.current = Date.now();
         } catch (error) {
             console.error("Error fetching data", error);

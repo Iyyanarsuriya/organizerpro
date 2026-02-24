@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import React from 'react';
 import {
@@ -133,11 +133,42 @@ const HotelExpenses = () => {
 
     const COLORS = ['#2d5bff', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
 
-    const fetchData = async () => {
+    const lastFetchRef = useRef(0);
+
+    const fetchData = async (force = false) => {
+        // Throttle fetching: don't fetch if last fetch was less than 60s ago
+        const now = Date.now();
+        if (!force && now - lastFetchRef.current < 60000 && !loading) {
+            return;
+        }
+
+        // Request Deduplication (Handles StrictMode & Rapid Calls)
+        const currentParamsKey = JSON.stringify({
+            currentPeriod, periodType,
+            rangeStart: periodType === 'range' ? customRange.start : null,
+            rangeEnd: periodType === 'range' ? customRange.end : null,
+            filterProperty, filterRoom, filterVendor, filterPaymentMode, filterCategory
+        });
+
+        if (!force && window._hotelExpenseFetchPromise && window._hotelExpenseParamsKey === currentParamsKey) {
+            try {
+                await window._hotelExpenseFetchPromise;
+                return;
+            } catch (error) {
+                console.error("Error joining existing fetch:", error);
+            }
+            return;
+        }
+
+        setLoading(true);
         try {
             const isRange = periodType === 'range';
             const rangeStart = isRange ? customRange.start : null;
             const rangeEnd = isRange ? customRange.end : null;
+            if (isRange && (!rangeStart || !rangeEnd)) {
+                setLoading(false);
+                return;
+            }
 
             const params = {
                 period: isRange ? null : currentPeriod,
@@ -151,7 +182,7 @@ const HotelExpenses = () => {
                 sector: 'hotel'
             };
 
-            const [transRes, statsRes, catRes, membersRes, vendorRes, unitRes, bookingRes, lookupRes] = await Promise.all([
+            const fetchPromise = Promise.all([
                 getTransactions(params),
                 getTransactionStats(params),
                 getExpenseCategories({ sector: 'hotel' }),
@@ -161,6 +192,13 @@ const HotelExpenses = () => {
                 getBookings(),
                 getLookups()
             ]);
+
+            if (!force) {
+                window._hotelExpenseFetchPromise = fetchPromise;
+                window._hotelExpenseParamsKey = currentParamsKey;
+            }
+
+            const [transRes, statsRes, catRes, membersRes, vendorRes, unitRes, bookingRes, lookupRes] = await fetchPromise;
 
             setTransactions(transRes.data.data || []);
             setStats(statsRes.data.data || { summary: { total_income: 0, total_expense: 0 }, categories: [] });
@@ -172,10 +210,16 @@ const HotelExpenses = () => {
             setLookups(lookupRes.data.data || []);
 
             setLoading(false);
+            lastFetchRef.current = Date.now();
         } catch (error) {
             console.error("Fetch Data Error:", error);
             toast.error("Failed to load hospitality data");
             setLoading(false);
+        } finally {
+            if (!force) {
+                window._hotelExpenseFetchPromise = null;
+                window._hotelExpenseParamsKey = null;
+            }
         }
     };
 

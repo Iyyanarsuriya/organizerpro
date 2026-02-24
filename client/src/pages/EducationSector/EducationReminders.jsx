@@ -61,12 +61,13 @@ const EducationReminders = () => {
         // Request Deduplication (Handles StrictMode & Rapid Calls)
         if (!force && window._eduFetchPromise) {
             try {
-                const [remindersRes, userRes, categoriesRes] = await window._eduFetchPromise;
+                const [remindersRes, categoriesRes] = await window._eduFetchPromise;
                 setReminders(Array.isArray(remindersRes.data) ? remindersRes.data : []);
-                setUser(userRes.data);
+
+                // Safer category check
                 const fetchedCategories = categoriesRes.data?.data || categoriesRes.data || [];
                 setCategories(Array.isArray(fetchedCategories) ? fetchedCategories : []);
-                localStorage.setItem('user', JSON.stringify(userRes.data));
+
                 lastFetchRef.current = Date.now();
             } catch (error) {
                 console.error("Error joining existing fetch:", error);
@@ -78,7 +79,6 @@ const EducationReminders = () => {
 
         const fetchPromise = Promise.all([
             getReminders(),
-            getMe(),
             getCategories()
         ]);
 
@@ -87,15 +87,13 @@ const EducationReminders = () => {
         }
 
         try {
-            const [remindersRes, userRes, categoriesRes] = await fetchPromise;
+            const [remindersRes, categoriesRes] = await fetchPromise;
             setReminders(Array.isArray(remindersRes.data) ? remindersRes.data : []);
-            setUser(userRes.data);
 
             // Safer category check
             const fetchedCategories = categoriesRes.data?.data || categoriesRes.data || [];
             setCategories(Array.isArray(fetchedCategories) ? fetchedCategories : []);
 
-            localStorage.setItem('user', JSON.stringify(userRes.data));
             lastFetchRef.current = Date.now();
         } catch (error) {
             console.error("Error fetching data", error);

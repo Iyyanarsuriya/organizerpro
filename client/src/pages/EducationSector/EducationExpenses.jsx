@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
     getTransactions,
@@ -99,12 +99,41 @@ const EducationExpenses = () => {
     const [sortBy, setSortBy] = useState('date_desc');
     const [searchQuery, setSearchQuery] = useState('');
 
-    const fetchData = async () => {
+    const lastFetchRef = useRef(0);
+
+    const fetchData = async (force = false) => {
+        // Throttle fetching: don't fetch if last fetch was less than 60s ago
+        const now = Date.now();
+        if (!force && now - lastFetchRef.current < 60000 && !loading) {
+            return;
+        }
+
+        // Request Deduplication (Handles StrictMode & Rapid Calls)
+        const currentParamsKey = JSON.stringify({
+            filterMember, currentPeriod, periodType,
+            rangeStart: periodType === 'range' ? customRange.start : null,
+            rangeEnd: periodType === 'range' ? customRange.end : null
+        });
+
+        if (!force && window._eduExpenseFetchPromise && window._eduExpenseParamsKey === currentParamsKey) {
+            try {
+                await window._eduExpenseFetchPromise;
+                return;
+            } catch (error) {
+                console.error("Error joining existing fetch:", error);
+            }
+            return;
+        }
+
+        setLoading(true);
         try {
             const isRange = periodType === 'range';
             const rangeStart = isRange ? customRange.start : null;
             const rangeEnd = isRange ? customRange.end : null;
-            if (isRange && (!rangeStart || !rangeEnd)) return;
+            if (isRange && (!rangeStart || !rangeEnd)) {
+                setLoading(false);
+                return;
+            }
 
             const params = {
                 memberId: filterMember,
@@ -114,7 +143,7 @@ const EducationExpenses = () => {
                 sector: 'education'
             };
 
-            const [transRes, catRes, statsRes, membersRes, vendorsRes, deptsRes] = await Promise.all([
+            const fetchPromise = Promise.all([
                 getTransactions(params),
                 getExpenseCategories({ sector: 'education' }),
                 getTransactionStats(params),
@@ -123,6 +152,13 @@ const EducationExpenses = () => {
                 getDepartments({ sector: 'education' })
             ]);
 
+            if (!force) {
+                window._eduExpenseFetchPromise = fetchPromise;
+                window._eduExpenseParamsKey = currentParamsKey;
+            }
+
+            const [transRes, catRes, statsRes, membersRes, vendorsRes, deptsRes] = await fetchPromise;
+
             setMembers(membersRes.data.data || []);
             setVendors(vendorsRes.data.data || []);
             setDepartments(deptsRes.data.data || []);
@@ -130,10 +166,16 @@ const EducationExpenses = () => {
             setCategories(catRes.data || []);
             setStats(statsRes.data.data || { summary: { total_income: 0, total_expense: 0 }, categories: [] });
             setLoading(false);
+            lastFetchRef.current = Date.now();
         } catch (error) {
             console.error("Fetch Data Error Details:", error.response || error);
             toast.error(`Failed to fetch data: ${error.response?.data?.message || error.message}`);
             setLoading(false);
+        } finally {
+            if (!force) {
+                window._eduExpenseFetchPromise = null;
+                window._eduExpenseParamsKey = null;
+            }
         }
     };
 

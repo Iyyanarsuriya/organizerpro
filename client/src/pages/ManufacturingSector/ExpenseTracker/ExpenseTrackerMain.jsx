@@ -1,5 +1,5 @@
 // Force reload
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import ReactDOM from 'react-dom'; // Keep ReactDOM as it IS used for the portal
 import {
@@ -124,26 +124,56 @@ const ExpenseTrackerMain = () => {
     const [salaryLoading, setSalaryLoading] = useState(false);
 
     const COLORS = ['#2d5bff', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
+    const lastFetchRef = useRef(0);
 
-    const fetchData = async () => {
+    const fetchData = async (force = false) => {
+        // Throttle fetching: don't fetch if last fetch was less than 60s ago
+        const now = Date.now();
+        if (!force && now - lastFetchRef.current < 60000 && !loading) {
+            return;
+        }
+
+        // Request Deduplication (Handles StrictMode & Rapid Calls)
+        const currentParamsKey = JSON.stringify({
+            filterProject, filterMember, filterMemberType, currentPeriod, periodType,
+            rangeStart: periodType === 'range' ? customRange.start : null,
+            rangeEnd: periodType === 'range' ? customRange.end : null
+        });
+
+        if (!force && window._mfgExpenseFetchPromise && window._mfgExpenseParamsKey === currentParamsKey) {
+            try {
+                const results = await window._mfgExpenseFetchPromise;
+                // We'll let the second call join and wait, but only the first one should really manage state if they are identical
+                // Actually, if we are here, the first call is already processing. 
+                // We can just return if it's identical to avoid double state updates too.
+                return;
+            } catch (error) {
+                console.error("Error joining existing fetch:", error);
+            }
+            return;
+        }
+
         setLoading(true);
         try {
             const isRange = periodType === 'range';
             const rangeStart = isRange ? customRange.start : null;
             const rangeEnd = isRange ? customRange.end : null;
-            if (isRange && (!rangeStart || !rangeEnd)) return;
+            if (isRange && (!rangeStart || !rangeEnd)) {
+                setLoading(false);
+                return;
+            }
 
             const params = {
                 projectId: filterProject,
                 memberId: filterMember,
-                memberType: filterMemberType, // NEW
+                memberType: filterMemberType,
                 period: isRange ? null : currentPeriod,
                 startDate: rangeStart,
                 endDate: rangeEnd,
-                sector: 'manufacturing' // Add sector
+                sector: 'manufacturing'
             };
 
-            const [transRes, statsRes, catRes, projRes, membersRes, roleRes, guestRes, vehicleRes] = await Promise.all([
+            const fetchPromise = Promise.all([
                 getTransactions(params),
                 getTransactionStats({ ...params, excludeCategory: !filterMember ? 'Salary Pot' : null }),
                 getExpenseCategories({ sector: 'manufacturing' }),
@@ -153,6 +183,13 @@ const ExpenseTrackerMain = () => {
                 getGuests(),
                 getVehicleLogs()
             ]);
+
+            if (!force) {
+                window._mfgExpenseFetchPromise = fetchPromise;
+                window._mfgExpenseParamsKey = currentParamsKey;
+            }
+
+            const [transRes, statsRes, catRes, projRes, membersRes, roleRes, guestRes, vehicleRes] = await fetchPromise;
             setTransactions(transRes.data.data || []);
             setVehicleLogs(vehicleRes?.data || []);
 
@@ -220,10 +257,16 @@ const ExpenseTrackerMain = () => {
             }
 
             setLoading(false);
+            lastFetchRef.current = Date.now();
         } catch (error) {
             console.error("Fetch Data Error Details:", error.response || error);
             toast.error(`Failed to fetch data: ${error.response?.data?.message || error.message}`);
             setLoading(false);
+        } finally {
+            if (!force) {
+                window._mfgExpenseFetchPromise = null;
+                window._mfgExpenseParamsKey = null;
+            }
         }
     };
 

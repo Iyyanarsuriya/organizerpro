@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense, lazy } from 'react';
+import { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster, useToasterStore, toast } from 'react-hot-toast';
 import { getReminders as getPersonalReminders } from './api/Reminder/personalReminder';
@@ -99,8 +99,25 @@ const AppContent = () => {
   const [previewImage, setPreviewImage] = useState(null);
   const [updatingProfile, setUpdatingProfile] = useState(false);
 
+  const fetchInProgress = useRef({ user: false, reminders: false });
+
+  const fetchUserData = async () => {
+    if (!token || fetchInProgress.current.user) return;
+    fetchInProgress.current.user = true;
+    try {
+      const res = await getMe();
+      setUser(res.data);
+      localStorage.setItem('user', JSON.stringify(res.data));
+    } catch (error) {
+      console.error("Failed to fetch user data", error);
+    } finally {
+      fetchInProgress.current.user = false;
+    }
+  };
+
   const fetchTodayReminders = async () => {
-    if (!token) return;
+    if (!token || fetchInProgress.current.reminders) return;
+    fetchInProgress.current.reminders = true;
     try {
       let res;
       const sector = user?.sector || 'personal';
@@ -111,27 +128,24 @@ const AppContent = () => {
       else if (sector === 'manufacturing') res = await getMfgReminders();
       else res = await getPersonalReminders();
 
-      // Ensure res.data is an array before setting state
       setReminders(Array.isArray(res?.data) ? res.data : []);
     } catch (error) {
       console.error("Failed to fetch reminders for header", error);
+    } finally {
+      fetchInProgress.current.reminders = false;
     }
   };
 
-  const fetchUserData = async () => {
-    if (!token) return;
-    try {
-      const res = await getMe();
-      setUser(res.data);
-      localStorage.setItem('user', JSON.stringify(res.data));
-    } catch (error) {
-      console.error("Failed to fetch user data", error);
-    }
-  };
-
+  // Effect 1: Fetch user data once when token changes
   useEffect(() => {
     if (token) {
       fetchUserData();
+    }
+  }, [token]);
+
+  // Effect 2: Fetch reminders when sector is available
+  useEffect(() => {
+    if (token && user?.sector) {
       fetchTodayReminders();
       const interval = setInterval(fetchTodayReminders, 60000); // Refresh every minute
 

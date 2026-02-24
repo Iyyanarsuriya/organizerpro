@@ -40,9 +40,7 @@ const ReminderDashboard = () => {
     const fetchData = async (signal) => {
         try {
             const res = await getReminders(null, { signal });
-            const userRes = await getMe({ signal });
             setReminders(res.data || []);
-            setUser(userRes.data);
         } catch (error) {
             if (error.name !== 'CanceledError') {
                 console.error("Error fetching reminders", error);

@@ -57,12 +57,10 @@ const Reminders = () => {
         // Request Deduplication (Handles StrictMode & Rapid Calls)
         if (!force && window._mfgFetchPromise) {
             try {
-                const [remindersRes, userRes, categoriesRes] = await window._mfgFetchPromise;
+                const [remindersRes, categoriesRes] = await window._mfgFetchPromise;
                 setReminders(Array.isArray(remindersRes.data) ? remindersRes.data : []);
-                setUser(userRes.data);
                 const fetchedCategories = categoriesRes.data?.data || categoriesRes.data || [];
                 setCategories(Array.isArray(fetchedCategories) ? fetchedCategories : []);
-                localStorage.setItem('user', JSON.stringify(userRes.data));
                 lastFetchRef.current = Date.now();
             } catch (error) {
                 console.error("Error joining existing fetch:", error);
@@ -74,7 +72,6 @@ const Reminders = () => {
 
         const fetchPromise = Promise.all([
             getReminders(),
-            getMe(),
             getCategories()
         ]);
 
@@ -83,15 +80,13 @@ const Reminders = () => {
         }
 
         try {
-            const [remindersRes, userRes, categoriesRes] = await fetchPromise;
+            const [remindersRes, categoriesRes] = await fetchPromise;
             setReminders(Array.isArray(remindersRes.data) ? remindersRes.data : []);
-            setUser(userRes.data);
 
             // Safer category check
             const fetchedCategories = categoriesRes.data?.data || categoriesRes.data || [];
             setCategories(Array.isArray(fetchedCategories) ? fetchedCategories : []);
 
-            localStorage.setItem('user', JSON.stringify(userRes.data));
             lastFetchRef.current = Date.now();
         } catch (error) {
             console.error("Error fetching data", error);

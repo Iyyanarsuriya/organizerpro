@@ -54,11 +54,9 @@ const PersonalReminders = () => {
         // Request Deduplication (Handles StrictMode & Rapid Calls)
         if (!force && window._personalFetchPromise) {
             try {
-                const [remindersRes, userRes, categoriesRes] = await window._personalFetchPromise;
+                const [remindersRes, categoriesRes] = await window._personalFetchPromise;
                 setReminders(remindersRes.data);
-                setUser(userRes.data);
                 setCategories(categoriesRes.data.data || []);
-                localStorage.setItem('user', JSON.stringify(userRes.data));
                 lastFetchRef.current = Date.now();
             } catch (error) {
                 console.error("Error joining existing fetch:", error);
@@ -70,7 +68,6 @@ const PersonalReminders = () => {
 
         const fetchPromise = Promise.all([
             getReminders(),
-            getMe(),
             getCategories()
         ]);
 
@@ -79,11 +76,9 @@ const PersonalReminders = () => {
         }
 
         try {
-            const [remindersRes, userRes, categoriesRes] = await fetchPromise;
+            const [remindersRes, categoriesRes] = await fetchPromise;
             setReminders(remindersRes.data);
-            setUser(userRes.data);
             setCategories(categoriesRes.data.data || []);
-            localStorage.setItem('user', JSON.stringify(userRes.data));
             lastFetchRef.current = Date.now();
         } catch (error) {
             console.error("Error fetching data", error);

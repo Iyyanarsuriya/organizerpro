@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
     getTransactions,
@@ -100,12 +100,41 @@ const ITExpenseTracker = () => {
         category: 'all'
     });
 
-    const fetchData = async () => {
+    const lastFetchRef = useRef(0);
+
+    const fetchData = async (force = false) => {
+        // Throttle fetching: don't fetch if last fetch was less than 60s ago
+        const now = Date.now();
+        if (!force && now - lastFetchRef.current < 60000 && !loading) {
+            return;
+        }
+
+        // Request Deduplication (Handles StrictMode & Rapid Calls)
+        const currentParamsKey = JSON.stringify({
+            filterProject, filterMember, filterMemberType, currentPeriod, periodType,
+            rangeStart: periodType === 'range' ? customRange.start : null,
+            rangeEnd: periodType === 'range' ? customRange.end : null
+        });
+
+        if (!force && window._itExpenseFetchPromise && window._itExpenseParamsKey === currentParamsKey) {
+            try {
+                await window._itExpenseFetchPromise;
+                return;
+            } catch (error) {
+                console.error("Error joining existing fetch:", error);
+            }
+            return;
+        }
+
+        setLoading(true);
         try {
             const isRange = periodType === 'range';
             const rangeStart = isRange ? customRange.start : null;
             const rangeEnd = isRange ? customRange.end : null;
-            if (isRange && (!rangeStart || !rangeEnd)) return;
+            if (isRange && (!rangeStart || !rangeEnd)) {
+                setLoading(false);
+                return;
+            }
 
             const params = {
                 projectId: filterProject,
@@ -117,7 +146,7 @@ const ITExpenseTracker = () => {
                 sector: 'it'
             };
 
-            const [transRes, statsRes, catRes, projRes, membersRes, roleRes, guestRes] = await Promise.all([
+            const fetchPromise = Promise.all([
                 getTransactions(params),
                 getTransactionStats(params),
                 getExpenseCategories({ sector: 'it' }),
@@ -126,6 +155,13 @@ const ITExpenseTracker = () => {
                 getMemberRoles({ sector: 'it' }),
                 getGuests({ sector: 'it' })
             ]);
+
+            if (!force) {
+                window._itExpenseFetchPromise = fetchPromise;
+                window._itExpenseParamsKey = currentParamsKey;
+            }
+
+            const [transRes, statsRes, catRes, projRes, membersRes, roleRes, guestRes] = await fetchPromise;
             setTransactions(transRes.data.data || []);
             setStats(statsRes.data.data || { summary: { total_income: 0, total_expense: 0 }, categories: [] });
             setCategories(catRes.data.data || []);
@@ -142,10 +178,16 @@ const ITExpenseTracker = () => {
             }
 
             setLoading(false);
+            lastFetchRef.current = Date.now();
         } catch (error) {
             console.error("Fetch Data Error Details:", error.response || error);
             toast.error(`Failed to fetch data: ${error.response?.data?.message || error.message}`);
             setLoading(false);
+        } finally {
+            if (!force) {
+                window._itExpenseFetchPromise = null;
+                window._itExpenseParamsKey = null;
+            }
         }
     };
 
