@@ -32,3 +32,10 @@ export const deleteWorkLog = (id) => axiosInstance.delete(`/manufacturing-sector
 export const getWorkTypes = (params) => axiosInstance.get('/manufacturing-sector/work-types', { params });
 export const createWorkType = (data) => axiosInstance.post('/manufacturing-sector/work-types', data);
 export const deleteWorkType = (id) => axiosInstance.delete(`/manufacturing-sector/work-types/${id}`);
+
+// Approvals
+export const getApprovals = (params) => axiosInstance.get('/manufacturing-sector/approvals', { params });
+export const createApproval = (data) => axiosInstance.post('/manufacturing-sector/approvals', data);
+export const updateApprovalStatus = (id, data) => axiosInstance.put(`/manufacturing-sector/approvals/${id}`, data);
+export const deleteApproval = (id) => axiosInstance.delete(`/manufacturing-sector/approvals/${id}`);
+
