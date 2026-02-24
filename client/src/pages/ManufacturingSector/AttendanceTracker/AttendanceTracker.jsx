@@ -17,6 +17,7 @@ import {
     createShift,
     deleteShift,
     getProjects,
+    createProject,
     deleteProject
 } from '../../../api/Attendance/mfgAttendance';
 import { getActiveMembers } from '../../../api/TeamManagement/mfgTeam';
