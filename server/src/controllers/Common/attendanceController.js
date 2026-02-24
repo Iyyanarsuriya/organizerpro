@@ -37,22 +37,54 @@ const ManufacturingAttendanceController = {
     },
     quickMark: async (req, res) => {
         const { status, member_id, date } = req.body;
+        const userId = req.user.data_owner_id;
 
-        // Check if attendance is locked for this date
-        if (await ManufacturingAttendanceController.checkLock(req.user.data_owner_id, date)) {
-            return res.status(403).json({ success: false, message: "Attendance is locked for this period." });
-        }
-
-        if (['CL', 'SL', 'EL'].includes(status)) {
-            const [member] = await db.query('SELECT cl_balance, sl_balance, el_balance FROM manufacturing_members WHERE id = ?', [member_id]);
-            if (member.length > 0) {
-                const field = `${status.toLowerCase()}_balance`;
-                if (member[0][field] <= 0) return res.status(400).json({ success: false, message: `Insufficient ${status} balance.` });
-                await db.query(`UPDATE manufacturing_members SET ${field} = ${field} - 1 WHERE id = ?`, [member_id]);
+        try {
+            // 1. Check if attendance is locked for this date
+            if (await ManufacturingAttendanceController.checkLock(userId, date)) {
+                return res.status(403).json({ success: false, message: "Attendance is locked for this period." });
             }
+
+            // 2. Get existing record to handle balance adjustments
+            const [existing] = await db.query(
+                `SELECT status FROM manufacturing_attendance WHERE user_id = ? AND member_id = ? AND DATE(date) = ?`,
+                [userId, member_id, date]
+            );
+
+            const oldStatus = existing.length > 0 ? existing[0].status : null;
+
+            // 3. Handle Balance Adjustments
+            if (oldStatus !== status) {
+                const leaveTypes = ['CL', 'SL', 'EL'];
+
+                // Reverse old leave balance if applicable
+                if (leaveTypes.includes(oldStatus)) {
+                    const oldField = `${oldStatus.toLowerCase()}_balance`;
+                    await db.query(`UPDATE manufacturing_members SET ${oldField} = ${oldField} + 1 WHERE id = ?`, [member_id]);
+                }
+
+                // Apply new leave balance if applicable
+                if (leaveTypes.includes(status)) {
+                    const [member] = await db.query('SELECT cl_balance, sl_balance, el_balance FROM manufacturing_members WHERE id = ?', [member_id]);
+                    if (member.length > 0) {
+                        const newField = `${status.toLowerCase()}_balance`;
+                        if (member[0][newField] <= 0) {
+                            // If we reversed an old status, we should probably roll it back? 
+                            // But usually, the user is fixing a mistake.
+                            return res.status(400).json({ success: false, message: `Insufficient ${status} balance.` });
+                        }
+                        await db.query(`UPDATE manufacturing_members SET ${newField} = ${newField} - 1 WHERE id = ?`, [member_id]);
+                    }
+                }
+            }
+
+            // 4. Perform Quick Mark
+            const result = await Attendance.quickMark({ ...req.body, user_id: userId, updated_by: req.user.username });
+            res.status(200).json({ success: true, data: result });
+        } catch (error) {
+            console.error('Manufacturing quickMark error:', error);
+            res.status(500).json({ success: false, message: error.message });
         }
-        const result = await Attendance.quickMark({ ...req.body, user_id: req.user.data_owner_id, updated_by: req.user.username });
-        res.status(200).json({ success: true, data: result });
     }
 };
 
@@ -207,7 +239,13 @@ const lockAttendance = async (req, res) => {
             // If ignore didn't insert, update
             await db.query('UPDATE education_attendance_locks SET is_locked = 1 WHERE user_id = ? AND date = ?', [userId, date]);
         }
-        else if (sector === 'manufacturing') await db.query('INSERT INTO manufacturing_attendance_locks (user_id, month, year, locked_by) VALUES (?, ?, ?, ?)', [userId, month, year, req.user.id]);
+        else if (sector === 'manufacturing') {
+            await db.query(`
+                INSERT INTO manufacturing_attendance_locks (user_id, month, year, locked_by, status, unlocked_at) 
+                VALUES (?, ?, ?, ?, 'locked', NULL)
+                ON DUPLICATE KEY UPDATE locked_by = VALUES(locked_by), status = 'locked', unlocked_at = NULL, locked_at = NOW()
+            `, [userId, month, year, req.user.id]);
+        }
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 };
@@ -230,7 +268,7 @@ const unlockAttendance = async (req, res) => {
                 return res.status(400).json({ success: false, message: "Sector not supported for locking yet" });
             }
             const table = 'manufacturing_attendance_locks';
-            await db.query(`UPDATE ${table} SET unlocked_by = ?, unlocked_at = NOW(), unlock_reason = ? WHERE user_id = ? AND month = ? AND year = ?`, [req.user.id, reason, req.user.data_owner_id, month, year]);
+            await db.query(`UPDATE ${table} SET unlocked_by = ?, unlocked_at = NOW(), unlock_reason = ?, status = 'unlocked' WHERE user_id = ? AND month = ? AND year = ?`, [req.user.id, reason, req.user.data_owner_id, month, year]);
         }
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false, message: e.message }); }
