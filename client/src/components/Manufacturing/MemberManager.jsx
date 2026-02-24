@@ -1,14 +1,17 @@
 import { getMembers, createMember, updateMember, deleteMember, getGuests, getMemberRoles, createMemberRole, deleteMemberRole } from '../../api/TeamManagement/mfgTeam';
+import { getShifts } from '../../api/Attendance/mfgAttendance';
 import { getTransactions } from '../../api/Expense/mfgExpense';
 import toast from 'react-hot-toast';
-import { FaTimes, FaPlus, FaEdit, FaTrash, FaUser, FaUsers, FaBriefcase, FaPhone, FaEnvelope, FaHistory, FaMoneyBillWave, FaUniversity, FaTag, FaSearch, FaFilter } from 'react-icons/fa';
+import { FaTimes, FaPlus, FaEdit, FaTrash, FaUser, FaUsers, FaBriefcase, FaPhone, FaEnvelope, FaHistory, FaMoneyBillWave, FaUniversity, FaTag, FaSearch, FaFilter, FaClock } from 'react-icons/fa';
 import ConfirmModal from '../modals/ConfirmModal';
 import RoleManager from './RoleManager'; // IMPORT
 import ExportButtons from '../Common/ExportButtons';
 import { generateCSV, generatePDF, generateTXT } from '../../utils/exportUtils/base.js';
 import { useState, useEffect, useRef } from 'react';
 
-const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles }) => {
+const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: propShifts }) => {
+    const [localShifts, setLocalShifts] = useState([]);
+    const shifts = propShifts || localShifts;
     const [members, setMembers] = useState([]);
     const [localRoles, setLocalRoles] = useState([]); // Internal roles state
     const roles = propRoles || localRoles; // Use prop if available, else local
@@ -23,6 +26,7 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles }) => {
         member_type: 'employee',
         wage_type: 'monthly',
         daily_wage: '',
+        shift_id: '',
         status: 'active'
     });
 
@@ -71,6 +75,7 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles }) => {
         const fetchPromise = Promise.all([
             getMembers({ sector }),
             !propRoles ? getMemberRoles({ sector }) : Promise.resolve({ data: { data: [] } }),
+            !propShifts ? getShifts({ sector }) : Promise.resolve({ data: { data: [] } }),
             getGuests({ sector })
         ]);
 
@@ -79,11 +84,12 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles }) => {
         }
 
         try {
-            const [memRes, roleRes, guestRes] = await fetchPromise;
+            const [memRes, roleRes, shiftRes, guestRes] = await fetchPromise;
             const guests = (Array.isArray(guestRes?.data?.data) ? guestRes.data.data : []).map(g => ({ ...g, isGuest: true }));
             const membersRaw = Array.isArray(memRes?.data?.data) ? memRes.data.data : [];
             setMembers([...membersRaw, ...guests]);
             if (!propRoles) setLocalRoles(Array.isArray(roleRes?.data?.data) ? roleRes.data.data : []);
+            if (!propShifts) setLocalShifts(Array.isArray(shiftRes?.data?.data) ? shiftRes.data.data : []);
             lastFetchRef.current = Date.now();
         } catch (error) {
             toast.error("Failed to fetch data");
@@ -96,6 +102,18 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles }) => {
     useEffect(() => {
         fetchMembers();
     }, []);
+
+    // Set default shift for new members
+    useEffect(() => {
+        if (!editingId && shifts.length > 0 && !formData.shift_id) {
+            const defaultShift = shifts.find(s => s.is_default === 1) ||
+                shifts.find(s => s.name.toLowerCase().includes('9') && s.name.toLowerCase().includes('6')) ||
+                shifts[0];
+            if (defaultShift) {
+                setFormData(prev => ({ ...prev, shift_id: defaultShift.id }));
+            }
+        }
+    }, [shifts, editingId]);
 
     // Filter Logic
     const filteredMembers = (Array.isArray(members) ? members : []).filter(m => {
@@ -201,6 +219,7 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles }) => {
             member_type: member.member_type || 'worker',
             wage_type: member.wage_type || 'daily',
             daily_wage: member.daily_wage || '',
+            shift_id: member.shift_id || '',
             status: member.status
         });
         setEditingId(member.id);
@@ -223,7 +242,7 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles }) => {
     };
 
     const resetForm = () => {
-        setFormData({ name: '', role: '', phone: '', email: '', member_type: 'employee', wage_type: 'monthly', daily_wage: '', status: 'active' });
+        setFormData({ name: '', role: '', phone: '', email: '', member_type: 'employee', wage_type: 'monthly', daily_wage: '', shift_id: '', status: 'active' });
         setEditingId(null);
     };
 
@@ -378,6 +397,24 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles }) => {
                             </select>
                         </div>
 
+                        <div className="col-span-1 lg:col-span-1">
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                                <FaClock className="inline mr-1 text-[8px]" /> Assign Shift
+                            </label>
+                            <select
+                                value={formData.shift_id}
+                                onChange={(e) => setFormData({ ...formData, shift_id: e.target.value })}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
+                            >
+                                <option value="">Select Shift</option>
+                                {shifts.map(shift => (
+                                    <option key={shift.id} value={shift.id}>
+                                        {shift.name} ({shift.start_time.slice(0, 5)} - {shift.end_time.slice(0, 5)})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
                         <div className="col-span-1 md:col-span-2 lg:col-span-2 flex items-end gap-2">
                             <button
                                 type="submit"
@@ -501,6 +538,12 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles }) => {
                                                     <div className="flex items-center gap-2">
                                                         <FaEnvelope className="text-slate-400 text-[12px]" />
                                                         <span className="font-medium">{member.email}</span>
+                                                    </div>
+                                                )}
+                                                {member.shift_name && (
+                                                    <div className="flex items-center gap-2">
+                                                        <FaClock className="text-slate-400 text-[12px]" />
+                                                        <span className="font-medium">{member.shift_name}</span>
                                                     </div>
                                                 )}
                                                 <div className="flex items-center gap-2">

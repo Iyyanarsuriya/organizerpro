@@ -593,9 +593,16 @@ const quickMark = async (data) => {
 };
 
 const bulkMark = async (data) => {
-    const { user_id, member_ids, date, status, sector, updated_by, check_in } = data;
-    if (!member_ids || member_ids.length === 0) return { count: 0 };
+    const { user_id, member_ids, date, status, sector, updated_by, check_in, payloads } = data;
     const model = getSectorModel(sector);
+
+    if (payloads && Array.isArray(payloads)) {
+        const promises = payloads.map(p => model.quickMark({ ...p, user_id, updated_by }));
+        await Promise.all(promises);
+        return { count: payloads.length };
+    }
+
+    if (!member_ids || member_ids.length === 0) return { count: 0 };
     const promises = member_ids.map(mid => model.quickMark({ user_id, member_id: mid, date, status, sector, updated_by, check_in }));
     await Promise.all(promises);
     return { count: member_ids.length };
@@ -629,10 +636,8 @@ const deleteHoliday = async (id, userId, sector) => {
 // --- SHIFT MANAGEMENT ---
 const getShifts = async (userId, sector) => {
     const { shifts: table } = getTables(sector);
-    try {
-        const [rows] = await db.execute(`SELECT * FROM ${table} WHERE user_id = ?`, [userId]);
-        return rows;
-    } catch (e) { return []; }
+    const [rows] = await db.execute(`SELECT * FROM ${table} WHERE user_id = ?`, [userId]);
+    return rows;
 };
 
 const createShift = async (data) => {

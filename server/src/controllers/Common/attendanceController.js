@@ -170,8 +170,23 @@ const bulkMarkAttendance = async (req, res) => {
 const getHolidays = async (req, res) => { try { res.json({ success: true, data: await Attendance.getHolidays(req.user.data_owner_id, req.query.sector) }); } catch (e) { res.status(500).json({ success: false, message: e.message }); } };
 const createHoliday = async (req, res) => { try { res.json({ success: true, data: await Attendance.createHoliday({ ...req.body, user_id: req.user.data_owner_id }) }); } catch (e) { res.status(500).json({ success: false, message: e.message }); } };
 const deleteHoliday = async (req, res) => { try { await Attendance.deleteHoliday(req.params.id, req.user.data_owner_id, req.query.sector); res.json({ success: true }); } catch (e) { res.status(500).json({ success: false, message: e.message }); } };
-const getShifts = async (req, res) => { try { res.json({ success: true, data: await Attendance.getShifts(req.user.data_owner_id, req.query.sector) }); } catch (e) { res.status(500).json({ success: false, message: e.message }); } };
-const createShift = async (req, res) => { try { res.json({ success: true, data: await Attendance.createShift({ ...req.body, user_id: req.user.data_owner_id }) }); } catch (e) { res.status(500).json({ success: false, message: e.message }); } };
+const getShifts = async (req, res) => {
+    try {
+        const data = await Attendance.getShifts(req.user.data_owner_id, req.query.sector);
+        res.json({ success: true, data });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+};
+
+const createShift = async (req, res) => {
+    try {
+        const data = await Attendance.createShift({ ...req.body, user_id: req.user.data_owner_id });
+        res.json({ success: true, data });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+};
 const deleteShift = async (req, res) => { try { await Attendance.deleteShift(req.params.id, req.user.data_owner_id, req.query.sector); res.json({ success: true }); } catch (e) { res.status(500).json({ success: false, message: e.message }); } };
 
 // --- LOCKING ---
@@ -239,7 +254,7 @@ const getLockStatus = async (req, res) => {
                 // Other sectors might not have locks yet
                 return res.json({ success: true, data: [] });
             }
-            console.log('getLockStatus manufacturing query:', table, month, year);
+
             [locks] = await db.query(`SELECT * FROM ${table} WHERE user_id = ? AND month = ? AND year = ?`, [req.user.data_owner_id, month, year]);
         }
         res.json({ success: true, data: locks });

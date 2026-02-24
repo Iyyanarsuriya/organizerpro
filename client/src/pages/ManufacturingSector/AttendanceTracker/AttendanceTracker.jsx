@@ -309,14 +309,19 @@ const AttendanceTracker = () => {
             let finalTotalHours = total_hours || existing?.total_hours || null;
             let finalWorkMode = work_mode || existing?.work_mode || null;
 
-            // Auto-fill check_in if marking present and it's empty
-            if (status === 'present' && !finalCheckIn) {
-                const now = new Date();
-                finalCheckIn = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            // Auto-fill check_in and check_out if marking present and it's empty, using shift times if available
+            if (status === 'present') {
+                const member = members.find(m => m.id === memberId);
+                if (!finalCheckIn) {
+                    finalCheckIn = member?.start_time ? member.start_time.slice(0, 5) : `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`;
+                }
+                if (!finalCheckOut && member?.end_time) {
+                    finalCheckOut = member.end_time.slice(0, 5);
+                }
             }
 
             // Recalculate total hours if both in and out exist
-            if (finalCheckIn && finalCheckOut && (!total_hours)) {
+            if (finalCheckIn && finalCheckOut && (!total_hours || total_hours === existing?.total_hours)) {
                 finalTotalHours = calculateDuration(finalCheckIn, finalCheckOut);
             }
 
@@ -365,28 +370,41 @@ const AttendanceTracker = () => {
     const confirmBulkMark = async (status) => {
         try {
             const date = periodType === 'day' ? currentPeriod : new Date().toISOString().split('T')[0];
-            const activeMemberIds = (Array.isArray(members) ? members : []).filter(m => m.status === 'active').map(m => m.id);
+            const activeMembers = (Array.isArray(members) ? members : []).filter(m => m.status === 'active');
+            const activeMemberIds = activeMembers.map(m => m.id);
 
             if (activeMemberIds.length === 0) {
                 toast.error("No active members found");
                 return;
             }
 
-            let check_in = null;
-            if (status === 'present') {
-                const now = new Date();
-                check_in = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-            }
+            const bulkPayloads = activeMembers.map(member => {
+                let m_check_in = member?.start_time ? member.start_time.slice(0, 5) : null;
+                let m_check_out = member?.end_time ? member.end_time.slice(0, 5) : null;
+                let m_total_hours = (m_check_in && m_check_out) ? calculateDuration(m_check_in, m_check_out) : null;
+
+                if (status === 'present' && !m_check_in) {
+                    const now = new Date();
+                    m_check_in = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                }
+
+                return {
+                    member_id: member.id,
+                    status: status === 'week_off' ? 'week_off' : status === 'holiday' ? 'holiday' : 'present',
+                    date,
+                    subject: status === 'week_off' ? 'Weekend' : status === 'holiday' ? 'Holiday' : 'Daily Attendance',
+                    note: '',
+                    sector: 'manufacturing',
+                    check_in: m_check_in,
+                    check_out: m_check_out,
+                    total_hours: m_total_hours
+                };
+            });
 
             await bulkMarkAttendance({
                 user_id: currentUser.id,
-                member_ids: activeMemberIds,
-                date,
-                status: status === 'week_off' ? 'week_off' : status === 'holiday' ? 'holiday' : 'present',
-                subject: status === 'week_off' ? 'Weekend' : status === 'holiday' ? 'Holiday' : 'Daily Attendance',
-                note: '',
-                sector: 'manufacturing',
-                check_in
+                payloads: bulkPayloads,
+                sector: 'manufacturing'
             });
 
             toast.success("Bulk update successful");
@@ -1175,7 +1193,7 @@ const AttendanceTracker = () => {
                         </div>
                     </div>
                 ) : activeTab === 'members' ? (
-                    <MemberManager onClose={() => setActiveTab('records')} onUpdate={() => fetchData(true)} roles={roles} sector="manufacturing" />
+                    <MemberManager onClose={() => setActiveTab('records')} onUpdate={() => fetchData(true)} roles={roles} shifts={shifts} sector="manufacturing" />
                 ) : activeTab === 'shifts' ? (
                     <ShiftManager
                         shifts={shifts}

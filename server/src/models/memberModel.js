@@ -78,27 +78,28 @@ const HotelMemberModel = {
 // --- MANUFACTURING SECTOR ---
 const ManufacturingMemberModel = {
     create: async (data) => {
-        const { user_id, name, role, phone, email, status, project_id, wage_type, daily_wage, member_type, created_by } = data;
+        const { user_id, name, role, phone, email, status, project_id, shift_id, wage_type, daily_wage, member_type, created_by } = data;
         const [res] = await db.query(
-            `INSERT INTO manufacturing_members (user_id, name, role, phone, email, status, project_id, wage_type, daily_wage, member_type, created_by) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [user_id, name, role, phone, email, status || 'active', project_id, wage_type || 'daily', daily_wage || 0, member_type || 'worker', created_by]
+            `INSERT INTO manufacturing_members (user_id, name, role, phone, email, status, project_id, shift_id, wage_type, daily_wage, member_type, created_by) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [user_id, name, role, phone, email, status || 'active', project_id || null, shift_id || null, wage_type || 'daily', daily_wage || 0, member_type || 'worker', created_by]
         );
         return { id: res.insertId, ...data };
     },
     update: async (id, userId, data) => {
-        const { name, role, phone, email, status, project_id, wage_type, daily_wage, member_type } = data;
+        const { name, role, phone, email, status, project_id, shift_id, wage_type, daily_wage, member_type } = data;
         const [res] = await db.query(
-            `UPDATE manufacturing_members SET name=?, role=?, phone=?, email=?, status=?, project_id=?, wage_type=?, daily_wage=?, member_type=? WHERE id=? AND user_id=?`,
-            [name, role, phone, email, status, project_id, wage_type, daily_wage, member_type, id, userId]
+            `UPDATE manufacturing_members SET name=?, role=?, phone=?, email=?, status=?, project_id=?, shift_id=?, wage_type=?, daily_wage=?, member_type=? WHERE id=? AND user_id=?`,
+            [name, role, phone, email, status, project_id || null, shift_id || null, wage_type, daily_wage, member_type, id, userId]
         );
         return res.affectedRows > 0;
     },
     getAll: async (userId, memberType) => {
         let query = `
-            SELECT m.*, p.name as project_name 
+            SELECT m.*, p.name as project_name, s.name as shift_name 
             FROM manufacturing_members m 
             LEFT JOIN manufacturing_projects p ON m.project_id = p.id 
+            LEFT JOIN manufacturing_shifts s ON m.shift_id = s.id
             WHERE m.user_id = ?`;
         const params = [userId];
         if (memberType && memberType !== 'all') { query += ' AND m.member_type = ?'; params.push(memberType); }
@@ -198,10 +199,21 @@ const deleteMember = async (id, userId, sector) => {
 
 const getActiveMembers = async (userId, memberType = null, sector) => {
     const { members: table } = getTables(sector);
-    let query = `SELECT * FROM ${table} WHERE user_id = ? AND status = "active"`;
+    let query;
     let params = [userId];
-    if (sector !== 'hotel' && memberType && memberType !== 'all') { query += ' AND member_type = ?'; params.push(memberType); }
-    query += ' ORDER BY name ASC';
+
+    if (sector === 'manufacturing') {
+        query = `
+            SELECT m.*, s.name as shift_name, s.start_time, s.end_time 
+            FROM manufacturing_members m
+            LEFT JOIN manufacturing_shifts s ON m.shift_id = s.id
+            WHERE m.user_id = ? AND m.status = "active"`;
+    } else {
+        query = `SELECT m.* FROM ${table} m WHERE m.user_id = ? AND m.status = "active"`;
+    }
+
+    if (sector !== 'hotel' && memberType && memberType !== 'all') { query += ' AND m.member_type = ?'; params.push(memberType); }
+    query += ' ORDER BY m.name ASC';
     const [rows] = await db.query(query, params);
     return rows;
 };

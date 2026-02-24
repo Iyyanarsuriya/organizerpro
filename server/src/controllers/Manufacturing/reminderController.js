@@ -3,7 +3,6 @@ const Reminder = require('../../models/reminderModel');
 exports.getReminders = async (req, res) => {
     try {
         const sector = 'manufacturing';
-        console.log("Fetching Manufacturing reminders for user:", req.user.data_owner_id);
         const rows = await Reminder.getAllByUserId(req.user.data_owner_id, sector);
         res.json(rows);
     } catch (error) {
