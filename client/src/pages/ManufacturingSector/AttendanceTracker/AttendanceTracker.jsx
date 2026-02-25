@@ -174,12 +174,6 @@ const AttendanceTracker = () => {
     const lastFetchRef = useRef(0);
 
     const fetchData = async (force = false) => {
-        const now = Date.now();
-        // Throttle fetching (60s cache/throttle)
-        if (!force && now - lastFetchRef.current < 60000 && !loading) {
-            return;
-        }
-
         // Request Deduplication
         const isRange = periodType === 'range';
         const rangeStart = isRange ? customRange.start : null;
@@ -251,6 +245,7 @@ const AttendanceTracker = () => {
             window._mfgAttendanceParamsKey = currentParamsKey;
         }
 
+
         try {
             const [attRes, statsRes, summaryRes, projRes, membersRes, roleRes, holidaysRes, shiftsRes] = await fetchPromise;
 
@@ -309,7 +304,20 @@ const AttendanceTracker = () => {
 
     const handleQuickMark = async (memberId, status = null, permission_duration = null, note = null, permission_start_time = null, permission_end_time = null, permission_reason = null, overtimeData = null, check_in = null, check_out = null, total_hours = null, work_mode = null) => {
         try {
-            const date = periodType === 'day' ? currentPeriod : new Date().toISOString().split('T')[0];
+            const today = new Date().toISOString().split('T')[0];
+            // Compute the intended attendance date (same as activeTargetDate logic)
+            let date;
+            if (periodType === 'day') {
+                date = currentPeriod;
+            } else if (periodType === 'range') {
+                date = customRange.end || today;
+            } else if (periodType === 'month' && currentPeriod.length === 7) {
+                date = today.startsWith(currentPeriod) ? today : `${currentPeriod}-01`;
+            } else if (periodType === 'year' && currentPeriod.length === 4) {
+                date = today.startsWith(currentPeriod) ? today : `${currentPeriod}-01-01`;
+            } else {
+                date = today;
+            }
             const existing = activeMembersAttendanceRecords[memberId];
 
             let finalCheckIn = check_in || existing?.check_in || null;
@@ -365,7 +373,17 @@ const AttendanceTracker = () => {
     };
 
     const handleBulkMark = (status) => {
-        const date = periodType === 'day' ? currentPeriod : new Date().toISOString().split('T')[0];
+        const today = new Date().toISOString().split('T')[0];
+        let date;
+        if (periodType === 'day') {
+            date = currentPeriod;
+        } else if (periodType === 'range') {
+            date = customRange.end || today;
+        } else if (periodType === 'month' && currentPeriod.length === 7) {
+            date = today.startsWith(currentPeriod) ? today : `${currentPeriod}-01`;
+        } else {
+            date = today;
+        }
         setConfirmModal({
             show: true,
             type: 'BULK_MARK',
@@ -377,7 +395,18 @@ const AttendanceTracker = () => {
 
     const confirmBulkMark = async (status) => {
         try {
-            const date = periodType === 'day' ? currentPeriod : new Date().toISOString().split('T')[0];
+            const today = new Date().toISOString().split('T')[0];
+            let date;
+            if (periodType === 'day') {
+                date = currentPeriod;
+            } else if (periodType === 'range') {
+                date = customRange.end || today;
+            } else if (periodType === 'month' && currentPeriod.length === 7) {
+                date = today.startsWith(currentPeriod) ? today : `${currentPeriod}-01`;
+            } else {
+                date = today;
+            }
+
             const activeMembers = (Array.isArray(members) ? members : []).filter(m => m.status === 'active');
             const activeMemberIds = activeMembers.map(m => m.id);
 
