@@ -287,11 +287,12 @@ const ExpenseTrackerMain = () => {
 
                 const statsArray = attRes.data?.data || [];
                 const summary = {
-                    present: statsArray.filter(s => ['present', 'late', 'permission'].includes(s.status))
-                        .reduce((acc, curr) => acc + curr.count, 0),
+                    present: statsArray.find(s => s.status === 'present')?.count || 0,
                     absent: statsArray.find(s => s.status === 'absent')?.count || 0,
                     late: statsArray.find(s => s.status === 'late')?.count || 0,
                     half_day: statsArray.find(s => s.status === 'half-day')?.count || 0,
+                    permission: statsArray.find(s => s.status === 'permission')?.count || 0,
+                    total_worked: statsArray.filter(s => ['present', 'late', 'permission', 'half-day'].includes(s.status)).reduce((acc, curr) => acc + (curr.status === 'half-day' ? curr.count * 0.5 : curr.count), 0)
                 };
 
                 setAttendanceStats({ summary, raw: statsArray });

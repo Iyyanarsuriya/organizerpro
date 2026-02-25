@@ -88,10 +88,26 @@ const SalaryCalculator = ({
     }, [transactions, filterMember, members]);
 
     const currentAttendanceEarned = useMemo(() => {
+        if (attendanceStats?.summary?.total_worked !== undefined) {
+            const worked = attendanceStats.summary.total_worked;
+            if (salaryMode === 'daily') {
+                return worked * dailyWage;
+            } else if (salaryMode === 'monthly') {
+                let daysInMonth = 30;
+                if (currentPeriod) {
+                    const [y, m] = currentPeriod.split('-');
+                    if (y && m) daysInMonth = new Date(y, m, 0).getDate();
+                }
+                return worked * (monthlySalary / daysInMonth);
+            } else {
+                return (unitsProduced * ratePerUnit);
+            }
+        }
+
+        // Fallback for old summary structure (though we updated it)
         if (salaryMode === 'daily') {
             return ((attendanceStats?.summary?.present || 0) * dailyWage) + ((attendanceStats?.summary?.half_day || 0) * (dailyWage / 2));
         } else if (salaryMode === 'monthly') {
-            // Calculate days in month dynamically
             let daysInMonth = 30;
             if (currentPeriod) {
                 const [y, m] = currentPeriod.split('-');
@@ -313,20 +329,41 @@ const SalaryCalculator = ({
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 xs:grid-cols-3 gap-4 mb-10">
-                                <div className="p-6 bg-emerald-50/50 rounded-3xl border border-emerald-100 text-center">
-                                    <p className="text-3xl font-black text-emerald-600 tracking-tighter">{attendanceStats?.summary?.present || 0}</p>
-                                    <p className="text-[8px] font-black text-emerald-500 uppercase tracking-[0.2em] mt-1">Present</p>
+                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-10">
+                                <div className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100 text-center">
+                                    <p className="text-xl font-black text-emerald-600 tracking-tighter">{attendanceStats?.summary?.present || 0}</p>
+                                    <p className="text-[7px] font-black text-emerald-500 uppercase tracking-widest mt-1">Present</p>
                                 </div>
-                                <div className="p-6 bg-blue-50/50 rounded-3xl border border-blue-100 text-center">
-                                    <p className="text-3xl font-black text-blue-600 tracking-tighter">{attendanceStats?.summary?.half_day || 0}</p>
-                                    <p className="text-[8px] font-black text-blue-500 uppercase tracking-[0.2em] mt-1">Half Days</p>
+                                <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 text-center">
+                                    <p className="text-xl font-black text-blue-600 tracking-tighter">{attendanceStats?.summary?.half_day || 0}</p>
+                                    <p className="text-[7px] font-black text-blue-500 uppercase tracking-widest mt-1">Half Days</p>
                                 </div>
-                                <div className="p-6 bg-rose-50/50 rounded-3xl border border-rose-100 text-center">
-                                    <p className="text-3xl font-black text-rose-600 tracking-tighter">{attendanceStats?.summary?.absent || 0}</p>
-                                    <p className="text-[8px] font-black text-rose-500 uppercase tracking-[0.2em] mt-1">Absent</p>
+                                <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 text-center">
+                                    <p className="text-xl font-black text-indigo-600 tracking-tighter">{attendanceStats?.summary?.late || 0}</p>
+                                    <p className="text-[7px] font-black text-indigo-500 uppercase tracking-widest mt-1">Late</p>
+                                </div>
+                                <div className="p-4 bg-amber-50/50 rounded-2xl border border-amber-100 text-center">
+                                    <p className="text-xl font-black text-amber-600 tracking-tighter">{attendanceStats?.summary?.permission || 0}</p>
+                                    <p className="text-[7px] font-black text-amber-500 uppercase tracking-widest mt-1">Permit</p>
+                                </div>
+                                <div className="p-4 bg-rose-50/50 rounded-2xl border border-rose-100 text-center">
+                                    <p className="text-xl font-black text-rose-600 tracking-tighter">{attendanceStats?.summary?.absent || 0}</p>
+                                    <p className="text-[7px] font-black text-rose-500 uppercase tracking-widest mt-1">Absent</p>
                                 </div>
                             </div>
+
+                            {attendanceStats?.summary?.total_worked > 0 && (
+                                <div className="mb-10 p-4 bg-slate-900 rounded-2xl flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center text-blue-400"><FaCalculator size={14} /></div>
+                                        <div>
+                                            <p className="text-[10px] font-black text-white uppercase tracking-widest">Effective Days Worked</p>
+                                            <p className="text-[8px] font-bold text-slate-400">Total payable days after half-day/late adjustments</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-2xl font-black text-blue-400 tracking-tight">{attendanceStats.summary.total_worked}</div>
+                                </div>
+                            )}
 
                             {/* Payment Controls */}
                             <div className="space-y-8">
