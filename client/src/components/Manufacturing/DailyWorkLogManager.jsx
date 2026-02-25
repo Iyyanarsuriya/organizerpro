@@ -41,7 +41,8 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
         date: selectedDate,
         units_produced: '',
         rate_per_unit: '',
-        work_type: '', // Changed default to empty to force selection or rely on effect
+        unit_type: 'piece', // 'piece' or 'day'
+        work_type: '',
         notes: ''
     });
     const [editingId, setEditingId] = useState(null);
@@ -195,6 +196,7 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
             date: log.date,
             units_produced: log.units_produced,
             rate_per_unit: log.rate_per_unit,
+            unit_type: log.unit_type || 'piece',
             work_type: log.work_type || (workTypes.length > 0 ? workTypes[0].name : 'Production'),
             notes: log.notes || ''
         });
@@ -225,6 +227,7 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
             date: selectedDate,
             units_produced: '',
             rate_per_unit: '',
+            unit_type: 'piece',
             work_type: '',
             notes: ''
         });
@@ -357,22 +360,50 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">
-                                        <FaBoxes className="inline mr-1 text-[8px]" /> Units / Days *
-                                    </label>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                                            <FaBoxes className="text-[8px]" />
+                                            {formData.unit_type === 'day' ? 'Days Worked *' : 'Pieces Produced *'}
+                                        </label>
+                                        {/* Piece / Day toggle */}
+                                        <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, unit_type: 'piece' })}
+                                                className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider transition-all ${formData.unit_type === 'piece'
+                                                        ? 'bg-indigo-600 text-white shadow-sm'
+                                                        : 'text-slate-500 hover:text-slate-700'
+                                                    }`}
+                                            >
+                                                Piece
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, unit_type: 'day' })}
+                                                className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider transition-all ${formData.unit_type === 'day'
+                                                        ? 'bg-emerald-600 text-white shadow-sm'
+                                                        : 'text-slate-500 hover:text-slate-700'
+                                                    }`}
+                                            >
+                                                Day
+                                            </button>
+                                        </div>
+                                    </div>
                                     <input
                                         required
                                         type="number"
                                         step="0.01"
+                                        min="0"
                                         value={formData.units_produced}
                                         onChange={(e) => setFormData({ ...formData, units_produced: e.target.value })}
-                                        placeholder="Pieces or Days"
+                                        placeholder={formData.unit_type === 'day' ? 'Number of days (e.g. 1, 0.5)' : 'Number of pieces produced'}
                                         className="w-full bg-white border border-slate-200 rounded-2xl px-4 h-12 text-sm font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-sm"
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">
-                                        <FaMoneyBillWave className="inline mr-1 text-[8px]" /> Rate *
+                                        <FaMoneyBillWave className="inline mr-1 text-[8px]" />
+                                        {formData.unit_type === 'day' ? 'Rate per Day *' : 'Rate per Piece *'}
                                     </label>
                                     <input
                                         required
@@ -380,7 +411,7 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                                         step="0.01"
                                         value={formData.rate_per_unit}
                                         onChange={(e) => setFormData({ ...formData, rate_per_unit: e.target.value })}
-                                        placeholder="Rate per piece/day"
+                                        placeholder={formData.unit_type === 'day' ? 'Daily wage rate' : 'Rate per piece'}
                                         className="w-full bg-white border border-slate-200 rounded-2xl px-4 h-12 text-sm font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-sm"
                                     />
                                 </div>
@@ -416,9 +447,19 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                                 )}
                             </div>
                             {formData.units_produced && formData.rate_per_unit && (
-                                <div className="mt-4 p-4 bg-indigo-50 rounded-2xl border border-indigo-100 flex items-center justify-between">
-                                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Calculated Amount</p>
-                                    <p className="text-2xl font-black text-indigo-600">
+                                <div className={`mt-4 p-4 rounded-2xl border flex items-center justify-between ${formData.unit_type === 'day'
+                                        ? 'bg-emerald-50 border-emerald-100'
+                                        : 'bg-indigo-50 border-indigo-100'
+                                    }`}>
+                                    <div>
+                                        <p className={`text-[10px] font-black uppercase tracking-widest ${formData.unit_type === 'day' ? 'text-emerald-400' : 'text-indigo-400'
+                                            }`}>Calculated Amount</p>
+                                        <p className="text-[9px] font-bold text-slate-400 mt-0.5">
+                                            {formData.units_produced} {formData.unit_type === 'day' ? 'days' : 'pieces'} × ₹{formData.rate_per_unit}/{formData.unit_type === 'day' ? 'day' : 'piece'}
+                                        </p>
+                                    </div>
+                                    <p className={`text-2xl font-black ${formData.unit_type === 'day' ? 'text-emerald-600' : 'text-indigo-600'
+                                        }`}>
                                         ₹{(parseFloat(formData.units_produced) * parseFloat(formData.rate_per_unit)).toFixed(2)}
                                     </p>
                                 </div>
