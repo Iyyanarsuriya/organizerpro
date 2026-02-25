@@ -655,7 +655,8 @@ const ExpenseTrackerMain = () => {
                 startDate: customReportForm.startDate,
                 endDate: endDateInclusive,
                 category: customReportForm.category === 'all' ? null : customReportForm.category,
-                type: customReportForm.type === 'all' ? null : customReportForm.type
+                type: customReportForm.type === 'all' ? null : customReportForm.type,
+                sector: 'manufacturing'
             };
 
             const fetchPromises = [getTransactions(params), getTransactionStats(params), getVehicleLogs()];
@@ -676,7 +677,7 @@ const ExpenseTrackerMain = () => {
             const vehicleRes = results[2]; // Vehicle Logs
 
             // Process Vehicle Logs for Report
-            let combinedTransactions = [...transRes.data];
+            let combinedTransactions = [...(transRes?.data?.data || [])];
             if (customReportForm.vehicle) { combinedTransactions = []; }
 
             if (vehicleRes && Array.isArray(vehicleRes)) {
@@ -795,12 +796,12 @@ const ExpenseTrackerMain = () => {
                         bonus: 0 // Bonus not captured in custom report form
                     });
                 } else {
-                    handleExportPDF(combinedTransactions, statsRes.data, customReportForm);
+                    handleExportPDF(combinedTransactions, statsRes?.data?.data, params);
                 }
             } else if (format === 'CSV') {
-                handleExportCSV(combinedTransactions, customReportForm);
+                handleExportCSV(combinedTransactions, params);
             } else if (format === 'TXT') {
-                handleExportTXT(combinedTransactions, statsRes.data, customReportForm);
+                handleExportTXT(combinedTransactions, statsRes?.data?.data, params);
             }
 
             setShowCustomReportModal(false);
