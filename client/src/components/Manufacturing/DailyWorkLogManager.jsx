@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { getWorkLogs, createWorkLog, updateWorkLog, deleteWorkLog, getMonthlyTotal, getWorkTypes, createWorkType, deleteWorkType } from '../../api/Attendance/mfgAttendance';
+import { getWorkLogs, createWorkLog, updateWorkLog, deleteWorkLog, getMonthlyTotal } from '../../api/Attendance/mfgAttendance';
 import { getActiveMembers } from '../../api/TeamManagement/mfgTeam';
 import toast from 'react-hot-toast';
-import { FaTimes, FaPlus, FaEdit, FaTrash, FaCalendarAlt, FaMoneyBillWave, FaBoxes, FaStickyNote, FaUser, FaTags, FaSearch } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaCalendarAlt, FaMoneyBillWave, FaBoxes, FaStickyNote, FaSearch } from 'react-icons/fa';
 import ConfirmModal from '../modals/ConfirmModal';
 import ExportButtons from '../Common/ExportButtons';
 import { exportWorkLogToCSV, exportWorkLogToTXT, exportWorkLogToPDF } from '../../utils/exportUtils/index.js';
@@ -10,12 +10,9 @@ import { exportWorkLogToCSV, exportWorkLogToTXT, exportWorkLogToPDF } from '../.
 const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().split('T')[0] }) => {
     const [workLogs, setWorkLogs] = useState([]);
     const [members, setMembers] = useState([]);
-    const [workTypes, setWorkTypes] = useState([]); // State for work types
     const [loading, setLoading] = useState(true);
     const [monthlyTotals, setMonthlyTotals] = useState([]);
     const [isGuest, setIsGuest] = useState(false);
-    const [showTypeManager, setShowTypeManager] = useState(false); // Modal for Type Manager
-    const [newTypeName, setNewTypeName] = useState(''); // Input for new type
 
     // Search and Filter States
     const [searchTerm, setSearchTerm] = useState('');
@@ -41,7 +38,7 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
         date: selectedDate,
         units_produced: '',
         rate_per_unit: '',
-        unit_type: 'piece', // 'piece' or 'day'
+        unit_type: 'day', // 'piece' or 'day'
         work_type: '',
         notes: ''
     });
@@ -60,10 +57,9 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
         // Deduplicate only when params are identical and not forced
         if (!force && window._mfgWorkLogFetchPromise && window._mfgWorkLogParamsKey === currentParamsKey) {
             try {
-                const [logsRes, membersRes, typesRes] = await window._mfgWorkLogFetchPromise;
+                const [logsRes, membersRes] = await window._mfgWorkLogFetchPromise;
                 setWorkLogs(logsRes.data?.data || []);
                 setMembers(membersRes.data?.data || []);
-                setWorkTypes(typesRes.data?.data || []);
             } catch (error) {
                 console.error("Error joining existing fetch:", error);
             } finally {
@@ -78,8 +74,7 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
 
         const fetchPromise = Promise.all([
             getWorkLogs({ startDate: dateFilter.start, endDate: dateFilter.end }),
-            getActiveMembers(),
-            getWorkTypes()
+            getActiveMembers()
         ]);
 
         if (!force) {
@@ -89,10 +84,9 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
 
         setLoading(true);
         try {
-            const [logsRes, membersRes, typesRes] = await fetchPromise;
+            const [logsRes, membersRes] = await fetchPromise;
             setWorkLogs(logsRes.data?.data || []);
             setMembers(membersRes.data?.data || []);
-            setWorkTypes(typesRes.data?.data || []);
         } catch (error) {
             console.error("Failed to fetch data", error);
             toast.error("Failed to load data");
@@ -227,7 +221,7 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
             date: selectedDate,
             units_produced: '',
             rate_per_unit: '',
-            unit_type: 'piece',
+            unit_type: 'day',
             work_type: '',
             notes: ''
         });
@@ -255,12 +249,6 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                     </h2>
                     <p className="text-slate-500 text-xs mt-1 ml-4 font-bold tracking-wide">Track daily production and calculate earnings</p>
                 </div>
-                <button
-                    onClick={() => setShowTypeManager(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all"
-                >
-                    <FaTags /> Manage Work Types
-                </button>
             </div>
 
             {/* Scrollable Content */}
@@ -332,21 +320,7 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                                         </select>
                                     )}
                                 </div>
-                                <div>
-                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">
-                                        Work Type
-                                    </label>
-                                    <select
-                                        value={formData.work_type}
-                                        onChange={(e) => setFormData({ ...formData, work_type: e.target.value })}
-                                        className="w-full bg-white border border-slate-200 rounded-2xl px-4 h-12 text-sm font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all cursor-pointer shadow-sm"
-                                    >
-                                        <option value="">Select Work Type</option>
-                                        {workTypes.map(t => (
-                                            <option key={t.id} value={t.name}>{t.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
+
                                 <div>
                                     <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">
                                         <FaCalendarAlt className="inline mr-1 text-[8px]" /> Date *
@@ -371,8 +345,8 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                                                 type="button"
                                                 onClick={() => setFormData({ ...formData, unit_type: 'piece' })}
                                                 className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider transition-all ${formData.unit_type === 'piece'
-                                                        ? 'bg-indigo-600 text-white shadow-sm'
-                                                        : 'text-slate-500 hover:text-slate-700'
+                                                    ? 'bg-indigo-600 text-white shadow-sm'
+                                                    : 'text-slate-500 hover:text-slate-700'
                                                     }`}
                                             >
                                                 Piece
@@ -381,8 +355,8 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                                                 type="button"
                                                 onClick={() => setFormData({ ...formData, unit_type: 'day' })}
                                                 className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider transition-all ${formData.unit_type === 'day'
-                                                        ? 'bg-emerald-600 text-white shadow-sm'
-                                                        : 'text-slate-500 hover:text-slate-700'
+                                                    ? 'bg-emerald-600 text-white shadow-sm'
+                                                    : 'text-slate-500 hover:text-slate-700'
                                                     }`}
                                             >
                                                 Day
@@ -448,8 +422,8 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                             </div>
                             {formData.units_produced && formData.rate_per_unit && (
                                 <div className={`mt-4 p-4 rounded-2xl border flex items-center justify-between ${formData.unit_type === 'day'
-                                        ? 'bg-emerald-50 border-emerald-100'
-                                        : 'bg-indigo-50 border-indigo-100'
+                                    ? 'bg-emerald-50 border-emerald-100'
+                                    : 'bg-indigo-50 border-indigo-100'
                                     }`}>
                                     <div>
                                         <p className={`text-[10px] font-black uppercase tracking-widest ${formData.unit_type === 'day' ? 'text-emerald-400' : 'text-indigo-400'
@@ -631,40 +605,7 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                 }
             </div >
 
-            {/* Work Type Manager Modal */}
-            {
-                showTypeManager && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-                        <div className="bg-white rounded-[40px] p-8 w-full max-w-md shadow-2xl relative animate-in zoom-in-95 duration-300">
-                            <button onClick={() => setShowTypeManager(false)} className="absolute top-8 right-8 text-slate-400 hover:text-slate-800 transition-colors">
-                                <FaTimes />
-                            </button>
-                            <h3 className="text-xl font-black text-slate-900 mb-6">Manage Work Types</h3>
 
-                            <form onSubmit={handleAddType} className="flex gap-2 mb-8">
-                                <input
-                                    type="text"
-                                    value={newTypeName}
-                                    onChange={(e) => setNewTypeName(e.target.value)}
-                                    placeholder="New Type Name (e.g. Piece Rate)"
-                                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500 transition-all"
-                                />
-                                <button type="submit" className="bg-indigo-600 text-white rounded-xl px-4 font-black text-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20">+</button>
-                            </form>
-
-                            <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">
-                                {workTypes.map(type => (
-                                    <div key={type.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                        <span className="font-bold text-slate-700">{type.name}</span>
-                                        <button onClick={() => handleDeleteType(type.id)} className="text-slate-400 hover:text-red-500 transition-colors p-2"><FaTrash size={14} /></button>
-                                    </div>
-                                ))}
-                                {workTypes.length === 0 && <p className="text-center text-slate-400 text-xs italic">No types added yet.</p>}
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
 
             <ConfirmModal
                 isOpen={confirmModal.show}
