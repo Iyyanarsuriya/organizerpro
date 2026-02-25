@@ -788,7 +788,7 @@ const ExpenseTrackerMain = () => {
 
                     exportMemberPayslipToPDF({
                         member: memberObj || { name: guestName, id: 'GUEST', member_type: 'guest' },
-                        transactions: transRes.data,
+                        transactions: combinedTransactions,
                         attendanceStats: summary ? { summary } : null,
                         period: `${customReportForm.startDate} to ${customReportForm.endDate}`,
                         filename: `payslip_${guestName || memberObj?.name}_${customReportForm.startDate}`,
