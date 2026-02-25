@@ -21,6 +21,12 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: pr
         if (propMembers) {
             setLocalMembers(propMembers);
             setLoading(false);
+            // Even if members are provided, if shifts aren't, we need to fetch them
+            if (!propShifts && localShifts.length === 0) {
+                getShifts({ sector })
+                    .then(res => setLocalShifts(Array.isArray(res?.data?.data) ? res.data.data : []))
+                    .catch(err => console.error("Failed to load shifts", err));
+            }
         } else {
             fetchMembers();
         }
