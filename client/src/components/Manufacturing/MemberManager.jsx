@@ -77,7 +77,7 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: pr
                 const [memRes, roleRes, guestRes] = await window._mfgMemberFetchPromise;
                 const guests = (Array.isArray(guestRes?.data?.data) ? guestRes.data.data : []).map(g => ({ ...g, isGuest: true }));
                 const membersRaw = Array.isArray(memRes?.data?.data) ? memRes.data.data : [];
-                setMembers([...membersRaw, ...guests]);
+                setLocalMembers([...membersRaw, ...guests]);
                 if (!propRoles) setLocalRoles(Array.isArray(roleRes?.data?.data) ? roleRes.data.data : []);
                 lastFetchRef.current = Date.now();
             } catch (error) {
@@ -103,7 +103,7 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: pr
             const [memRes, roleRes, shiftRes, guestRes] = await fetchPromise;
             const guests = (Array.isArray(guestRes?.data?.data) ? guestRes.data.data : []).map(g => ({ ...g, isGuest: true }));
             const membersRaw = Array.isArray(memRes?.data?.data) ? memRes.data.data : [];
-            setMembers([...membersRaw, ...guests]);
+            setLocalMembers([...membersRaw, ...guests]);
             if (!propRoles) setLocalRoles(Array.isArray(roleRes?.data?.data) ? roleRes.data.data : []);
             if (!propShifts) setLocalShifts(Array.isArray(shiftRes?.data?.data) ? shiftRes.data.data : []);
             lastFetchRef.current = Date.now();

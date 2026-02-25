@@ -575,9 +575,11 @@ const AttendanceTracker = () => {
                 (a.member_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                 dateStr.includes(searchQuery);
             const matchesRole = !filterRole || memberIdToRoleMap[a.member_id] === filterRole;
-            return matchesSearch && matchesRole;
+            const matchesProject = !filterProject || a.project_id == filterProject;
+            const matchesMember = !filterMember || a.member_id == filterMember;
+            return matchesSearch && matchesRole && matchesProject && matchesMember;
         });
-    }, [attendances, searchQuery, filterRole, memberIdToRoleMap]);
+    }, [attendances, searchQuery, filterRole, filterProject, filterMember, memberIdToRoleMap]);
 
     const activeTargetDate = useMemo(() => {
         const today = new Date().toISOString().split('T')[0];
