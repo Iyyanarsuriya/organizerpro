@@ -140,7 +140,7 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
         e.preventDefault();
         if (!newTypeName.trim()) return;
         try {
-            await createWorkType(newTypeName);
+            await createWorkType({ name: newTypeName });
             toast.success("Work type added");
             setNewTypeName('');
             const res = await getWorkTypes();
