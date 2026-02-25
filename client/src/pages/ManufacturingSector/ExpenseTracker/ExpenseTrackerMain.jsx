@@ -904,7 +904,7 @@ const ExpenseTrackerMain = () => {
 
             {/* Main Content */}
             <main className="flex-1 p-[16px] lg:p-[48px] h-screen overflow-y-auto custom-scrollbar">
-                {activeTab === 'Dashboard' && (
+                {['Dashboard', 'Reports'].includes(activeTab) && (
                     <div className="flex flex-col gap-6 mb-8 lg:mb-12">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -959,69 +959,73 @@ const ExpenseTrackerMain = () => {
                                 </div>
                             </div>
 
-                            {/* Project Filter */}
-                            <div className="w-full sm:w-[140px]">
-                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Project</label>
-                                <select value={filterProject} onChange={(e) => setFilterProject(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
-                                    <option value="">All Projects</option>
-                                    {Array.isArray(projects) && projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                </select>
-                            </div>
+                            {activeTab === 'Dashboard' && (
+                                <>
+                                    {/* Project Filter */}
+                                    <div className="w-full sm:w-[140px]">
+                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Project</label>
+                                        <select value={filterProject} onChange={(e) => setFilterProject(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
+                                            <option value="">All Projects</option>
+                                            {Array.isArray(projects) && projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                        </select>
+                                    </div>
 
-                            {/* Vehicle Filter */}
-                            <div className="w-full sm:w-[140px]">
-                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Vehicle</label>
-                                <select value={filterVehicle} onChange={(e) => setFilterVehicle(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
-                                    <option value="">All Vehicles</option>
-                                    {[...new Set((Array.isArray(vehicleLogs) ? vehicleLogs : []).map(l => l.vehicle_name))].filter(Boolean).sort().map(v => <option key={v} value={v}>{v}</option>)}
-                                </select>
-                            </div>
+                                    {/* Vehicle Filter */}
+                                    <div className="w-full sm:w-[140px]">
+                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Vehicle</label>
+                                        <select value={filterVehicle} onChange={(e) => setFilterVehicle(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
+                                            <option value="">All Vehicles</option>
+                                            {[...new Set((Array.isArray(vehicleLogs) ? vehicleLogs : []).map(l => l.vehicle_name))].filter(Boolean).sort().map(v => <option key={v} value={v}>{v}</option>)}
+                                        </select>
+                                    </div>
 
-                            {/* Role Filter */}
-                            <div className="w-full sm:w-[130px]">
-                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Role</label>
-                                <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
-                                    <option value="">All Roles</option>
-                                    {[...new Set([...(Array.isArray(roles) ? roles.map(r => r.name) : []), ...(Array.isArray(members) ? members.map(m => m.role).filter(Boolean) : [])])].sort().map(role => (
-                                        <option key={role} value={role}>{role}</option>
-                                    ))}
-                                </select>
-                            </div>
+                                    {/* Role Filter */}
+                                    <div className="w-full sm:w-[130px]">
+                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Role</label>
+                                        <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
+                                            <option value="">All Roles</option>
+                                            {[...new Set([...(Array.isArray(roles) ? roles.map(r => r.name) : []), ...(Array.isArray(members) ? members.map(m => m.role).filter(Boolean) : [])])].sort().map(role => (
+                                                <option key={role} value={role}>{role}</option>
+                                            ))}
+                                        </select>
+                                    </div>
 
-                            {/* Type Filter */}
-                            <div className="w-full sm:w-[130px]">
-                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Type</label>
-                                <select value={filterMemberType} onChange={(e) => setFilterMemberType(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
-                                    <option value="all">Everyone</option>
-                                    <option value="worker">Workers</option>
-                                    <option value="employee">Employees</option>
-                                </select>
-                            </div>
+                                    {/* Type Filter */}
+                                    <div className="w-full sm:w-[130px]">
+                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Type</label>
+                                        <select value={filterMemberType} onChange={(e) => setFilterMemberType(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
+                                            <option value="all">Everyone</option>
+                                            <option value="worker">Workers</option>
+                                            <option value="employee">Employees</option>
+                                        </select>
+                                    </div>
 
-                            {/* Member Filter */}
-                            <div className="w-full sm:w-[180px]">
-                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Member / Guest</label>
-                                <select value={filterMember} onChange={(e) => setFilterMember(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
-                                    <option value="">Everyone</option>
-                                    <option value="guest">All Guests (Non-Members)</option>
-                                    <optgroup label="Registered Members">
-                                        {members.filter(m => !m.isGuest && (!filterRole || m.role === filterRole) && (filterMemberType === 'all' || m.member_type === filterMemberType)).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                                    </optgroup>
-                                    <optgroup label="Frequent Guests">
-                                        {members.filter(m => m.isGuest).map(m => <option key={m.id} value={m.id}>[GUEST] {m.name}</option>)}
-                                    </optgroup>
-                                </select>
-                            </div>
+                                    {/* Member Filter */}
+                                    <div className="w-full sm:w-[180px]">
+                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Member / Guest</label>
+                                        <select value={filterMember} onChange={(e) => setFilterMember(e.target.value)} className="h-10 w-full bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none cursor-pointer">
+                                            <option value="">Everyone</option>
+                                            <option value="guest">All Guests (Non-Members)</option>
+                                            <optgroup label="Registered Members">
+                                                {members.filter(m => !m.isGuest && (!filterRole || m.role === filterRole) && (filterMemberType === 'all' || m.member_type === filterMemberType)).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                            </optgroup>
+                                            <optgroup label="Frequent Guests">
+                                                {members.filter(m => m.isGuest).map(m => <option key={m.id} value={m.id}>[GUEST] {m.name}</option>)}
+                                            </optgroup>
+                                        </select>
+                                    </div>
 
-                            {/* Action Buttons */}
-                            <div className="flex items-center gap-2 ml-auto">
-                                <ExportButtons onExportCSV={() => setConfirmModal({ show: true, type: 'CSV', label: 'CSV Report' })} onExportPDF={() => setConfirmModal({ show: true, type: 'PDF', label: 'PDF Report' })} onExportTXT={() => setConfirmModal({ show: true, type: 'TXT', label: 'Plain Text Report' })} />
-                                <button onClick={() => setShowProjectManager(true)} className="h-10 bg-blue-600 text-white px-4 rounded-xl shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2" title="New Project">
-                                    <FaFolderPlus />
-                                    <span className="text-[9px] font-black uppercase tracking-widest hidden lg:inline">Project</span>
-                                </button>
-                                <button onClick={() => setActiveTab('Work Log')} className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-sm lg:hidden ${activeTab === 'Work Log' ? 'bg-[#2d5bff] text-white' : 'bg-slate-800 text-white hover:bg-slate-900'}`} title="Daily Work Logs"><FaBoxes /></button>
-                            </div>
+                                    {/* Action Buttons */}
+                                    <div className="flex items-center gap-2 ml-auto">
+                                        <ExportButtons onExportCSV={() => setConfirmModal({ show: true, type: 'CSV', label: 'CSV Report' })} onExportPDF={() => setConfirmModal({ show: true, type: 'PDF', label: 'PDF Report' })} onExportTXT={() => setConfirmModal({ show: true, type: 'TXT', label: 'Plain Text Report' })} />
+                                        <button onClick={() => setShowProjectManager(true)} className="h-10 bg-blue-600 text-white px-4 rounded-xl shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2" title="New Project">
+                                            <FaFolderPlus />
+                                            <span className="text-[9px] font-black uppercase tracking-widest hidden lg:inline">Project</span>
+                                        </button>
+                                        <button onClick={() => setActiveTab('Work Log')} className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-sm lg:hidden ${activeTab === 'Work Log' ? 'bg-[#2d5bff] text-white' : 'bg-slate-800 text-white hover:bg-slate-900'}`} title="Daily Work Logs"><FaBoxes /></button>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 )}
