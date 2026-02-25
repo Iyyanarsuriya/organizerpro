@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { FaFileAlt, FaMoneyBillWave, FaUserCheck, FaArrowLeft, FaPlusCircle, FaPlus, FaHistory, FaHandHoldingUsd, FaReceipt, FaSearch, FaFilter, FaTag, FaUser } from 'react-icons/fa';
+import React, { useState, useMemo, useEffect } from 'react';
+import { FaFileAlt, FaMoneyBillWave, FaUserCheck, FaArrowLeft, FaPlusCircle, FaPlus, FaHistory, FaHandHoldingUsd, FaReceipt, FaSearch, FaFilter, FaTag, FaUser, FaCalendarAlt, FaCalculator } from 'react-icons/fa';
 import { formatAmount } from '../../../utils/formatUtils';
 import ExportButtons from '../../../components/Common/ExportButtons';
 
@@ -34,12 +34,30 @@ const SalaryCalculator = ({
     setShowAddModal,
     handleExportPayslip,
     currentPeriod,
-    transactions
+    transactions,
+    onSalaryPeriodChange  // New: callback when salary month changes
 }) => {
     // Local Filter State
     const [searchQuery, setSearchQuery] = useState('');
     const [filterRole, setFilterRole] = useState('');
     const [filterType, setFilterType] = useState('all');
+
+    // Salary-specific month picker (defaults to current month)
+    const defaultSalaryPeriod = (() => {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    })();
+    const [salaryPeriod, setSalaryPeriod] = useState(defaultSalaryPeriod);
+
+    // Notify parent when salaryPeriod or filterMember changes
+    useEffect(() => {
+        if (onSalaryPeriodChange) {
+            onSalaryPeriodChange(salaryPeriod);
+        }
+    }, [salaryPeriod, filterMember]);
+
+    // The effective period to use for salary calculations (salary month picker)
+    const effectivePeriod = salaryPeriod || currentPeriod;
 
     // Filter Logic
     const filteredMembers = useMemo(() => {
@@ -94,8 +112,9 @@ const SalaryCalculator = ({
                 return worked * dailyWage;
             } else if (salaryMode === 'monthly') {
                 let daysInMonth = 30;
-                if (currentPeriod) {
-                    const [y, m] = currentPeriod.split('-');
+                const periodToUse = effectivePeriod || currentPeriod;
+                if (periodToUse) {
+                    const [y, m] = periodToUse.split('-');
                     if (y && m) daysInMonth = new Date(y, m, 0).getDate();
                 }
                 return worked * (monthlySalary / daysInMonth);
@@ -104,20 +123,21 @@ const SalaryCalculator = ({
             }
         }
 
-        // Fallback for old summary structure (though we updated it)
+        // Fallback
         if (salaryMode === 'daily') {
             return ((attendanceStats?.summary?.present || 0) * dailyWage) + ((attendanceStats?.summary?.half_day || 0) * (dailyWage / 2));
         } else if (salaryMode === 'monthly') {
             let daysInMonth = 30;
-            if (currentPeriod) {
-                const [y, m] = currentPeriod.split('-');
+            const periodToUse = effectivePeriod || currentPeriod;
+            if (periodToUse) {
+                const [y, m] = periodToUse.split('-');
                 if (y && m) daysInMonth = new Date(y, m, 0).getDate();
             }
             return (((attendanceStats?.summary?.present || 0) + (attendanceStats?.summary?.half_day || 0) * 0.5) * (monthlySalary / daysInMonth));
         } else {
             return (unitsProduced * ratePerUnit);
         }
-    }, [salaryMode, attendanceStats, dailyWage, monthlySalary, unitsProduced, ratePerUnit, currentPeriod]);
+    }, [salaryMode, attendanceStats, dailyWage, monthlySalary, unitsProduced, ratePerUnit, effectivePeriod, currentPeriod]);
 
     const totalGross = currentAttendanceEarned + parseFloat(bonus || 0);
     // Note: Deductions usually include both Salary payments and Advances in this period
@@ -169,7 +189,18 @@ const SalaryCalculator = ({
                 </div>
 
                 {/* Filter Bar */}
-                <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm grid grid-cols-1 md:grid-cols-5 gap-3">
+                    {/* Month Picker - Purple/Violet */}
+                    <div className="relative group">
+                        <FaCalendarAlt className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-violet-400 group-hover:text-violet-500 transition-colors" size={12} />
+                        <input
+                            type="month"
+                            value={salaryPeriod}
+                            onChange={(e) => setSalaryPeriod(e.target.value)}
+                            className="w-full bg-violet-50 hover:bg-violet-100 border border-transparent rounded-2xl py-2 md:py-3 pl-8 md:pl-10 pr-4 text-[10px] md:text-xs font-black text-violet-700 outline-none focus:ring-2 focus:ring-violet-200 transition-all uppercase tracking-wide cursor-pointer"
+                        />
+                    </div>
+
                     {/* Search - Blue */}
                     <div className="relative group">
                         <FaSearch className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-blue-400 group-hover:text-blue-500 transition-colors" size={12} />

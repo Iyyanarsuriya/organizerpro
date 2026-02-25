@@ -123,15 +123,17 @@ const ExpenseTrackerMain = () => {
     const [bonus, setBonus] = useState(0);
     const [salaryLoading, setSalaryLoading] = useState(false);
 
+    // Salary tab's own period (month)
+    const defaultSalaryPeriod = (() => {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    })();
+    const [salaryPeriod, setSalaryPeriod] = useState(defaultSalaryPeriod);
+
     const COLORS = ['#2d5bff', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
     const lastFetchRef = useRef(0);
 
     const fetchData = async (force = false) => {
-        // Throttle fetching: don't fetch if last fetch was less than 60s ago
-        const now = Date.now();
-        if (!force && now - lastFetchRef.current < 60000 && !loading) {
-            return;
-        }
 
         // Request Deduplication (Handles StrictMode & Rapid Calls)
         const currentParamsKey = JSON.stringify({
@@ -318,6 +320,35 @@ const ExpenseTrackerMain = () => {
         fetchData();
     }, [currentPeriod, filterProject, filterMember, filterMemberType, customRange.start, customRange.end, periodType]);
 
+    // Fetch attendance stats whenever salary period or member changes (for the Salary tab)
+    const fetchAttendanceForSalary = async (period, memberId) => {
+        if (!memberId) { setAttendanceStats(null); return; }
+        setSalaryLoading(true);
+        try {
+            const attRes = await getAttendanceStats({ memberId, period });
+            const statsArray = attRes.data?.data || [];
+            const summary = {
+                present: statsArray.find(s => s.status === 'present')?.count || 0,
+                absent: statsArray.find(s => s.status === 'absent')?.count || 0,
+                late: statsArray.find(s => s.status === 'late')?.count || 0,
+                half_day: statsArray.find(s => s.status === 'half-day')?.count || 0,
+                permission: statsArray.find(s => s.status === 'permission')?.count || 0,
+                total_worked: statsArray.filter(s => ['present', 'late', 'permission', 'half-day'].includes(s.status))
+                    .reduce((acc, curr) => acc + (curr.status === 'half-day' ? curr.count * 0.5 : curr.count), 0)
+            };
+            setAttendanceStats({ summary, raw: statsArray });
+        } catch (error) {
+            console.error('Failed to fetch salary attendance:', error);
+            setAttendanceStats(null);
+        } finally {
+            setSalaryLoading(false);
+        }
+    };
+
+    const handleSalaryPeriodChange = (period) => {
+        setSalaryPeriod(period);
+        fetchAttendanceForSalary(period, filterMember);
+    };
     // Auto-fill Salary Calculator from Member Data
     useEffect(() => {
         if (filterMember && members.length > 0) {
@@ -345,6 +376,15 @@ const ExpenseTrackerMain = () => {
             setRatePerUnit(0);
         }
     }, [filterMember, members]);
+
+    // When member changes on Salary tab, fetch attendance for salary period
+    useEffect(() => {
+        if (activeTab === 'Salary' && filterMember) {
+            fetchAttendanceForSalary(salaryPeriod, filterMember);
+        } else if (!filterMember) {
+            setAttendanceStats(null);
+        }
+    }, [filterMember, salaryPeriod, activeTab]);
 
     // Period formatting logic
     useEffect(() => {
@@ -1080,7 +1120,7 @@ const ExpenseTrackerMain = () => {
                 ) : activeTab === 'Salary' ? (
                     <SalaryCalculator
                         periodType={periodType} filterMember={filterMember} setFilterMember={setFilterMember}
-                        filterMemberType={filterMemberType} currentPeriod={currentPeriod}
+                        filterMemberType={filterMemberType} currentPeriod={salaryPeriod}
                         members={members} roles={roles} filteredTransactions={filteredTransactions}
                         handleExportPDF={handleExportPDF} handleExportCSV={handleExportCSV} handleExportTXT={handleExportTXT}
                         handleExportPayslip={handleExportPayslip}
@@ -1089,6 +1129,7 @@ const ExpenseTrackerMain = () => {
                         unitsProduced={unitsProduced} setUnitsProduced={setUnitsProduced} ratePerUnit={ratePerUnit} setRatePerUnit={setRatePerUnit}
                         bonus={bonus} setBonus={setBonus} stats={displayStats} setFormData={setFormData} formData={formData}
                         setShowAddModal={setShowAddModal} transactions={transactions}
+                        onSalaryPeriodChange={handleSalaryPeriodChange}
                     />
                 ) : activeTab === 'Vehicle Log' ? (
                     <VehicleTrackerManager data={vehicleLogs} onUpdate={fetchData} />
