@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { getWorkLogs, createWorkLog, updateWorkLog, deleteWorkLog, getMonthlyTotal, getWorkTypes, createWorkType, deleteWorkType } from '../../api/Attendance/mfgAttendance';
 import { getActiveMembers } from '../../api/TeamManagement/mfgTeam';
 import toast from 'react-hot-toast';
-import { FaTimes, FaPlus, FaEdit, FaTrash, FaCalendarAlt, FaMoneyBillWave, FaBoxes, FaStickyNote, FaUser, FaTags, FaSearch, FaFilter } from 'react-icons/fa';
+import { FaTimes, FaPlus, FaEdit, FaTrash, FaCalendarAlt, FaMoneyBillWave, FaBoxes, FaStickyNote, FaUser, FaTags, FaSearch } from 'react-icons/fa';
 import ConfirmModal from '../modals/ConfirmModal';
 import ExportButtons from '../Common/ExportButtons';
 import { exportWorkLogToCSV, exportWorkLogToTXT, exportWorkLogToPDF } from '../../utils/exportUtils/index.js';
@@ -48,29 +48,21 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
     const [viewMode, setViewMode] = useState('daily');
     const [confirmModal, setConfirmModal] = useState({ show: false, id: null });
 
-    const lastFetchRef = useRef(0);
-
     const fetchData = async (force = false) => {
-        const now = Date.now();
-        // Throttle fetching (60s cache/throttle)
-        if (!force && now - lastFetchRef.current < 60000 && !loading) {
-            return;
-        }
-
-        // Request Deduplication
+        // Always clear stale deduplication cache when force or date changes
         const currentParamsKey = JSON.stringify({
             startDate: dateFilter.start,
             endDate: dateFilter.end,
             viewMode
         });
 
+        // Deduplicate only when params are identical and not forced
         if (!force && window._mfgWorkLogFetchPromise && window._mfgWorkLogParamsKey === currentParamsKey) {
             try {
                 const [logsRes, membersRes, typesRes] = await window._mfgWorkLogFetchPromise;
-                setWorkLogs(logsRes.data.data);
-                setMembers(membersRes.data.data);
-                setWorkTypes(typesRes.data.data);
-                lastFetchRef.current = Date.now();
+                setWorkLogs(logsRes.data?.data || []);
+                setMembers(membersRes.data?.data || []);
+                setWorkTypes(typesRes.data?.data || []);
             } catch (error) {
                 console.error("Error joining existing fetch:", error);
             } finally {
@@ -79,15 +71,12 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
             return;
         }
 
-        if (force) {
-            window._mfgWorkLogFetchPromise = null;
-        }
+        // Always clear old promise cache before new fetch
+        window._mfgWorkLogFetchPromise = null;
+        window._mfgWorkLogParamsKey = null;
 
         const fetchPromise = Promise.all([
-            getWorkLogs({
-                startDate: dateFilter.start,
-                endDate: dateFilter.end
-            }),
+            getWorkLogs({ startDate: dateFilter.start, endDate: dateFilter.end }),
             getActiveMembers(),
             getWorkTypes()
         ]);
@@ -103,27 +92,26 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
             setWorkLogs(logsRes.data?.data || []);
             setMembers(membersRes.data?.data || []);
             setWorkTypes(typesRes.data?.data || []);
-            lastFetchRef.current = Date.now();
         } catch (error) {
             console.error("Failed to fetch data", error);
-            toast.error("Failed to fetch data");
+            toast.error("Failed to load data");
         } finally {
-            if (!force) {
-                window._mfgWorkLogFetchPromise = null;
-            }
+            window._mfgWorkLogFetchPromise = null;
             setLoading(false);
         }
     };
 
     const fetchMonthlyTotals = async () => {
         try {
-            const date = new Date(formData.date);
+            // Use dateFilter.start (or end) to derive the year/month for monthly totals
+            const refDate = new Date(dateFilter.start || new Date().toISOString().split('T')[0]);
             const res = await getMonthlyTotal({
-                year: date.getFullYear(),
-                month: date.getMonth() + 1
+                year: refDate.getFullYear(),
+                month: refDate.getMonth() + 1
             });
-            setMonthlyTotals(res.data.data);
+            setMonthlyTotals(res.data?.data || []);
         } catch (error) {
+            console.error('Monthly totals error:', error);
             toast.error("Failed to fetch monthly totals");
         }
     };
@@ -192,7 +180,7 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                 toast.success("Work log added!");
             }
             resetForm();
-            fetchData();
+            fetchData(true); // force refresh so new log appears immediately
             if (viewMode === 'monthly') fetchMonthlyTotals();
         } catch (error) {
             toast.error(error.response?.data?.message || "Failed to save work log");
@@ -221,7 +209,7 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
         try {
             await deleteWorkLog(confirmModal.id);
             toast.success("Work log deleted");
-            fetchData();
+            fetchData(true); // force refresh so deleted log disappears immediately
             if (viewMode === 'monthly') fetchMonthlyTotals();
         } catch (error) {
             toast.error("Failed to delete");
@@ -563,7 +551,7 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                     /* Monthly Summary */
                     <div className="space-y-6 font-['Outfit']">
                         <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-1">
-                            Monthly Summary - {new Date(formData.date).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
+                            Monthly Summary - {new Date(dateFilter.start || new Date()).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
                         </h3>
                         {monthlyTotals.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
