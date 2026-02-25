@@ -1,6 +1,7 @@
 import React from 'react';
 import { FaFileAlt, FaReceipt, FaHandHoldingUsd, FaMoneyBillWave } from 'react-icons/fa';
 import { formatAmount } from '../../../utils/formatUtils';
+import toast from 'react-hot-toast';
 
 const Reports = ({
     transactions,
@@ -36,19 +37,19 @@ const Reports = ({
                 <h2 className="text-[20px] sm:text-[24px] font-black tracking-tight text-slate-900">Financial Intelligence</h2>
                 <div className="flex items-center gap-[8px]">
                     <button
-                        onClick={() => handleExportPDF(filteredTransactions)}
+                        onClick={() => { handleExportPDF(filteredTransactions); toast.success("PDF Report generated!"); }}
                         className="bg-slate-900 text-white px-[16px] py-[10px] rounded-[14px] text-[10px] font-black uppercase tracking-widest shadow-lg shadow-black/10 hover:scale-105 transition-all whitespace-nowrap"
                     >
                         PDF
                     </button>
                     <button
-                        onClick={() => handleExportCSV(filteredTransactions)}
+                        onClick={() => { handleExportCSV(filteredTransactions); toast.success("CSV Report generated!"); }}
                         className="bg-white border border-slate-200 px-[16px] py-[10px] rounded-[14px] text-[10px] font-black uppercase tracking-widest hover:border-blue-500 hover:text-blue-500 transition-all whitespace-nowrap"
                     >
                         CSV
                     </button>
                     <button
-                        onClick={() => handleExportTXT(filteredTransactions)}
+                        onClick={() => { handleExportTXT(filteredTransactions); toast.success("Text Report generated!"); }}
                         className="bg-white border border-slate-200 px-[16px] py-[10px] rounded-[14px] text-[10px] font-black uppercase tracking-widest hover:border-blue-500 hover:text-blue-500 transition-all whitespace-nowrap"
                     >
                         Text
