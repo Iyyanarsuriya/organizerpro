@@ -680,8 +680,9 @@ const ExpenseTrackerMain = () => {
             let combinedTransactions = [...(transRes?.data?.data || [])];
             if (customReportForm.vehicle) { combinedTransactions = []; }
 
-            if (vehicleRes && Array.isArray(vehicleRes)) {
-                const vLogs = vehicleRes.filter(log => {
+            const vehicleDataArray = vehicleRes?.data || [];
+            if (vehicleDataArray.length > 0) {
+                const vLogs = vehicleDataArray.filter(log => {
                     const d = (log.out_time || log.created_at).split('T')[0];
                     if (d < customReportForm.startDate || d > customReportForm.endDate.split('T')[0]) return false;
 
@@ -1073,6 +1074,7 @@ const ExpenseTrackerMain = () => {
                         periodType={periodType} customRange={customRange} currentPeriod={currentPeriod}
                         memberStats={memberStats} stats={displayStats} setShowCustomReportModal={setShowCustomReportModal}
                         setCustomReportForm={setCustomReportForm} customReportForm={customReportForm}
+                        setConfirmModal={setConfirmModal}
                     />
                 ) : activeTab === 'Salary' ? (
                     <SalaryCalculator
@@ -1320,7 +1322,7 @@ const ExpenseTrackerMain = () => {
                         <p className="text-slate-500 text-[15px] font-medium mb-[32px] leading-relaxed">Are you sure you want to download this <span className="text-slate-900 font-bold">{confirmModal.type}</span> report?</p>
                         <div className="grid grid-cols-2 gap-[16px]">
                             <button onClick={() => setConfirmModal({ show: false, type: null, label: '' })} className="py-[16px] rounded-[20px] bg-slate-100 text-slate-600 text-[13px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all">Cancel</button>
-                            <button onClick={() => { if (confirmModal.type === 'CSV') handleExportCSV(combinedData); if (confirmModal.type === 'PDF') handleExportPDF(combinedData); if (confirmModal.type === 'TXT') handleExportTXT(combinedData); setConfirmModal({ show: false, type: null, label: '' }); }} className="py-[16px] rounded-[20px] bg-slate-900 text-white text-[13px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/20 flex items-center justify-center gap-[10px]"><FaCheck /> Confirm</button>
+                            <button onClick={() => { if (confirmModal.type === 'CSV') { handleExportCSV(combinedData, { startDate: customRange.start, endDate: customRange.end, memberId: filterMember, projectId: filterProject, role: filterRole }); toast.success("CSV Report generated!"); } if (confirmModal.type === 'PDF') { handleExportPDF(combinedData, stats, { startDate: customRange.start, endDate: customRange.end, memberId: filterMember, projectId: filterProject, role: filterRole }); toast.success("PDF Report generated!"); } if (confirmModal.type === 'TXT') { handleExportTXT(combinedData, stats, { startDate: customRange.start, endDate: customRange.end, memberId: filterMember, projectId: filterProject, role: filterRole }); toast.success("Text Report generated!"); } setConfirmModal({ show: false, type: null, label: '' }); }} className="py-[16px] rounded-[20px] bg-slate-900 text-white text-[13px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/20 flex items-center justify-center gap-[10px]"><FaCheck /> Confirm</button>
                         </div>
                     </div>
                 </div>,

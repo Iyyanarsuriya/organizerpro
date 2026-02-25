@@ -20,7 +20,8 @@ const Reports = ({
     stats,
     setShowCustomReportModal,
     setCustomReportForm,
-    customReportForm
+    customReportForm,
+    setConfirmModal
 }) => {
     // Ledger Logic for Member View
     const memberLedgerBalance = React.useMemo(() => {
@@ -37,19 +38,19 @@ const Reports = ({
                 <h2 className="text-[20px] sm:text-[24px] font-black tracking-tight text-slate-900">Financial Intelligence</h2>
                 <div className="flex items-center gap-[8px]">
                     <button
-                        onClick={() => { handleExportPDF(filteredTransactions); toast.success("PDF Report generated!"); }}
+                        onClick={() => setConfirmModal({ show: true, type: 'PDF', label: 'PDF Report' })}
                         className="bg-slate-900 text-white px-[16px] py-[10px] rounded-[14px] text-[10px] font-black uppercase tracking-widest shadow-lg shadow-black/10 hover:scale-105 transition-all whitespace-nowrap"
                     >
                         PDF
                     </button>
                     <button
-                        onClick={() => { handleExportCSV(filteredTransactions); toast.success("CSV Report generated!"); }}
+                        onClick={() => setConfirmModal({ show: true, type: 'CSV', label: 'CSV Report' })}
                         className="bg-white border border-slate-200 px-[16px] py-[10px] rounded-[14px] text-[10px] font-black uppercase tracking-widest hover:border-blue-500 hover:text-blue-500 transition-all whitespace-nowrap"
                     >
                         CSV
                     </button>
                     <button
-                        onClick={() => { handleExportTXT(filteredTransactions); toast.success("Text Report generated!"); }}
+                        onClick={() => setConfirmModal({ show: true, type: 'TXT', label: 'Text Report' })}
                         className="bg-white border border-slate-200 px-[16px] py-[10px] rounded-[14px] text-[10px] font-black uppercase tracking-widest hover:border-blue-500 hover:text-blue-500 transition-all whitespace-nowrap"
                     >
                         Text
