@@ -813,9 +813,49 @@ const ExpenseTrackerMain = () => {
         }
     };
 
+    // Calculate global stats correctly handling ALL filters including Vehicle Logs & Roles
+    const displayStats = useMemo(() => {
+        let totalIncome = 0;
+        let totalExpense = 0;
+        const categoryMap = {};
+
+        const dashboardData = combinedData.filter(t => {
+            if (filterProject && t.category === 'Vehicle Log') return false;
+            if (filterProject && t.project_id && t.project_id != filterProject) return false;
+            // Check Role
+            const matchesRole = !filterRole || (t.member_id && memberIdToRoleMap[t.member_id] === filterRole);
+            return matchesRole;
+        });
+
+        dashboardData.forEach(t => {
+            const amt = parseFloat(t.amount || 0);
+            if (t.type === 'income') {
+                totalIncome += amt;
+            } else if (t.type === 'expense') {
+                totalExpense += amt;
+                if (!categoryMap[t.category]) categoryMap[t.category] = 0;
+                categoryMap[t.category] += amt;
+            }
+        });
+
+        const catArray = Object.entries(categoryMap).map(([category, total]) => ({ category, type: 'expense', total }));
+
+        let mostSpent = null;
+        if (catArray.length > 0) {
+            mostSpent = catArray.reduce((prev, current) => (prev.total > current.total) ? prev : current).category;
+        }
+
+        return {
+            summary: { total_income: totalIncome, total_expense: totalExpense },
+            categories: catArray,
+            mostSpentCategory: mostSpent,
+            dashboardData
+        };
+    }, [combinedData, filterProject, filterRole, memberIdToRoleMap]);
+
     // Chart Data
-    const pieData = (Array.isArray(stats?.categories) ? stats.categories : []).filter(c => c.type === 'expense').map(c => ({ name: c.category, value: parseFloat(c.total || 0) }));
-    const barData = [{ name: 'This Period', Income: parseFloat(stats?.summary?.total_income || 0), Expenses: parseFloat(stats?.summary?.total_expense || 0) }];
+    const pieData = displayStats.categories.map(c => ({ name: c.category, value: parseFloat(c.total || 0) }));
+    const barData = [{ name: 'This Period', Income: displayStats.summary.total_income, Expenses: displayStats.summary.total_expense }];
 
     const SidebarItem = ({ icon: Icon, label, onClick }) => (
         <button
@@ -995,8 +1035,8 @@ const ExpenseTrackerMain = () => {
                 {/* Components */}
                 {activeTab === 'Dashboard' ? (
                     <Dashboard
-                        periodType={periodType} customRange={customRange} currentPeriod={currentPeriod} stats={stats}
-                        pieData={pieData} barData={barData} COLORS={COLORS} transactions={combinedData}
+                        periodType={periodType} customRange={customRange} currentPeriod={currentPeriod} stats={displayStats}
+                        pieData={pieData} barData={barData} COLORS={COLORS} transactions={displayStats.dashboardData}
                         handleShowTransactions={handleShowTransactions} handleAddNewTransaction={handleAddNewTransaction}
                         setActiveTab={setActiveTab} formatCurrency={formatCurrency}
                     />
@@ -1026,7 +1066,7 @@ const ExpenseTrackerMain = () => {
                         handleExportPDF={handleExportPDF} handleExportCSV={handleExportCSV} handleExportTXT={handleExportTXT}
                         filterMember={filterMember} filterProject={filterProject} members={members} projects={projects}
                         periodType={periodType} customRange={customRange} currentPeriod={currentPeriod}
-                        memberStats={memberStats} stats={stats} setShowCustomReportModal={setShowCustomReportModal}
+                        memberStats={memberStats} stats={displayStats} setShowCustomReportModal={setShowCustomReportModal}
                         setCustomReportForm={setCustomReportForm} customReportForm={customReportForm}
                     />
                 ) : activeTab === 'Salary' ? (
@@ -1039,7 +1079,7 @@ const ExpenseTrackerMain = () => {
                         salaryLoading={salaryLoading} attendanceStats={attendanceStats} salaryMode={salaryMode} setSalaryMode={setSalaryMode}
                         dailyWage={dailyWage} setDailyWage={setDailyWage} monthlySalary={monthlySalary} setMonthlySalary={setMonthlySalary}
                         unitsProduced={unitsProduced} setUnitsProduced={setUnitsProduced} ratePerUnit={ratePerUnit} setRatePerUnit={setRatePerUnit}
-                        bonus={bonus} setBonus={setBonus} stats={stats} setFormData={setFormData} formData={formData}
+                        bonus={bonus} setBonus={setBonus} stats={displayStats} setFormData={setFormData} formData={formData}
                         setShowAddModal={setShowAddModal} transactions={transactions}
                     />
                 ) : activeTab === 'Vehicle Log' ? (
