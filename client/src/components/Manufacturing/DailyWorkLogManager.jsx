@@ -118,32 +118,6 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
         }
     }, [dateFilter, viewMode]);
 
-    // Handle Adding New Work Type
-    const handleAddType = async (e) => {
-        e.preventDefault();
-        if (!newTypeName.trim()) return;
-        try {
-            await createWorkType({ name: newTypeName });
-            toast.success("Work type added");
-            setNewTypeName('');
-            const res = await getWorkTypes();
-            setWorkTypes(res.data.data);
-        } catch (error) {
-            toast.error(error.response?.data?.message || "Failed to add type");
-        }
-    };
-
-    // Handle Deleting Work Type
-    const handleDeleteType = async (id) => {
-        try {
-            await deleteWorkType(id);
-            toast.success("Work type deleted");
-            const res = await getWorkTypes();
-            setWorkTypes(res.data.data);
-        } catch (error) {
-            toast.error("Failed to delete type");
-        }
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -163,8 +137,7 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                 }
             }
             if (!payload.work_type) {
-                // If no type selected, default to first available or 'Production'
-                payload.work_type = workTypes.length > 0 ? workTypes[0].name : 'Production';
+                payload.work_type = 'Production';
             }
 
             if (editingId) {
@@ -191,7 +164,7 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
             units_produced: log.units_produced,
             rate_per_unit: log.rate_per_unit,
             unit_type: log.unit_type || 'piece',
-            work_type: log.work_type || (workTypes.length > 0 ? workTypes[0].name : 'Production'),
+            work_type: log.work_type || 'Production',
             notes: log.notes || ''
         });
         setEditingId(log.id);
