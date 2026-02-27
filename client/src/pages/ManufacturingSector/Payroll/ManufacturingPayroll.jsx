@@ -116,12 +116,12 @@ const ManufacturingPayroll = () => {
 
             if (res.data.success) {
                 toast.success(`Payroll generated for ${res.data.data.records.length} members!`);
-                fetchPayrolls();
+                fetchPayrolls(true); // force refresh
             }
         } catch (error) {
             const msg = error.response?.data?.message || 'Generation failed';
             if (msg.includes('already exists')) {
-                toast.error(msg); // Duplicate warning
+                toast.error(msg);
             } else {
                 toast.error(msg);
             }
@@ -135,7 +135,7 @@ const ManufacturingPayroll = () => {
             const res = await approveMfgPayroll(id);
             if (res.data.success) {
                 toast.success('Payroll approved & expense created!');
-                fetchPayrolls();
+                fetchPayrolls(true); // force refresh to immediately show Approved status
             }
         } catch (error) {
             toast.error(error.response?.data?.message || 'Approval failed');
@@ -147,7 +147,7 @@ const ManufacturingPayroll = () => {
         try {
             await deleteMfgPayroll(id);
             toast.success('Payroll deleted');
-            fetchPayrolls();
+            fetchPayrolls(true); // force refresh
         } catch (error) {
             toast.error(error.response?.data?.message || 'Delete failed');
         }
