@@ -9,7 +9,9 @@ import { exportVehicleLogToCSV, exportVehicleLogToTXT, exportVehicleLogToPDF } f
 const VehicleTrackerManager = ({ data: externalData, onUpdate }) => {
     const [logs, setLogs] = useState(externalData || []);
     const [loading, setLoading] = useState(!externalData);
-    const [dateRange, setDateRange] = useState({ start: '', end: '' });
+    const [periodType, setPeriodType] = useState('month');
+    const [currentPeriod, setCurrentPeriod] = useState(new Date().toISOString().slice(0, 7)); // Default to current month
+    const [customRange, setCustomRange] = useState({ start: '', end: '' });
     const [searchVehicle, setSearchVehicle] = useState('');
 
     // Derived state for filtering
@@ -17,7 +19,17 @@ const VehicleTrackerManager = ({ data: externalData, onUpdate }) => {
         const logDateV = new Date(log.out_time || log.created_at || Date.now());
         const logDate = logDateV.toISOString().split('T')[0];
 
-        const matchDate = (!dateRange.start || logDate >= dateRange.start) && (!dateRange.end || logDate <= dateRange.end);
+        let matchDate = false;
+        if (periodType === 'day') {
+            matchDate = logDate === currentPeriod;
+        } else if (periodType === 'month') {
+            matchDate = logDate.startsWith(currentPeriod);
+        } else if (periodType === 'year') {
+            matchDate = logDate.startsWith(currentPeriod);
+        } else if (periodType === 'range') {
+            matchDate = (!customRange.start || logDate >= customRange.start) &&
+                (!customRange.end || logDate <= customRange.end);
+        }
 
         const term = searchVehicle.toLowerCase();
         const matchSearch = !term ||
@@ -336,23 +348,75 @@ const VehicleTrackerManager = ({ data: externalData, onUpdate }) => {
 
                     {/* Filters Bar */}
                     <div className="bg-white/80 backdrop-blur-xl p-[12px] sm:p-4 rounded-[16px] sm:rounded-2xl border border-white/20 shadow-xl shadow-slate-200/50 mb-[14px] sm:mb-8 sticky top-2 z-10">
-                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                            <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-[12px] sm:rounded-xl border border-slate-100 shrink-0">
-                                <FaFilter className="text-slate-300 ml-2" size={10} />
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        type="date"
-                                        value={dateRange.start}
-                                        onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-                                        className="bg-transparent text-[10px] sm:text-xs font-bold text-slate-700 outline-none p-1 sm:p-1.5 cursor-pointer"
-                                    />
-                                    <span className="text-slate-300 text-[10px] sm:text-xs">to</span>
-                                    <input
-                                        type="date"
-                                        value={dateRange.end}
-                                        onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-                                        className="bg-transparent text-[10px] sm:text-xs font-bold text-slate-700 outline-none p-1 sm:p-1.5 cursor-pointer"
-                                    />
+                        <div className="flex flex-col xl:flex-row gap-3 sm:gap-4">
+                            {/* Period Selector and Date Input Group */}
+                            <div className="flex flex-col sm:flex-row gap-2 p-[6px] sm:p-1.5 bg-slate-50 rounded-[14px] sm:rounded-2xl border border-slate-100 shrink-0">
+                                {/* Period Tabs */}
+                                <div className="flex bg-white rounded-[10px] sm:rounded-xl shadow-sm p-1 gap-1">
+                                    {['day', 'month', 'year', 'range'].map((type) => (
+                                        <button
+                                            key={type}
+                                            onClick={() => {
+                                                setPeriodType(type);
+                                                if (type === 'year') setCurrentPeriod(new Date().getFullYear().toString());
+                                                if (type === 'month') setCurrentPeriod(new Date().toISOString().slice(0, 7));
+                                                if (type === 'day') setCurrentPeriod(new Date().toISOString().split('T')[0]);
+                                            }}
+                                            className={`
+                                                flex-1 px-3 sm:px-4 h-7 sm:h-8 rounded-[8px] sm:rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all outline-none focus:outline-none ring-0 whitespace-nowrap
+                                                ${periodType === type
+                                                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
+                                                    : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                                                }
+                                            `}
+                                        >
+                                            {type}
+                                        </button>
+                                    ))}
+                                </div>
+                                {/* Date Input Dynamic */}
+                                <div className="px-2 sm:px-3 flex items-center w-full sm:w-auto sm:min-w-[140px] border-t sm:border-t-0 sm:border-l border-slate-200 mt-1 sm:mt-0 pt-2 sm:pt-0 sm:pl-4 sm:ml-2 overflow-hidden">
+                                    <FaCalendarAlt className="text-slate-300 mr-2 shrink-0" size={12} />
+                                    {periodType === 'day' ? (
+                                        <input
+                                            type="date"
+                                            value={currentPeriod}
+                                            onChange={(e) => setCurrentPeriod(e.target.value)}
+                                            className="w-full text-[11px] sm:text-xs font-bold text-slate-700 outline-none bg-transparent font-mono cursor-pointer"
+                                        />
+                                    ) : periodType === 'month' ? (
+                                        <input
+                                            type="month"
+                                            value={currentPeriod}
+                                            onChange={(e) => setCurrentPeriod(e.target.value)}
+                                            className="w-full text-[11px] sm:text-xs font-bold text-slate-700 outline-none bg-transparent font-mono cursor-pointer"
+                                        />
+                                    ) : periodType === 'year' ? (
+                                        <input
+                                            type="number"
+                                            min="2000"
+                                            max="2100"
+                                            value={currentPeriod}
+                                            onChange={(e) => setCurrentPeriod(e.target.value)}
+                                            className="w-full text-[11px] sm:text-xs font-bold text-slate-700 outline-none bg-transparent font-mono"
+                                        />
+                                    ) : (
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="date"
+                                                value={customRange.start}
+                                                onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })}
+                                                className="bg-transparent text-[10px] sm:text-xs font-bold text-slate-700 outline-none p-1 cursor-pointer"
+                                            />
+                                            <span className="text-slate-300 text-[10px] sm:text-xs">to</span>
+                                            <input
+                                                type="date"
+                                                value={customRange.end}
+                                                onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })}
+                                                className="bg-transparent text-[10px] sm:text-xs font-bold text-slate-700 outline-none p-1 cursor-pointer"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
