@@ -122,7 +122,13 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const payload = { ...formData };
+            const payload = {
+                ...formData,
+                units_produced: parseFloat(formData.units_produced) || 0,
+                rate_per_unit: parseFloat(formData.rate_per_unit) || 0,
+                work_type: formData.work_type || 'Production'
+            };
+
             if (isGuest) {
                 payload.member_id = null;
                 if (!payload.guest_name) {
@@ -135,9 +141,6 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                     toast.error("Member is required");
                     return;
                 }
-            }
-            if (!payload.work_type) {
-                payload.work_type = 'Production';
             }
 
             if (editingId) {
@@ -207,7 +210,8 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
         setFormData({
             ...formData,
             member_id: memberId,
-            rate_per_unit: member?.daily_wage || ''
+            rate_per_unit: member?.daily_wage || '',
+            unit_type: member?.wage_type === 'piece_rate' ? 'piece' : 'day'
         });
     };
 
@@ -249,14 +253,20 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                             <div className="flex bg-slate-100 p-1 rounded-xl mb-6 w-fit border border-slate-200">
                                 <button
                                     type="button"
-                                    onClick={() => setIsGuest(false)}
+                                    onClick={() => {
+                                        setIsGuest(false);
+                                        setFormData({ ...formData, guest_name: '', rate_per_unit: '' });
+                                    }}
                                     className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${!isGuest ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
                                 >
                                     Existing Member
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => { setIsGuest(true); setFormData({ ...formData, member_id: '' }); }}
+                                    onClick={() => {
+                                        setIsGuest(true);
+                                        setFormData({ ...formData, member_id: '', rate_per_unit: '' });
+                                    }}
                                     className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${isGuest ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
                                 >
                                     Guest / Temp
