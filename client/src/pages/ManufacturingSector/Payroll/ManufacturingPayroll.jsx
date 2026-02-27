@@ -231,6 +231,10 @@ const ManufacturingPayroll = () => {
         <div className="min-h-screen bg-[#f8fafc] p-[16px] sm:p-[28px] md:p-[40px] font-['Outfit'] pb-[80px] sm:pb-[100px]">
             <div className="max-w-[1280px] mx-auto w-full">
 
+                <h1 className="text-[20px] sm:text-[24px] md:text-[30px] font-black text-slate-800 mb-[16px] sm:mb-[24px] uppercase tracking-widest text-center transition-all duration-300">
+                    Manufacturing Payroll
+                </h1>
+
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-[16px] sm:gap-[24px] mb-[24px] sm:mb-[40px]">
                     <div className="flex items-center gap-[12px] sm:gap-[16px]">

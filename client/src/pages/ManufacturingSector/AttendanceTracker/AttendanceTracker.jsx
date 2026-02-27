@@ -723,7 +723,7 @@ const AttendanceTracker = () => {
                                 <FaUserCheck className="text-white text-lg sm:text-xl" />
                             </div>
                             <div>
-                                <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Attendance</h1>
+                                <h1 className="text-[18px] sm:text-xl md:text-2xl font-black text-slate-900 tracking-tight">Manufacturing Attendance</h1>
                                 <p className="text-slate-500 text-[10px] sm:text-xs font-bold uppercase tracking-widest leading-none">Consistency is key</p>
                             </div>
                         </div>

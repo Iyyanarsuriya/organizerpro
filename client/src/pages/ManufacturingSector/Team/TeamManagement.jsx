@@ -154,6 +154,10 @@ const TeamManagement = () => {
 
             <div className="max-w-[1280px] mx-auto px-[16px] sm:px-[24px] lg:px-[32px] py-[20px] sm:py-[40px] pb-[80px] sm:pb-[100px]">
 
+                <h1 className="text-[20px] sm:text-[24px] md:text-[30px] font-black text-slate-800 mb-[16px] sm:mb-[24px] uppercase tracking-widest text-center transition-all duration-300">
+                    Manufacturing Team Management
+                </h1>
+
                 {/* ── Header ── */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-[24px] sm:mb-[32px] gap-[14px] sm:gap-[16px]">
                     <div className="flex items-center gap-[12px] sm:gap-[16px]">
@@ -231,9 +235,9 @@ const TeamManagement = () => {
                                                 {/* Middle: Role + Created By + Date */}
                                                 <div className="flex items-center gap-[8px] sm:gap-[12px] flex-wrap">
                                                     <span className={`inline-flex items-center px-[8px] sm:px-[10px] py-[3px] sm:py-[4px] rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest ${user.role === 'admin' || user.role === 'owner' ? 'bg-purple-50 text-purple-600' :
-                                                            user.role === 'manager' ? 'bg-blue-50 text-blue-600' :
-                                                                user.role === 'staff' ? 'bg-green-50 text-green-600' :
-                                                                    'bg-slate-100 text-slate-600'
+                                                        user.role === 'manager' ? 'bg-blue-50 text-blue-600' :
+                                                            user.role === 'staff' ? 'bg-green-50 text-green-600' :
+                                                                'bg-slate-100 text-slate-600'
                                                         }`}>
                                                         {user.role}
                                                     </span>
@@ -286,9 +290,9 @@ const TeamManagement = () => {
                                                     </td>
                                                     <td className="px-[20px] md:px-[32px] py-[16px] md:py-[20px]">
                                                         <span className={`inline-flex items-center px-[10px] md:px-[12px] py-[3px] md:py-[4px] rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest ${user.role === 'admin' || user.role === 'owner' ? 'bg-purple-50 text-purple-600' :
-                                                                user.role === 'manager' ? 'bg-blue-50 text-blue-600' :
-                                                                    user.role === 'staff' ? 'bg-green-50 text-green-600' :
-                                                                        'bg-slate-100 text-slate-600'
+                                                            user.role === 'manager' ? 'bg-blue-50 text-blue-600' :
+                                                                user.role === 'staff' ? 'bg-green-50 text-green-600' :
+                                                                    'bg-slate-100 text-slate-600'
                                                             }`}>
                                                             {user.role}
                                                         </span>
