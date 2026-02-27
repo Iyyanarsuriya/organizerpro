@@ -156,7 +156,7 @@ const ExpenseTrackerMain = () => {
                 const rangeEnd = isRange ? customRange.end : null;
                 const vLogsRaw = vehicleRes?.data || [];
                 const filteredVehicleLogs = (Array.isArray(vLogsRaw) ? vLogsRaw : []).filter(log => {
-                    const logDate = (log.out_time || log.created_at || '').split('T')[0];
+                    const logDate = (log.out_time || log.created_at || '').substring(0, 10);
                     if (!logDate) return false;
                     if (periodType === 'range') return (!rangeStart || logDate >= rangeStart) && (!rangeEnd || logDate <= rangeEnd);
                     if (periodType === 'day') return logDate === currentPeriod;
@@ -244,7 +244,7 @@ const ExpenseTrackerMain = () => {
             // PROCESS VEHICLE LOGS
             const vLogsRaw = vehicleRes?.data || [];
             const filteredVehicleLogs = (Array.isArray(vLogsRaw) ? vLogsRaw : []).filter(log => {
-                const logDate = (log.out_time || log.created_at || '').split('T')[0];
+                const logDate = (log.out_time || log.created_at || '').substring(0, 10);
                 if (!logDate) return false;
 
                 if (periodType === 'range') return (!rangeStart || logDate >= rangeStart) && (!rangeEnd || logDate <= rangeEnd);
@@ -527,7 +527,7 @@ const ExpenseTrackerMain = () => {
     const combinedData = useMemo(() => {
         // 1. Filter Vehicle Logs
         const filteredVLogs = (Array.isArray(vehicleLogs) ? vehicleLogs : []).filter(log => {
-            const logDate = (log.out_time || log.created_at || '').split('T')[0];
+            const logDate = (log.out_time || log.created_at || '').substring(0, 10);
             if (!logDate) return false;
 
             let dateMatch = false;
@@ -901,7 +901,50 @@ const ExpenseTrackerMain = () => {
 
     // Chart Data
     const pieData = displayStats.categories.map(c => ({ name: c.category, value: parseFloat(c.total || 0) }));
-    const barData = [{ name: 'This Period', Income: displayStats.summary.total_income, Expenses: displayStats.summary.total_expense }];
+
+    // Dynamic bar chart: group combinedData by date (last 7 days or by week/month buckets)
+    const barData = useMemo(() => {
+        const data = displayStats.dashboardData || [];
+        if (data.length === 0) return [];
+
+        const buckets = {};
+        data.forEach(t => {
+            const d = t.date ? new Date(t.date) : null;
+            if (!d || isNaN(d)) return;
+            let key;
+            if (periodType === 'year') {
+                // Group by month within the year
+                key = `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+            } else if (periodType === 'month' || periodType === 'week') {
+                // Group by day within the month/week
+                key = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+            } else {
+                // 'day' or 'range': group by full date
+                key = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+            }
+            if (!buckets[key]) buckets[key] = { name: key, Income: 0, Expenses: 0 };
+            const amt = parseFloat(t.amount || 0);
+            if (t.type === 'income') buckets[key].Income += amt;
+            else if (t.type === 'expense') buckets[key].Expenses += amt;
+        });
+
+        // Sort keys chronologically
+        const sorted = Object.values(buckets).sort((a, b) => {
+            const parseKey = (k) => {
+                const parts = k.split('/');
+                if (parts.length === 2) return new Date(parts[1], parseInt(parts[0]) - 1, 1);
+                return new Date();
+            };
+            return parseKey(a.name) - parseKey(b.name);
+        });
+
+        // If nothing grouped but we have summary, show at least a summary bar
+        if (sorted.length === 0 && (displayStats.summary.total_income > 0 || displayStats.summary.total_expense > 0)) {
+            return [{ name: 'This Period', Income: displayStats.summary.total_income, Expenses: displayStats.summary.total_expense }];
+        }
+
+        return sorted;
+    }, [displayStats, periodType]);
 
     const SidebarItem = ({ icon: Icon, label, onClick }) => (
         <button
