@@ -318,7 +318,10 @@ const ExpenseTrackerMain = () => {
 
     useEffect(() => {
         fetchData();
-    }, [currentPeriod, filterProject, filterMember, filterMemberType, customRange.start, customRange.end, periodType]);
+        // periodType intentionally excluded: every periodType change also updates currentPeriod,
+        // which already triggers this effect. Including periodType causes a double fetch.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentPeriod, filterProject, filterMember, filterMemberType, customRange.start, customRange.end]);
 
     // Fetch attendance stats whenever salary period or member changes (for the Salary tab)
     const fetchAttendanceForSalary = async (period, memberId) => {

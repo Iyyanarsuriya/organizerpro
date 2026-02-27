@@ -21,8 +21,9 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: pr
         if (propMembers) {
             setLocalMembers(propMembers);
             setLoading(false);
-            // Even if members are provided, if shifts aren't, we need to fetch them
-            if (!propShifts && localShifts.length === 0) {
+            // Only fetch shifts once per mount, not every time propMembers reference changes
+            if (!propShifts && localShifts.length === 0 && !hasFetchedShiftsRef.current) {
+                hasFetchedShiftsRef.current = true;
                 getShifts({ sector })
                     .then(res => setLocalShifts(Array.isArray(res?.data?.data) ? res.data.data : []))
                     .catch(err => console.error("Failed to load shifts", err));
@@ -30,6 +31,7 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: pr
         } else {
             fetchMembers();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [propMembers]);
 
     const [showRoleManager, setShowRoleManager] = useState(false); // MANAGER STATE
@@ -59,6 +61,7 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: pr
     const [paymentsLoading, setPaymentsLoading] = useState(false);
 
     const lastFetchRef = useRef(0);
+    const hasFetchedShiftsRef = useRef(false); // Guard to prevent double shifts fetch on mount
 
     const fetchMembers = async (force = false) => {
         const now = Date.now();
