@@ -277,9 +277,9 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: pr
     };
 
     return (
-        <div className="animate-in slide-in-from-right-10 duration-500 pb-20 w-full font-['Outfit']">
+        <div className="animate-in slide-in-from-right-10 duration-500 pb-[80px] sm:pb-20 w-full font-['Outfit']">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-[12px] sm:gap-4 mb-[20px] sm:mb-8">
                 <div>
                     <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
                         <FaUsers className="text-blue-600" /> Manage Members
@@ -296,7 +296,7 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: pr
             <div className="flex-1">
 
                 {/* Add/Edit Form */}
-                <form onSubmit={handleSubmit} className="mb-6 p-6 bg-white rounded-[32px] border border-slate-100 shadow-sm font-['Outfit']">
+                <form onSubmit={handleSubmit} className="mb-[16px] sm:mb-6 p-[14px] sm:p-6 bg-white rounded-[20px] sm:rounded-[32px] border border-slate-100 shadow-sm font-['Outfit']">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                         <div className="col-span-1 lg:col-span-1">
                             <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
@@ -453,7 +453,7 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: pr
                 </form>
 
                 {/* Filter Bar - Modern Design */}
-                <div className="bg-white/80 backdrop-blur-xl p-4 rounded-[24px] border border-white/20 shadow-xl shadow-slate-200/50 mb-6 sticky top-2 z-10">
+                <div className="bg-white/80 backdrop-blur-xl p-[12px] sm:p-4 rounded-[18px] sm:rounded-[24px] border border-white/20 shadow-xl shadow-slate-200/50 mb-[14px] sm:mb-6 sticky top-2 z-10">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         {/* Category Filter - Indigo */}
                         <div className="relative group">
@@ -518,7 +518,7 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: pr
                             filteredMembers.map(member => (
                                 <div
                                     key={member.id}
-                                    className="bg-white border border-slate-100 rounded-xl p-4 hover:border-blue-200 transition-all group"
+                                    className="bg-white border border-slate-100 rounded-[14px] sm:rounded-xl p-[12px] sm:p-4 hover:border-blue-200 transition-all group"
                                 >
                                     <div className="flex items-start justify-between gap-[16px]">
                                         <div className="flex-1">
@@ -571,7 +571,7 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: pr
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="flex gap-2 sm:opacity-0 group-hover:opacity-100 opacity-100 transition-opacity">
                                             <button
                                                 onClick={() => handleViewPayments(member)}
                                                 className="p-3 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
@@ -652,7 +652,7 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: pr
                         {/* So the closing tags should be fine if I didn't change the number of open tags. */}
                         {/* Checking the middle... */}
 
-                        <div className="bg-white rounded-[40px] p-[32px] sm:p-[40px] w-full max-w-2xl shadow-2xl relative animate-in zoom-in-95 duration-300 max-h-[85vh] flex flex-col font-['Outfit']">
+                        <div className="bg-white rounded-[24px] sm:rounded-[40px] p-[20px] sm:p-[32px] md:p-[40px] w-full max-w-2xl shadow-2xl relative animate-in zoom-in-95 duration-300 max-h-[85vh] flex flex-col font-['Outfit']">
                             <button
                                 onClick={() => setViewingPayments(null)}
                                 className="absolute top-8 right-8 text-slate-400 hover:text-slate-800 transition-colors"
@@ -660,8 +660,8 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: pr
                                 <FaTimes className="text-[20px]" />
                             </button>
 
-                            <div className="mb-[32px]">
-                                <h2 className="text-[24px] font-black text-slate-900 flex items-center gap-3">
+                            <div className="mb-[20px] sm:mb-[32px]">
+                                <h2 className="text-[18px] sm:text-[24px] font-black text-slate-900 flex items-center gap-3">
                                     <div className="w-2 h-8 bg-emerald-500 rounded-full"></div>
                                     Activity History: {viewingPayments.name}
                                 </h2>

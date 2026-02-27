@@ -880,9 +880,9 @@ const AttendanceTracker = () => {
                 </div>
             </header>
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <main className="max-w-7xl mx-auto px-[16px] sm:px-6 lg:px-8 py-[16px] sm:py-8">
                 {/* View Selector */}
-                <div className="flex bg-slate-100 p-1 rounded-xl shadow-inner border border-slate-200 w-full mb-8 overflow-x-auto no-scrollbar custom-scrollbar">
+                <div className="flex bg-slate-100 p-1 rounded-xl shadow-inner border border-slate-200 w-full mb-[16px] sm:mb-8 overflow-x-auto no-scrollbar custom-scrollbar">
                     <div className="flex flex-nowrap min-w-max gap-1">
                         {[
                             { id: 'records', label: 'Records' },
@@ -904,9 +904,9 @@ const AttendanceTracker = () => {
                 </div>
 
                 {activeTab === 'records' ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div className="lg:col-span-1 space-y-6">
-                            <div className="bg-white rounded-3xl p-8 shadow-xl border border-slate-100">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-[16px] sm:gap-6 lg:gap-8">
+                        <div className="lg:col-span-1 space-y-[16px] sm:space-y-6">
+                            <div className="bg-white rounded-[20px] sm:rounded-3xl p-[16px] sm:p-8 shadow-xl border border-slate-100">
                                 <h3 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-2 font-['Outfit']">
                                     <FaChartBar className="text-blue-500" />
                                     {periodType.charAt(0).toUpperCase() + periodType.slice(1)} Stats
@@ -950,7 +950,7 @@ const AttendanceTracker = () => {
                         </div>
 
                         <div className="lg:col-span-2">
-                            <div className="bg-white rounded-3xl p-8 shadow-xl border border-slate-100 min-h-[500px]">
+                            <div className="bg-white rounded-[20px] sm:rounded-3xl p-[16px] sm:p-8 shadow-xl border border-slate-100 min-h-[400px] sm:min-h-[500px]">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                                     <h3 className="text-lg font-black text-slate-900 font-['Outfit']">Recent Records</h3>
                                     {/* Global search applies here */}
@@ -963,7 +963,7 @@ const AttendanceTracker = () => {
                                                 return (
                                                     <div
                                                         key={item.id}
-                                                        className="group bg-white p-4 rounded-3xl border border-slate-100 hover:shadow-lg hover:border-blue-200 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2"
+                                                        className="group bg-white p-[12px] sm:p-4 rounded-[16px] sm:rounded-3xl border border-slate-100 hover:shadow-lg hover:border-blue-200 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2"
                                                         style={{ animationDelay: `${idx * 50}ms` }}
                                                     >
                                                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -991,7 +991,6 @@ const AttendanceTracker = () => {
                                                                             </>
                                                                         )}
                                                                     </div>
-
                                                                     {/* Work Mode Badge */}
                                                                     <div className="mt-3">
                                                                         <span className="px-3 py-1 bg-slate-100 text-slate-500 text-[9px] font-black uppercase tracking-widest rounded-lg">
@@ -1014,7 +1013,6 @@ const AttendanceTracker = () => {
                                                                         </span>
                                                                     </div>
                                                                 )}
-
                                                                 {/* Duration */}
                                                                 {item.total_hours > 0 && (
                                                                     <div className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase tracking-widest">
@@ -1038,8 +1036,8 @@ const AttendanceTracker = () => {
                         </div>
                     </div>
                 ) : activeTab === 'summary' ? (
-                    <div className="bg-white rounded-[32px] shadow-xl border border-slate-100 overflow-hidden animate-in fade-in duration-500">
-                        <div className="p-4 sm:p-8 border-b border-slate-100 bg-slate-50/50">
+                    <div className="bg-white rounded-[24px] sm:rounded-[32px] shadow-xl border border-slate-100 overflow-hidden animate-in fade-in duration-500">
+                        <div className="p-[14px] sm:p-4 md:p-8 border-b border-slate-100 bg-slate-50/50">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 bg-white rounded-2xl border border-slate-200 shadow-sm flex items-center justify-center text-blue-600 text-xl shrink-0">
@@ -1160,7 +1158,7 @@ const AttendanceTracker = () => {
                                     const presentValue = (Number(w.present) || 0) + (Number(w.late) || 0) + (Number(w.permission) || 0) + (Number(w.OD) || 0) + (Number(w.holiday) || 0) + (Number(w.week_off) || 0) + (Number(w.half_day) || 0) * 0.5;
                                     const rate = totalRelevantDays > 0 ? (presentValue / totalRelevantDays * 100) : 0;
                                     return (
-                                        <div key={w.id} className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
+                                        <div key={w.id} className="bg-white p-[14px] sm:p-5 rounded-[18px] sm:rounded-3xl border border-slate-100 shadow-sm">
                                             <div className="flex items-center justify-between mb-5">
                                                 <div className="flex items-center gap-4">
                                                     <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-sm shadow-md shadow-blue-500/20">
@@ -1257,8 +1255,8 @@ const AttendanceTracker = () => {
                         }}
                     />
                 ) : (
-                    <div className="bg-white rounded-[40px] shadow-xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="p-6 sm:p-10 border-b border-slate-100 bg-linear-to-br from-slate-900 to-slate-800 text-white">
+                    <div className="bg-white rounded-[24px] sm:rounded-[40px] shadow-xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="p-[14px] sm:p-6 md:p-10 border-b border-slate-100 bg-gradient-to-br from-slate-900 to-slate-800 text-white">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div>
                                     <h3 className="text-xl sm:text-2xl font-black mb-1.5 font-['Outfit']">Daily Attendance Sheet</h3>
@@ -1289,7 +1287,7 @@ const AttendanceTracker = () => {
                         </div>
 
                         <div className="p-0">
-                            <div className="px-6 py-4 sm:px-8 sm:py-6 border-b border-slate-100 flex flex-wrap items-center gap-3 sm:gap-4 bg-slate-50/30">
+                            <div className="px-[14px] py-[10px] sm:px-6 sm:py-4 md:px-8 md:py-6 border-b border-slate-100 flex flex-wrap items-center gap-[8px] sm:gap-3 md:gap-4 bg-slate-50/30">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Quick Actions:</label>
                                 <button
                                     id="mark-all-present"
