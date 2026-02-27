@@ -29,7 +29,7 @@ const Transactions = ({
     return (
         <div className="animate-in slide-in-from-right-10 duration-500">
             {/* Header with Filters */}
-            <div className="bg-white/80 backdrop-blur-xl p-[14px] sm:p-6 rounded-[20px] sm:rounded-[32px] border border-white/20 shadow-xl shadow-slate-200/50 mb-[14px] sm:mb-8 sticky top-4 z-10">
+            <div className="bg-white/80 backdrop-blur-xl p-[12px] sm:p-6 rounded-[16px] sm:rounded-[32px] border border-white/20 shadow-xl shadow-slate-200/50 mb-[14px] sm:mb-8 sticky top-4 z-10">
                 {/* Title & Actions */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-[12px] sm:gap-6 mb-[12px] sm:mb-6">
                     <div>
@@ -46,17 +46,17 @@ const Transactions = ({
                 </div>
 
                 {/* Filters Bar */}
-                <div className="flex flex-col lg:flex-row gap-4">
+                <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
                     {/* Left: Period & Date - Floating Style */}
-                    <div className="flex flex-col sm:flex-row gap-2 p-1.5 bg-slate-50 rounded-2xl border border-slate-100 shrink-0">
+                    <div className="flex flex-col sm:flex-row gap-2 p-[6px] sm:p-1.5 bg-slate-50 rounded-[14px] sm:rounded-2xl border border-slate-100 shrink-0">
                         {/* Period Tabs */}
-                        <div className="flex bg-white rounded-xl shadow-sm p-1 gap-1">
+                        <div className="flex bg-white rounded-[10px] sm:rounded-xl shadow-sm p-1 gap-1 overflow-x-auto sm:overflow-visible">
                             {['day', 'week', 'month', 'range'].map((type) => (
                                 <button
                                     key={type}
                                     onClick={() => setPeriodType(type)}
                                     className={`
-                                        flex-1 px-4 h-8 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all outline-none focus:outline-none ring-0
+                                        flex-1 px-3 sm:px-4 h-7 sm:h-8 rounded-[8px] sm:rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all outline-none focus:outline-none ring-0 whitespace-nowrap
                                         ${periodType === type
                                             ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
                                             : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
@@ -68,36 +68,36 @@ const Transactions = ({
                             ))}
                         </div>
                         {/* Date Input */}
-                        <div className="px-3 flex items-center w-full sm:w-auto sm:min-w-[140px] border-t sm:border-t-0 sm:border-l border-slate-200 mt-1 sm:mt-0 pt-2 sm:pt-0 sm:pl-4 sm:ml-2">
+                        <div className="px-2 sm:px-3 flex items-center w-full sm:w-auto sm:min-w-[140px] border-t sm:border-t-0 sm:border-l border-slate-200 mt-1 sm:mt-0 pt-2 sm:pt-0 sm:pl-4 sm:ml-2 overflow-hidden">
                             <FaCalendarAlt className="text-slate-300 mr-2 shrink-0" size={12} />
-                            {periodType === 'day' ? <input type="date" value={currentPeriod.length === 10 ? currentPeriod : ''} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-xs font-bold text-slate-700 outline-none bg-transparent font-mono" /> :
-                                periodType === 'week' ? <input type="week" value={currentPeriod.includes('W') ? currentPeriod : ''} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-xs font-bold text-slate-700 outline-none bg-transparent font-mono" /> :
-                                    periodType === 'month' ? <input type="month" value={currentPeriod.length === 7 ? currentPeriod : ''} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-xs font-bold text-slate-700 outline-none bg-transparent font-mono" /> :
-                                        <div className="flex items-center gap-2 w-full"><input type="date" value={customRange.start} onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })} className="text-[10px] font-bold text-slate-700 w-full bg-transparent font-mono" /><span className="text-slate-300">-</span><input type="date" value={customRange.end} onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })} className="text-[10px] font-bold text-slate-700 w-full bg-transparent font-mono" /></div>}
+                            {periodType === 'day' ? <input type="date" value={currentPeriod.length === 10 ? currentPeriod : ''} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-[11px] sm:text-xs font-bold text-slate-700 outline-none bg-transparent font-mono" /> :
+                                periodType === 'week' ? <input type="week" value={currentPeriod.includes('W') ? currentPeriod : ''} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-[11px] sm:text-xs font-bold text-slate-700 outline-none bg-transparent font-mono" /> :
+                                    periodType === 'month' ? <input type="month" value={currentPeriod.length === 7 ? currentPeriod : ''} onChange={(e) => setCurrentPeriod(e.target.value)} className="w-full text-[11px] sm:text-xs font-bold text-slate-700 outline-none bg-transparent font-mono" /> :
+                                        <div className="flex items-center gap-2 w-full"><input type="date" value={customRange.start} onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })} className="text-[10px] sm:text-[11px] font-bold text-slate-700 w-full bg-transparent font-mono" /><span className="text-slate-300">-</span><input type="date" value={customRange.end} onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })} className="text-[10px] sm:text-[11px] font-bold text-slate-700 w-full bg-transparent font-mono" /></div>}
                         </div>
                     </div>
 
                     {/* Right: Entity Filters & Search */}
-                    <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
                         {/* Project - Indigo Theme */}
                         <div className="relative group">
-                            <FaProjectDiagram className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-indigo-400 group-hover:text-indigo-500 transition-colors" size={12} />
-                            <select value={filterProject} onChange={(e) => setFilterProject(e.target.value)} className="w-full bg-indigo-50 hover:bg-indigo-100 border border-transparent rounded-2xl py-2 md:py-3 pl-8 md:pl-10 pr-6 md:pr-10 text-[10px] md:text-xs font-black text-indigo-600 text-center outline-none focus:ring-2 focus:ring-indigo-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
+                            <FaProjectDiagram className="absolute left-2.5 sm:left-4 top-1/2 -translate-y-1/2 text-indigo-400 group-hover:text-indigo-500 transition-colors" size={10} />
+                            <select value={filterProject} onChange={(e) => setFilterProject(e.target.value)} className="w-full bg-indigo-50 hover:bg-indigo-100 border border-transparent rounded-[14px] sm:rounded-2xl py-2 sm:py-3 pl-7 sm:pl-10 pr-5 sm:pr-10 text-[9px] sm:text-xs font-black text-indigo-600 text-center outline-none focus:ring-2 focus:ring-indigo-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
                                 <option value="">All Projects</option>
                                 {Array.isArray(projects) && projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                             </select>
-                            <div className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 pointer-events-none text-indigo-400 text-[10px]">▼</div>
+                            <div className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 pointer-events-none text-indigo-400 text-[9px]">▼</div>
                         </div>
 
                         {/* Member - Emerald Theme */}
                         <div className="relative group">
-                            <FaUser className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-emerald-400 group-hover:text-emerald-500 transition-colors" size={12} />
-                            <select value={filterMember} onChange={(e) => setFilterMember(e.target.value)} className="w-full bg-emerald-50 hover:bg-emerald-100 border border-transparent rounded-2xl py-2 md:py-3 pl-8 md:pl-10 pr-6 md:pr-10 text-[10px] md:text-xs font-black text-emerald-600 text-center outline-none focus:ring-2 focus:ring-emerald-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
+                            <FaUser className="absolute left-2.5 sm:left-4 top-1/2 -translate-y-1/2 text-emerald-400 group-hover:text-emerald-500 transition-colors" size={10} />
+                            <select value={filterMember} onChange={(e) => setFilterMember(e.target.value)} className="w-full bg-emerald-50 hover:bg-emerald-100 border border-transparent rounded-[14px] sm:rounded-2xl py-2 sm:py-3 pl-7 sm:pl-10 pr-5 sm:pr-10 text-[9px] sm:text-xs font-black text-emerald-600 text-center outline-none focus:ring-2 focus:ring-emerald-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
                                 <option value="">All Members</option>
                                 <option value="guest">Guests / Non-Members</option>
                                 {Array.isArray(members) && members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                             </select>
-                            <div className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 pointer-events-none text-emerald-400 text-[10px]">▼</div>
+                            <div className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 pointer-events-none text-emerald-400 text-[9px]">▼</div>
                         </div>
 
                         {/* Vehicle - Orange Theme */}
@@ -135,22 +135,27 @@ const Transactions = ({
                     </div>
                 </div>
             </div>
-
-            <div className="space-y-4">
+            {/* Transactions List */}
+            <div className="space-y-[10px] sm:space-y-4">
                 {Array.isArray(filteredTransactions) && filteredTransactions.map(t => (
-                    <div key={t.id} className="bg-white p-[12px] sm:p-4 md:p-6 rounded-[20px] sm:rounded-[32px] shadow-sm border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-[10px] sm:gap-4 group hover:shadow-md transition-all">
-                        <div className="flex items-center gap-4">
-                            <div className={`w-[40px] h-[40px] sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-[12px] sm:rounded-2xl flex items-center justify-center text-xl shadow-sm shrink-0 transition-transform group-hover:scale-105 ${t.type === 'income' ? 'bg-blue-50 text-blue-500' : 'bg-red-50 text-red-500'}`}>
-                                {t.type === 'income' ? '↓' : '↑'}
+                    <div key={t.id} className="group bg-white hover:bg-slate-50 p-[12px] sm:p-5 rounded-[16px] sm:rounded-[24px] border border-slate-100 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-[10px] sm:gap-6">
+                        <div className="flex items-center gap-[10px] sm:gap-4 overflow-hidden">
+                            <div className={`w-[40px] h-[40px] sm:w-12 sm:h-12 rounded-[12px] sm:rounded-2xl flex items-center justify-center shrink-0 ${t.type === 'income' ? 'bg-blue-50 text-blue-600' : 'bg-red-50 text-red-600'}`}>
+                                <FaExchangeAlt className={`${t.type === 'income' ? '' : 'rotate-180'} text-[14px] sm:text-[18px]`} />
                             </div>
-                            <div>
-                                <h4 className="font-black text-slate-900 text-sm sm:text-base leading-tight">{t.title}</h4>
-                                <div className="h-[8px] mt-1.5 flex flex-wrap gap-1">
-                                    <div className="px-1 bg-slate-100 text-[6px] font-black text-slate-400 rounded-full flex items-center uppercase tracking-tighter">
+                            <div className="min-w-0 flex-1 sm:flex-initial">
+                                <h3 className="text-[13px] sm:text-sm font-bold text-slate-800 tracking-tight truncate line-clamp-1">
+                                    {t.title}
+                                </h3>
+                                <div className="flex flex-wrap items-center gap-[4px] sm:gap-2 mt-[2px]">
+                                    <div className={`px-1 text-[6px] font-black rounded-full flex items-center uppercase tracking-tighter ${t.type === 'income' ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-600'}`}>
+                                        {t.type}
+                                    </div>
+                                    <div className="px-1 bg-slate-100 text-[6px] font-black text-slate-500 rounded-full flex items-center uppercase tracking-tighter">
                                         {t.category}
                                     </div>
                                     {t.project_name && (
-                                        <div className="px-1 bg-blue-50 text-[6px] font-black text-blue-500 rounded-full flex items-center uppercase tracking-tighter">
+                                        <div className="px-1 bg-blue-100 text-[6px] font-black text-blue-600 rounded-full flex items-center uppercase tracking-tighter">
                                             {t.project_name}
                                         </div>
                                     )}

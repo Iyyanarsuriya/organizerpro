@@ -452,55 +452,63 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: pr
                     </div>
                 </form>
 
-                {/* Filter Bar - Modern Design */}
-                <div className="bg-white/80 backdrop-blur-xl p-[12px] sm:p-4 rounded-[18px] sm:rounded-[24px] border border-white/20 shadow-xl shadow-slate-200/50 mb-[14px] sm:mb-6 sticky top-2 z-10">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {/* Category Filter - Indigo */}
-                        <div className="relative group">
-                            <FaTag className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400 group-hover:text-indigo-500 transition-colors" size={12} />
-                            <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} className="w-full bg-indigo-50 hover:bg-indigo-100 border border-transparent rounded-2xl py-3 pl-10 pr-10 text-xs font-black text-indigo-600 text-center outline-none focus:ring-2 focus:ring-indigo-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
-                                <option value="">All Categories</option>
-                                {[...new Set((Array.isArray(members) ? members : []).map(m => m.role).filter(Boolean))].map(role => (
-                                    <option key={role} value={role}>{role}</option>
-                                ))}
-                            </select>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-indigo-400 text-[10px]">▼</div>
-                        </div>
-
-                        {/* Type Filter - Emerald */}
-                        <div className="relative group">
-                            <FaUser className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-emerald-400 group-hover:text-emerald-500 transition-colors" size={12} />
-                            <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="w-full bg-emerald-50 hover:bg-emerald-100 border border-transparent rounded-2xl py-2 md:py-3 pl-8 md:pl-10 pr-6 md:pr-10 text-[10px] md:text-xs font-black text-emerald-600 text-center outline-none focus:ring-2 focus:ring-emerald-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
-                                <option value="all">All Types</option>
-                                <option value="worker">Worker</option>
-                                <option value="employee">Employee</option>
-                                <option value="guest">Guest</option>
-                            </select>
-                            <div className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 pointer-events-none text-emerald-400 text-[10px]">▼</div>
-                        </div>
-
-                        {/* Status Filter - Purple */}
-                        <div className="relative group">
-                            <FaFilter className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-purple-400 group-hover:text-purple-500 transition-colors" size={12} />
-                            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="w-full bg-purple-50 hover:bg-purple-100 border border-transparent rounded-2xl py-2 md:py-3 pl-8 md:pl-10 pr-6 md:pr-10 text-[10px] md:text-xs font-black text-purple-600 text-center outline-none focus:ring-2 focus:ring-purple-200 transition-all cursor-pointer appearance-none uppercase tracking-wide">
-                                <option value="all">All Status</option>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
-                            <div className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 pointer-events-none text-purple-400 text-[10px]">▼</div>
-                        </div>
-
-                        {/* Search - Blue */}
-                        <div className="relative group">
-                            <FaSearch className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-blue-400 group-hover:text-blue-500 transition-colors" size={12} />
+                {/* Filters Bar */}
+                <div className="bg-slate-50 p-[12px] sm:p-4 rounded-[16px] sm:rounded-2xl border border-slate-100 flex flex-col gap-3 sm:gap-4 mb-6 sm:mb-8 font-['Outfit']">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="flex-1 relative group">
+                            <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={12} />
                             <input
                                 type="text"
-                                placeholder="SEARCH..."
+                                placeholder="Find member..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-blue-50 hover:bg-blue-100 border border-transparent rounded-2xl py-2 md:py-3 pl-8 md:pl-10 pr-4 text-[10px] md:text-xs font-black text-blue-600 text-center placeholder:text-blue-300 outline-none focus:ring-2 focus:ring-blue-200 transition-all uppercase tracking-wide"
+                                className="w-full bg-white border border-slate-200 rounded-[12px] sm:rounded-xl pl-10 pr-4 py-2 sm:py-2.5 text-[11px] font-bold text-slate-700 outline-none focus:border-blue-500 transition-all"
                             />
                         </div>
+                        <div className="flex gap-2">
+                            <div className="relative flex-1 sm:w-40">
+                                <FaFilter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={10} />
+                                <select
+                                    value={filterRole}
+                                    onChange={(e) => setFilterRole(e.target.value)}
+                                    className="w-full bg-white border border-slate-200 rounded-[12px] sm:rounded-xl pl-8 pr-6 py-2 sm:py-2.5 text-[10px] sm:text-[11px] font-bold text-slate-600 outline-none appearance-none cursor-pointer"
+                                >
+                                    <option value="">All Roles</option>
+                                    {roles.map(r => <option key={r.id} value={r.name}>{r.name}</option>)}
+                                </select>
+                            </div>
+                            <div className="relative flex-1 sm:w-32">
+                                <FaBriefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={10} />
+                                <select
+                                    value={filterType}
+                                    onChange={(e) => setFilterType(e.target.value)}
+                                    className="w-full bg-white border border-slate-200 rounded-[12px] sm:rounded-xl pl-8 pr-6 py-2 sm:py-2.5 text-[10px] sm:text-[11px] font-bold text-slate-600 outline-none appearance-none cursor-pointer"
+                                >
+                                    <option value="all">Any Type</option>
+                                    <option value="employee">Employee</option>
+                                    <option value="worker">Worker</option>
+                                    <option value="guest">Guest</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <div className="flex bg-slate-200/50 p-1 rounded-[10px] sm:rounded-xl border border-slate-200">
+                            {['all', 'active', 'inactive'].map(status => (
+                                <button
+                                    key={status}
+                                    onClick={() => setFilterStatus(status)}
+                                    className={`px-3 sm:px-4 py-1 sm:py-1.5 rounded-[8px] sm:rounded-lg text-[8px] sm:text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === status ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    {status}
+                                </button>
+                            ))}
+                        </div>
+                        <ExportButtons
+                            onExportCSV={() => generateCSV(filteredMembers, 'Members_List')}
+                            onExportPDF={() => generatePDF(filteredMembers, 'Members_List', 'Active Workforce')}
+                            onExportTXT={() => generateTXT(filteredMembers, 'Members_List')}
+                        />
                     </div>
                 </div>
 
@@ -515,90 +523,39 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: pr
                                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
                             </div>
                         ) : filteredMembers.length > 0 ? (
-                            filteredMembers.map(member => (
-                                <div
-                                    key={member.id}
-                                    className="bg-white border border-slate-100 rounded-[14px] sm:rounded-xl p-[12px] sm:p-4 hover:border-blue-200 transition-all group"
-                                >
-                                    <div className="flex items-start justify-between gap-[16px]">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <h4 className="text-[18px] font-black text-slate-900">{member.name}</h4>
-                                                <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${member.wage_type === 'monthly'
-                                                    ? 'bg-purple-50 text-purple-600'
-                                                    : 'bg-amber-50 text-amber-600'
-                                                    }`}>
-                                                    {member.member_type || 'worker'} <span className="opacity-50">|</span> {member.wage_type === 'monthly' ? 'Monthly' : 'Daily'}
-                                                </span>
-                                                <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${member.status === 'active'
-                                                    ? 'bg-emerald-50 text-emerald-600'
-                                                    : 'bg-slate-100 text-slate-500'
-                                                    }`}>
-                                                    {member.status}
-                                                </span>
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6">
+                                {filteredMembers.map(member => (
+                                    <div key={member.id} className={`bg-white border text-center relative group p-5 transition-all flex flex-col items-center justify-center overflow-hidden rounded-[24px] sm:rounded-[32px] ${member.isGuest ? 'border-amber-100 hover:border-amber-300' : 'border-slate-100 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5'}`}>
+                                        {/* Actions Overlay */}
+                                        <div className="absolute top-4 right-4 flex gap-2 sm:gap-3 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
+                                            <button onClick={() => handleEdit(member)} className="w-[30px] h-[30px] sm:w-9 sm:h-9 bg-white shadow-md rounded-xl flex items-center justify-center text-slate-400 hover:text-blue-600 transition-all"><FaEdit size={12} /></button>
+                                            <button onClick={() => handleDeleteClick(member.id)} className="w-[30px] h-[30px] sm:w-9 sm:h-9 bg-white shadow-md rounded-xl flex items-center justify-center text-slate-400 hover:text-red-600 transition-all"><FaTrash size={12} /></button>
+                                        </div>
+
+                                        <div className="relative mb-5">
+                                            <div className={`w-[70px] h-[70px] sm:w-20 sm:h-20 rounded-[24px] sm:rounded-3xl flex items-center justify-center text-2xl sm:text-3xl font-black ${member.isGuest ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}`}>
+                                                {member.name.charAt(0).toUpperCase()}
                                             </div>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[14px] text-slate-500">
-                                                {member.role && (
-                                                    <div className="flex items-center gap-2">
-                                                        <FaBriefcase className="text-slate-400 text-[12px]" />
-                                                        <span className="font-medium">{member.role}</span>
-                                                    </div>
-                                                )}
-                                                {member.phone && (
-                                                    <div className="flex items-center gap-2">
-                                                        <FaPhone className="text-slate-400 text-[12px]" />
-                                                        <span className="font-medium">{member.phone}</span>
-                                                    </div>
-                                                )}
-                                                {member.email && (
-                                                    <div className="flex items-center gap-2">
-                                                        <FaEnvelope className="text-slate-400 text-[12px]" />
-                                                        <span className="font-medium">{member.email}</span>
-                                                    </div>
-                                                )}
-                                                {member.shift_name && (
-                                                    <div className="flex items-center gap-2">
-                                                        <FaClock className="text-slate-400 text-[12px]" />
-                                                        <span className="font-medium">{member.shift_name}</span>
-                                                    </div>
-                                                )}
-                                                <div className="flex items-center gap-2">
-                                                    <FaMoneyBillWave className="text-slate-400 text-[12px]" />
-                                                    <span className="font-medium">
-                                                        {member.wage_type === 'monthly' ? 'Monthly' : 'Daily'}:
-                                                        ₹{parseFloat(member.daily_wage || 0)}
-                                                    </span>
-                                                </div>
+                                            <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-lg flex items-center justify-center border-4 border-white ${member.status === 'active' ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                                <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></div>
                                             </div>
                                         </div>
-                                        <div className="flex gap-2 sm:opacity-0 group-hover:opacity-100 opacity-100 transition-opacity">
-                                            <button
-                                                onClick={() => handleViewPayments(member)}
-                                                className="p-3 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
-                                                title="History"
-                                            >
-                                                <FaUniversity />
-                                            </button>
-                                            {!member.isGuest && (
-                                                <>
-                                                    <button
-                                                        onClick={() => handleEdit(member)}
-                                                        className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-                                                    >
-                                                        <FaEdit />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteClick(member.id)}
-                                                        className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                                                    >
-                                                        <FaTrash />
-                                                    </button>
-                                                </>
-                                            )}
+
+                                        <h4 className="text-[16px] sm:text-lg font-black text-slate-900 group-hover:text-blue-600 transition-colors">{member.name}</h4>
+                                        <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 mb-4">{member.role || (member.isGuest ? 'Guest' : 'Staff')}</p>
+
+                                        <div className="flex flex-wrap items-center justify-center gap-2 w-full mt-auto">
+                                            <div className="px-3 py-1.5 bg-slate-50 rounded-[10px] sm:rounded-xl text-[9px] font-bold text-slate-600 flex items-center gap-2">
+                                                <FaPhone className="text-slate-300" size={10} />
+                                                {member.phone || 'No phone'}
+                                            </div>
+                                            <div className={`px-3 py-1.5 rounded-[10px] sm:rounded-xl text-[9px] font-black uppercase tracking-widest ${member.wage_type === 'monthly' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                                                ₹{member.daily_wage || 0} / {member.wage_type === 'piece_rate' ? 'piece' : member.wage_type === 'monthly' ? 'mo' : 'day'}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))
+                                ))}
+                            </div>
                         ) : (
                             <div className="text-center py-[48px] text-slate-400">
                                 <FaUser className="text-[36px] mx-auto mb-3 opacity-20" />

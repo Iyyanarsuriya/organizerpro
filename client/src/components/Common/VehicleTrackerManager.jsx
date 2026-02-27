@@ -103,12 +103,21 @@ const VehicleTrackerManager = ({ data: externalData, onUpdate }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            const payload = {
+                ...formData,
+                sector: 'manufacturing',
+                start_km: parseFloat(formData.start_km) || 0,
+                end_km: parseFloat(formData.end_km) || 0,
+                expense_amount: parseFloat(formData.expense_amount) || 0,
+                income_amount: parseFloat(formData.income_amount) || 0
+            };
+
             if (editingId) {
-                await updateVehicleLog(editingId, formData);
-                toast.success('Log updated');
+                await updateVehicleLog(editingId, payload);
+                toast.success('Log updated successfully');
             } else {
-                await createVehicleLog(formData);
-                toast.success('Log created');
+                await createVehicleLog(payload);
+                toast.success('Log created successfully');
             }
             setFormData({
                 vehicle_name: '',
@@ -325,45 +334,43 @@ const VehicleTrackerManager = ({ data: externalData, onUpdate }) => {
                 {/* List Section */}
                 <div className="lg:col-span-2 space-y-6">
 
-                    {/* Filters & Actions */}
-                    <div className="bg-white p-4 rounded-[24px] border border-slate-100 shadow-sm flex flex-col gap-4">
-                        <div className="flex flex-col sm:flex-row gap-3 w-full">
-                            <div className="flex items-center gap-2 bg-slate-50 px-2 md:px-3 py-2 rounded-xl border border-slate-100 w-full sm:w-auto">
-                                <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">From</span>
-                                <input
-                                    type="date"
-                                    value={dateRange.start}
-                                    onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-                                    className="bg-transparent text-[10px] md:text-xs font-bold text-slate-700 outline-none w-full sm:w-[110px]"
-                                />
+                    {/* Filters Bar */}
+                    <div className="bg-white/80 backdrop-blur-xl p-[12px] sm:p-4 rounded-[16px] sm:rounded-2xl border border-white/20 shadow-xl shadow-slate-200/50 mb-[14px] sm:mb-8 sticky top-2 z-10">
+                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                            <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-[12px] sm:rounded-xl border border-slate-100 shrink-0">
+                                <FaFilter className="text-slate-300 ml-2" size={10} />
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="date"
+                                        value={dateRange.start}
+                                        onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+                                        className="bg-transparent text-[10px] sm:text-xs font-bold text-slate-700 outline-none p-1 sm:p-1.5 cursor-pointer"
+                                    />
+                                    <span className="text-slate-300 text-[10px] sm:text-xs">to</span>
+                                    <input
+                                        type="date"
+                                        value={dateRange.end}
+                                        onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+                                        className="bg-transparent text-[10px] sm:text-xs font-bold text-slate-700 outline-none p-1 sm:p-1.5 cursor-pointer"
+                                    />
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2 bg-slate-50 px-2 md:px-3 py-2 rounded-xl border border-slate-100 w-full sm:w-auto">
-                                <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">To</span>
-                                <input
-                                    type="date"
-                                    value={dateRange.end}
-                                    onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-                                    className="bg-transparent text-[10px] md:text-xs font-bold text-slate-700 outline-none w-full sm:w-[110px]"
-                                />
-                            </div>
-                            {/* Search Input */}
-                            <div className="flex-1 relative">
-                                <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={12} />
+
+                            <div className="flex-1 relative group">
+                                <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={12} />
                                 <input
                                     type="text"
-                                    placeholder="Search Vehicle / Driver..."
+                                    placeholder="Find vehicle, number or driver..."
                                     value={searchVehicle}
                                     onChange={(e) => setSearchVehicle(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-9 pr-4 py-2 text-[10px] md:text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all"
+                                    className="w-full bg-slate-50 border border-slate-100 rounded-[12px] sm:rounded-xl pl-10 pr-4 py-2 sm:py-2.5 text-[11px] font-bold text-slate-700 outline-none focus:bg-white focus:border-blue-500 transition-all"
                                 />
                             </div>
-                        </div>
 
-                        <div className="flex justify-end">
                             <ExportButtons
                                 onExportCSV={() => exportVehicleLogToCSV(filteredLogs, 'Vehicle_Log_Report')}
-                                onExportPDF={() => exportVehicleLogToPDF({ data: filteredLogs, period: 'Custom Range', filename: 'Vehicle_Log_Report' })}
-                                onExportTXT={() => exportVehicleLogToTXT({ data: filteredLogs, period: 'Custom Range', filename: 'Vehicle_Log_Report' })}
+                                onExportPDF={() => exportVehicleLogToPDF({ data: filteredLogs, filename: 'Vehicle_Log_Report' })}
+                                onExportTXT={() => exportVehicleLogToTXT({ data: filteredLogs, filename: 'Vehicle_Log_Report' })}
                             />
                         </div>
                     </div>

@@ -218,29 +218,29 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
     return (
         <div className="bg-white rounded-[32px] p-6 lg:p-8 h-full flex flex-col font-['Outfit'] border border-slate-100 shadow-sm animate-in fade-in duration-300 relative">
             {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
-                        <div className="w-1 h-6 bg-indigo-600 rounded-full"></div>
+            <div className="flex flex-col sm:flex-row items-center justify-between mb-6 sm:mb-8 gap-4">
+                <div className="text-center sm:text-left">
+                    <h2 className="text-[20px] sm:text-2xl font-black text-slate-900 flex items-center justify-center sm:justify-start gap-3">
+                        <div className="w-1 h-6 bg-indigo-600 rounded-full hidden sm:block"></div>
                         Daily Work Log
                     </h2>
-                    <p className="text-slate-500 text-xs mt-1 ml-4 font-bold tracking-wide">Track daily production and calculate earnings</p>
+                    <p className="text-slate-500 text-[10px] sm:text-xs mt-1 sm:ml-4 font-bold tracking-wide">Track daily production and calculate earnings</p>
                 </div>
             </div>
 
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
                 {/* View Toggle */}
-                <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-8 w-fit border border-slate-200">
+                <div className="flex bg-slate-100 p-1.5 rounded-[12px] sm:rounded-2xl mb-8 w-full sm:w-fit border border-slate-200">
                     <button
                         onClick={() => setViewMode('daily')}
-                        className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'daily' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`flex-1 sm:flex-initial px-4 sm:px-6 py-2 sm:py-2.5 rounded-[10px] sm:rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'daily' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                         Daily Entry
                     </button>
                     <button
                         onClick={() => setViewMode('monthly')}
-                        className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'monthly' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`flex-1 sm:flex-initial px-4 sm:px-6 py-2 sm:py-2.5 rounded-[10px] sm:rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'monthly' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                         Monthly Summary
                     </button>
@@ -424,53 +424,55 @@ const DailyWorkLogManager = ({ onClose, selectedDate = new Date().toISOString().
                         </form>
 
                         {/* Search and Filters */}
-                        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                            <div className="flex gap-3 w-full sm:w-auto">
-                                <div className="flex items-center gap-2 bg-slate-50 px-2 md:px-3 py-2 rounded-xl border border-slate-100 w-full sm:w-auto">
-                                    <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">From</span>
+                        <div className="flex flex-col gap-4 mb-8">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:items-center gap-3">
+                                <div className="flex items-center gap-2 bg-slate-50 px-3 py-2.5 rounded-[12px] sm:rounded-xl border border-slate-100">
+                                    <span className="text-slate-400 text-[9px] font-black uppercase tracking-widest">From</span>
                                     <input
                                         type="date"
                                         value={dateFilter.start}
                                         onChange={(e) => setDateFilter({ ...dateFilter, start: e.target.value })}
-                                        className="bg-transparent text-[10px] md:text-xs font-bold text-slate-700 outline-none w-full sm:w-[110px]"
+                                        className="bg-transparent text-[11px] font-bold text-slate-700 outline-none w-full"
                                     />
                                 </div>
-                                <div className="flex items-center gap-2 bg-slate-50 px-2 md:px-3 py-2 rounded-xl border border-slate-100 w-full sm:w-auto">
-                                    <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">To</span>
+                                <div className="flex items-center gap-2 bg-slate-50 px-3 py-2.5 rounded-[12px] sm:rounded-xl border border-slate-100">
+                                    <span className="text-slate-400 text-[9px] font-black uppercase tracking-widest">To</span>
                                     <input
                                         type="date"
                                         value={dateFilter.end}
                                         onChange={(e) => setDateFilter({ ...dateFilter, end: e.target.value })}
-                                        className="bg-transparent text-[10px] md:text-xs font-bold text-slate-700 outline-none w-full sm:w-[110px]"
+                                        className="bg-transparent text-[11px] font-bold text-slate-700 outline-none w-full"
+                                    />
+                                </div>
+                                <div className="relative flex-1">
+                                    <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={12} />
+                                    <input
+                                        type="text"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        placeholder="Search by name..."
+                                        className="w-full bg-slate-50 border border-slate-100 rounded-[12px] sm:rounded-xl pl-10 pr-4 py-2.5 text-[11px] font-bold text-slate-700 outline-none focus:border-indigo-500 transition-all"
                                     />
                                 </div>
                             </div>
-                            <div className="flex-1 relative">
-                                <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={12} />
-                                <input
-                                    type="text"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    placeholder="Search by name..."
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-10 md:pl-12 pr-4 py-2 md:py-2.5 text-[10px] md:text-xs font-bold text-slate-700 outline-none focus:border-indigo-500 transition-all"
+                            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                                <div className="flex bg-slate-100 p-1 rounded-[10px] sm:rounded-xl w-full sm:w-fit border border-slate-200">
+                                    {['all', 'member', 'guest'].map(type => (
+                                        <button
+                                            key={type}
+                                            onClick={() => setLogFilterType(type)}
+                                            className={`flex-1 sm:flex-initial px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${logFilterType === type ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            {type === 'all' ? 'All' : type}
+                                        </button>
+                                    ))}
+                                </div>
+                                <ExportButtons
+                                    onExportCSV={() => exportWorkLogToCSV(filteredLogs, 'Work_Log_Report')}
+                                    onExportPDF={() => exportWorkLogToPDF({ data: filteredLogs, period: `${dateFilter.start} to ${dateFilter.end}`, filename: 'Work_Log_Report' })}
+                                    onExportTXT={() => exportWorkLogToTXT({ data: filteredLogs, period: `${dateFilter.start} to ${dateFilter.end}`, filename: 'Work_Log_Report' })}
                                 />
                             </div>
-                            <div className="flex bg-slate-100 p-1 rounded-xl w-fit border border-slate-200">
-                                {['all', 'member', 'guest'].map(type => (
-                                    <button
-                                        key={type}
-                                        onClick={() => setLogFilterType(type)}
-                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${logFilterType === type ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                                    >
-                                        {type === 'all' ? 'All' : type}
-                                    </button>
-                                ))}
-                            </div>
-                            <ExportButtons
-                                onExportCSV={() => exportWorkLogToCSV(filteredLogs, 'Work_Log_Report')}
-                                onExportPDF={() => exportWorkLogToPDF({ data: filteredLogs, period: `${dateFilter.start} to ${dateFilter.end}`, filename: 'Work_Log_Report' })}
-                                onExportTXT={() => exportWorkLogToTXT({ data: filteredLogs, period: `${dateFilter.start} to ${dateFilter.end}`, filename: 'Work_Log_Report' })}
-                            />
                         </div>
 
                         {/* Logs List */}

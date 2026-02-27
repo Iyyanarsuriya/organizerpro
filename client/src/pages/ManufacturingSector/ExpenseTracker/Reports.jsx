@@ -57,7 +57,7 @@ const Reports = ({
                     </button>
                 </div>
             </div>
-            <div className="bg-white p-[16px] sm:p-[32px] md:p-[48px] rounded-[24px] sm:rounded-[40px] shadow-2xl border border-slate-100 overflow-hidden relative">
+            <div className="bg-white p-[16px] sm:p-[28px] md:p-[40px] rounded-[24px] sm:rounded-[32px] md:rounded-[40px] shadow-2xl border border-slate-100 overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-blue-500/5 rounded-full blur-[100px] -mr-[150px] -mt-[150px]"></div>
                 <div className="relative">
                     <div className="flex items-center gap-[12px] sm:gap-[16px] mb-[24px] sm:mb-[48px]">
@@ -81,7 +81,7 @@ const Reports = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-[10px] sm:gap-6 mb-[32px] sm:mb-16">
                         {filterMember ? (
                             <>
-                                <div className="p-6 bg-emerald-50/50 rounded-3xl border border-emerald-100 flex flex-col justify-between min-h-[140px]">
+                                <div className="p-[20px] sm:p-6 bg-emerald-50/50 rounded-[20px] sm:rounded-3xl border border-emerald-100 flex flex-col justify-between min-h-[120px] sm:min-h-[140px]">
                                     <div>
                                         <p className="text-[8px] font-black text-emerald-400 uppercase tracking-[0.2em] mb-1">Unpaid Balance</p>
                                         <h4 className={`text-[22px] sm:text-3xl font-black tracking-tighter ${memberLedgerBalance.balance > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
@@ -93,7 +93,7 @@ const Reports = ({
                                         <span className="text-[6px] font-black text-emerald-600 uppercase tracking-tighter">EARNED - PAID (PERIOD)</span>
                                     </div>
                                 </div>
-                                <div className="p-6 bg-blue-50/50 rounded-3xl border border-blue-100 flex flex-col justify-between min-h-[140px]">
+                                <div className="p-[20px] sm:p-6 bg-blue-50/50 rounded-[20px] sm:rounded-3xl border border-blue-100 flex flex-col justify-between min-h-[120px] sm:min-h-[140px]">
                                     <div>
                                         <p className="text-[8px] font-black text-blue-400 uppercase tracking-[0.2em] mb-1">Total Earned (Pots)</p>
                                         <h4 className="text-[22px] sm:text-3xl font-black tracking-tighter text-blue-600">₹{formatAmount(memberLedgerBalance.earned)}</h4>
