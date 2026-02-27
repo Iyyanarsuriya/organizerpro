@@ -151,23 +151,24 @@ const TeamManagement = () => {
 
     return (
         <div className="min-h-screen bg-[#f8fafc]">
-            {/* Navbar is handled by App.jsx layout */}
 
-            <div className="max-w-7xl mx-auto px-[16px] sm:px-[24px] lg:px-[32px] py-[40px]">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-[32px] gap-[16px]">
-                    <div className="flex items-center gap-4">
+            <div className="max-w-[1280px] mx-auto px-[16px] sm:px-[24px] lg:px-[32px] py-[20px] sm:py-[40px] pb-[80px] sm:pb-[100px]">
+
+                {/* ── Header ── */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-[24px] sm:mb-[32px] gap-[14px] sm:gap-[16px]">
+                    <div className="flex items-center gap-[12px] sm:gap-[16px]">
                         <Link
                             to="/manufacturing"
-                            className="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-500 hover:text-[#2d5bff] hover:border-[#2d5bff] transition-all shadow-sm hover:shadow-md active:scale-95 shrink-0"
+                            className="w-[40px] h-[40px] sm:w-[48px] sm:h-[48px] bg-white border border-slate-200 rounded-[14px] sm:rounded-[18px] flex items-center justify-center text-slate-500 hover:text-[#2d5bff] hover:border-[#2d5bff] transition-all shadow-sm hover:shadow-md active:scale-95 shrink-0"
                         >
-                            <FaChevronLeft className="w-4 h-4" />
+                            <FaChevronLeft className="w-[14px] h-[14px] sm:w-[16px] sm:h-[16px]" />
                         </Link>
                         <div>
-                            <h1 className="text-[28px] sm:text-[32px] font-black text-slate-800 tracking-tight leading-tight">Team Management</h1>
-                            <p className="text-slate-500 mt-[4px] text-[14px]">Manage access for your organization</p>
+                            <h1 className="text-[20px] sm:text-[28px] md:text-[32px] font-black text-slate-800 tracking-tight leading-tight">Team Management</h1>
+                            <p className="text-slate-500 mt-[2px] text-[11px] sm:text-[14px]">Manage access for your organization</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-[10px] sm:gap-[12px] w-full sm:w-auto">
                         <ExportButtons
                             onExportCSV={handleExportCSV}
                             onExportPDF={handleExportPDF}
@@ -175,41 +176,43 @@ const TeamManagement = () => {
                         />
                         <button
                             onClick={() => setShowModal(true)}
-                            className="w-full sm:w-auto flex items-center justify-center gap-[8px] bg-[#2d5bff] text-white px-[20px] py-[10px] rounded-[12px] font-bold hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/30 text-[14px]"
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-[8px] bg-[#2d5bff] text-white px-[16px] sm:px-[20px] py-[9px] sm:py-[10px] rounded-[12px] font-bold hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/30 text-[13px] sm:text-[14px] active:scale-95"
                         >
-                            <FaUserPlus /> Add Member
+                            <FaUserPlus className="text-[12px] sm:text-[14px]" /> Add Member
                         </button>
                     </div>
                 </div>
 
                 {loading ? (
-                    <div className="flex justify-center py-[80px]"><div className="animate-spin rounded-full h-[48px] w-[48px] border-t-2 border-[#2d5bff]"></div></div>
+                    <div className="flex justify-center py-[60px] sm:py-[80px]">
+                        <div className="animate-spin rounded-full h-[40px] w-[40px] sm:h-[48px] sm:w-[48px] border-t-[3px] border-[#2d5bff]"></div>
+                    </div>
                 ) : (
-                    <div className="bg-white rounded-[24px] sm:rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+                    <div className="bg-white rounded-[20px] sm:rounded-[24px] md:rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
                         {team.length === 0 ? (
-                            <div className="text-center py-[80px] px-[20px]">
-                                <div className="w-[64px] h-[64px] bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-[16px]">
-                                    <FaUserTie className="text-slate-300 text-[24px]" />
+                            <div className="text-center py-[60px] sm:py-[80px] px-[20px]">
+                                <div className="w-[52px] h-[52px] sm:w-[64px] sm:h-[64px] bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-[14px] sm:mb-[16px]">
+                                    <FaUserTie className="text-slate-300 text-[20px] sm:text-[24px]" />
                                 </div>
-                                <h3 className="text-[18px] font-bold text-slate-700">No team members yet</h3>
-                                <p className="text-slate-500 text-[14px] mt-[4px]">Add your employees to give them access.</p>
+                                <h3 className="text-[16px] sm:text-[18px] font-bold text-slate-700">No team members yet</h3>
+                                <p className="text-slate-500 text-[12px] sm:text-[14px] mt-[4px]">Add your employees to give them access.</p>
                             </div>
                         ) : (
                             <>
-                                {/* Mobile/Tablet View (Cards) - Visible on screens smaller than custom tablet breakpoint if needed, usually md is 768px */}
+                                {/* Mobile/Tablet Card View */}
                                 <div className="block md:hidden">
                                     <div className="divide-y divide-slate-100">
                                         {team.map(user => (
-                                            <div key={user.id} className="p-[20px] flex flex-col gap-[16px]">
+                                            <div key={user.id} className="p-[16px] sm:p-[20px] flex flex-col gap-[12px] sm:gap-[16px]">
                                                 {/* Top Row: Avatar + Name + Delete */}
                                                 <div className="flex justify-between items-start">
-                                                    <div className="flex items-center gap-[12px]">
-                                                        <div className="w-[40px] h-[40px] rounded-full bg-linear-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-[14px] shadow-sm">
+                                                    <div className="flex items-center gap-[10px] sm:gap-[12px]">
+                                                        <div className="w-[38px] h-[38px] sm:w-[44px] sm:h-[44px] rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-[13px] sm:text-[15px] shadow-sm shrink-0">
                                                             {user.username.charAt(0).toUpperCase()}
                                                         </div>
                                                         <div>
-                                                            <h3 className="text-[14px] font-bold text-slate-800 leading-tight">{user.username}</h3>
-                                                            <p className="text-[12px] text-slate-500 font-medium leading-tight">{user.email}</p>
+                                                            <h3 className="text-[13px] sm:text-[14px] font-bold text-slate-800 leading-tight">{user.username}</h3>
+                                                            <p className="text-[11px] sm:text-[12px] text-slate-500 font-medium leading-tight">{user.email}</p>
                                                         </div>
                                                     </div>
                                                     {currentUser?.role === 'owner' && (
@@ -218,35 +221,35 @@ const TeamManagement = () => {
                                                                 e.stopPropagation();
                                                                 handleDelete(user.id);
                                                             }}
-                                                            className="w-[32px] h-[32px] flex items-center justify-center rounded-[8px] text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors"
+                                                            className="w-[30px] h-[30px] sm:w-[32px] sm:h-[32px] flex items-center justify-center rounded-[8px] text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors"
                                                         >
-                                                            <FaTrash className="text-[12px]" />
+                                                            <FaTrash className="text-[11px] sm:text-[12px]" />
                                                         </button>
                                                     )}
                                                 </div>
 
-                                                {/* Middle Row: Details */}
-                                                <div className="flex items-center gap-[12px] flex-wrap">
-                                                    <span className={`inline-flex items-center px-[10px] py-[4px] rounded-full text-[10px] font-black uppercase tracking-widest ${user.role === 'admin' || user.role === 'owner' ? 'bg-purple-50 text-purple-600' :
-                                                        user.role === 'manager' ? 'bg-blue-50 text-blue-600' :
-                                                            user.role === 'staff' ? 'bg-green-50 text-green-600' :
-                                                                'bg-slate-100 text-slate-600'
+                                                {/* Middle: Role + Created By + Date */}
+                                                <div className="flex items-center gap-[8px] sm:gap-[12px] flex-wrap">
+                                                    <span className={`inline-flex items-center px-[8px] sm:px-[10px] py-[3px] sm:py-[4px] rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest ${user.role === 'admin' || user.role === 'owner' ? 'bg-purple-50 text-purple-600' :
+                                                            user.role === 'manager' ? 'bg-blue-50 text-blue-600' :
+                                                                user.role === 'staff' ? 'bg-green-50 text-green-600' :
+                                                                    'bg-slate-100 text-slate-600'
                                                         }`}>
                                                         {user.role}
                                                     </span>
-                                                    <span className="inline-flex items-center gap-1.5 px-[10px] py-[4px] rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest border border-blue-100">
+                                                    <span className="inline-flex items-center gap-[4px] px-[8px] sm:px-[10px] py-[3px] sm:py-[4px] rounded-full bg-blue-50 text-blue-600 text-[9px] sm:text-[10px] font-black uppercase tracking-widest border border-blue-100">
                                                         By: {user.created_by || 'Owner'}
                                                     </span>
-                                                    <span className="text-[11px] text-slate-400 font-bold flex items-center gap-[4px]">
-                                                        <FaCalendar className="text-[10px]" />
+                                                    <span className="text-[10px] sm:text-[11px] text-slate-400 font-bold flex items-center gap-[4px]">
+                                                        <FaCalendar className="text-[9px] sm:text-[10px]" />
                                                         {new Date(user.created_at).toLocaleDateString()}
                                                     </span>
                                                 </div>
 
-                                                {/* Bottom Row: View Details Button */}
+                                                {/* View Details Button */}
                                                 <button
                                                     onClick={() => setSelectedUser(user)}
-                                                    className="w-full py-[10px] bg-slate-900 text-white text-[11px] font-black uppercase tracking-widest rounded-[12px] hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 active:scale-95"
+                                                    className="w-full py-[9px] sm:py-[10px] bg-slate-900 text-white text-[10px] sm:text-[11px] font-black uppercase tracking-widest rounded-[10px] sm:rounded-[12px] hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 active:scale-95"
                                                 >
                                                     View Details
                                                 </button>
@@ -255,56 +258,56 @@ const TeamManagement = () => {
                                     </div>
                                 </div>
 
-                                {/* Desktop/Tablet View (Table) - Hidden on mobile */}
+                                {/* Desktop Table View */}
                                 <div className="hidden md:block overflow-x-auto">
-                                    <table className="w-full text-left border-collapse">
+                                    <table className="w-full text-left border-collapse min-w-[600px]">
                                         <thead>
                                             <tr className="bg-slate-50/50 border-b border-slate-100">
-                                                <th className="px-[32px] py-[20px] text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">User Profile</th>
-                                                <th className="px-[32px] py-[20px] text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Role & Access</th>
-                                                <th className="px-[32px] py-[20px] text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Joined Date</th>
-                                                <th className="px-[32px] py-[20px] text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Created By</th>
-                                                <th className="px-[32px] py-[20px] text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none text-right">Actions</th>
+                                                <th className="px-[20px] md:px-[32px] py-[16px] md:py-[20px] text-[10px] font-black text-slate-400 uppercase tracking-widest">User Profile</th>
+                                                <th className="px-[20px] md:px-[32px] py-[16px] md:py-[20px] text-[10px] font-black text-slate-400 uppercase tracking-widest">Role &amp; Access</th>
+                                                <th className="px-[20px] md:px-[32px] py-[16px] md:py-[20px] text-[10px] font-black text-slate-400 uppercase tracking-widest">Joined Date</th>
+                                                <th className="px-[20px] md:px-[32px] py-[16px] md:py-[20px] text-[10px] font-black text-slate-400 uppercase tracking-widest">Created By</th>
+                                                <th className="px-[20px] md:px-[32px] py-[16px] md:py-[20px] text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
                                             {team.map(user => (
                                                 <tr key={user.id} className="hover:bg-slate-50/50 transition-colors group">
-                                                    <td className="px-[32px] py-[20px]">
-                                                        <div className="flex items-center gap-[16px]">
-                                                            <div className="w-[40px] h-[40px] rounded-full bg-linear-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-[14px] shadow-sm">
+                                                    <td className="px-[20px] md:px-[32px] py-[16px] md:py-[20px]">
+                                                        <div className="flex items-center gap-[12px] md:gap-[16px]">
+                                                            <div className="w-[36px] h-[36px] md:w-[40px] md:h-[40px] rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-[13px] md:text-[14px] shadow-sm shrink-0">
                                                                 {user.username.charAt(0).toUpperCase()}
                                                             </div>
                                                             <div>
-                                                                <h3 className="text-[14px] font-bold text-slate-800">{user.username}</h3>
-                                                                <p className="text-[12px] text-slate-500 font-medium">{user.email}</p>
+                                                                <h3 className="text-[13px] md:text-[14px] font-bold text-slate-800">{user.username}</h3>
+                                                                <p className="text-[11px] md:text-[12px] text-slate-500 font-medium">{user.email}</p>
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-[32px] py-[20px]">
-                                                        <span className={`inline-flex items-center px-[12px] py-[4px] rounded-full text-[10px] font-black uppercase tracking-widest ${user.role === 'admin' || user.role === 'owner' ? 'bg-purple-50 text-purple-600' :
-                                                            user.role === 'manager' ? 'bg-blue-50 text-blue-600' :
-                                                                user.role === 'staff' ? 'bg-green-50 text-green-600' :
-                                                                    'bg-slate-100 text-slate-600'
+                                                    <td className="px-[20px] md:px-[32px] py-[16px] md:py-[20px]">
+                                                        <span className={`inline-flex items-center px-[10px] md:px-[12px] py-[3px] md:py-[4px] rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest ${user.role === 'admin' || user.role === 'owner' ? 'bg-purple-50 text-purple-600' :
+                                                                user.role === 'manager' ? 'bg-blue-50 text-blue-600' :
+                                                                    user.role === 'staff' ? 'bg-green-50 text-green-600' :
+                                                                        'bg-slate-100 text-slate-600'
                                                             }`}>
                                                             {user.role}
                                                         </span>
                                                     </td>
-                                                    <td className="px-[32px] py-[20px]">
-                                                        <span className="text-[12px] font-bold text-slate-500">
+                                                    <td className="px-[20px] md:px-[32px] py-[16px] md:py-[20px]">
+                                                        <span className="text-[11px] md:text-[12px] font-bold text-slate-500">
                                                             {new Date(user.created_at).toLocaleDateString()}
                                                         </span>
                                                     </td>
-                                                    <td className="px-[32px] py-[20px]">
-                                                        <span className="text-[12px] font-bold text-slate-500 italic">
+                                                    <td className="px-[20px] md:px-[32px] py-[16px] md:py-[20px]">
+                                                        <span className="text-[11px] md:text-[12px] font-bold text-slate-500 italic">
                                                             {user.created_by || 'Owner'}
                                                         </span>
                                                     </td>
-                                                    <td className="px-[32px] py-[20px] text-right">
-                                                        <div className="flex items-center justify-end gap-[12px]">
+                                                    <td className="px-[20px] md:px-[32px] py-[16px] md:py-[20px] text-right">
+                                                        <div className="flex items-center justify-end gap-[8px] md:gap-[12px]">
                                                             <button
                                                                 onClick={() => setSelectedUser(user)}
-                                                                className="px-[16px] py-[8px] bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-[12px] hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 active:scale-95"
+                                                                className="px-[12px] md:px-[16px] py-[6px] md:py-[8px] bg-slate-900 text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-[10px] md:rounded-[12px] hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 active:scale-95"
                                                             >
                                                                 View Details
                                                             </button>
@@ -314,10 +317,10 @@ const TeamManagement = () => {
                                                                         e.stopPropagation();
                                                                         handleDelete(user.id);
                                                                     }}
-                                                                    className="w-[32px] h-[32px] flex items-center justify-center rounded-[12px] text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                                                                    className="w-[30px] h-[30px] md:w-[32px] md:h-[32px] flex items-center justify-center rounded-[10px] md:rounded-[12px] text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
                                                                     title="Delete User"
                                                                 >
-                                                                    <FaTrash className="text-[12px]" />
+                                                                    <FaTrash className="text-[11px] md:text-[12px]" />
                                                                 </button>
                                                             )}
                                                         </div>
