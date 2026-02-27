@@ -34,9 +34,9 @@ const Reports = ({
 
     return (
         <div className="animate-in slide-in-from-right-10 duration-500">
-            <div className="flex justify-between items-center mb-[32px]">
-                <h2 className="text-[20px] sm:text-[24px] font-black tracking-tight text-slate-900">Financial Intelligence</h2>
-                <div className="flex items-center gap-[8px]">
+            <div className="flex flex-wrap justify-between items-center gap-[12px] mb-[20px] sm:mb-[32px]">
+                <h2 className="text-[18px] sm:text-[20px] md:text-[24px] font-black tracking-tight text-slate-900">Financial Intelligence</h2>
+                <div className="flex items-center gap-[6px] sm:gap-[8px]">
                     <button
                         onClick={() => setConfirmModal({ show: true, type: 'PDF', label: 'PDF Report' })}
                         className="bg-slate-900 text-white px-[16px] py-[10px] rounded-[14px] text-[10px] font-black uppercase tracking-widest shadow-lg shadow-black/10 hover:scale-105 transition-all whitespace-nowrap"
@@ -57,15 +57,15 @@ const Reports = ({
                     </button>
                 </div>
             </div>
-            <div className="bg-white p-[32px] sm:p-[48px] rounded-[40px] shadow-2xl border border-slate-100 overflow-hidden relative">
+            <div className="bg-white p-[16px] sm:p-[32px] md:p-[48px] rounded-[24px] sm:rounded-[40px] shadow-2xl border border-slate-100 overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-blue-500/5 rounded-full blur-[100px] -mr-[150px] -mt-[150px]"></div>
                 <div className="relative">
-                    <div className="flex items-center gap-[16px] mb-[48px]">
-                        <div className="w-[56px] h-[56px] bg-blue-500/10 text-blue-500 rounded-[20px] flex items-center justify-center text-[24px]">
+                    <div className="flex items-center gap-[12px] sm:gap-[16px] mb-[24px] sm:mb-[48px]">
+                        <div className="w-[40px] h-[40px] sm:w-[56px] sm:h-[56px] bg-blue-500/10 text-blue-500 rounded-[14px] sm:rounded-[20px] flex items-center justify-center text-[18px] sm:text-[24px] shrink-0">
                             <FaFileAlt />
                         </div>
                         <div>
-                            <h3 className="text-[20px] font-black text-slate-900">
+                            <h3 className="text-[16px] sm:text-[20px] font-black text-slate-900">
                                 {filterMember
                                     ? `${members.find(w => w.id == filterMember)?.name}'s Ledger`
                                     : filterProject
@@ -78,13 +78,13 @@ const Reports = ({
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-[10px] sm:gap-6 mb-[32px] sm:mb-16">
                         {filterMember ? (
                             <>
                                 <div className="p-6 bg-emerald-50/50 rounded-3xl border border-emerald-100 flex flex-col justify-between min-h-[140px]">
                                     <div>
                                         <p className="text-[8px] font-black text-emerald-400 uppercase tracking-[0.2em] mb-1">Unpaid Balance</p>
-                                        <h4 className={`text-3xl font-black tracking-tighter ${memberLedgerBalance.balance > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                        <h4 className={`text-[22px] sm:text-3xl font-black tracking-tighter ${memberLedgerBalance.balance > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
                                             ₹{formatAmount(memberLedgerBalance.balance)}
                                         </h4>
                                     </div>
@@ -96,7 +96,7 @@ const Reports = ({
                                 <div className="p-6 bg-blue-50/50 rounded-3xl border border-blue-100 flex flex-col justify-between min-h-[140px]">
                                     <div>
                                         <p className="text-[8px] font-black text-blue-400 uppercase tracking-[0.2em] mb-1">Total Earned (Pots)</p>
-                                        <h4 className="text-3xl font-black tracking-tighter text-blue-600">₹{formatAmount(memberLedgerBalance.earned)}</h4>
+                                        <h4 className="text-[22px] sm:text-3xl font-black tracking-tighter text-blue-600">₹{formatAmount(memberLedgerBalance.earned)}</h4>
                                     </div>
                                     <div className="h-[8px] flex items-center gap-1">
                                         <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
@@ -106,7 +106,7 @@ const Reports = ({
                                 <div className="p-6 bg-slate-900 rounded-3xl border border-slate-800 shadow-xl shadow-slate-900/10 flex flex-col justify-between min-h-[140px]">
                                     <div>
                                         <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Lifetime Payout</p>
-                                        <h4 className="text-3xl font-black tracking-tighter text-white">₹{formatAmount(stats.lifetime?.total_expense || 0)}</h4>
+                                        <h4 className="text-[22px] sm:text-3xl font-black tracking-tighter text-white">₹{formatAmount(stats.lifetime?.total_expense || 0)}</h4>
                                     </div>
                                     <div className="h-[8px] flex items-center gap-1">
                                         <div className="w-1.5 h-1.5 rounded-full bg-slate-600"></div>
@@ -119,7 +119,7 @@ const Reports = ({
                                 <div className="p-6 bg-emerald-50/50 rounded-3xl border border-emerald-100 flex flex-col justify-between min-h-[140px]">
                                     <div>
                                         <p className="text-[8px] font-black text-emerald-400 uppercase tracking-[0.2em] mb-1">Total Income</p>
-                                        <h4 className="text-3xl font-black tracking-tighter text-emerald-600">₹{formatAmount(stats.summary?.total_income || 0)}</h4>
+                                        <h4 className="text-[22px] sm:text-3xl font-black tracking-tighter text-emerald-600">₹{formatAmount(stats.summary?.total_income || 0)}</h4>
                                     </div>
                                     <div className="h-[8px] flex items-center gap-1">
                                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
@@ -129,7 +129,7 @@ const Reports = ({
                                 <div className="p-6 bg-rose-50/50 rounded-3xl border border-rose-100 flex flex-col justify-between min-h-[140px]">
                                     <div>
                                         <p className="text-[8px] font-black text-rose-400 uppercase tracking-[0.2em] mb-1">Total Expense</p>
-                                        <h4 className="text-3xl font-black tracking-tighter text-rose-600">₹{formatAmount(stats.summary?.total_expense || 0)}</h4>
+                                        <h4 className="text-[22px] sm:text-3xl font-black tracking-tighter text-rose-600">₹{formatAmount(stats.summary?.total_expense || 0)}</h4>
                                     </div>
                                     <div className="h-[8px] flex items-center gap-1">
                                         <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
@@ -139,7 +139,7 @@ const Reports = ({
                                 <div className="p-6 bg-indigo-50/50 rounded-3xl border border-indigo-100 flex flex-col justify-between min-h-[140px]">
                                     <div>
                                         <p className="text-[8px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-1">Total Units Tracked</p>
-                                        <h4 className="text-3xl font-black tracking-tighter text-indigo-600">
+                                        <h4 className="text-[22px] sm:text-3xl font-black tracking-tighter text-indigo-600">
                                             {formatAmount((Array.isArray(filteredTransactions) ? filteredTransactions : []).reduce((acc, t) => acc + parseFloat(t.quantity || 1), 0))}
                                         </h4>
                                     </div>

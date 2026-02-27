@@ -165,9 +165,9 @@ const SalaryCalculator = ({
     };
 
     return (
-        <div className="animate-in slide-in-from-right-10 duration-500 pb-20">
+        <div className="animate-in slide-in-from-right-10 duration-500 pb-[80px] sm:pb-20">
             {/* Header section... */}
-            <div className="flex flex-col gap-6 mb-8">
+            <div className="flex flex-col gap-[12px] sm:gap-6 mb-[14px] sm:mb-8">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div className="flex flex-col gap-1">
                         <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Salary & Payouts</h2>
@@ -191,7 +191,7 @@ const SalaryCalculator = ({
                 {/* Filter Bar */}
                 {filterMember ? (
                     /* Member Detail View: show only month picker + Back button */
-                    <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center gap-3">
+                    <div className="bg-white p-[12px] sm:p-4 rounded-[16px] sm:rounded-3xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center gap-[10px] sm:gap-3">
                         {/* Back Button */}
                         <button
                             onClick={() => setFilterMember('')}
@@ -227,7 +227,7 @@ const SalaryCalculator = ({
                     </div>
                 ) : (
                     /* Overview mode: full filter bar */
-                    <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm grid grid-cols-1 md:grid-cols-5 gap-3">
+                    <div className="bg-white p-[12px] sm:p-4 rounded-[16px] sm:rounded-3xl border border-slate-100 shadow-sm grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                         {/* Month Picker - Purple/Violet */}
                         <div className="relative group">
                             <FaCalendarAlt className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-violet-400 group-hover:text-violet-500 transition-colors" size={12} />
@@ -296,7 +296,7 @@ const SalaryCalculator = ({
 
 
             {!filterMember ? (
-                <div className="bg-white rounded-[40px] p-6 sm:p-8 border border-slate-100 shadow-sm">
+                <div className="bg-white rounded-[24px] sm:rounded-[40px] p-[14px] sm:p-6 md:p-8 border border-slate-100 shadow-sm">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="w-1 h-6 bg-slate-900 rounded-full"></div>
                         <h3 className="text-xl font-black text-slate-900 tracking-tight">Salary Overview</h3>
@@ -372,12 +372,12 @@ const SalaryCalculator = ({
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500"></div>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-[12px] sm:gap-8">
                     {/* Input Column */}
                     <div className="lg:col-span-2 space-y-8">
                         {/* Member Quick Stats */}
-                        <div className="bg-white rounded-[40px] p-8 sm:p-12 shadow-sm border border-slate-100">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-10">
+                        <div className="bg-white rounded-[24px] sm:rounded-[40px] p-[14px] sm:p-8 md:p-12 shadow-sm border border-slate-100">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-[12px] sm:gap-6 mb-[14px] sm:mb-10">
                                 <div className="flex items-center gap-4">
                                     <div className="w-14 h-14 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center text-2xl shadow-xs border border-indigo-100">
                                         <FaUserCheck />
@@ -400,7 +400,7 @@ const SalaryCalculator = ({
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-10">
+                            <div className="grid grid-cols-3 sm:grid-cols-5 gap-[8px] sm:gap-3 mb-[14px] sm:mb-10">
                                 <div className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100 text-center">
                                     <p className="text-xl font-black text-emerald-600 tracking-tighter">{attendanceStats?.summary?.present || 0}</p>
                                     <p className="text-[7px] font-black text-emerald-500 uppercase tracking-widest mt-1">Present</p>
@@ -632,7 +632,7 @@ const SalaryCalculator = ({
 
                     {/* Summary Column - FINAL PAYOUT CALCULATION */}
                     <div className="space-y-8">
-                        <div className="bg-slate-900 rounded-[40px] p-8 sm:p-10 shadow-xl relative overflow-hidden">
+                        <div className="bg-slate-900 rounded-[24px] sm:rounded-[40px] p-[14px] sm:p-8 md:p-10 shadow-xl relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl -mr-24 -mt-24"></div>
                             <div className="relative z-10">
                                 <p className="text-blue-400 text-[8px] font-black uppercase tracking-[0.3em] mb-8">Settlement Tool</p>
@@ -654,7 +654,7 @@ const SalaryCalculator = ({
                                     <div className="flex justify-between items-end">
                                         <div>
                                             <p className="text-white/40 text-[6px] font-black uppercase tracking-widest mb-1">TOTAL NET SETTLEMENT</p>
-                                            <p className="text-3xl font-black text-blue-400 tracking-tighter">
+                                            <p className="text-[22px] sm:text-3xl font-black text-blue-400 tracking-tighter">
                                                 ₹{formatAmount(netPayable)}
                                             </p>
                                         </div>
@@ -684,7 +684,7 @@ const SalaryCalculator = ({
                         </div>
 
                         {/* Recent Activity Log */}
-                        <div className="bg-white rounded-[40px] p-8 border border-slate-100 shadow-sm">
+                        <div className="bg-white rounded-[24px] sm:rounded-[40px] p-[14px] sm:p-8 border border-slate-100 shadow-sm">
                             <div className="flex items-center gap-2 mb-4 border-b border-slate-50 pb-4">
                                 <div className="w-1 h-5 bg-blue-500 rounded-full"></div>
                                 <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-800">Payment Summary</h4>

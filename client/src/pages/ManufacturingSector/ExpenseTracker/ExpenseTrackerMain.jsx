@@ -971,7 +971,7 @@ const ExpenseTrackerMain = () => {
                         </div>
 
                         {/* Filter Grid */}
-                        <div className="flex flex-wrap items-end gap-3 p-6 bg-white rounded-[32px] border border-slate-100 shadow-sm transition-all hover:shadow-md">
+                        <div className="flex flex-wrap items-end gap-3 p-[14px] sm:p-6 bg-white rounded-[20px] sm:rounded-[32px] border border-slate-100 shadow-sm transition-all hover:shadow-md">
                             {/* Period Type - Full Width Row */}
                             <div className="w-full">
                                 <label className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">Period Type</label>
@@ -1078,7 +1078,7 @@ const ExpenseTrackerMain = () => {
                 {/* Mobile Tabs */}
                 <div className="lg:hidden flex overflow-x-auto gap-3 mb-8 pb-2 custom-scrollbar">
                     {['Dashboard', 'Members', 'Transactions', 'Reports', 'Salary', 'Work Log', 'Vehicle Log'].map(tab => (
-                        <button key={tab} onClick={() => setActiveTab(tab)} className={`whitespace-nowrap px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-[#2d5bff] text-white' : 'bg-white text-slate-500 border'}`}>{tab}</button>
+                        <button key={tab} onClick={() => setActiveTab(tab)} className={`whitespace-nowrap px-[14px] sm:px-5 py-[10px] sm:py-3 rounded-[10px] sm:rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-[#2d5bff] text-white' : 'bg-white text-slate-500 border'}`}>{tab}</button>
                     ))}
                 </div>
 
@@ -1144,13 +1144,13 @@ const ExpenseTrackerMain = () => {
             {/* Global Modals */}
             {showAddModal && (
                 <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[40px] p-8 sm:p-10 w-full max-w-md shadow-2xl relative animate-in zoom-in-95 duration-300 border border-white">
+                    <div className="bg-white rounded-[24px] sm:rounded-[40px] p-[16px] sm:p-8 md:p-10 w-full max-w-md shadow-2xl relative animate-in zoom-in-95 duration-300 border border-white">
                         <button onClick={() => { setShowAddModal(false); setEditingId(null); }} className="absolute top-8 right-8 text-slate-400 hover:text-slate-800 transition-colors">
                             <FaTimes size={18} />
                         </button>
 
-                        <div className="mb-8">
-                            <h2 className="text-2xl font-black text-slate-900 leading-tight">
+                        <div className="mb-[16px] sm:mb-8">
+                            <h2 className="text-[18px] sm:text-2xl font-black text-slate-900 leading-tight">
                                 {editingId ? 'Edit Record' : `New ${formData.type === 'income' ? 'Income' : 'Expense'}`}
                             </h2>
                             <div className="h-[8px] mt-1 flex gap-1">

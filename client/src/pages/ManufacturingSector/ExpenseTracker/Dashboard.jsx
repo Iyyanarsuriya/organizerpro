@@ -37,13 +37,13 @@ const Dashboard = ({
     return (
         <div className="animate-in fade-in duration-500">
             {/* Period Summary Stats */}
-            <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 sm:mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[12px] sm:gap-4 mb-[12px] sm:mb-8">
                 <div className="bg-white p-6 sm:p-8 rounded-[32px] shadow-sm border border-slate-100 relative group overflow-hidden">
                     <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-blue-500/10 transition-colors"></div>
                     <div className="relative z-10 flex flex-col justify-between h-full">
                         <div>
                             <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Total Period Income</p>
-                            <h3 className="text-3xl font-black tracking-tight text-blue-600">₹{formatAmount(stats.summary?.total_income || 0)}</h3>
+                            <h3 className="text-[20px] sm:text-3xl font-black tracking-tight text-blue-600">₹{formatAmount(stats.summary?.total_income || 0)}</h3>
                         </div>
                         <div className="h-[8px] mt-4 flex items-center gap-1">
                             <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
@@ -57,7 +57,7 @@ const Dashboard = ({
                     <div className="relative z-10 flex flex-col justify-between h-full">
                         <div>
                             <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Total Period Expense</p>
-                            <h3 className="text-3xl font-black tracking-tight text-rose-600">₹{formatAmount(stats.summary?.total_expense || 0)}</h3>
+                            <h3 className="text-[20px] sm:text-3xl font-black tracking-tight text-rose-600">₹{formatAmount(stats.summary?.total_expense || 0)}</h3>
                         </div>
                         <div className="h-[8px] mt-4 flex items-center gap-1">
                             <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></div>
@@ -66,7 +66,7 @@ const Dashboard = ({
                     </div>
                 </div>
 
-                <div className="bg-slate-900 p-6 sm:p-8 rounded-[32px] shadow-xl border border-slate-800 relative group overflow-hidden xs:col-span-2 lg:col-span-1">
+                <div className="bg-slate-900 p-[16px] sm:p-6 md:p-8 rounded-[20px] sm:rounded-[32px] shadow-xl border border-slate-800 relative group overflow-hidden sm:col-span-2 lg:col-span-1">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-indigo-500/20 transition-colors"></div>
                     <div className="relative z-10 flex flex-col justify-between h-full">
                         <div>
@@ -83,7 +83,7 @@ const Dashboard = ({
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 lg:mb-12">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-[12px] sm:gap-8 mb-[12px] sm:mb-12">
                 {/* Visualizations */}
                 <div className="bg-white rounded-[40px] p-8 sm:p-10 shadow-sm border border-slate-100 flex flex-col min-h-[450px]">
                     <div className="flex justify-between items-center mb-10">
@@ -127,8 +127,8 @@ const Dashboard = ({
                     </div>
                 </div>
 
-                <div className="bg-white rounded-[40px] p-8 sm:p-10 shadow-sm border border-slate-100 flex flex-col min-h-[450px]">
-                    <div className="flex justify-between items-center mb-10">
+                <div className="bg-white rounded-[24px] sm:rounded-[40px] p-[16px] sm:p-8 md:p-10 shadow-sm border border-slate-100 flex flex-col min-h-[280px] sm:min-h-[450px]">
+                    <div className="flex justify-between items-center mb-[10px] sm:mb-10">
                         <h3 className="text-sm font-black flex items-center gap-2">
                             <div className="w-1 h-6 bg-slate-900 rounded-full"></div>
                             Activity Overview
@@ -158,8 +158,8 @@ const Dashboard = ({
             <div className="grid grid-cols-1 gap-6 mb-8 lg:mb-12">
 
                 {/* Recent Activity */}
-                <div className="bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-slate-100">
-                    <div className="flex justify-between items-center mb-6">
+                <div className="bg-white rounded-[20px] sm:rounded-[32px] p-[14px] sm:p-8 shadow-sm border border-slate-100">
+                    <div className="flex justify-between items-center mb-[14px] sm:mb-6">
                         <h3 className="text-sm font-black flex items-center gap-2">
                             <div className="w-1 h-6 bg-slate-900 rounded-full"></div>
                             Recent Activity
@@ -168,9 +168,9 @@ const Dashboard = ({
                     </div>
                     <div className="space-y-3">
                         {Array.isArray(transactions) && transactions.slice(0, 5).map(t => (
-                            <div key={t.id} className="flex justify-between items-center p-4 rounded-3xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100 group">
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm shadow-xs ${t.type === 'income' ? 'bg-blue-50 text-blue-500' : 'bg-red-50 text-red-500'}`}>
+                            <div key={t.id} className="flex justify-between items-center p-[10px] sm:p-4 rounded-[16px] sm:rounded-3xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100 group">
+                                <div className="flex items-center gap-[10px] sm:gap-4">
+                                    <div className={`w-[36px] h-[36px] sm:w-10 sm:h-10 rounded-[10px] sm:rounded-xl flex items-center justify-center text-sm shadow-xs shrink-0 ${t.type === 'income' ? 'bg-blue-50 text-blue-500' : 'bg-red-50 text-red-500'}`}>
                                         {t.type === 'income' ? '↓' : '↑'}
                                     </div>
                                     <div>
@@ -192,10 +192,10 @@ const Dashboard = ({
                 </div>
             </div>
 
-            <div className="flex justify-center mt-[32px]">
+            <div className="flex justify-center mt-[24px] sm:mt-[32px]">
                 <button
                     onClick={handleAddNewTransaction}
-                    className="bg-[#1a1c21] hover:bg-slate-800 text-white font-black px-[48px] py-[20px] rounded-[24px] shadow-2xl transition-all active:scale-95 flex items-center gap-[16px] hover:shadow-blue-500/10 text-[14px]"
+                    className="w-full sm:w-auto bg-[#1a1c21] hover:bg-slate-800 text-white font-black px-[32px] sm:px-[48px] py-[16px] sm:py-[20px] rounded-[18px] sm:rounded-[24px] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-[12px] sm:gap-[16px] hover:shadow-blue-500/10 text-[13px] sm:text-[14px]"
                 >
                     <FaPlus /> Add Transaction
                 </button>

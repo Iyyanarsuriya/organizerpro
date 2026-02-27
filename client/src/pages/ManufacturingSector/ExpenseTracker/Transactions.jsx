@@ -29,12 +29,12 @@ const Transactions = ({
     return (
         <div className="animate-in slide-in-from-right-10 duration-500">
             {/* Header with Filters */}
-            <div className="bg-white/80 backdrop-blur-xl p-6 rounded-[32px] border border-white/20 shadow-xl shadow-slate-200/50 mb-8 sticky top-4 z-10">
+            <div className="bg-white/80 backdrop-blur-xl p-[14px] sm:p-6 rounded-[20px] sm:rounded-[32px] border border-white/20 shadow-xl shadow-slate-200/50 mb-[14px] sm:mb-8 sticky top-4 z-10">
                 {/* Title & Actions */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-[12px] sm:gap-6 mb-[12px] sm:mb-6">
                     <div>
-                        <h2 className="text-2xl font-black text-slate-800 tracking-tight">Transactions</h2>
-                        <p className="text-sm font-medium text-slate-400 mt-1">Manage and track your financial records</p>
+                        <h2 className="text-[18px] sm:text-2xl font-black text-slate-800 tracking-tight">Transactions</h2>
+                        <p className="text-[11px] sm:text-sm font-medium text-slate-400 mt-1">Manage and track your financial records</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <ExportButtons onExportCSV={onExportCSV} onExportPDF={onExportPDF} onExportTXT={onExportTXT} />
@@ -138,9 +138,9 @@ const Transactions = ({
 
             <div className="space-y-4">
                 {Array.isArray(filteredTransactions) && filteredTransactions.map(t => (
-                    <div key={t.id} className="bg-white p-4 sm:p-6 rounded-[32px] shadow-sm border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:shadow-md transition-all">
+                    <div key={t.id} className="bg-white p-[12px] sm:p-4 md:p-6 rounded-[20px] sm:rounded-[32px] shadow-sm border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-[10px] sm:gap-4 group hover:shadow-md transition-all">
                         <div className="flex items-center gap-4">
-                            <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-xl shadow-sm shrink-0 transition-transform group-hover:scale-105 ${t.type === 'income' ? 'bg-blue-50 text-blue-500' : 'bg-red-50 text-red-500'}`}>
+                            <div className={`w-[40px] h-[40px] sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-[12px] sm:rounded-2xl flex items-center justify-center text-xl shadow-sm shrink-0 transition-transform group-hover:scale-105 ${t.type === 'income' ? 'bg-blue-50 text-blue-500' : 'bg-red-50 text-red-500'}`}>
                                 {t.type === 'income' ? '↓' : '↑'}
                             </div>
                             <div>
@@ -188,7 +188,7 @@ const Transactions = ({
                     </div>
                 ))}
                 {filteredTransactions.length === 0 && (
-                    <div className="text-center py-[64px] bg-white rounded-[32px] border border-dashed border-slate-200">
+                    <div className="text-center py-[40px] sm:py-[64px] bg-white rounded-[24px] sm:rounded-[32px] border border-dashed border-slate-200">
                         <div className="w-[64px] h-[64px] bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-[16px]">
                             <FaExchangeAlt className="text-slate-300" />
                         </div>
