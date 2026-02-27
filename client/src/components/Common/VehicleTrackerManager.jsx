@@ -196,8 +196,8 @@ const VehicleTrackerManager = ({ data: externalData, onUpdate }) => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Form Section */}
                 <div className="lg:col-span-1">
-                    <div className="bg-white rounded-[40px] p-8 border border-slate-100 shadow-sm sticky top-8">
-                        <h3 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-2">
+                    <div className="bg-white rounded-[24px] sm:rounded-[40px] p-5 sm:p-8 border border-slate-100 shadow-sm sticky top-8">
+                        <h3 className="text-[16px] sm:text-lg font-black text-slate-900 mb-5 sm:mb-6 flex items-center gap-2">
                             {editingId ? <FaEdit className="text-blue-500" /> : <FaPlus className="text-emerald-500" />}
                             {editingId ? 'Edit Log Entry' : 'New Entry'}
                         </h3>
@@ -376,18 +376,18 @@ const VehicleTrackerManager = ({ data: externalData, onUpdate }) => {
                     </div>
 
                     {/* Stats Cards */}
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="bg-emerald-50 p-6 rounded-[24px] border border-emerald-100">
-                            <p className="text-[8px] font-black text-emerald-400 uppercase tracking-widest mb-1">Total Income</p>
-                            <p className="text-xl font-black text-emerald-600">₹{filteredLogs.reduce((acc, log) => acc + (parseFloat(log.income_amount) || 0), 0).toLocaleString()}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                        <div className="bg-emerald-50 p-4 sm:p-6 rounded-[20px] sm:rounded-[24px] border border-emerald-100 flex flex-col items-center sm:items-start text-center sm:text-left">
+                            <p className="text-[9px] sm:text-[8px] font-black text-emerald-400 uppercase tracking-widest mb-1">Total Income</p>
+                            <p className="text-[18px] sm:text-xl font-black text-emerald-600">₹{filteredLogs.reduce((acc, log) => acc + (parseFloat(log.income_amount) || 0), 0).toLocaleString()}</p>
                         </div>
-                        <div className="bg-rose-50 p-6 rounded-[24px] border border-rose-100">
-                            <p className="text-[8px] font-black text-rose-400 uppercase tracking-widest mb-1">Total Expenses</p>
-                            <p className="text-xl font-black text-rose-600">₹{filteredLogs.reduce((acc, log) => acc + (parseFloat(log.expense_amount) || 0), 0).toLocaleString()}</p>
+                        <div className="bg-rose-50 p-4 sm:p-6 rounded-[20px] sm:rounded-[24px] border border-rose-100 flex flex-col items-center sm:items-start text-center sm:text-left">
+                            <p className="text-[9px] sm:text-[8px] font-black text-rose-400 uppercase tracking-widest mb-1">Total Expenses</p>
+                            <p className="text-[18px] sm:text-xl font-black text-rose-600">₹{filteredLogs.reduce((acc, log) => acc + (parseFloat(log.expense_amount) || 0), 0).toLocaleString()}</p>
                         </div>
-                        <div className="bg-blue-50 p-6 rounded-[24px] border border-blue-100">
-                            <p className="text-[8px] font-black text-blue-400 uppercase tracking-widest mb-1">Net Profit</p>
-                            <p className="text-xl font-black text-blue-600">₹{(filteredLogs.reduce((acc, log) => acc + (parseFloat(log.income_amount) || 0), 0) - filteredLogs.reduce((acc, log) => acc + (parseFloat(log.expense_amount) || 0), 0)).toLocaleString()}</p>
+                        <div className="bg-blue-50 p-4 sm:p-6 rounded-[20px] sm:rounded-[24px] border border-blue-100 flex flex-col items-center sm:items-start text-center sm:text-left">
+                            <p className="text-[9px] sm:text-[8px] font-black text-blue-400 uppercase tracking-widest mb-1">Net Profit</p>
+                            <p className="text-[18px] sm:text-xl font-black text-blue-600">₹{(filteredLogs.reduce((acc, log) => acc + (parseFloat(log.income_amount) || 0), 0) - filteredLogs.reduce((acc, log) => acc + (parseFloat(log.expense_amount) || 0), 0)).toLocaleString()}</p>
                         </div>
                     </div>
 
@@ -402,42 +402,48 @@ const VehicleTrackerManager = ({ data: externalData, onUpdate }) => {
                             </div>
                         ) : (
                             filteredLogs.map(log => (
-                                <div key={log.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-md transition-all group relative">
+                                <div key={log.id} className="bg-white p-4 sm:p-6 rounded-[24px] sm:rounded-[32px] border border-slate-100 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
 
 
-                                    <div className="flex flex-col sm:flex-row items-center gap-6">
-                                        <div className="flex-1">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+                                        <div className="flex-1 w-full">
                                             <div className="flex items-center gap-3 mb-3">
-                                                <div className="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center font-black text-xs">
+                                                <div className="w-[36px] h-[36px] sm:w-10 sm:h-10 bg-slate-900 text-white rounded-[10px] sm:rounded-xl flex items-center justify-center font-black text-[10px] sm:text-xs shrink-0">
                                                     {log.vehicle_number.slice(-4)}
                                                 </div>
-                                                <div>
-                                                    <h4 className="font-black text-slate-900 uppercase tracking-tight">{log.vehicle_name ? `${log.vehicle_name} - ` : ''}{log.vehicle_number}</h4>
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{log.driver_name || 'No Driver'}</p>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <h4 className="text-[14px] sm:text-[16px] font-black text-slate-900 uppercase tracking-tight truncate">{log.vehicle_name ? `${log.vehicle_name} - ` : ''}{log.vehicle_number}</h4>
+                                                        <div className="flex sm:hidden gap-1 shrink-0">
+                                                            <button onClick={() => handleEdit(log)} className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"><FaEdit size={14} /></button>
+                                                            <button onClick={() => setConfirmModal({ show: true, id: log.id })} className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"><FaTrash size={14} /></button>
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{log.driver_name || 'No Driver'}</p>
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center gap-4 text-[10px] font-bold text-slate-500 bg-slate-50 w-fit px-3 py-1.5 rounded-lg mb-3">
+                                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-[9px] sm:text-[10px] font-bold text-slate-500 bg-slate-50 w-full sm:w-fit px-3 py-2 sm:py-1.5 rounded-[12px] sm:rounded-lg mb-3">
                                                 <div className="flex items-center gap-1.5">
-                                                    <FaClock className="text-slate-400" />
-                                                    <span>OUT: {formatDateTime(log.out_time)}</span>
+                                                    <FaClock className="text-slate-400 shrink-0" />
+                                                    <span className="truncate">OUT: {formatDateTime(log.out_time)}</span>
                                                 </div>
-                                                <div className="w-1 h-3 bg-slate-200"></div>
+                                                <div className="hidden sm:block w-1 h-3 bg-slate-200"></div>
                                                 <div className="flex items-center gap-1.5">
-                                                    <FaClock className="text-slate-400" />
-                                                    <span>IN: {formatDateTime(log.in_time)}</span>
+                                                    <FaClock className="text-slate-400 shrink-0" />
+                                                    <span className="truncate">IN: {formatDateTime(log.in_time)}</span>
                                                 </div>
                                             </div>
 
-                                            {log.notes && <p className="text-xs font-medium text-slate-600 italic bg-blue-50/50 p-3 rounded-xl">{log.notes}</p>}
+                                            {log.notes && <p className="text-[11px] sm:text-xs font-medium text-slate-600 italic bg-blue-50/50 p-2.5 sm:p-3 rounded-[12px] sm:rounded-xl">{log.notes}</p>}
                                         </div>
 
-                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 w-0 group-hover:w-auto overflow-hidden">
-                                            <button onClick={() => handleEdit(log)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-xl transition-colors shrink-0"><FaEdit size={16} /></button>
-                                            <button onClick={() => setConfirmModal({ show: true, id: log.id })} className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors shrink-0"><FaTrash size={16} /></button>
+                                        <div className="hidden sm:flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 w-0 group-hover:w-auto overflow-hidden shrink-0">
+                                            <button onClick={() => handleEdit(log)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-xl transition-colors"><FaEdit size={16} /></button>
+                                            <button onClick={() => setConfirmModal({ show: true, id: log.id })} className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors"><FaTrash size={16} /></button>
                                         </div>
 
-                                        <div className="flex flex-row sm:flex-col gap-3 sm:text-right border-t sm:border-t-0 sm:border-l border-slate-50 pt-4 sm:pt-0 sm:pl-6 min-w-[140px]">
+                                        <div className="flex flex-row sm:flex-col justify-between sm:justify-center gap-2 sm:gap-3 sm:text-right border-t sm:border-t-0 sm:border-l border-slate-100 pt-3 sm:pt-0 sm:pl-6 w-full sm:w-auto sm:min-w-[140px] shrink-0 text-center sm:text-right">
                                             <div className="flex-1">
                                                 <p className="text-[8px] font-black text-emerald-400 uppercase tracking-widest mb-0.5">Income</p>
                                                 <p className="text-lg font-black text-emerald-600">₹{parseFloat(log.income_amount || 0).toLocaleString()}</p>
