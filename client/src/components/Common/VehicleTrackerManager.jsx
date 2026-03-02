@@ -134,7 +134,8 @@ const VehicleTrackerManager = ({ data: externalData, onUpdate, members = [] }) =
             const payload = {
                 ...formData,
                 driver_name: finalDriverName,
-                member_id: finalMemberId,
+                member_id: (finalMemberId && String(finalMemberId).startsWith('guest-')) ? null : finalMemberId,
+                guest_name: (finalMemberId && String(finalMemberId).startsWith('guest-')) ? finalDriverName : (formData.guest_name || null),
                 sector: 'manufacturing',
                 start_km: parseFloat(formData.start_km) || 0,
                 end_km: parseFloat(formData.end_km) || 0,
@@ -209,6 +210,12 @@ const VehicleTrackerManager = ({ data: externalData, onUpdate, members = [] }) =
         return new Date(dateStr).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
     };
 
+    const setNow = (field) => {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        setFormData(prev => ({ ...prev, [field]: now.toISOString().slice(0, 16) }));
+    };
+
     return (
         <div className="animate-in slide-in-from-right-10 duration-500 pb-20">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -252,17 +259,43 @@ const VehicleTrackerManager = ({ data: externalData, onUpdate, members = [] }) =
                                         <div>
                                             <div className="flex justify-between items-center mb-1.5 px-1">
                                                 <div className="flex bg-slate-200 p-0.5 rounded-md">
-                                                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, member_id: '', guest_name: '' }))} className={`px-1.5 py-0.5 rounded text-[8px] font-black transition-all ${!formData.guest_name ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>MEMBER</button>
-                                                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, member_id: '', guest_name: 'Guest' }))} className={`px-1.5 py-0.5 rounded text-[8px] font-black transition-all ${formData.guest_name ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>GUEST</button>
+                                                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, member_id: '', guest_name: '' }))} className={`px-1.5 py-0.5 rounded text-[8px] font-black transition-all ${(!formData.guest_name && !formData.member_id) || (formData.member_id && !String(formData.member_id).startsWith('guest-')) ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>MEMBER</button>
+                                                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, member_id: '', guest_name: 'Guest' }))} className={`px-1.5 py-0.5 rounded text-[8px] font-black transition-all ${(formData.guest_name || (formData.member_id && String(formData.member_id).startsWith('guest-'))) ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>GUEST</button>
                                                 </div>
                                             </div>
-                                            {formData.guest_name !== undefined && formData.guest_name !== null && typeof formData.guest_name === 'string' && formData.guest_name.length >= 0 && (formData.member_id === '' || formData.member_id === null) && formData.guest_name !== '' ? (
-                                                <input type="text" value={formData.guest_name === 'Guest' ? '' : formData.guest_name} onChange={(e) => setFormData({ ...formData, guest_name: e.target.value, member_id: '' })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all" placeholder="Driver (Guest Name)" />
+                                            {formData.guest_name !== undefined && formData.guest_name !== null && typeof formData.guest_name === 'string' && formData.guest_name.length > 0 && !formData.guest_name.startsWith('guest-') ? (
+                                                <input
+                                                    type="text"
+                                                    value={formData.guest_name === 'Guest' ? '' : formData.guest_name}
+                                                    onChange={(e) => setFormData({ ...formData, guest_name: e.target.value, member_id: '' })}
+                                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all"
+                                                    placeholder="Driver (Guest Name)"
+                                                />
                                             ) : (
-                                                <select value={formData.member_id} onChange={(e) => setFormData({ ...formData, member_id: e.target.value, guest_name: '' })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer">
-                                                    <option value="">Select Member</option>
-                                                    {Array.isArray(members) && members.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                                                </select>
+                                                <div className="space-y-2">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Search member..."
+                                                        className="w-full bg-slate-100 border-none rounded-lg px-3 py-2 text-[10px] font-bold outline-none focus:ring-1 focus:ring-blue-400"
+                                                        onChange={(e) => {
+                                                            const term = e.target.value.toLowerCase();
+                                                            const found = members.find(m => m.name.toLowerCase().includes(term));
+                                                            if (found && term.length > 2) {
+                                                                setFormData(prev => ({ ...prev, member_id: found.id }));
+                                                            }
+                                                        }}
+                                                    />
+                                                    <select
+                                                        value={formData.member_id}
+                                                        onChange={(e) => setFormData({ ...formData, member_id: e.target.value, guest_name: '' })}
+                                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer"
+                                                    >
+                                                        <option value="">Select Member</option>
+                                                        {Array.isArray(members) && members.map(w => (
+                                                            <option key={w.id} value={w.id}>{w.name} {w.id && String(w.id).startsWith('guest-') ? '(Guest)' : ''}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
                                             )}
                                         </div>
                                     </div>
@@ -272,23 +305,25 @@ const VehicleTrackerManager = ({ data: externalData, onUpdate, members = [] }) =
                             <div>
                                 <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Timing</label>
                                 <div className="space-y-3">
-                                    <div className="relative">
+                                    <div className="relative group">
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 text-[10px] font-black uppercase">OUT</span>
                                         <input
                                             type="datetime-local"
                                             value={formData.out_time}
                                             onChange={e => setFormData({ ...formData, out_time: e.target.value })}
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-4 py-3 text-xs font-bold outline-none focus:border-blue-500 transition-all"
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-12 py-3 text-xs font-bold outline-none focus:border-blue-500 transition-all"
                                         />
+                                        <button type="button" onClick={() => setNow('out_time')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-blue-500 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">NOW</button>
                                     </div>
-                                    <div className="relative">
+                                    <div className="relative group">
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 text-[10px] font-black uppercase">IN</span>
                                         <input
                                             type="datetime-local"
                                             value={formData.in_time}
                                             onChange={e => setFormData({ ...formData, in_time: e.target.value })}
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-4 py-3 text-xs font-bold outline-none focus:border-blue-500 transition-all"
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-12 py-3 text-xs font-bold outline-none focus:border-blue-500 transition-all"
                                         />
+                                        <button type="button" onClick={() => setNow('in_time')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-blue-500 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">NOW</button>
                                     </div>
                                 </div>
                             </div>

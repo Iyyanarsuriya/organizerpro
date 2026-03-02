@@ -424,8 +424,13 @@ const ExpenseTrackerMain = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            const finalMemberId = (formData.member_id && String(formData.member_id).startsWith('guest-')) ? null : formData.member_id;
+            const finalGuestName = (formData.member_id && String(formData.member_id).startsWith('guest-')) ? (formData.guest_name || 'Guest') : (formData.guest_name || null);
+
             const payload = {
                 ...formData,
+                member_id: finalMemberId || null,
+                guest_name: finalGuestName,
                 sector: 'manufacturing'
             };
             if (editingId) {

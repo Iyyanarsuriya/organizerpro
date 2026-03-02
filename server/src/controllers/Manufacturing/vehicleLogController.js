@@ -30,6 +30,8 @@ exports.createVehicleLog = async (req, res) => {
                     type: 'expense',
                     category: 'Vehicle', // Ensure 'Vehicle' category exists or fallback to 'Other'
                     date: expenseDate,
+                    member_id: newLog.member_id,
+                    project_id: newLog.project_id,
                     sector: req.query.sector || req.body.sector || 'personal',
                     description: `Auto-generated from Vehicle Log ID: ${newLog.id}. ${newLog.notes || ''}`
                 });
