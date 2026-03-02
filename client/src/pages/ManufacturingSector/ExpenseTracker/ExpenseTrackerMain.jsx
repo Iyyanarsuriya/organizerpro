@@ -543,9 +543,12 @@ const ExpenseTrackerMain = () => {
 
             if (!dateMatch) return false;
 
-            if (filterMember && Array.isArray(members)) {
-                const memberName = members.find(m => m.id == filterMember)?.name;
-                if (!memberName || (log.driver_name !== memberName)) return false;
+            if (filterMember) {
+                if (filterMember === 'guest') {
+                    if (log.member_id) return false;
+                } else {
+                    if (log.member_id != filterMember) return false;
+                }
             }
 
             if (filterVehicle && log.vehicle_name !== filterVehicle) return false;
@@ -562,6 +565,7 @@ const ExpenseTrackerMain = () => {
                 category: 'Vehicle Log',
                 project_name: 'Fleet',
                 member_name: log.driver_name,
+                member_id: log.member_id,
                 payment_status: 'completed'
             });
             if (parseFloat(log.income_amount) > 0) items.push({
@@ -573,6 +577,7 @@ const ExpenseTrackerMain = () => {
                 category: 'Vehicle Log',
                 project_name: 'Fleet',
                 member_name: log.driver_name,
+                member_id: log.member_id,
                 payment_status: 'completed'
             });
             return items;
@@ -1181,7 +1186,7 @@ const ExpenseTrackerMain = () => {
                         onSalaryPeriodChange={handleSalaryPeriodChange}
                     />
                 ) : activeTab === 'Vehicle Log' ? (
-                    <VehicleTrackerManager data={vehicleLogs} onUpdate={fetchData} />
+                    <VehicleTrackerManager data={vehicleLogs} onUpdate={fetchData} members={members} />
                 ) : (
                     <DailyWorkLogManager />
                 )}

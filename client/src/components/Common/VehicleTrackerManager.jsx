@@ -6,7 +6,7 @@ import ConfirmModal from '../modals/ConfirmModal';
 import ExportButtons from './ExportButtons';
 import { exportVehicleLogToCSV, exportVehicleLogToTXT, exportVehicleLogToPDF } from '../../utils/exportUtils/index.js';
 
-const VehicleTrackerManager = ({ data: externalData, onUpdate }) => {
+const VehicleTrackerManager = ({ data: externalData, onUpdate, members = [] }) => {
     const [logs, setLogs] = useState(externalData || []);
     const [loading, setLoading] = useState(!externalData);
     const [periodType, setPeriodType] = useState('month');
@@ -44,6 +44,8 @@ const VehicleTrackerManager = ({ data: externalData, onUpdate }) => {
         vehicle_name: '',
         vehicle_number: '',
         driver_name: '',
+        member_id: '',
+        guest_name: '',
         in_time: '',
         out_time: '',
         start_km: '',
@@ -115,8 +117,24 @@ const VehicleTrackerManager = ({ data: externalData, onUpdate }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            // Determine driver name from member selection if applicable
+            let finalDriverName = formData.guest_name;
+            let finalMemberId = null;
+            if (formData.member_id) {
+                const member = members.find(m => m.id == formData.member_id);
+                if (member) {
+                    finalDriverName = member.name;
+                    finalMemberId = member.id;
+                }
+            } else if (!formData.guest_name && formData.driver_name) {
+                // Fallback if somehow using old state
+                finalDriverName = formData.driver_name;
+            }
+
             const payload = {
                 ...formData,
+                driver_name: finalDriverName,
+                member_id: finalMemberId,
                 sector: 'manufacturing',
                 start_km: parseFloat(formData.start_km) || 0,
                 end_km: parseFloat(formData.end_km) || 0,
@@ -135,6 +153,8 @@ const VehicleTrackerManager = ({ data: externalData, onUpdate }) => {
                 vehicle_name: '',
                 vehicle_number: '',
                 driver_name: '',
+                member_id: '',
+                guest_name: '',
                 in_time: '',
                 out_time: '',
                 start_km: '',
@@ -157,16 +177,11 @@ const VehicleTrackerManager = ({ data: externalData, onUpdate }) => {
 
     const handleEdit = (log) => {
         setFormData({
-            vehicle_name: log.vehicle_name || '',
-            vehicle_number: log.vehicle_number,
-            driver_name: log.driver_name || '',
+            ...log,
+            guest_name: !log.member_id ? (log.driver_name || 'Guest') : '',
+            member_id: log.member_id || '',
             in_time: log.in_time ? new Date(log.in_time).toISOString().slice(0, 16) : '',
-            out_time: log.out_time ? new Date(log.out_time).toISOString().slice(0, 16) : '',
-            start_km: log.start_km || '',
-            end_km: log.end_km || '',
-            expense_amount: log.expense_amount || '',
-            income_amount: log.income_amount || '',
-            notes: log.notes || ''
+            out_time: log.out_time ? new Date(log.out_time).toISOString().slice(0, 16) : ''
         });
         setEditingId(log.id);
     };
@@ -234,13 +249,22 @@ const VehicleTrackerManager = ({ data: externalData, onUpdate }) => {
                                             className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-blue-500 transition-all uppercase"
                                             required
                                         />
-                                        <input
-                                            type="text"
-                                            placeholder="Driver Name"
-                                            value={formData.driver_name}
-                                            onChange={e => setFormData({ ...formData, driver_name: e.target.value })}
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-blue-500 transition-all"
-                                        />
+                                        <div>
+                                            <div className="flex justify-between items-center mb-1.5 px-1">
+                                                <div className="flex bg-slate-200 p-0.5 rounded-md">
+                                                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, member_id: '', guest_name: '' }))} className={`px-1.5 py-0.5 rounded text-[8px] font-black transition-all ${!formData.guest_name ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>MEMBER</button>
+                                                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, member_id: '', guest_name: 'Guest' }))} className={`px-1.5 py-0.5 rounded text-[8px] font-black transition-all ${formData.guest_name ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>GUEST</button>
+                                                </div>
+                                            </div>
+                                            {formData.guest_name !== undefined && formData.guest_name !== null && typeof formData.guest_name === 'string' && formData.guest_name.length >= 0 && (formData.member_id === '' || formData.member_id === null) && formData.guest_name !== '' ? (
+                                                <input type="text" value={formData.guest_name === 'Guest' ? '' : formData.guest_name} onChange={(e) => setFormData({ ...formData, guest_name: e.target.value, member_id: '' })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all" placeholder="Driver (Guest Name)" />
+                                            ) : (
+                                                <select value={formData.member_id} onChange={(e) => setFormData({ ...formData, member_id: e.target.value, guest_name: '' })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all cursor-pointer">
+                                                    <option value="">Select Member</option>
+                                                    {Array.isArray(members) && members.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                                                </select>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
