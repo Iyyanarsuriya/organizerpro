@@ -56,7 +56,6 @@ mfgRouter.use('/attendance', require("./routes/Manufacturing/attendanceRoutes"))
 mfgRouter.use('/projects', require("./routes/Common/projectRoutes"));
 mfgRouter.use('/work-logs', require("./routes/Manufacturing/dailyWorkLogRoutes"));
 mfgRouter.use('/vehicle-logs', require("./routes/Manufacturing/vehicleLogRoutes"));
-mfgRouter.use('/work-types', require("./routes/Manufacturing/workTypeRoutes"));
 mfgRouter.use('/team', require("./routes/Manufacturing/teamRoutes"));
 mfgRouter.use('/notes', require("./routes/Manufacturing/noteRoutes"));
 mfgRouter.use('/payroll', require("./routes/Manufacturing/payrollRoutes"));
