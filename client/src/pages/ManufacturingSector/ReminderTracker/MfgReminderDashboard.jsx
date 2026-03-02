@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaCalendarAlt, FaGoogle, FaTimes } from 'react-icons/fa';
 import { IoArrowBack } from "react-icons/io5";
 import { getReminders } from '../../../api/Reminder/mfgReminder'; // Manufacturing sector context
+import { getGoogleAuthUrl, disconnectGoogle } from '../../../api/authApi';
 
 import toast from 'react-hot-toast';
 import { exportReminderToCSV, exportReminderToTXT, exportReminderToPDF } from '../../../utils/exportUtils/index.js';
@@ -13,6 +14,11 @@ const MfgReminderDashboard = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [reminders, setReminders] = useState([]);
+    const [user, setUser] = useState(() => {
+        const saved = localStorage.getItem('user');
+        return saved ? JSON.parse(saved) : null;
+    });
+    const [showDisconnectModal, setShowDisconnectModal] = useState(false);
     const [viewModalType, setViewModalType] = useState(null); // 'total', 'completed', 'remaining'
 
     // Filter State
@@ -120,8 +126,40 @@ const MfgReminderDashboard = () => {
         toast.success("Logged out successfully");
     };
 
-    const handleConnectCalendar = () => {
-        toast('Google Calendar integration coming soon!', { icon: '📅' });
+    const handleConnectCalendar = async () => {
+        try {
+            const res = await getGoogleAuthUrl();
+            if (res.data.url) {
+                window.location.href = res.data.url;
+            } else {
+                toast.error("Failed to get Google Auth URL");
+            }
+        } catch (error) {
+            console.error("Connect Calendar Error:", error);
+            toast.error("Failed to initiate connection");
+        }
+    };
+
+    const handleDisconnectCalendar = () => {
+        setShowDisconnectModal(true);
+    };
+
+    const confirmDisconnect = async () => {
+        try {
+            await disconnectGoogle();
+
+            // Update local user state
+            const updatedUser = { ...user, google_refresh_token: null };
+            setUser(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+
+            toast.success("Disconnected from Google Calendar");
+        } catch (error) {
+            console.error("Disconnect Error:", error);
+            toast.error("Failed to disconnect");
+        } finally {
+            setShowDisconnectModal(false);
+        }
     };
 
     if (loading) {
@@ -361,6 +399,37 @@ const MfgReminderDashboard = () => {
                                 </>
                             );
                         })()}
+                    </div>
+                </div>
+            )}
+
+            {/* Disconnect Confirmation Modal */}
+            {showDisconnectModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+                    <div className="bg-white rounded-[32px] p-8 w-full max-w-[400px] shadow-2xl animate-in zoom-in-95 duration-200 border border-white">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-6 border border-red-100 shadow-lg shadow-red-500/10">
+                                <FaGoogle className="text-2xl text-[#ff4d4d]" />
+                            </div>
+                            <h3 className="text-xl font-black text-slate-800 mb-2 uppercase tracking-tighter">Disconnect Calendar?</h3>
+                            <p className="text-slate-500 text-sm font-medium mb-8">
+                                Are you sure you want to disconnect? You will stop receiving automatic event syncs.
+                            </p>
+                            <div className="flex w-full gap-3">
+                                <button
+                                    onClick={() => setShowDisconnectModal(false)}
+                                    className="flex-1 py-3 px-6 rounded-xl font-black text-[13px] tracking-widest uppercase border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmDisconnect}
+                                    className="flex-1 py-3 px-6 rounded-xl font-black text-[13px] tracking-widest uppercase bg-[#ff4d4d] text-white shadow-lg shadow-red-500/20 hover:bg-[#ff3333] hover:shadow-xl transition-all active:scale-95 cursor-pointer"
+                                >
+                                    Disconnect
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
