@@ -791,7 +791,7 @@ const Reminders = () => {
 
                 {activeTab === 'notes' && (
                     <div className="flex-1 mt-[16px] overflow-hidden">
-                        <Notes sector="manufacturing" />
+                        <Notes isEmbedded={true} sector="manufacturing" />
                     </div>
                 )}
 
