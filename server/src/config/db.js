@@ -9,6 +9,11 @@ const pool = mysql.createPool({
     port: Number(process.env.DB_PORT), // ✅ REQUIRED
     dateStrings: true, // ✅ Return dates as strings to avoid timezone issues
 
+    // 🔥 VERY IMPORTANT FOR RAILWAY
+    ssl: {
+        rejectUnauthorized: false
+    },
+
     waitForConnections: true,
     connectionLimit: 5,
     queueLimit: 0,
