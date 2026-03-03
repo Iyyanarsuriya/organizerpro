@@ -27,34 +27,39 @@
 const mysql = require("mysql2");
 require("dotenv").config();
 
-const pool = mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: Number(process.env.DB_PORT),
+let pool;
 
-    ssl: {
-        rejectUnauthorized: false
-    },
+function createPool() {
+    pool = mysql.createPool({
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+        port: Number(process.env.DB_PORT),
 
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
+        ssl: { rejectUnauthorized: false },
 
-    enableKeepAlive: true,
-    keepAliveInitialDelay: 10000,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0,
+        enableKeepAlive: true,
+        keepAliveInitialDelay: 10000,
+    });
 
-    connectTimeout: 30000,
-});
+    pool.on("error", (err) => {
+        console.error("MySQL Pool Error:", err);
 
-const promisePool = pool.promise();
+        if (
+            err.code === "PROTOCOL_CONNECTION_LOST" ||
+            err.code === "ECONNRESET" ||
+            err.code === "PROTOCOL_ENQUEUE_AFTER_FATAL_ERROR"
+        ) {
+            console.log("🔄 Recreating MySQL Pool...");
+            createPool();
+        }
+    });
 
-// 🔥 THIS PREVENTS CRASH WHEN RAILWAY CLOSES CONNECTION
-pool.on("error", (err) => {
-    console.error("MySQL Pool Error:", err);
-});
+    return pool.promise();
+}
 
-module.exports = promisePool;
-
-
+module.exports = createPool();
