@@ -12,127 +12,191 @@ const expenseCategoryRoutes = require("./routes/Common/expenseCategoryRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5001;
+
 const db = require("./config/db");
 const { initCronJobs } = require("./jobs/cronService");
+
 // Start Cron Jobs
 initCronJobs();
 
-app.use(cors());
+// Middleware
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  })
+);
+
 app.use(express.json());
+
+// Health check route
+app.get("/", (req, res) => {
+  res.send("OrganizerPro API Running 🚀");
+});
 
 // Ensure uploads directory exists
 const uploadDir = path.join(__dirname, "../uploads");
 if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
+  fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 app.use("/uploads", express.static(uploadDir));
 
+// Base Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/push", pushRoutes);
 
 // Middleware to inject sector
 const withSector = (sector) => (req, res, next) => {
-    req.query.sector = sector;
-    if (req.body && typeof req.body === 'object') {
-        req.body.sector = sector;
-    }
-    next();
+  req.query.sector = sector;
+
+  if (req.body && typeof req.body === "object") {
+    req.body.sector = sector;
+  }
+
+  next();
 };
 
 // ==========================================
-// SECTOR SPECIFIC ROUTES (PRIORITIZED)
+// MANUFACTURING SECTOR
 // ==========================================
 
-// Manufacturing Sector Header
 const mfgRouter = express.Router();
-mfgRouter.use(withSector('manufacturing'));
-mfgRouter.use('/reminders', require("./routes/Manufacturing/reminderRoutes"));
-mfgRouter.use('/reminder-categories', require("./routes/Manufacturing/reminderCategoryRoutes"));
-mfgRouter.use('/transactions', transactionRoutes);
-mfgRouter.use('/members', require("./routes/Common/memberRoutes"));
-mfgRouter.use('/member-roles', require("./routes/Common/memberRoleRoutes"));
-mfgRouter.use('/attendance', require("./routes/Manufacturing/attendanceRoutes"));
-mfgRouter.use('/projects', require("./routes/Common/projectRoutes"));
-mfgRouter.use('/work-logs', require("./routes/Manufacturing/dailyWorkLogRoutes"));
-mfgRouter.use('/vehicle-logs', require("./routes/Manufacturing/vehicleLogRoutes"));
-mfgRouter.use('/team', require("./routes/Manufacturing/teamRoutes"));
-mfgRouter.use('/notes', require("./routes/Manufacturing/noteRoutes"));
-mfgRouter.use('/payroll', require("./routes/Manufacturing/payrollRoutes"));
-app.use('/api/manufacturing-sector', mfgRouter);
+mfgRouter.use(withSector("manufacturing"));
 
-// IT Sector Header
-const itRouter = express.Router();
-itRouter.use(withSector('it'));
-itRouter.use('/reminders', require("./routes/IT/reminderRoutes"));
-itRouter.use('/reminder-categories', require("./routes/IT/reminderCategoryRoutes"));
-itRouter.use('/notes', require("./routes/IT/noteRoutes"));
-itRouter.use('/transactions', transactionRoutes);
-itRouter.use('/categories', categoryRoutes);
-itRouter.use('/members', require("./routes/Common/memberRoutes"));
-itRouter.use('/member-roles', require("./routes/Common/memberRoleRoutes"));
-itRouter.use('/projects', require("./routes/Common/projectRoutes"));
-itRouter.use('/attendance', require("./routes/IT/attendanceRoutes"));
-itRouter.use('/team', require("./routes/IT/teamRoutes"));
-itRouter.use('/timesheets', require("./routes/IT/timesheetRoutes"));
-itRouter.use('/leaves', require("./routes/IT/leaveRoutes"));
-itRouter.use('/audit', require("./routes/IT/auditRoutes"));
-app.use('/api/it-sector', itRouter);
+mfgRouter.use("/reminders", require("./routes/Manufacturing/reminderRoutes"));
+mfgRouter.use(
+  "/reminder-categories",
+  require("./routes/Manufacturing/reminderCategoryRoutes")
+);
+mfgRouter.use("/transactions", transactionRoutes);
+mfgRouter.use("/members", require("./routes/Common/memberRoutes"));
+mfgRouter.use("/member-roles", require("./routes/Common/memberRoleRoutes"));
+mfgRouter.use("/attendance", require("./routes/Manufacturing/attendanceRoutes"));
+mfgRouter.use("/projects", require("./routes/Common/projectRoutes"));
+mfgRouter.use(
+  "/work-logs",
+  require("./routes/Manufacturing/dailyWorkLogRoutes")
+);
+mfgRouter.use(
+  "/vehicle-logs",
+  require("./routes/Manufacturing/vehicleLogRoutes")
+);
+mfgRouter.use("/team", require("./routes/Manufacturing/teamRoutes"));
+mfgRouter.use("/notes", require("./routes/Manufacturing/noteRoutes"));
+mfgRouter.use("/payroll", require("./routes/Manufacturing/payrollRoutes"));
 
-// Education Sector Header
-const eduRouter = express.Router();
-eduRouter.use(withSector('education'));
-eduRouter.use('/reminders', require("./routes/Education/reminderRoutes"));
-eduRouter.use('/reminder-categories', require("./routes/Education/reminderCategoryRoutes"));
-eduRouter.use('/notes', require("./routes/Education/noteRoutes"));
-eduRouter.use('/transactions', transactionRoutes);
-eduRouter.use('/categories', categoryRoutes);
-eduRouter.use('/members', require("./routes/Common/memberRoutes"));
-eduRouter.use('/member-roles', require("./routes/Common/memberRoleRoutes"));
-eduRouter.use('/attendance', require("./routes/Education/attendanceRoutes"));
-eduRouter.use('/departments', require("./routes/Education/departmentRoutes"));
-eduRouter.use('/team', require("./routes/Education/teamRoutes"));
-eduRouter.use('/expense-categories', expenseCategoryRoutes);
-eduRouter.use('/payroll', require("./routes/Education/payrollRoutes"));
-eduRouter.use('/vendors', require("./routes/Education/vendorRoutes"));
-eduRouter.use('/audit', require("./routes/Education/auditRoutes"));
-app.use('/api/education-sector', eduRouter);
-
-// Hotel Sector Header
-const hotelRouter = express.Router();
-hotelRouter.use(withSector('hotel'));
-hotelRouter.use('/reminders', require("./routes/Hotel/reminderRoutes"));
-hotelRouter.use('/reminder-categories', require("./routes/Hotel/reminderCategoryRoutes"));
-hotelRouter.use('/notes', require("./routes/Hotel/noteRoutes"));
-hotelRouter.use('/transactions', transactionRoutes);
-hotelRouter.use('/categories', categoryRoutes);
-hotelRouter.use('/members', require("./routes/Common/memberRoutes"));
-hotelRouter.use('/member-roles', require("./routes/Common/memberRoleRoutes"));
-hotelRouter.use('/projects', require("./routes/Common/projectRoutes"));
-hotelRouter.use('/attendance', require("./routes/Hotel/attendanceRoutes"));
-hotelRouter.use('/team', require("./routes/Hotel/teamRoutes"));
-hotelRouter.use('/vendors', require("./routes/Hotel/vendorRoutes"));
-hotelRouter.use('/lookups', require("./routes/Hotel/lookupRoutes"));
-hotelRouter.use('/', require("./routes/Hotel/hotelRoutes"));
-app.use('/api/hotel-sector', hotelRouter);
-
+app.use("/api/manufacturing-sector", mfgRouter);
 
 // ==========================================
-// PERSONAL SECTOR / FALLBACK (GENERIC /api)
+// IT SECTOR
+// ==========================================
+
+const itRouter = express.Router();
+itRouter.use(withSector("it"));
+
+itRouter.use("/reminders", require("./routes/IT/reminderRoutes"));
+itRouter.use(
+  "/reminder-categories",
+  require("./routes/IT/reminderCategoryRoutes")
+);
+itRouter.use("/notes", require("./routes/IT/noteRoutes"));
+itRouter.use("/transactions", transactionRoutes);
+itRouter.use("/categories", categoryRoutes);
+itRouter.use("/members", require("./routes/Common/memberRoutes"));
+itRouter.use("/member-roles", require("./routes/Common/memberRoleRoutes"));
+itRouter.use("/projects", require("./routes/Common/projectRoutes"));
+itRouter.use("/attendance", require("./routes/IT/attendanceRoutes"));
+itRouter.use("/team", require("./routes/IT/teamRoutes"));
+itRouter.use("/timesheets", require("./routes/IT/timesheetRoutes"));
+itRouter.use("/leaves", require("./routes/IT/leaveRoutes"));
+itRouter.use("/audit", require("./routes/IT/auditRoutes"));
+
+app.use("/api/it-sector", itRouter);
+
+// ==========================================
+// EDUCATION SECTOR
+// ==========================================
+
+const eduRouter = express.Router();
+eduRouter.use(withSector("education"));
+
+eduRouter.use("/reminders", require("./routes/Education/reminderRoutes"));
+eduRouter.use(
+  "/reminder-categories",
+  require("./routes/Education/reminderCategoryRoutes")
+);
+eduRouter.use("/notes", require("./routes/Education/noteRoutes"));
+eduRouter.use("/transactions", transactionRoutes);
+eduRouter.use("/categories", categoryRoutes);
+eduRouter.use("/members", require("./routes/Common/memberRoutes"));
+eduRouter.use("/member-roles", require("./routes/Common/memberRoleRoutes"));
+eduRouter.use("/attendance", require("./routes/Education/attendanceRoutes"));
+eduRouter.use("/departments", require("./routes/Education/departmentRoutes"));
+eduRouter.use("/team", require("./routes/Education/teamRoutes"));
+eduRouter.use("/expense-categories", expenseCategoryRoutes);
+eduRouter.use("/payroll", require("./routes/Education/payrollRoutes"));
+eduRouter.use("/vendors", require("./routes/Education/vendorRoutes"));
+eduRouter.use("/audit", require("./routes/Education/auditRoutes"));
+
+app.use("/api/education-sector", eduRouter);
+
+// ==========================================
+// HOTEL SECTOR
+// ==========================================
+
+const hotelRouter = express.Router();
+hotelRouter.use(withSector("hotel"));
+
+hotelRouter.use("/reminders", require("./routes/Hotel/reminderRoutes"));
+hotelRouter.use(
+  "/reminder-categories",
+  require("./routes/Hotel/reminderCategoryRoutes")
+);
+hotelRouter.use("/notes", require("./routes/Hotel/noteRoutes"));
+hotelRouter.use("/transactions", transactionRoutes);
+hotelRouter.use("/categories", categoryRoutes);
+hotelRouter.use("/members", require("./routes/Common/memberRoutes"));
+hotelRouter.use("/member-roles", require("./routes/Common/memberRoleRoutes"));
+hotelRouter.use("/projects", require("./routes/Common/projectRoutes"));
+hotelRouter.use("/attendance", require("./routes/Hotel/attendanceRoutes"));
+hotelRouter.use("/team", require("./routes/Hotel/teamRoutes"));
+hotelRouter.use("/vendors", require("./routes/Hotel/vendorRoutes"));
+hotelRouter.use("/lookups", require("./routes/Hotel/lookupRoutes"));
+hotelRouter.use("/", require("./routes/Hotel/hotelRoutes"));
+
+app.use("/api/hotel-sector", hotelRouter);
+
+// ==========================================
+// PERSONAL SECTOR
 // ==========================================
 
 const personalRouter = express.Router();
-personalRouter.use(withSector('personal'));
-personalRouter.use('/reminders', require("./routes/Personal/reminderRoutes"));
-personalRouter.use('/transactions', transactionRoutes);
-personalRouter.use('/categories', categoryRoutes);
-personalRouter.use('/expense-categories', expenseCategoryRoutes);
-personalRouter.use('/notes', require("./routes/Personal/noteRoutes"));
+personalRouter.use(withSector("personal"));
 
-personalRouter.use('/budgets', require("./routes/Personal/budgetRoutes"));
-app.use('/api', personalRouter);
+personalRouter.use("/reminders", require("./routes/Personal/reminderRoutes"));
+personalRouter.use("/transactions", transactionRoutes);
+personalRouter.use("/categories", categoryRoutes);
+personalRouter.use("/expense-categories", expenseCategoryRoutes);
+personalRouter.use("/notes", require("./routes/Personal/noteRoutes"));
+personalRouter.use("/budgets", require("./routes/Personal/budgetRoutes"));
 
+app.use("/api", personalRouter);
 
-app.listen(PORT, () => {
-    console.log(` Server running on port ${PORT}`);
-});
+// ==========================================
+// DATABASE CONNECTION + SERVER START
+// ==========================================
+
+(async () => {
+  try {
+    await db.query("SELECT 1");
+    console.log("✅ Database connected successfully");
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error("❌ Database connection failed:", err);
+    process.exit(1);
+  }
+})();

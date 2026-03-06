@@ -24,42 +24,29 @@
 
 // module.exports = pool.promise();
 
-const mysql = require("mysql2");
+
+
+const mysql = require("mysql2/promise");
 require("dotenv").config();
 
 let pool;
 
 function createPool() {
     pool = mysql.createPool({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME,
-        port: Number(process.env.DB_PORT),
-
-        ssl: { rejectUnauthorized: false },
-
+        uri: process.env.DATABASE_URL,
+        ssl: {
+            rejectUnauthorized: false
+        },
         waitForConnections: true,
         connectionLimit: 10,
-        queueLimit: 0,
-        enableKeepAlive: true,
-        keepAliveInitialDelay: 10000,
+        queueLimit: 0
     });
 
     pool.on("error", (err) => {
         console.error("MySQL Pool Error:", err);
-
-        if (
-            err.code === "PROTOCOL_CONNECTION_LOST" ||
-            err.code === "ECONNRESET" ||
-            err.code === "PROTOCOL_ENQUEUE_AFTER_FATAL_ERROR"
-        ) {
-            console.log("🔄 Recreating MySQL Pool...");
-            createPool();
-        }
     });
 
-    return pool.promise();
+    return pool;
 }
 
 module.exports = createPool();
