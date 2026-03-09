@@ -150,6 +150,24 @@ app.use((err, req, res, next) => {
     });
 });
 
+// Health check
+app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
+
+// 404 Handler
+app.use((req, res) => {
+    console.error(`404 - Not Found: ${req.method} ${req.url}`);
+    res.status(404).json({ error: 'Route not found', method: req.method, url: req.url });
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+    console.error('Unhandled Error:', err);
+    res.status(err.status || 500).json({
+        error: err.message || 'Internal Server Error',
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
+});
+
 
 app.listen(PORT, () => {
     console.log(` Server running on port ${PORT}`);
