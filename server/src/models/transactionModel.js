@@ -50,7 +50,7 @@ const ITTransactionModel = {
             FROM it_transactions t 
             LEFT JOIN it_members w ON t.member_id = w.id
             LEFT JOIN it_projects p ON t.project_id = p.id
-            LEFT JOIN it_reminder_categories c ON t.category_id = c.id
+            LEFT JOIN it_categories c ON t.category_id = c.id
             WHERE t.user_id = ?`;
         const params = [userId];
         // ... build filters (omitted for brevity in template, will implement full logic)
@@ -154,7 +154,7 @@ const EducationTransactionModel = {
             w.member_type, c.name as category_name, d.name as department_name, v.name as vendor_name
             FROM education_transactions t 
             LEFT JOIN education_members w ON t.member_id = w.id
-            LEFT JOIN education_expense_categories c ON t.category_id = c.id
+            LEFT JOIN education_categories c ON t.category_id = c.id
             LEFT JOIN education_departments d ON t.department_id = d.id
             LEFT JOIN education_vendors v ON t.vendor_id = v.id
             WHERE t.user_id = ?`;
@@ -291,11 +291,7 @@ module.exports = {
         if (sector === 'personal' || sector === 'manufacturing') {
             baseQuery = `SELECT category, type, SUM(amount) as total FROM ${table} t WHERE t.user_id = ?`;
         } else {
-            let catTable = 'personal_expense_categories';
-            if (sector === 'it') catTable = 'it_reminder_categories';
-            else if (sector === 'hotel') catTable = 'hotel_categories';
-            else if (sector === 'education') catTable = 'education_expense_categories';
-            else if (sector === 'manufacturing') catTable = 'manufacturing_expense_categories';
+            const catTable = table.replace('_transactions', '_categories');
             baseQuery = `SELECT c.name as category, t.type, SUM(t.amount) as total 
                       FROM ${table} t 
                       LEFT JOIN ${catTable} c ON t.category_id = c.id 

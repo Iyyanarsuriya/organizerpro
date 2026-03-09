@@ -1,10 +1,10 @@
 const db = require('../config/db');
 
 const getTableName = (sector) => {
-    if (sector === 'it') return 'it_reminder_categories';
+    if (sector === 'it') return 'it_categories';
     if (sector === 'education') return 'education_expense_categories';
-    if (sector === 'manufacturing') return 'manufacturing_expense_categories';
-    return 'personal_expense_categories';
+    if (sector === 'personal' || !sector) return 'personal_expense_categories';
+    return sector === 'manufacturing' ? 'manufacturing_expense_categories' : 'it_categories';
 };
 
 const getAllByUserId = async (userId, sector) => {
