@@ -347,6 +347,7 @@ const EducationReminders = () => {
             const res = await createReminder({ ...reminderData, sector: SECTOR });
             setReminders(prev => [res.data, ...prev]);
             toast.success("Reminder added!");
+            window.dispatchEvent(new Event('refresh-reminders'));
         } catch {
             toast.error("Failed to add reminder");
         }
@@ -364,6 +365,7 @@ const EducationReminders = () => {
             try {
                 await updateReminder(id, { is_completed: false, sector: SECTOR });
                 toast.success("Task marked as incomplete");
+                window.dispatchEvent(new Event('refresh-reminders'));
             } catch {
                 setReminders(previousReminders); // Revert
                 toast.error("Update failed");
@@ -390,6 +392,7 @@ const EducationReminders = () => {
         try {
             await updateReminder(id, { is_completed: true, sector: SECTOR });
             toast.success("Task completed! 🥳");
+            window.dispatchEvent(new Event('refresh-reminders'));
         } catch {
             setReminders(previousReminders); // Revert
             toast.error("Update failed");
@@ -404,6 +407,7 @@ const EducationReminders = () => {
             setReminders(res.data);
             setEditingReminder(null);
             toast.success("Task updated successfully!");
+            window.dispatchEvent(new Event('refresh-reminders'));
         } catch (error) {
             toast.error("Failed to update task");
         }
@@ -414,6 +418,7 @@ const EducationReminders = () => {
             await deleteReminder(id, { sector: SECTOR });
             setReminders(prev => prev.filter(r => r.id !== id));
             toast.success("Reminder deleted");
+            window.dispatchEvent(new Event('refresh-reminders'));
         } catch {
             toast.error("Delete failed");
         }

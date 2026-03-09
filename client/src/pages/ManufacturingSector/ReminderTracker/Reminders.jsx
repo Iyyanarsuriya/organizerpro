@@ -337,6 +337,7 @@ const Reminders = () => {
             const res = await createReminder(data);
             setReminders(prev => [res.data, ...prev]);
             toast.success("Reminder created");
+            window.dispatchEvent(new Event('refresh-reminders'));
         } catch {
             toast.error("Failed to create reminder");
         }
@@ -347,6 +348,7 @@ const Reminders = () => {
             await updateReminder(id, data);
             setReminders(prev => prev.map(r => r.id === id ? { ...r, ...data } : r));
             toast.success("Reminder updated");
+            window.dispatchEvent(new Event('refresh-reminders'));
         } catch {
             toast.error("Update failed");
         }
@@ -359,6 +361,7 @@ const Reminders = () => {
             setReminders(prev => prev.map(r => r.id === id ? { ...r, is_completed: nextStatus, status: nextStatus ? 'completed' : 'pending' } : r));
             setConfirmToggle(null);
             toast.success(nextStatus ? "Task completed" : "Task pending");
+            window.dispatchEvent(new Event('refresh-reminders'));
         } catch {
             toast.error("Status update failed");
         }
@@ -369,6 +372,7 @@ const Reminders = () => {
             await deleteReminder(id);
             setReminders(prev => prev.filter(r => r.id !== id));
             toast.success("Reminder deleted");
+            window.dispatchEvent(new Event('refresh-reminders'));
         } catch {
             toast.error("Delete failed");
         }

@@ -274,6 +274,7 @@ const HotelReminders = () => {
             const res = await createReminder({ ...reminderData, sector: SECTOR });
             setReminders(prev => [res.data, ...prev]);
             toast.success("Reminder added!");
+            window.dispatchEvent(new Event('refresh-reminders'));
         } catch {
             toast.error("Failed to add reminder");
         }
@@ -286,6 +287,7 @@ const HotelReminders = () => {
             try {
                 await updateReminder(id, { is_completed: false, sector: SECTOR });
                 toast.success("Task marked as incomplete");
+                window.dispatchEvent(new Event('refresh-reminders'));
             } catch {
                 setReminders(previousReminders);
                 toast.error("Update failed");
@@ -305,6 +307,7 @@ const HotelReminders = () => {
         try {
             await updateReminder(id, { is_completed: true, sector: SECTOR });
             toast.success("Task completed! 🥳");
+            window.dispatchEvent(new Event('refresh-reminders'));
         } catch {
             setReminders(previousReminders);
             toast.error("Update failed");
@@ -316,6 +319,7 @@ const HotelReminders = () => {
             await deleteReminder(id, { sector: SECTOR });
             setReminders(prev => prev.filter(r => r.id !== id));
             toast.success("Reminder deleted");
+            window.dispatchEvent(new Event('refresh-reminders'));
         } catch {
             toast.error("Delete failed");
         }
