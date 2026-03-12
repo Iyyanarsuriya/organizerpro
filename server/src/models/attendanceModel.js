@@ -409,17 +409,41 @@ const ManufacturingAttendanceModel = {
 // --- IT SECTOR ---
 const ITAttendanceModel = {
     create: async (data) => {
-        const { user_id, status, date, member_id, project_id, created_by } = data;
+        const {
+            user_id, status, date, member_id, project_id, created_by,
+            subject, note, check_in, check_out, total_hours, work_mode
+        } = data;
+
         const [res] = await db.query(
-            `INSERT INTO it_attendance (user_id, status, date, member_id, project_id, created_by) VALUES (?, ?, ?, ?, ?, ?)`,
-            [user_id, status, date, member_id, project_id, created_by]
+            `INSERT INTO it_attendance (
+                user_id, status, date, member_id, project_id, created_by,
+                subject, note, check_in, check_out, total_hours, work_mode
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                user_id, status, date, member_id, project_id, created_by,
+                subject || 'Daily Attendance', note, check_in, check_out, total_hours || 0, work_mode || 'Office'
+            ]
         );
         return { id: res.insertId, ...data };
     },
 
     update: async (id, userId, data) => {
-        const { status, date, project_id, updated_by } = data;
-        const [res] = await db.query(`UPDATE it_attendance SET status=?, date=?, project_id=?, updated_by=? WHERE id=? AND user_id=?`, [status, date, project_id, updated_by, id, userId]);
+        const {
+            status, date, project_id, updated_by,
+            subject, note, check_in, check_out, total_hours, work_mode
+        } = data;
+
+        const [res] = await db.query(
+            `UPDATE it_attendance SET 
+                status=?, date=?, project_id=?, updated_by=?,
+                subject=?, note=?, check_in=?, check_out=?, total_hours=?, work_mode=?
+            WHERE id=? AND user_id=?`,
+            [
+                status, date, project_id, updated_by,
+                subject, note, check_in, check_out, total_hours, work_mode,
+                id, userId
+            ]
+        );
         return res.affectedRows > 0;
     },
 
@@ -429,11 +453,34 @@ const ITAttendanceModel = {
     },
 
     getAll: async (userId, filters) => {
-        let query = `SELECT a.*, w.name as member_name FROM it_attendance a LEFT JOIN it_members w ON a.member_id = w.id WHERE a.user_id = ?`;
+        let query = `
+            SELECT a.*, w.name as member_name, w.role as member_role, p.name as project_name 
+            FROM it_attendance a 
+            LEFT JOIN it_members w ON a.member_id = w.id 
+            LEFT JOIN it_projects p ON a.project_id = p.id
+            WHERE a.user_id = ?`;
         const params = [userId];
+
+        if (filters.projectId) { query += ' AND a.project_id = ?'; params.push(filters.projectId); }
         if (filters.memberId) { query += ' AND a.member_id = ?'; params.push(filters.memberId); }
-        if (filters.period) { query += " AND DATE_FORMAT(a.date, '%Y-%m') = ?"; params.push(filters.period); }
-        query += ' ORDER BY a.date DESC';
+
+        if (filters.startDate && filters.endDate) {
+            query += ' AND a.date BETWEEN ? AND ?';
+            params.push(filters.startDate, filters.endDate);
+        } else if (filters.period) {
+            if (filters.period.length === 10) { // YYYY-MM-DD
+                query += ' AND DATE(a.date) = ?';
+                params.push(filters.period);
+            } else if (filters.period.length === 7) { // YYYY-MM
+                query += " AND DATE_FORMAT(a.date, '%Y-%m') = ?";
+                params.push(filters.period);
+            } else if (filters.period.length === 4) { // YYYY
+                query += " AND DATE_FORMAT(a.date, '%Y') = ?";
+                params.push(filters.period);
+            }
+        }
+
+        query += ' ORDER BY a.date DESC, a.created_at DESC';
         const [rows] = await db.query(query, params);
         return rows;
     },
@@ -441,27 +488,71 @@ const ITAttendanceModel = {
     getStats: async (userId, filters) => {
         let query = `SELECT status, COUNT(*) as count FROM it_attendance WHERE user_id=?`;
         const params = [userId];
-        if (filters.period) { query += " AND DATE_FORMAT(date, '%Y-%m') = ?"; params.push(filters.period); }
+
+        if (filters.projectId) { query += ' AND project_id = ?'; params.push(filters.projectId); }
+        if (filters.memberId) { query += ' AND member_id = ?'; params.push(filters.memberId); }
+
+        if (filters.startDate && filters.endDate) {
+            query += ' AND date BETWEEN ? AND ?';
+            params.push(filters.startDate, filters.endDate);
+        } else if (filters.period) {
+            if (filters.period.length === 10) {
+                query += ' AND DATE(date) = ?';
+                params.push(filters.period);
+            } else {
+                query += " AND DATE_FORMAT(date, '%Y-%m') = ?";
+                params.push(filters.period);
+            }
+        }
+
         query += ` GROUP BY status`;
         const [rows] = await db.query(query, params);
         return rows;
     },
 
     getSummary: async (userId, filters) => {
-        let query = `SELECT w.id, w.name, COUNT(a.id) as total_records,
-            COUNT(CASE WHEN a.status IN ('present', 'late') THEN 1 END) as present,
-            COUNT(CASE WHEN a.status = 'absent' THEN 1 END) as absent
-            FROM it_members w LEFT JOIN it_attendance a ON w.id = a.member_id AND a.user_id = ?`;
+        let query = `
+            SELECT 
+                w.id, w.name, w.role,
+                COUNT(a.id) as working_days,
+                SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) as present,
+                SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END) as absent,
+                SUM(CASE WHEN a.status = 'late' THEN 1 ELSE 0 END) as late,
+                SUM(CASE WHEN a.status = 'half-day' THEN 1 ELSE 0 END) as half_day,
+                SUM(CASE WHEN a.status = 'permission' THEN 1 ELSE 0 END) as permission,
+                SUM(CASE WHEN a.status = 'week_off' THEN 1 ELSE 0 END) as week_off,
+                SUM(CASE WHEN a.status = 'holiday' THEN 1 ELSE 0 END) as holiday,
+                SUM(CASE WHEN a.status = 'CL' THEN 1 ELSE 0 END) as CL,
+                SUM(CASE WHEN a.status = 'SL' THEN 1 ELSE 0 END) as SL,
+                SUM(CASE WHEN a.status = 'EL' THEN 1 ELSE 0 END) as EL,
+                SUM(CASE WHEN a.status = 'OD' THEN 1 ELSE 0 END) as OD,
+                COALESCE(SUM(a.total_hours), 0) as total_hours_worked
+            FROM it_members w 
+            LEFT JOIN it_attendance a ON w.id = a.member_id AND a.user_id = ?`;
         const params = [userId];
-        if (filters.period) {
-            if (filters.period.length > 7) { query += ' AND DATE(a.date) = ?'; params.push(filters.period); }
-            else { query += " AND DATE_FORMAT(a.date, '%Y-%m') = ?"; params.push(filters.period); }
-        } else if (filters.startDate && filters.endDate) {
+
+        if (filters.startDate && filters.endDate) {
             query += ' AND a.date BETWEEN ? AND ?';
             params.push(filters.startDate, filters.endDate);
+        } else if (filters.period) {
+            if (filters.period.length === 10) {
+                query += ' AND DATE(a.date) = ?';
+                params.push(filters.period);
+            } else {
+                query += " AND DATE_FORMAT(a.date, '%Y-%m') = ?";
+                params.push(filters.period);
+            }
         }
-        query += ` WHERE w.user_id=? AND w.status = 'active' GROUP BY w.id`;
+
+        query += ` WHERE w.user_id = ? AND w.status = 'active'`;
         params.push(userId);
+
+        if (filters.role) {
+            query += ` AND w.role = ?`;
+            params.push(filters.role);
+        }
+
+        query += ` GROUP BY w.id ORDER BY w.name ASC`;
         const [rows] = await db.query(query, params);
         return rows;
     },
@@ -469,8 +560,30 @@ const ITAttendanceModel = {
     quickMark: async (data) => {
         const { user_id, member_id, date, status, updated_by } = data;
         const [existing] = await db.query(`SELECT id FROM it_attendance WHERE user_id=? AND member_id=? AND DATE(date)=?`, [user_id, member_id, date]);
+
         if (existing.length > 0) {
-            await db.query(`UPDATE it_attendance SET status=?, updated_by=? WHERE id=?`, [status, updated_by, existing[0].id]);
+            const {
+                subject, note, check_in, check_out, total_hours, work_mode, project_id
+            } = data;
+
+            // Prepare dynamic update
+            const updates = [];
+            const params = [];
+
+            if (status !== undefined) { updates.push('status=?'); params.push(status); }
+            if (updated_by !== undefined) { updates.push('updated_by=?'); params.push(updated_by); }
+            if (subject !== undefined) { updates.push('subject=?'); params.push(subject); }
+            if (note !== undefined) { updates.push('note=?'); params.push(note); }
+            if (check_in !== undefined) { updates.push('check_in=?'); params.push(check_in); }
+            if (check_out !== undefined) { updates.push('check_out=?'); params.push(check_out); }
+            if (total_hours !== undefined) { updates.push('total_hours=?'); params.push(total_hours); }
+            if (work_mode !== undefined) { updates.push('work_mode=?'); params.push(work_mode); }
+            if (project_id !== undefined) { updates.push('project_id=?'); params.push(project_id); }
+
+            if (updates.length > 0) {
+                params.push(existing[0].id);
+                await db.query(`UPDATE it_attendance SET ${updates.join(', ')} WHERE id=?`, params);
+            }
             return { id: existing[0].id, updated: true };
         }
         return ITAttendanceModel.create({ ...data, created_by: updated_by });
