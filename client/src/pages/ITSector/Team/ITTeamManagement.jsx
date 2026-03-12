@@ -13,6 +13,7 @@ const ITTeamManagement = () => {
     const [formData, setFormData] = useState({ username: '', email: '', password: '', role: 'staff', project_id: '' }); // Added project_id
     const [showModal, setShowModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
+    const [deleteModal, setDeleteModal] = useState({ show: false, id: null });
     const [currentUser, setCurrentUser] = useState(() => JSON.parse(localStorage.getItem('user')));
     const location = useLocation();
 
