@@ -508,8 +508,8 @@ const PersonalExpenseTracker = () => {
                                     </div>
                                 </div>
 
-                                {/* Export Actions (Hidden on Mobile) */}
-                                <div className="hidden sm:block ml-auto">
+                                {/* Export Actions */}
+                                <div className="w-full sm:w-auto sm:ml-auto flex justify-center sm:justify-end mt-[4px] sm:mt-0">
                                     <ExportButtons
                                         onExportCSV={() => setPendingExport({ type: 'CSV', action: () => exportPersonalExpenseToCSV(filteredTransactions, `personal_expenses_${new Date().toISOString().split('T')[0]}`) })}
                                         onExportPDF={() => setPendingExport({ type: 'PDF', action: () => exportPersonalExpenseToPDF({ data: filteredTransactions, period: filterTime === 'range' ? `${customRange.start || 'Start'} to ${customRange.end || 'End'}` : (filterTime === 'all' ? 'All Time' : filterTime), filename: `personal_expenses_${new Date().toISOString().split('T')[0]}` }) })}
