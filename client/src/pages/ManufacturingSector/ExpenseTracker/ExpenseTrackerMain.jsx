@@ -1362,7 +1362,7 @@ const ExpenseTrackerMain = () => {
                 </div>
             )}
 
-            {showCategoryManager && <CategoryManager categories={categories} onUpdate={() => getExpenseCategories({ sector: 'manufacturing' }).then(res => setCategories(res.data))} onCreate={(data) => createExpenseCategory({ ...data, sector: 'manufacturing' })} onDelete={(id) => deleteExpenseCategory(id, 'manufacturing')} onClose={() => setShowCategoryManager(false)} />}
+            {showCategoryManager && <CategoryManager categories={categories} onUpdate={() => getExpenseCategories({ sector: 'manufacturing' }).then(res => setCategories(res.data.data || []))} onCreate={(data) => createExpenseCategory({ ...data, sector: 'manufacturing' })} onDelete={(id) => deleteExpenseCategory(id, 'manufacturing')} onClose={() => setShowCategoryManager(false)} />}
             {showProjectManager && <ProjectManager projects={projects} onCreate={createProject} onDelete={deleteProject} onRefresh={fetchData} onClose={() => setShowProjectManager(false)} />}
 
             {showCustomReportModal && (

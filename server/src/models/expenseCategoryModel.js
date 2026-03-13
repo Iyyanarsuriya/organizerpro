@@ -15,9 +15,11 @@ const getAllByUserId = async (userId, sector) => {
 
     let [rows] = await db.query(query, [userId]);
 
-    // Auto-seed for Personal Sector if empty or 'General' is missing
+    // Auto-seed for Personal and Manufacturing Sectors if empty or 'General' is missing
     const hasGeneral = rows.some(r => r.name === 'General');
-    if ((sector === 'personal' || !sector) && (rows.length === 0 || !hasGeneral)) {
+    const sectorsNeedingSeed = ['personal', 'manufacturing'];
+    
+    if ((sectorsNeedingSeed.includes(sector) || !sector) && (rows.length === 0 || !hasGeneral)) {
         await seed(userId, sector);
         [rows] = await db.query(query, [userId]);
     }

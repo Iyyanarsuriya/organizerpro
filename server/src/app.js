@@ -58,6 +58,7 @@ mfgRouter.use('/work-logs', require("./routes/Manufacturing/dailyWorkLogRoutes")
 mfgRouter.use('/vehicle-logs', require("./routes/Manufacturing/vehicleLogRoutes"));
 mfgRouter.use('/team', require("./routes/Manufacturing/teamRoutes"));
 mfgRouter.use('/notes', require("./routes/Manufacturing/noteRoutes"));
+mfgRouter.use('/expense-categories', require("./routes/Manufacturing/mfgExpenseCategoryRoutes"));
 mfgRouter.use('/payroll', require("./routes/Manufacturing/payrollRoutes"));
 app.use('/api/manufacturing-sector', mfgRouter);
 
@@ -149,25 +150,6 @@ app.use((err, req, res, next) => {
         stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
 });
-
-// Health check
-app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
-
-// 404 Handler
-app.use((req, res) => {
-    console.error(`404 - Not Found: ${req.method} ${req.url}`);
-    res.status(404).json({ error: 'Route not found', method: req.method, url: req.url });
-});
-
-// Global Error Handler
-app.use((err, req, res, next) => {
-    console.error('Unhandled Error:', err);
-    res.status(err.status || 500).json({
-        error: err.message || 'Internal Server Error',
-        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
-    });
-});
-
 
 app.listen(PORT, () => {
     console.log(` Server running on port ${PORT}`);
