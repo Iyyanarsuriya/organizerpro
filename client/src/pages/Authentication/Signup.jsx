@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signup } from '../../api/authApi';
+import { clearAuthData } from '../../api/axiosInstance';
 import toast from 'react-hot-toast';
 
 const Signup = ({ onClose, onSwitch }) => {
@@ -43,6 +44,8 @@ const Signup = ({ onClose, onSwitch }) => {
 
     try {
       setLoading(true);
+      // Ensure any stale data is cleared before new signup
+      clearAuthData();
       await signup({ username, email, password, mobile_number });
       toast.dismiss();
       toast.success("Account created successfully!");

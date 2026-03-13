@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { login } from '../../api/authApi';
+import { clearAuthData } from '../../api/axiosInstance';
 import toast from 'react-hot-toast';
 
 const Login = ({ setToken, setUser, onClose, onSwitch }) => {
@@ -48,11 +49,8 @@ const Login = ({ setToken, setUser, onClose, onSwitch }) => {
 
       const { token, user } = response.data;
 
-      // Clear any previous session data
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      sessionStorage.removeItem("token");
-      sessionStorage.removeItem("user");
+      // Clear any previous session data proactively
+      clearAuthData();
 
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));

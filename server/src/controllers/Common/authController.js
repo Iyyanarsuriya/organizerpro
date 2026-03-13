@@ -119,6 +119,7 @@ exports.signup = async (req, res) => {
             mobile_number,
             sector
         });
+        res.set('Cache-Control', 'no-store');
         res.status(201).json({ message: 'User created successfully', userId });
     } catch (error) {
         console.error(error);
@@ -149,6 +150,7 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
 
+        res.set('Cache-Control', 'no-store');
         res.json({ token, user: { id: user.id, username: user.username, email: user.email, profile_image: user.profile_image, role: user.role, owner_id: user.owner_id, sector: user.sector } });
     } catch (error) {
         console.error('Login error details:', error);
@@ -160,6 +162,7 @@ exports.getMe = async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ error: 'User not found' });
+        res.set('Cache-Control', 'no-store');
         res.json(user);
     } catch (error) {
         console.error('getMe error:', error);

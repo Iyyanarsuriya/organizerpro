@@ -5,6 +5,16 @@ const { authenticateToken } = require('../../middlewares/authMiddleware');
 
 const upload = require('../../middlewares/uploadMiddleware');
 
+// Force no-cache for all authentication routes to prevent mobile browser issues
+const noCache = (req, res, next) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    next();
+};
+
+router.use(noCache);
+
 router.post('/signup', authController.signup);
 router.post('/login', authController.login);
 router.get('/me', authenticateToken, authController.getMe);
