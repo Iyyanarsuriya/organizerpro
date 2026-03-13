@@ -6,7 +6,7 @@ const TABLE_MAP = {
     education: 'education_reminder_categories', // Updated to specific reminder categories table
     hotel: 'hotel_reminder_categories', // Updated to specific reminder categories table
     manufacturing: 'manufacturing_reminder_categories', // Updated to specific reminder categories table
-    personal: 'personal_categories'
+    personal: 'personal_reminder_categories'
 };
 
 const getTableName = (sector) => TABLE_MAP[sector] || TABLE_MAP.personal;
@@ -90,17 +90,17 @@ const EducationCategoryModel = {
 // --- PERSONAL (DEFAULT) SECTOR ---
 const PersonalCategoryModel = {
     getAll: async (userId) => {
-        let [rows] = await db.query(`SELECT * FROM personal_categories WHERE user_id = ? ORDER BY name ASC`, [userId]);
+        let [rows] = await db.query(`SELECT * FROM personal_reminder_categories WHERE user_id = ? ORDER BY name ASC`, [userId]);
         const hasGeneral = rows.some(r => r.name === 'General');
         if (rows.length === 0 || !hasGeneral) {
             await PersonalCategoryModel.seed(userId);
-            [rows] = await db.query(`SELECT * FROM personal_categories WHERE user_id = ? ORDER BY name ASC`, [userId]);
+            [rows] = await db.query(`SELECT * FROM personal_reminder_categories WHERE user_id = ? ORDER BY name ASC`, [userId]);
         }
         return rows;
     },
     create: async (data) => {
         const { user_id, name, color } = data;
-        const [res] = await db.query(`INSERT INTO personal_categories (user_id, name, color) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE name=name`, [user_id, name, color || '#2d5bff']);
+        const [res] = await db.query(`INSERT INTO personal_reminder_categories (user_id, name, color) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE name=name`, [user_id, name, color || '#2d5bff']);
         return { id: res.insertId, ...data };
     },
     seed: async (userId) => {

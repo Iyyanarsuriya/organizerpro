@@ -217,6 +217,18 @@ CREATE TABLE `personal_categories` (
   CONSTRAINT `fk_personal_cat_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- Personal Reminder Categories
+DROP TABLE IF EXISTS `personal_reminder_categories`;
+CREATE TABLE `personal_reminder_categories` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` varchar(255) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `color` varchar(50) DEFAULT '#2d5bff',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `user_cat_unique` (`user_id`,`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 -- Personal Expense Categories
 DROP TABLE IF EXISTS `personal_expense_categories`;
 CREATE TABLE `personal_expense_categories` (
