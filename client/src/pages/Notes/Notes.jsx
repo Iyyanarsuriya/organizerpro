@@ -36,7 +36,13 @@ const Notes = ({ isEmbedded = false, sector = 'personal' }) => {
 
     // Date Filtering State
     const [periodType, setPeriodType] = useState('day'); // 'day', 'month', 'year', 'range'
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const [selectedDate, setSelectedDate] = useState(() => {
+        const d = new Date();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    });
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
     // Delete Confirmation State
@@ -158,7 +164,10 @@ const Notes = ({ isEmbedded = false, sector = 'personal' }) => {
             if (!matchesSearch) return false;
 
             const noteDate = new Date(n.created_at);
-            const dateStr = noteDate.toISOString().split('T')[0];
+            const year = noteDate.getFullYear();
+            const month = String(noteDate.getMonth() + 1).padStart(2, '0');
+            const day = String(noteDate.getDate()).padStart(2, '0');
+            const dateStr = `${year}-${month}-${day}`;
 
             if (periodType === 'day') {
                 return dateStr === selectedDate;

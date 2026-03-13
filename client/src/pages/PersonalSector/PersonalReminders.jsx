@@ -26,7 +26,7 @@ const PersonalReminders = () => {
     const [confirmToggle, setConfirmToggle] = useState(null); // { id, currentStatus }
     const [sortBy, setSortBy] = useState('due_date'); // Default to date wise
 
-    const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]); // Default to Today
+    const [filterDate, setFilterDate] = useState((new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0])); // Default to Today
     const [periodType, setPeriodType] = useState('today'); // 'all', 'today', 'range'
     const [customRange, setCustomRange] = useState({ start: '', end: '' });
     const [filterCategory, setFilterCategory] = useState('');
@@ -148,7 +148,7 @@ const PersonalReminders = () => {
                 const lastNotifyTime = JSON.parse(localStorage.getItem('lastNotifiedTimes') || '{}')[reminder.id] || 0;
 
                 // Only notify if it's due today (to avoid confusion with filtered lists)
-                const isDueToday = reminder.due_date.startsWith(new Date().toISOString().split('T')[0]);
+                const isDueToday = reminder.due_date.startsWith((new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]));
 
                 if (isDueToday && nowMs >= dueDateMs - 30000 && (nowMs - lastNotifyTime >= 300000)) {
                     // Show In-App Toast
@@ -256,7 +256,7 @@ const PersonalReminders = () => {
 
     // 🔔 Notification logic for today's tasks
     const notifications = useMemo(() => {
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = (new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]);
         return reminders.filter(r => {
             if (r.is_completed) return false;
             return r.due_date && r.due_date.startsWith(todayStr);
@@ -398,7 +398,7 @@ const PersonalReminders = () => {
             .filter(r => {
                 let matches = true;
                 if (periodType === 'today') {
-                    const today = new Date().toISOString().split('T')[0];
+                    const today = (new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]);
                     if (!r.due_date) matches = false;
                     else {
                         const rDate = r.due_date.split('T')[0].split(' ')[0];
@@ -641,7 +641,7 @@ const PersonalReminders = () => {
                                                             onChange={(e) => {
                                                                 const val = e.target.value;
                                                                 setPeriodType(val);
-                                                                if (val === 'today') setFilterDate(new Date().toISOString().split('T')[0]);
+                                                                if (val === 'today') setFilterDate((new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]));
                                                                 else setFilterDate('');
                                                             }}
                                                             className="bg-transparent text-[10px] sm:text-[12px] font-bold text-slate-700 outline-none cursor-pointer uppercase tracking-wider px-[8px]"
@@ -690,9 +690,9 @@ const PersonalReminders = () => {
                                                 <div className="h-[24px] w-px bg-slate-200 mx-[4px]"></div>
 
                                                 <ExportButtons
-                                                    onExportCSV={() => exportReminderToCSV({ data: processedReminders, period: exportPeriod, filename: `reminders_${new Date().toISOString().split('T')[0]}` })}
-                                                    onExportPDF={() => exportReminderToPDF({ data: processedReminders, period: exportPeriod, filename: `reminders_${new Date().toISOString().split('T')[0]}` })}
-                                                    onExportTXT={() => exportReminderToTXT({ data: processedReminders, period: exportPeriod, filename: `reminders_${new Date().toISOString().split('T')[0]}` })}
+                                                    onExportCSV={() => exportReminderToCSV({ data: processedReminders, period: exportPeriod, filename: `reminders_${(new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0])}` })}
+                                                    onExportPDF={() => exportReminderToPDF({ data: processedReminders, period: exportPeriod, filename: `reminders_${(new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0])}` })}
+                                                    onExportTXT={() => exportReminderToTXT({ data: processedReminders, period: exportPeriod, filename: `reminders_${(new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0])}` })}
                                                     className="scale-90 sm:scale-100"
                                                 />
                                             </div>
