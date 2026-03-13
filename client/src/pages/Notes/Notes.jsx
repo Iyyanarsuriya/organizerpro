@@ -318,7 +318,21 @@ const Notes = ({ isEmbedded = false, sector = 'personal' }) => {
                             {['day', 'month', 'year', 'range'].map((type) => (
                                 <button
                                     key={type}
-                                    onClick={() => setPeriodType(type)}
+                                    onClick={() => {
+                                        setPeriodType(type);
+                                        const d = new Date();
+                                        const year = d.getFullYear();
+                                        const month = String(d.getMonth() + 1).padStart(2, '0');
+                                        const day = String(d.getDate()).padStart(2, '0');
+                                        
+                                        if (type === 'year') {
+                                            setSelectedDate(`${year}`);
+                                        } else if (type === 'month') {
+                                            setSelectedDate(`${year}-${month}`);
+                                        } else if (type === 'day') {
+                                            setSelectedDate(`${year}-${month}-${day}`);
+                                        }
+                                    }}
                                     className={`px-[16px] py-[8px] sm:px-[20px] sm:py-[10px] rounded-[10px] text-[10px] sm:text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${periodType === type ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
                                 >
                                     {type}
