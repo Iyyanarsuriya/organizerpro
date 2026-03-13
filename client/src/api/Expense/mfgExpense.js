@@ -8,7 +8,7 @@ export const getTransactionStats = (params) => axiosInstance.get('/manufacturing
 
 export const getExpenseCategories = (params = { sector: 'manufacturing' }) => axiosInstance.get('/manufacturing-sector/expense-categories', { params });
 export const createExpenseCategory = (categoryData) => axiosInstance.post('/manufacturing-sector/expense-categories', { ...categoryData, sector: 'manufacturing' });
-export const deleteExpenseCategory = (id, params = { sector: 'manufacturing' }) => axiosInstance.delete(`/manufacturing-sector/expense-categories/${id}`, { params });
+export const deleteExpenseCategory = (id, sector = 'manufacturing') => axiosInstance.delete(`/manufacturing-sector/expense-categories/${id}`, { params: { sector } });
 
 // Vehicle Logs
 export const getVehicleLogs = () => axiosInstance.get('/manufacturing-sector/vehicle-logs');

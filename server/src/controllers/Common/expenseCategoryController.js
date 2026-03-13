@@ -4,7 +4,7 @@ exports.getExpenseCategories = async (req, res) => {
     try {
         const { sector } = req.query; // Expect sector param
         const categories = await ExpenseCategory.getAllByUserId(req.user.data_owner_id, sector);
-        res.json({ data: categories });
+        res.json(categories);
     } catch (error) {
         console.error("Error fetching expense categories:", error);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -22,7 +22,7 @@ exports.createExpenseCategory = async (req, res) => {
             type,
             sector
         });
-        res.status(201).json({ data: newCategory });
+        res.status(201).json(newCategory);
     } catch (error) {
         if (error.code === 'ER_DUP_ENTRY') {
             return res.status(400).json({ error: 'Category already exists' });
