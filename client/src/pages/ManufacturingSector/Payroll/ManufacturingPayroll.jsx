@@ -38,13 +38,15 @@ const ManufacturingPayroll = () => {
         const month = selectedDate.getMonth() + 1;
         const year = selectedDate.getFullYear();
 
-        // Throttle fetching (60s cache/throttle)
-        if (!force && now - lastFetchRef.current < 60000 && !loading) {
+        // Request Deduplication
+        const currentParamsKey = JSON.stringify({ month, year });
+
+        // Throttle only if it's the exact same month/year and within 10 seconds (reduced from 60s)
+        if (!force && window._lastMfgParamsKey === currentParamsKey && now - lastFetchRef.current < 10000 && !loading) {
             return;
         }
 
-        // Request Deduplication
-        const currentParamsKey = JSON.stringify({ month, year });
+        window._lastMfgParamsKey = currentParamsKey;
 
         if (!force && window._mfgPayrollFetchPromise && window._mfgPayrollParamsKey === currentParamsKey) {
             try {
@@ -342,6 +344,7 @@ const ManufacturingPayroll = () => {
                                     <th className="text-left py-[14px] sm:py-[20px] px-[14px] sm:px-[24px] text-[11px] sm:text-[13px] font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Role</th>
                                     <th className="hidden sm:table-cell text-left py-[14px] sm:py-[20px] px-[14px] sm:px-[24px] text-[11px] sm:text-[13px] font-bold text-slate-500 uppercase tracking-wider">Base Salary</th>
                                     <th className="text-left py-[14px] sm:py-[20px] px-[14px] sm:px-[24px] text-[11px] sm:text-[13px] font-bold text-slate-500 uppercase tracking-wider">Net Amount</th>
+                                    <th className="hidden lg:table-cell text-left py-[14px] sm:py-[20px] px-[14px] sm:px-[24px] text-[11px] sm:text-[13px] font-bold text-slate-500 uppercase tracking-wider">Paid Days</th>
                                     <th className="text-left py-[14px] sm:py-[20px] px-[14px] sm:px-[24px] text-[11px] sm:text-[13px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
                                     <th className="text-right py-[14px] sm:py-[20px] px-[14px] sm:px-[24px] text-[11px] sm:text-[13px] font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                                 </tr>
@@ -381,6 +384,15 @@ const ManufacturingPayroll = () => {
                                             {/* Net Amount */}
                                             <td className="py-[14px] sm:py-[20px] px-[14px] sm:px-[24px]">
                                                 <div className="text-[15px] sm:text-[18px] font-bold text-slate-800">₹{payroll.net_amount?.toLocaleString()}</div>
+                                            </td>
+                                            {/* Paid Days — hidden on mobile */}
+                                            <td className="hidden lg:table-cell py-[14px] sm:py-[20px] px-[14px] sm:px-[24px]">
+                                                <div className="text-[13px] sm:text-[14px] text-slate-600 font-medium">
+                                                    {(payroll.wage_type === 'monthly') 
+                                                        ? ((payroll.days_present || 0) + (payroll.days_half || 0) * 0.5 + (payroll.days_leave || 0) + (payroll.days_holiday || 0) + (payroll.days_weekend || 0)).toFixed(1)
+                                                        : ((payroll.days_present || 0) + (payroll.days_half || 0) * 0.5).toFixed(1)
+                                                    } d
+                                                </div>
                                             </td>
                                             {/* Status */}
                                             <td className="py-[14px] sm:py-[20px] px-[14px] sm:px-[24px]">

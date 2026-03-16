@@ -160,11 +160,21 @@ const calculateWage = async (member, attendanceSummary, settings) => {
         }
 
     } else if (wage_type === 'monthly') {
-        // Monthly salary calculation
-        const monthlySalary = daily_wage; // For monthly, daily_wage stores monthly salary
-        const perDayDeduction = monthlySalary / settings.working_days_per_month;
+        // Monthly salary calculation (Positive attendance basis)
+        const monthlySalary = daily_wage; 
+        
+        // Total "paid" days including worked days, paid leaves, holidays, and weekends
+        const totalPaidDays = attendanceSummary.days_present + 
+                              (attendanceSummary.days_half * 0.5) + 
+                              attendanceSummary.days_leave + 
+                              attendanceSummary.days_holiday + 
+                              attendanceSummary.days_weekend;
 
-        baseAmount = monthlySalary - (attendanceSummary.days_absent * perDayDeduction);
+        // Calculate proportional salary based on working days setting
+        let calculatedBase = (monthlySalary / settings.working_days_per_month) * totalPaidDays;
+        
+        // Cap at monthly salary to prevent overpayment in long months
+        baseAmount = Math.min(calculatedBase, monthlySalary);
 
         // Overtime: hourly rate × hours × multiplier
         const hourlyRate = monthlySalary / settings.working_hours_per_month;
