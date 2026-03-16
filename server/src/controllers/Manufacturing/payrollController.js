@@ -534,6 +534,79 @@ const approvePayroll = async (req, res) => {
 };
 
 /**
+ * Revert approved payroll back to draft
+ * Deletes associated transaction and reverts advance balances
+ */
+const revertPayroll = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.data_owner_id;
+
+        // Get payroll details
+        const [payrolls] = await db.query(`
+            SELECT * FROM manufacturing_payroll
+            WHERE id = ? AND user_id = ?
+        `, [id, userId]);
+
+        if (payrolls.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Payroll not found'
+            });
+        }
+
+        const payroll = payrolls[0];
+
+        if (payroll.status !== 'approved') {
+            return res.status(400).json({
+                success: false,
+                message: 'Only approved (unpaid) payroll can be reverted'
+            });
+        }
+
+        // 1. Delete associated transaction if exists
+        if (payroll.expense_id) {
+            await db.query(`DELETE FROM manufacturing_transactions WHERE id = ? AND user_id = ?`, [payroll.expense_id, userId]);
+        }
+
+        // 2. Revert advance balance if deducted
+        if (payroll.advance_deducted > 0) {
+            await db.query(`
+                UPDATE manufacturing_advances
+                SET total_deducted = total_deducted - monthly_deduction,
+                    balance = balance + monthly_deduction,
+                    status = 'active'
+                WHERE member_id = ?
+                AND user_id = ?
+                AND total_deducted >= monthly_deduction
+            `, [payroll.member_id, userId]);
+        }
+
+        // 3. Update payroll status back to draft
+        await db.query(`
+            UPDATE manufacturing_payroll
+            SET status = 'draft',
+                expense_id = NULL,
+                approved_by = NULL,
+                approved_at = NULL
+            WHERE id = ?
+        `, [id]);
+
+        res.status(200).json({
+            success: true,
+            message: 'Payroll reverted to draft'
+        });
+
+    } catch (error) {
+        console.error('Revert payroll error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+/**
  * Delete payroll (only if draft)
  */
 const deletePayroll = async (req, res) => {
@@ -624,6 +697,7 @@ module.exports = {
     getPayrollList,
     getPayrollDetails,
     approvePayroll,
+    revertPayroll,
     deletePayroll,
     deleteMonthlyPayroll
 };

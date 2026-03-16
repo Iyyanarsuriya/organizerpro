@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import {
     getMfgPayroll,
     generateMfgPayroll,
     approveMfgPayroll,
+    revertMfgPayroll,
     deleteMfgPayroll
 } from '../../../api/Payroll/mfgPayroll';
 import {
@@ -15,15 +16,26 @@ import {
     Search,
     CheckCircle,
     Clock,
-    Loader2
+    RotateCcw,
+    Loader2,
+    Info
 } from 'lucide-react';
 import ExportButtons from '../../../components/Common/ExportButtons';
 import { generateCSV, generatePDF, generateTXT } from '../../../utils/exportUtils/base';
 
 const ManufacturingPayroll = () => {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [loading, setLoading] = useState(true);
     const [generating, setGenerating] = useState(false);
-    const [selectedDate, setSelectedDate] = useState(new Date());
+    
+    // Initialize from URL or today
+    const [selectedDate, setSelectedDate] = useState(() => {
+        const m = parseInt(searchParams.get('month'));
+        const y = parseInt(searchParams.get('year'));
+        if (m && y) return new Date(y, m - 1, 1);
+        return new Date();
+    });
+
     const [payrolls, setPayrolls] = useState([]);
     const [summary, setSummary] = useState({ total_amount: 0, status_counts: {} });
     const [searchTerm, setSearchTerm] = useState('');
@@ -144,6 +156,20 @@ const ManufacturingPayroll = () => {
         }
     };
 
+    const handleRevert = async (id) => {
+        if (!window.confirm('Are you sure you want to undo this approval? This will also delete the associated expense entry.')) return;
+        
+        try {
+            const res = await revertMfgPayroll(id);
+            if (res.data.success) {
+                toast.success('Payroll reverted to draft!');
+                fetchPayrolls(true); // force refresh
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Revert failed');
+        }
+    };
+
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this payroll record?')) return;
         try {
@@ -220,6 +246,12 @@ const ManufacturingPayroll = () => {
         const newDate = new Date(selectedDate);
         newDate.setMonth(newDate.getMonth() + delta);
         setSelectedDate(newDate);
+        
+        // Sync URL
+        setSearchParams({
+            month: (newDate.getMonth() + 1).toString(),
+            year: newDate.getFullYear().toString()
+        });
     };
 
     const filteredPayrolls = (Array.isArray(payrolls) ? payrolls : []).filter(p =>
@@ -424,9 +456,18 @@ const ManufacturingPayroll = () => {
                                                         </>
                                                     )}
                                                     {(payroll.status === 'approved' || payroll.status === 'paid') && (
-                                                        <span className="text-emerald-600 font-medium text-[11px] sm:text-[14px] flex items-center gap-[4px] sm:gap-[6px]">
-                                                            <CheckCircle className="w-[13px] h-[13px] sm:w-[16px] sm:h-[16px]" /> Approved
-                                                        </span>
+                                                        <div className="flex items-center gap-[12px]">
+                                                            <span className="text-emerald-600 font-medium text-[11px] sm:text-[14px] flex items-center gap-[4px] sm:gap-[6px]">
+                                                                <CheckCircle className="w-[13px] h-[13px] sm:w-[16px] sm:h-[16px]" /> Approved
+                                                            </span>
+                                                            <button
+                                                                onClick={() => handleRevert(payroll.id)}
+                                                                className="p-[6px] text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-all"
+                                                                title="Undo Approval"
+                                                            >
+                                                                <RotateCcw className="w-[16px] h-[16px]" />
+                                                            </button>
+                                                        </div>
                                                     )}
                                                 </div>
                                             </td>

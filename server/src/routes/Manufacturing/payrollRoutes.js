@@ -13,6 +13,7 @@ const {
     getPayrollList,
     getPayrollDetails,
     approvePayroll,
+    revertPayroll,
     deletePayroll,
     deleteMonthlyPayroll
 } = require('../../controllers/Manufacturing/payrollController');
@@ -36,6 +37,10 @@ router.get('/:id', authenticateToken, getPayrollDetails);
 // Approve payroll (auto-generates expense)
 // POST /api/manufacturing/payroll/:id/approve
 router.post('/:id/approve', authenticateToken, approvePayroll);
+
+// Revert approved payroll to draft
+// POST /api/manufacturing/payroll/:id/revert
+router.post('/:id/revert', authenticateToken, revertPayroll);
 
 // Delete single payroll record (draft only)
 // DELETE /api/manufacturing/payroll/:id

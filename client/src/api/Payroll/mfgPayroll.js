@@ -15,3 +15,7 @@ export const approveMfgPayroll = (id) => {
 export const deleteMfgPayroll = (id) => {
     return axiosInstance.delete(`/manufacturing-sector/payroll/${id}`);
 };
+
+export const revertMfgPayroll = (id) => {
+    return axiosInstance.post(`/manufacturing-sector/payroll/${id}/revert`);
+};
