@@ -78,19 +78,19 @@ const HotelMemberModel = {
 // --- MANUFACTURING SECTOR ---
 const ManufacturingMemberModel = {
     create: async (data) => {
-        const { user_id, name, role, phone, email, status, project_id, shift_id, wage_type, daily_wage, member_type, created_by } = data;
+        const { user_id, name, role, phone, email, status, project_id, shift_id, wage_type, daily_wage, member_type, cl_balance, sl_balance, el_balance, created_by } = data;
         const [res] = await db.query(
-            `INSERT INTO manufacturing_members (user_id, name, role, phone, email, status, project_id, shift_id, wage_type, daily_wage, member_type, created_by) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [user_id, name, role, phone, email, status || 'active', project_id || null, shift_id || null, wage_type || 'daily', daily_wage || 0, member_type || 'worker', created_by]
+            `INSERT INTO manufacturing_members (user_id, name, role, phone, email, status, project_id, shift_id, wage_type, daily_wage, member_type, cl_balance, sl_balance, el_balance, created_by) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [user_id, name, role, phone, email, status || 'active', project_id || null, shift_id || null, wage_type || 'daily', daily_wage || 0, member_type || 'worker', cl_balance || 0, sl_balance || 0, el_balance || 0, created_by]
         );
         return { id: res.insertId, ...data };
     },
     update: async (id, userId, data) => {
-        const { name, role, phone, email, status, project_id, shift_id, wage_type, daily_wage, member_type } = data;
+        const { name, role, phone, email, status, project_id, shift_id, wage_type, daily_wage, member_type, cl_balance, sl_balance, el_balance } = data;
         const [res] = await db.query(
-            `UPDATE manufacturing_members SET name=?, role=?, phone=?, email=?, status=?, project_id=?, shift_id=?, wage_type=?, daily_wage=?, member_type=? WHERE id=? AND user_id=?`,
-            [name, role, phone, email, status, project_id || null, shift_id || null, wage_type, daily_wage, member_type, id, userId]
+            `UPDATE manufacturing_members SET name=?, role=?, phone=?, email=?, status=?, project_id=?, shift_id=?, wage_type=?, daily_wage=?, member_type=?, cl_balance=?, sl_balance=?, el_balance=? WHERE id=? AND user_id=?`,
+            [name, role, phone, email, status, project_id || null, shift_id || null, wage_type, daily_wage, member_type, cl_balance, sl_balance, el_balance, id, userId]
         );
         return res.affectedRows > 0;
     },

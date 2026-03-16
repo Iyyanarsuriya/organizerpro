@@ -71,7 +71,7 @@ const ManufacturingAttendanceController = {
                         if (member[0][newField] <= 0) {
                             // If we reversed an old status, we should probably roll it back? 
                             // But usually, the user is fixing a mistake.
-                            return res.status(400).json({ success: false, message: `Insufficient ${status} balance.` });
+                            return res.status(200).json({ success: false, message: `Insufficient ${status} balance.` });
                         }
                         await db.query(`UPDATE manufacturing_members SET ${newField} = ${newField} - 1 WHERE id = ?`, [member_id]);
                     }

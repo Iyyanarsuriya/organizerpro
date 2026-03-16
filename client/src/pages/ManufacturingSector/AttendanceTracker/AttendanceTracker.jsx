@@ -364,11 +364,25 @@ const AttendanceTracker = () => {
                 payload.overtime_reason = overtimeData.reason;
             }
 
-            await quickMarkAttendance(payload);
+            const response = await quickMarkAttendance(payload);
+            
+            if (response.data && response.data.success === false) {
+                let errorMsg = response.data.message || "Failed to update";
+                if (errorMsg === "Insufficient CL balance.") {
+                    errorMsg = "Not available casual leave";
+                }
+                toast.error(errorMsg);
+                return;
+            }
+
             toast.success(status ? `Marked as ${status.replace('_', ' ')}` : 'Attendance Updated');
             fetchData(true);
         } catch (error) {
-            toast.error("Failed to update");
+            let errorMsg = error.response?.data?.message || "Failed to update";
+            if (errorMsg === "Insufficient CL balance.") {
+                errorMsg = "Not available casual leave";
+            }
+            toast.error(errorMsg);
         }
     };
 
@@ -448,7 +462,8 @@ const AttendanceTracker = () => {
             fetchData(true);
         } catch (error) {
             console.error(error);
-            toast.error("Failed to update bulk attendance");
+            const errorMsg = error.response?.data?.message || "Failed to update bulk attendance";
+            toast.error(errorMsg);
         }
     };
 

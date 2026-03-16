@@ -45,7 +45,10 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: pr
         wage_type: 'monthly',
         daily_wage: '',
         shift_id: '',
-        status: 'active'
+        status: 'active',
+        cl_balance: '',
+        sl_balance: '',
+        el_balance: ''
     });
 
     // Filter State
@@ -236,7 +239,10 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: pr
             wage_type: member.wage_type || 'daily',
             daily_wage: member.daily_wage || '',
             shift_id: member.shift_id || '',
-            status: member.status
+            status: member.status,
+            cl_balance: member.cl_balance || '',
+            sl_balance: member.sl_balance || '',
+            el_balance: member.el_balance || ''
         });
         setEditingId(member.id);
     };
@@ -258,7 +264,7 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: pr
     };
 
     const resetForm = () => {
-        setFormData({ name: '', role: '', phone: '', email: '', member_type: 'employee', wage_type: 'monthly', daily_wage: '', shift_id: '', status: 'active' });
+        setFormData({ name: '', role: '', phone: '', email: '', member_type: 'employee', wage_type: 'monthly', daily_wage: '', shift_id: '', status: 'active', cl_balance: '', sl_balance: '', el_balance: '' });
         setEditingId(null);
     };
 
@@ -431,7 +437,46 @@ const MemberManager = ({ onClose, onUpdate, sector, roles: propRoles, shifts: pr
                             </select>
                         </div>
 
-                        <div className="col-span-1 md:col-span-2 lg:col-span-2 flex items-end gap-2">
+                        <div className="col-span-1 lg:col-span-1">
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                                CL Balance
+                            </label>
+                            <input
+                                type="number"
+                                value={formData.cl_balance}
+                                onChange={(e) => setFormData({ ...formData, cl_balance: e.target.value })}
+                                placeholder="0"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all"
+                            />
+                        </div>
+
+                        <div className="col-span-1 lg:col-span-1">
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                                SL Balance
+                            </label>
+                            <input
+                                type="number"
+                                value={formData.sl_balance}
+                                onChange={(e) => setFormData({ ...formData, sl_balance: e.target.value })}
+                                placeholder="0"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all"
+                            />
+                        </div>
+
+                        <div className="col-span-1 lg:col-span-1">
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                                EL Balance
+                            </label>
+                            <input
+                                type="number"
+                                value={formData.el_balance}
+                                onChange={(e) => setFormData({ ...formData, el_balance: e.target.value })}
+                                placeholder="0"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all"
+                            />
+                        </div>
+
+                        <div className="col-span-1 md:col-span-2 lg:col-span-1 flex items-end gap-2">
                             <button
                                 type="submit"
                                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white h-10 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
