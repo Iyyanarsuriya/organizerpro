@@ -34,6 +34,24 @@ router.get('/locked-dates', getLockedDates);
 router.get('/', getAttendances);
 router.get('/stats', getAttendanceStats);
 router.get('/summary', getMemberSummary);
+
+// Calendar & Shifts
+const {
+    getHolidays,
+    createHoliday,
+    deleteHoliday,
+    getShifts,
+    createShift,
+    deleteShift
+} = require('../../controllers/Common/attendanceController');
+
+router.get('/holidays', getHolidays);
+router.post('/holidays', createHoliday);
+router.delete('/holidays/:id', deleteHoliday);
+router.get('/shifts', getShifts);
+router.post('/shifts', createShift);
+router.delete('/shifts/:id', deleteShift);
+
 router.put('/:id', updateAttendance);
 router.delete('/:id', requireOwner, deleteAttendance);
 

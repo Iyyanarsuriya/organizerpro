@@ -9,3 +9,11 @@ export const deleteAttendance = (id) => axiosInstance.delete(`/education-sector/
 export const lockAttendance = (date) => axiosInstance.post('/education-sector/attendance/lock', { date });
 export const unlockAttendance = (date) => axiosInstance.post('/education-sector/attendance/unlock', { date });
 export const getLockedDates = (month, year) => axiosInstance.get('/education-sector/attendance/locked-dates', { params: { month, year } });
+
+// Calendar & Shifts
+export const getHolidays = (params) => axiosInstance.get('/education-sector/attendance/holidays', { params });
+export const createHoliday = (data) => axiosInstance.post('/education-sector/attendance/holidays', data);
+export const deleteHoliday = (id) => axiosInstance.delete(`/education-sector/attendance/holidays/${id}`);
+export const getShifts = (params) => axiosInstance.get('/education-sector/attendance/shifts', { params });
+export const createShift = (data) => axiosInstance.post('/education-sector/attendance/shifts', data);
+export const deleteShift = (id) => axiosInstance.delete(`/education-sector/attendance/shifts/${id}`);

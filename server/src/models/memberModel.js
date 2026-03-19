@@ -112,7 +112,7 @@ const ManufacturingMemberModel = {
 // --- EDUCATION SECTOR ---
 const EducationMemberModel = {
     create: async (data) => {
-        const { user_id, name, role, phone, email, status, staff_id, department, subjects, gender, profile_image, employment_type, date_of_joining, reporting_manager_id, shift_start_time, shift_end_time, cl_balance, sl_balance, el_balance } = data;
+        const { user_id, name, role, phone, email, status, staff_id, department, subjects, gender, profile_image, member_type, wage_type, daily_wage, employment_type, date_of_joining, reporting_manager_id, shift_start_time, shift_end_time, cl_balance, sl_balance, el_balance } = data;
 
         // Check duplicates
         if (email || phone) {
@@ -126,14 +126,14 @@ const EducationMemberModel = {
         }
 
         const [res] = await db.query(
-            `INSERT INTO education_members (user_id, name, role, phone, email, status, staff_id, department, subjects, gender, profile_image, employment_type, date_of_joining, reporting_manager_id, shift_start_time, shift_end_time, cl_balance, sl_balance, el_balance, created_by) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [user_id, name, role, phone, email, status || 'active', staff_id, department, subjects, gender, profile_image, employment_type || 'permanent', date_of_joining, reporting_manager_id, shift_start_time, shift_end_time, cl_balance || 0, sl_balance || 0, el_balance || 0, data.created_by]
+            `INSERT INTO education_members (user_id, name, role, phone, email, status, staff_id, department, subjects, gender, profile_image, member_type, wage_type, daily_wage, employment_type, date_of_joining, reporting_manager_id, shift_start_time, shift_end_time, cl_balance, sl_balance, el_balance, created_by) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [user_id, name, role, phone, email, status || 'active', staff_id, department, subjects, gender, profile_image, member_type || 'employee', wage_type || 'monthly', daily_wage || 0, employment_type || 'permanent', date_of_joining, reporting_manager_id, shift_start_time, shift_end_time, cl_balance || 0, sl_balance || 0, el_balance || 0, data.created_by]
         );
         return { id: res.insertId, ...data };
     },
     update: async (id, userId, data) => {
-        const { name, role, phone, email, status, staff_id, department, subjects, gender, profile_image, employment_type, date_of_joining, reporting_manager_id, shift_start_time, shift_end_time, cl_balance, sl_balance, el_balance } = data;
+        const { name, role, phone, email, status, staff_id, department, subjects, gender, profile_image, member_type, wage_type, daily_wage, employment_type, date_of_joining, reporting_manager_id, shift_start_time, shift_end_time, cl_balance, sl_balance, el_balance } = data;
 
         // Check duplicates (excluding self)
         if (email || phone) {
@@ -147,8 +147,8 @@ const EducationMemberModel = {
         }
 
         const [res] = await db.query(
-            `UPDATE education_members SET name=?, role=?, phone=?, email=?, status=?, staff_id=?, department=?, subjects=?, gender=?, profile_image=?, employment_type=?, date_of_joining=?, reporting_manager_id=?, shift_start_time=?, shift_end_time=?, cl_balance=?, sl_balance=?, el_balance=? WHERE id=? AND user_id=?`,
-            [name, role, phone, email, status, staff_id, department, subjects, gender, profile_image, employment_type, date_of_joining, reporting_manager_id, shift_start_time, shift_end_time, cl_balance, sl_balance, el_balance, id, userId]
+            `UPDATE education_members SET name=?, role=?, phone=?, email=?, status=?, staff_id=?, department=?, subjects=?, gender=?, profile_image=?, member_type=?, wage_type=?, daily_wage=?, employment_type=?, date_of_joining=?, reporting_manager_id=?, shift_start_time=?, shift_end_time=?, cl_balance=?, sl_balance=?, el_balance=? WHERE id=? AND user_id=?`,
+            [name, role, phone, email, status, staff_id, department, subjects, gender, profile_image, member_type, wage_type, daily_wage, employment_type, date_of_joining, reporting_manager_id, shift_start_time, shift_end_time, cl_balance, sl_balance, el_balance, id, userId]
         );
         return res.affectedRows > 0;
     },

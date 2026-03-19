@@ -10,7 +10,13 @@ import {
     quickMarkAttendance as quickMarkEduAttendance,
     lockAttendance as lockEduAttendance,
     unlockAttendance as unlockEduAttendance,
-    getLockedDates as getEduLockedDates
+    getLockedDates as getEduLockedDates,
+    getHolidays as getEduHolidays,
+    createHoliday as createEduHoliday,
+    deleteHoliday as deleteEduHoliday,
+    getShifts as getEduShifts,
+    createShift as createEduShift,
+    deleteShift as deleteEduShift
 } from '../../api/Attendance/eduAttendance';
 
 import {
@@ -23,7 +29,7 @@ import {
     FaCalendarAlt, FaSearch,
     FaFilter, FaChartBar, FaUserCheck,
     FaInbox, FaUserEdit,
-    FaTag, FaBusinessTime, FaBuilding, FaPlane, FaBriefcaseMedical, FaHome, FaArrowLeft, FaPlus
+    FaTag, FaBusinessTime, FaBuilding, FaPlane, FaBriefcaseMedical, FaHome, FaArrowLeft, FaPlus, FaFileAlt
 } from 'react-icons/fa';
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend
@@ -33,6 +39,8 @@ import ExportButtons from '../../components/Common/ExportButtons';
 import EducationMemberManager from '../../components/Education/MemberManager';
 import RoleManager from '../../components/IT/RoleManager';
 import DepartmentManager from '../../components/Education/DepartmentManager';
+import EducationShiftManager from './EducationShiftManager';
+import EducationCalendarManager from './EducationCalendarManager';
 
 const EducationAttendance = () => {
     const navigate = useNavigate();
@@ -56,6 +64,8 @@ const EducationAttendance = () => {
     const [filterRole, setFilterRole] = useState('');
     const [confirmModal, setConfirmModal] = useState({ show: false, type: null, label: '', id: null });
     const [lockedDates, setLockedDates] = useState([]);
+    const [holidays, setHolidays] = useState([]);
+    const [shifts, setShifts] = useState([]);
 
     const [showPermissionModal, setShowPermissionModal] = useState(false);
     const [permissionModalData, setPermissionModalData] = useState({
@@ -82,16 +92,41 @@ const EducationAttendance = () => {
         note: ''
     });
 
+    const [showOvertimeModal, setShowOvertimeModal] = useState(false);
+    const [overtimeModalData, setOvertimeModalData] = useState({
+        member_id: null,
+        member_name: '',
+        status: 'overtime',
+        start_hour: '05',
+        start_minute: '00',
+        start_period: 'PM',
+        end_hour: '07',
+        end_minute: '00',
+        end_period: 'PM',
+        reason: '',
+        attendance_id: null
+    });
+
+    const [showWorkDoneModal, setShowWorkDoneModal] = useState(false);
+    const [workDoneModalData, setWorkDoneModalData] = useState({
+        member_id: null,
+        member_name: '',
+        status: 'present',
+        note: '',
+        attendance_id: null
+    });
+
     const statusOptions = [
-        { id: 'present', label: 'Present', icon: FaCheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-50', border: 'border-emerald-100' },
-        { id: 'absent', label: 'Absent', icon: FaTimesCircle, color: 'text-red-500', bg: 'bg-red-50', border: 'border-red-100' },
-        { id: 'late', label: 'Late', icon: FaClock, color: 'text-amber-500', bg: 'bg-amber-50', border: 'border-amber-100' },
-        { id: 'half-day', label: 'Half Day', icon: FaExclamationCircle, color: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-100' },
-        { id: 'permission', label: 'Permission', icon: FaBusinessTime, color: 'text-purple-500', bg: 'bg-purple-50', border: 'border-purple-100' },
-        { id: 'CL', label: 'Casual Leave', icon: FaHome, color: 'text-cyan-500', bg: 'bg-cyan-50', border: 'border-cyan-100' },
-        { id: 'SL', label: 'Sick Leave', icon: FaBriefcaseMedical, color: 'text-rose-500', bg: 'bg-rose-50', border: 'border-rose-100' },
-        { id: 'EL', label: 'Earned Leave', icon: FaPlane, color: 'text-indigo-500', bg: 'bg-indigo-50', border: 'border-indigo-100' },
-        { id: 'OD', label: 'On Duty', icon: FaBriefcaseMedical, color: 'text-orange-500', bg: 'bg-orange-50', border: 'border-orange-100' },
+        { id: 'present', label: 'Present', icon: FaCheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+        { id: 'absent', label: 'Absent', icon: FaTimesCircle, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
+        { id: 'half-day', label: 'Half Day', icon: FaExclamationCircle, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
+        { id: 'late', label: 'Late', icon: FaClock, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
+        { id: 'CL', label: 'CL', icon: FaTag, color: 'text-cyan-600', bg: 'bg-cyan-50', border: 'border-cyan-200' },
+        { id: 'SL', label: 'SL', icon: FaTag, color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-200' },
+        { id: 'EL', label: 'EL', icon: FaTag, color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-200' },
+        { id: 'OD', label: 'OD', icon: FaTag, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200' },
+        { id: 'holiday', label: 'Holiday', icon: FaTag, color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-200' },
+        { id: 'week_off', label: 'Weekend', icon: FaCalendarAlt, color: 'text-slate-500', bg: 'bg-slate-50', border: 'border-slate-200' }
     ];
 
     function getHexColor(status) {
@@ -103,8 +138,10 @@ const EducationAttendance = () => {
             case 'permission': return '#a855f7';
             case 'CL': return '#06b6d4';
             case 'SL': return '#f43f5e';
-            case 'EL': return '#6366f1';
-            case 'OD': return '#f97316';
+            case 'EL': return '#8b5cf6';
+            case 'OD': return '#6366f1';
+            case 'holiday': return '#f43f5e';
+            case 'week_off': return '#94a3b8';
             default: return '#94a3b8';
         }
     }
@@ -117,7 +154,7 @@ const EducationAttendance = () => {
 
             if (isRange && (!rangeStart || !rangeEnd)) return;
 
-            const [attRes, statsRes, summaryRes, membersRes, roleRes, deptRes, lockRes] = await Promise.all([
+            const [attRes, statsRes, summaryRes, membersRes, roleRes, deptRes, lockRes, holidayRes, shiftRes] = await Promise.all([
                 getEduAttendances({
                     memberId: filterMember,
                     period: isRange ? null : currentPeriod,
@@ -143,7 +180,9 @@ const EducationAttendance = () => {
                 getActiveMembers({ sector: 'education' }),
                 getMemberRoles({ sector: 'education' }),
                 getDepartments({ sector: 'education' }),
-                getEduLockedDates(new Date(currentPeriod).getMonth() + 1, new Date(currentPeriod).getFullYear())
+                getEduLockedDates(new Date(currentPeriod).getMonth() + 1, new Date(currentPeriod).getFullYear()),
+                getEduHolidays({ sector: 'education' }),
+                getEduShifts({ sector: 'education' })
             ]);
             setAttendances(attRes.data.data);
             setStats(statsRes.data.data || []);
@@ -151,7 +190,9 @@ const EducationAttendance = () => {
             setMembers(membersRes.data.data);
             setRoles(roleRes.data.data);
             setDepartments(deptRes.data.data);
-            setLockedDates(lockRes.data.data.map(d => new Date(d.date).toISOString().split('T')[0]));
+            setLockedDates(lockRes.data.data.filter(d => d.is_locked).map(d => new Date(d.date).toISOString().split('T')[0]));
+            setHolidays(holidayRes.data.data);
+            setShifts(shiftRes.data.data);
             setLoading(false);
         } catch (error) {
             toast.error("Failed to fetch attendance data");
@@ -251,6 +292,78 @@ const EducationAttendance = () => {
         setConfirmModal({ show: false, type: null });
     };
 
+    const handleTimeLogUpdate = async (memberId, field, value) => {
+        const todayRecord = attendances.find(a => a.member_id === memberId && new Date(a.date).toDateString() === new Date(currentPeriod).toDateString());
+
+        let checkIn = todayRecord?.check_in || '09:00:00';
+        let checkOut = todayRecord?.check_out || '18:00:00';
+
+        if (field === 'check_in') checkIn = value;
+        if (field === 'check_out') checkOut = value;
+
+        // Calculate total hours
+        const [h1, m1] = checkIn.split(':').map(Number);
+        const [h2, m2] = checkOut.split(':').map(Number);
+        const diff = (h2 * 60 + m2) - (h1 * 60 + m1);
+        const totalHours = Math.max(0, diff / 60).toFixed(2);
+
+        try {
+            const res = await quickMarkEduAttendance({
+                member_id: memberId,
+                date: currentPeriod,
+                check_in: checkIn,
+                check_out: checkOut,
+                total_hours: totalHours,
+                status: todayRecord?.status || 'present'
+            });
+            if (res.data.success === false) {
+                toast.error(res.data.message);
+            } else {
+                fetchData();
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to update time");
+        }
+    };
+
+    const handleOvertimeSubmit = async () => {
+        const { member_id, start_hour, start_minute, start_period, end_hour, end_minute, end_period, reason, attendance_id } = overtimeModalData;
+        const duration = `${start_hour}:${start_minute} ${start_period} - ${end_hour}:${end_minute} ${end_period}`;
+
+        try {
+            await quickMarkEduAttendance({
+                member_id,
+                date: currentPeriod,
+                overtime_duration: duration,
+                overtime_reason: reason,
+                status: attendances.find(a => a.id === attendance_id)?.status || 'present'
+            });
+            toast.success("Overtime updated");
+            setShowOvertimeModal(false);
+            fetchData();
+        } catch (err) {
+            toast.error("Failed to update overtime");
+        }
+    };
+
+    const handleWorkDoneSubmit = async () => {
+        const { member_id, note, attendance_id } = workDoneModalData;
+
+        try {
+            await quickMarkEduAttendance({
+                member_id,
+                date: currentPeriod,
+                note: note,
+                status: attendances.find(a => a.id === attendance_id)?.status || 'present'
+            });
+            toast.success("Note updated");
+            setShowWorkDoneModal(false);
+            fetchData();
+        } catch (err) {
+            toast.error("Failed to update note");
+        }
+    };
+
     const filteredAttendances = useMemo(() => {
         return attendances.filter(a => {
             const d = new Date(a.date);
@@ -258,8 +371,8 @@ const EducationAttendance = () => {
             const matchesSearch = (a.subject || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                 (a.member_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                 dateStr.includes(searchQuery);
-            const matchesRole = !filterRole || a.member_role === filterRole;
-            const matchesDept = !filterDepartment || (a.member_department && a.member_department.includes(filterDepartment));
+            const matchesRole = !filterRole || a.role === filterRole;
+            const matchesDept = !filterDepartment || (a.department && a.department.includes(filterDepartment));
             return matchesSearch && matchesRole && matchesDept;
         });
     }, [attendances, searchQuery, filterRole, filterDepartment]);
@@ -432,20 +545,35 @@ const EducationAttendance = () => {
             </header>
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="flex bg-slate-100 p-1 rounded-xl shadow-inner border border-slate-200 w-full sm:w-fit mb-8 overflow-x-auto custom-scrollbar">
-                    {[{ id: 'records', label: 'Records' }, { id: 'summary', label: 'Summary' }, { id: 'daily', label: 'Daily Sheet' }, { id: 'members', label: 'Manage Staff' }].map(tab => (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 sm:flex-none px-4 sm:px-6 py-2.5 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white text-slate-900 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-800'}`}>{tab.label}</button>
+                <div className="flex bg-slate-100 p-1 rounded-xl shadow-inner border border-slate-200 w-full sm:w-fit mb-8 overflow-x-auto custom-scrollbar no-scrollbar">
+                    {[
+                        { id: 'records', label: 'Records' },
+                        { id: 'summary', label: 'Summary' },
+                        { id: 'daily', label: 'Daily Sheet' },
+                        { id: 'shifts', label: 'Shifts & Rules' },
+                        { id: 'calendar', label: 'Calendar' },
+                        { id: 'members', label: 'Manage Staff' }
+                    ].map(tab => (
+                        <button 
+                            key={tab.id} 
+                            id={`tab-${tab.id}`}
+                            data-tab-id={tab.id}
+                            onClick={() => setActiveTab(tab.id)} 
+                            className={`flex-1 sm:flex-none px-4 sm:px-6 py-2.5 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white text-slate-900 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-800'}`}
+                        >
+                            {tab.label}
+                        </button>
                     ))}
                 </div>
 
                 {activeTab === 'daily' && (
-                    <div className="space-y-6 animate-in fade-in duration-500">
+                    <div className="space-y-6 animate-in fade-in duration-500 pb-20">
                         {/* Dark Design Header */}
                         <div className="bg-[#0f172a] rounded-[32px] p-8 text-white shadow-xl shadow-slate-200/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
                             <div className="relative z-10">
                                 <h2 className="text-3xl font-black tracking-tight mb-2 text-white flex items-center gap-4">
-                                    Daily Attendance Sheet
+                                    Attendance Tracker
                                     {lockedDates.includes(currentPeriod) && (
                                         <span className="bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] px-3 py-1 rounded-full uppercase tracking-widest font-black">Locked</span>
                                     )}
@@ -455,208 +583,270 @@ const EducationAttendance = () => {
                                     {new Date(currentPeriod).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4 group relative z-10">
+                            <div className="flex flex-wrap items-center gap-4 relative z-10">
+                                <div className="bg-white/5 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/10 flex flex-col items-center min-w-[120px]">
+                                    <p className="text-[9px] text-blue-300 font-black uppercase tracking-widest mb-1">Total Staff</p>
+                                    <p className="font-black text-white text-xl">{members.filter(m => m.status === 'active').length}</p>
+                                </div>
+                                <div className="bg-white/5 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/10 flex flex-col items-center min-w-[120px]">
+                                    <p className="text-[9px] text-emerald-400 font-black uppercase tracking-widest mb-1">Present Today</p>
+                                    <p className="font-black text-white text-xl">
+                                        {attendances.filter(a => new Date(a.date).toDateString() === new Date(currentPeriod).toDateString() && ['present', 'late', 'permission'].includes(a.status)).length}
+                                    </p>
+                                </div>
                                 {currentUser.role === 'owner' && (
                                     <button
                                         onClick={handleToggleLock}
-                                        className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 ${lockedDates.includes(currentPeriod)
+                                        className={`px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 ${lockedDates.includes(currentPeriod)
                                             ? 'bg-emerald-500 text-white shadow-emerald-500/20 hover:bg-emerald-600'
                                             : 'bg-red-500 text-white shadow-red-500/20 hover:bg-red-600'
                                             }`}
                                     >
-                                        {lockedDates.includes(currentPeriod) ? 'Unlock Attendance' : 'Lock Attendance'}
+                                        {lockedDates.includes(currentPeriod) ? 'Unlock Sheet' : 'Lock Sheet'}
                                     </button>
                                 )}
-                                <div className="bg-white/10 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/10 flex flex-col items-end">
-                                    <p className="text-[9px] text-blue-300 font-black uppercase tracking-widest mb-1">Marking Mode</p>
-                                    <p className="font-black text-white text-sm">Single Click Upsert</p>
-                                </div>
                             </div>
                         </div>
-
 
                         {/* Bulk Action Toolbar */}
-                        <div className="px-6 sm:px-8 py-4 bg-slate-50/50 border-b border-slate-100 flex flex-wrap items-center gap-3">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 hidden sm:block">Quick Actions:</p>
-                            <button
-                                onClick={() => handleBulkMark('present')}
-                                className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 shadow-sm transition-all flex items-center gap-2 cursor-pointer"
-                            >
-                                <FaCheckCircle className="text-sm" /> Mark All Present
-                            </button>
-                            <button
-                                onClick={() => handleBulkMark('week_off')}
-                                className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 hover:border-slate-300 shadow-sm transition-all flex items-center gap-2 cursor-pointer"
-                            >
-                                <FaCalendarAlt className="text-sm" /> Mark Weekend
-                            </button>
-                            <button
-                                onClick={() => handleBulkMark('holiday')}
-                                className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-pink-500 hover:bg-pink-50 hover:border-pink-200 shadow-sm transition-all flex items-center gap-2 cursor-pointer"
-                            >
-                                <FaTag className="text-sm" /> Mark Holiday
-                            </button>
+                        <div className="px-8 py-6 bg-white border border-slate-200 rounded-[28px] shadow-sm flex flex-wrap items-center justify-between gap-6">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-blue-50 rounded-2xl">
+                                    <FaFilter className="text-blue-500" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Quick Filters</p>
+                                    <p className="text-sm font-bold text-slate-900">Batch Marking Mode</p>
+                                </div>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-3">
+                                <button
+                                    onClick={() => handleBulkMark('present')}
+                                    className="px-6 py-3 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all flex items-center gap-2 active:scale-95"
+                                >
+                                    <FaCheckCircle /> Mark All Present
+                                </button>
+                                <button
+                                    onClick={() => handleBulkMark('week_off')}
+                                    className="px-6 py-3 bg-slate-100 text-slate-600 border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all flex items-center gap-2 active:scale-95"
+                                >
+                                    <FaCalendarAlt /> Mark Weekend
+                                </button>
+                                <button
+                                    onClick={() => handleBulkMark('holiday')}
+                                    className="px-6 py-3 bg-rose-50 text-rose-700 border border-rose-100 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-100 transition-all flex items-center gap-2 active:scale-95"
+                                >
+                                    <FaTag /> Mark Holiday
+                                </button>
+                            </div>
                         </div>
 
-                        {/* List View */}
-                        <div className="bg-white rounded-[24px] border border-slate-200 shadow-sm overflow-hidden">
-                            {/* List Header */}
-                            <div className="grid grid-cols-12 gap-4 p-5 bg-slate-50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                <div className="col-span-3 xl:col-span-2 pl-2">Name</div>
-                                <div className="col-span-5 xl:col-span-6 text-center">Status</div>
-                                <div className="col-span-2 text-center">Permission</div>
-                                <div className="col-span-2 xl:col-span-2 text-center">Current</div>
-                            </div>
+                        {/* Enhanced Table */}
+                        <div className="bg-white rounded-[32px] border border-slate-200 shadow-xl shadow-slate-200/20 overflow-visible">
+                            <div className="overflow-x-auto custom-scrollbar">
+                                <table className="w-full border-collapse">
+                                    <thead>
+                                        <tr className="bg-slate-50/50 border-b border-slate-100">
+                                            <th className="p-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest min-w-[250px]">Member</th>
+                                            <th className="p-6 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest min-w-[320px]">Status Selection</th>
+                                            <th className="p-6 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest min-w-[280px]">Time Log</th>
+                                            <th className="p-6 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest min-w-[150px]">Quick Extras</th>
+                                            <th className="p-6 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest min-w-[120px]">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-50">
+                                        {members.filter(m => (!filterDepartment || m.department === filterDepartment) && (!filterRole || m.role === filterRole) && (m.status === 'active')).map(member => {
+                                            const todayRecord = attendances.find(a => a.member_id === member.id && new Date(a.date).toDateString() === new Date(currentPeriod).toDateString());
+                                            const currentStatus = todayRecord?.status || 'not-marked';
+                                            const statusOption = statusOptions.find(o => o.id === currentStatus);
 
-                            {/* List Body */}
-                            <div className="divide-y divide-slate-50">
-                                {members.filter(m => (!filterDepartment || m.department === filterDepartment) && (!filterRole || m.role === filterRole) && (m.status === 'active')).map(member => {
-                                    const todayRecord = attendances.find(a => a.member_id === member.id && new Date(a.date).toDateString() === new Date(currentPeriod).toDateString());
-                                    const currentStatus = todayRecord?.status || 'not-marked';
-                                    const option = statusOptions.find(o => o.id === currentStatus);
+                                            const mark = async (status) => {
+                                                try {
+                                                    const res = await quickMarkEduAttendance({
+                                                        member_id: member.id,
+                                                        date: currentPeriod,
+                                                        status: status,
+                                                        check_in: todayRecord?.check_in || '09:00:00',
+                                                        check_out: todayRecord?.check_out || '18:00:00',
+                                                        total_hours: todayRecord?.total_hours || '9.00'
+                                                    });
+                                                    if (res.data.success === false) {
+                                                        toast.error(res.data.message);
+                                                    } else {
+                                                        toast.success(`Marked ${status}`);
+                                                        fetchData();
+                                                    }
+                                                } catch (err) {
+                                                    toast.error(err.response?.data?.message || "Failed to mark");
+                                                }
+                                            };
 
-                                    const mark = async (status) => {
-                                        try {
-                                            await quickMarkEduAttendance({
-                                                member_id: member.id,
-                                                date: currentPeriod,
-                                                status: status,
-                                                subject: 'Daily Attendance', // Default
-                                            });
-                                            toast.success(`Marked ${status}`);
-                                            fetchData();
-                                        } catch (err) {
-                                            console.error(err);
-                                            toast.error("Failed to mark");
-                                        }
-                                    };
-
-                                    return (
-                                        <div key={member.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-slate-50/50 transition-colors group">
-                                            {/* Name */}
-                                            <div className="col-span-3 xl:col-span-2 pl-2">
-                                                <h4 className="font-bold text-slate-900 text-sm truncate" title={member.name}>{member.name}</h4>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-md">{member.role}</span>
-                                                </div>
-                                            </div>
-
-                                            {/* Status Buttons */}
-                                            <div className="col-span-5 xl:col-span-6 flex flex-wrap justify-center gap-1.5">
-                                                {[
-                                                    { id: 'present', label: 'P', color: 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100', active: 'bg-emerald-500 text-white shadow-emerald-200' },
-                                                    { id: 'absent', label: 'A', color: 'text-red-600 bg-red-50 hover:bg-red-100', active: 'bg-red-500 text-white shadow-red-200' },
-                                                    { id: 'half-day', label: 'HD', color: 'text-blue-600 bg-blue-50 hover:bg-blue-100', active: 'bg-blue-500 text-white shadow-blue-200' },
-                                                    { id: 'late', label: 'L', color: 'text-amber-600 bg-amber-50 hover:bg-amber-100', active: 'bg-amber-500 text-white shadow-amber-200' },
-                                                ].map(btn => (
-                                                    <button
-                                                        key={btn.id}
-                                                        onClick={() => mark(btn.id)}
-                                                        className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black transition-all shadow-sm ${currentStatus === btn.id ? btn.active + ' shadow-md scale-105' : btn.color}`}
-                                                    >
-                                                        {btn.label}
-                                                    </button>
-                                                ))}
-                                                <div className="w-px h-8 bg-slate-200 mx-1"></div>
-                                                {[
-                                                    { id: 'CL', label: 'CL', color: 'text-cyan-600 bg-cyan-50 hover:bg-cyan-100', active: 'bg-cyan-500 text-white shadow-cyan-200' },
-                                                    { id: 'SL', label: 'SL', color: 'text-rose-600 bg-rose-50 hover:bg-rose-100', active: 'bg-rose-500 text-white shadow-rose-200' },
-                                                    { id: 'EL', label: 'EL', color: 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100', active: 'bg-indigo-500 text-white shadow-indigo-200' },
-                                                    { id: 'OD', label: 'OD', color: 'text-orange-600 bg-orange-50 hover:bg-orange-100', active: 'bg-orange-500 text-white shadow-orange-200' },
-                                                ].map(btn => (
-                                                    <button
-                                                        key={btn.id}
-                                                        onClick={() => mark(btn.id)}
-                                                        className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black transition-all shadow-sm ${currentStatus === btn.id ? btn.active + ' shadow-md scale-105' : btn.color}`}
-                                                    >
-                                                        {btn.label}
-                                                    </button>
-                                                ))}
-                                            </div>
-
-                                            {/* Permission */}
-                                            <div className="col-span-2 text-center">
-                                                <button
-                                                    onClick={() => {
-                                                        const currentReason = todayRecord?.permission_reason || '';
-                                                        const [startStr, endStr] = (todayRecord?.permission_duration || '09:00 AM - 10:00 AM').split(' - ');
-                                                        const parseTime = (str) => {
-                                                            const [time, period] = (str || '').split(' ');
-                                                            const [h, m] = (time || '09:00').split(':');
-                                                            return { h: h || '09', m: m || '00', p: period || 'AM' };
-                                                        };
-                                                        const start = parseTime(startStr);
-                                                        const end = parseTime(endStr);
-
-                                                        setPermissionModalData({
-                                                            member_id: member.id,
-                                                            member_name: member.name,
-                                                            status: 'permission',
-                                                            start_hour: start.h,
-                                                            start_minute: start.m,
-                                                            start_period: start.p,
-                                                            end_hour: end.h,
-                                                            end_minute: end.m,
-                                                            end_period: end.p,
-                                                            reason: currentReason,
-                                                            attendance_id: todayRecord?.id
-                                                        });
-                                                        setShowPermissionModal(true);
-                                                    }}
-                                                    className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all inline-flex items-center gap-1.5 ${todayRecord?.permission_duration ? 'bg-purple-500 text-white shadow-xs' : 'bg-slate-50 text-slate-400 border border-slate-200 hover:bg-purple-50 hover:text-purple-600'}`}
-                                                >
-                                                    <FaClock className="text-[10px]" /> {todayRecord?.permission_duration ? 'Perm.' : 'Add Perm'}
-                                                </button>
-                                                {todayRecord?.permission_duration && (
-                                                    <div className="mt-1 bg-white border border-slate-100 rounded-lg px-2 py-1 text-[8px] font-bold text-slate-600 shadow-sm mx-auto max-w-[100px] truncate">
-                                                        {todayRecord.permission_duration}
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* Current Status Badge */}
-                                            <div className="col-span-2 xl:col-span-2 flex justify-center items-center gap-2">
-                                                <div className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-2 ${currentStatus !== 'not-marked' && option ? `${option.bg} ${option.color}` : 'bg-slate-100 text-slate-400'}`}>
-                                                    {currentStatus !== 'not-marked' && option ? (
-                                                        <>
-                                                            <option.icon className="text-xs" />
-                                                            {option.label}
-                                                        </>
-                                                    ) : (
-                                                        <span>Pending</span>
-                                                    )}
-                                                </div>
-
-                                                {/* Info Icon for Owners - Shows created_by and updated_by */}
-                                                {currentUser.role === 'owner' && todayRecord && (todayRecord.created_by || todayRecord.updated_by) && (
-                                                    <div className="relative group/info">
-                                                        <FaUserEdit className="text-slate-400 hover:text-blue-500 cursor-help text-xs transition-colors" />
-
-                                                        {/* Tooltip */}
-                                                        <div className="absolute bottom-full right-0 mb-2 hidden group-hover/info:block z-50 w-48">
-                                                            <div className="bg-slate-900 text-white text-[10px] rounded-lg shadow-xl p-3 space-y-2">
-                                                                {todayRecord.created_by && (
-                                                                    <div>
-                                                                        <div className="text-slate-400 font-semibold uppercase tracking-wider text-[8px] mb-0.5">Created By</div>
-                                                                        <div className="font-bold">{todayRecord.created_by}</div>
-                                                                    </div>
-                                                                )}
-                                                                {todayRecord.updated_by && (
-                                                                    <div>
-                                                                        <div className="text-slate-400 font-semibold uppercase tracking-wider text-[8px] mb-0.5">Updated By</div>
-                                                                        <div className="font-bold">{todayRecord.updated_by}</div>
-                                                                    </div>
-                                                                )}
-                                                                {/* Arrow */}
-                                                                <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-900"></div>
+                                            return (
+                                                <tr key={member.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                    {/* Member Info */}
+                                                    <td className="p-6">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-12 h-12 bg-linear-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center font-black text-slate-400 border border-white shadow-sm ring-1 ring-slate-100">
+                                                                {member.name.charAt(0)}
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="font-black text-slate-900 text-sm whitespace-nowrap">{member.name}</h4>
+                                                                <div className="flex items-center gap-2 mt-1">
+                                                                    <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">{member.role}</span>
+                                                                    <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
+                                                                    <span className="text-[9px] font-black uppercase tracking-wider text-blue-500/70">{member.department}</span>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                                    </td>
+
+                                                    {/* Status Selection */}
+                                                    <td className="p-6">
+                                                        <div className="flex flex-wrap justify-center gap-1.5 max-w-[320px] mx-auto">
+                                                            {statusOptions.slice(0, 8).map(opt => (
+                                                                <button
+                                                                    key={opt.id}
+                                                                    onClick={() => mark(opt.id)}
+                                                                    title={opt.label}
+                                                                    className={`w-9 h-9 rounded-xl flex items-center justify-center text-[10px] font-black transition-all shadow-sm active:scale-90 ${currentStatus === opt.id ? `${opt.bg} ${opt.color} ring-2 ring-offset-2 ${opt.border.replace('border', 'ring')}` : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100'}`}
+                                                                >
+                                                                    {opt.id === 'present' ? 'P' : opt.id === 'absent' ? 'A' : opt.id === 'half-day' ? 'HD' : opt.id === 'late' ? 'L' : opt.id}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Time Log */}
+                                                    <td className="p-6">
+                                                        <div className="flex items-center justify-center gap-3">
+                                                            <div className="relative">
+                                                                <p className="absolute -top-4 left-0 text-[8px] font-black text-slate-400 uppercase tracking-widest">In</p>
+                                                                <input
+                                                                    type="time"
+                                                                    value={todayRecord?.check_in || '09:00'}
+                                                                    onChange={(e) => handleTimeLogUpdate(member.id, 'check_in', e.target.value)}
+                                                                    className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                                                                />
+                                                            </div>
+                                                            <div className="w-2 h-px bg-slate-300 mt-2"></div>
+                                                            <div className="relative">
+                                                                <p className="absolute -top-4 left-0 text-[8px] font-black text-slate-400 uppercase tracking-widest">Out</p>
+                                                                <input
+                                                                    type="time"
+                                                                    value={todayRecord?.check_out || '18:00'}
+                                                                    onChange={(e) => handleTimeLogUpdate(member.id, 'check_out', e.target.value)}
+                                                                    className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                                                                />
+                                                            </div>
+                                                            <div className="ml-2 flex flex-col items-center">
+                                                                <p className="text-[8px] font-black text-blue-500 uppercase tracking-widest mb-0.5">Total</p>
+                                                                <span className="text-[12px] font-black text-slate-900">{todayRecord?.total_hours || '0.00'}h</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Quick Extras */}
+                                                    <td className="p-6">
+                                                        <div className="flex items-center justify-center gap-2">
+                                                            <button
+                                                                onClick={() => {
+                                                                    const currentReason = todayRecord?.permission_reason || '';
+                                                                    const [startStr, endStr] = (todayRecord?.permission_duration || '09:00 AM - 10:00 AM').split(' - ');
+                                                                    const parseTime = (str) => {
+                                                                        const [time, period] = (str || '').split(' ');
+                                                                        const [h, m] = (time || '09:00').split(':');
+                                                                        return { h: h || '09', m: m || '00', p: period || 'AM' };
+                                                                    };
+                                                                    const start = parseTime(startStr);
+                                                                    const end = parseTime(endStr);
+                                                                    setPermissionModalData({
+                                                                        member_id: member.id,
+                                                                        member_name: member.name,
+                                                                        status: 'permission',
+                                                                        start_hour: start.h,
+                                                                        start_minute: start.m,
+                                                                        start_period: start.p,
+                                                                        end_hour: end.h,
+                                                                        end_minute: end.m,
+                                                                        end_period: end.p,
+                                                                        reason: currentReason,
+                                                                        attendance_id: todayRecord?.id
+                                                                    });
+                                                                    setShowPermissionModal(true);
+                                                                }}
+                                                                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-sm ${todayRecord?.permission_duration ? 'bg-purple-600 text-white shadow-purple-200' : 'bg-slate-50 text-slate-400 hover:bg-purple-50 hover:text-purple-600 border border-slate-100'}`}
+                                                                title="Add Permission"
+                                                            >
+                                                                <FaBusinessTime />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    const currentReason = todayRecord?.overtime_reason || '';
+                                                                    const [startStr, endStr] = (todayRecord?.overtime_duration || '05:00 PM - 07:00 PM').split(' - ');
+                                                                    const parseTime = (str) => {
+                                                                        const [time, period] = (str || '').split(' ');
+                                                                        const [h, m] = (time || '05:00').split(':');
+                                                                        return { h: h || '05', m: m || '00', p: period || 'PM' };
+                                                                    };
+                                                                    const start = parseTime(startStr);
+                                                                    const end = parseTime(endStr);
+                                                                    setOvertimeModalData({
+                                                                        member_id: member.id,
+                                                                        member_name: member.name,
+                                                                        status: 'overtime',
+                                                                        start_hour: start.h,
+                                                                        start_minute: start.m,
+                                                                        start_period: start.p,
+                                                                        end_hour: end.h,
+                                                                        end_minute: end.m,
+                                                                        end_period: end.p,
+                                                                        reason: currentReason,
+                                                                        attendance_id: todayRecord?.id
+                                                                    });
+                                                                    setShowOvertimeModal(true);
+                                                                }}
+                                                                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-sm ${todayRecord?.overtime_duration ? 'bg-orange-600 text-white shadow-orange-200' : 'bg-slate-50 text-slate-400 hover:bg-orange-50 hover:text-orange-600 border border-slate-100'}`}
+                                                                title="Add Overtime"
+                                                            >
+                                                                <FaClock />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setWorkDoneModalData({
+                                                                        member_id: member.id,
+                                                                        member_name: member.name,
+                                                                        status: todayRecord?.status || 'present',
+                                                                        note: todayRecord?.note || '',
+                                                                        attendance_id: todayRecord?.id
+                                                                    });
+                                                                    setShowWorkDoneModal(true);
+                                                                }}
+                                                                className="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-600 border border-slate-100 flex items-center justify-center transition-all shadow-sm"
+                                                                title="Add Note"
+                                                            >
+                                                                <FaFileAlt />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Status Badge */}
+                                                    <td className="p-6 text-center">
+                                                        <div className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-2 shadow-sm ${statusOption ? `${statusOption.bg} ${statusOption.color} border ${statusOption.border}` : 'bg-slate-100 text-slate-400 border border-slate-200'}`}>
+                                                            {statusOption ? (
+                                                                <>
+                                                                    <statusOption.icon className="text-xs" />
+                                                                    {statusOption.label}
+                                                                </>
+                                                            ) : (
+                                                                <span>Not Marked</span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -712,130 +902,92 @@ const EducationAttendance = () => {
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                        <th className="py-4 pl-4">Staff Name</th>
-                                        <th className="py-4 text-center text-emerald-500">Present</th>
-                                        <th className="py-4 text-center text-red-500">Absent</th>
-                                        <th className="py-4 text-center text-blue-500">Half Day</th>
-                                        <th className="py-4 text-center text-cyan-500">Leaves (CL/SL/EL)</th>
-                                        <th className="py-4 text-center text-slate-900">Total %</th>
+                                    <tr className="border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest ">
+                                        <th className="py-5 pl-4">Staff Member</th>
+                                        <th className="py-5 text-center text-emerald-500">P</th>
+                                        <th className="py-5 text-center text-red-500">A</th>
+                                        <th className="py-5 text-center text-blue-500">HD</th>
+                                        <th className="py-5 text-center text-amber-500">LV</th>
+                                        <th className="py-5 text-center text-purple-500">HOL</th>
+                                        <th className="py-5 text-center text-slate-900">Performance</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {memberSummary.map(m => {
-                                        const totalLeaves = (m.CL || 0) + (m.SL || 0) + (m.EL || 0) + (m.OD || 0); // Assuming keys match somewhat or need adjustment if backend doesn't aggregate them specifically. 
-                                        // Since backend returns specific status counts if status matches, but 'CL', 'SL' were not in previous code. 
-                                        // Backend query matches `status IN (...)`. I need to ensure backend Summary supports new statuses. 
-                                        // Wait, backend `getMemberSummary` groups by specific hardcoded strings? 
-                                        // "present", "late", "permission" -> present. 
-                                        // "CL", "SL" etc will fall into "working_days" but not counted in "present".
-                                        // I should probably rely on `getAttendanceStats` or assume standard summary logic needs update for granular leaves.
-                                        // For now, let's display what we have.
-                                        const percentage = m.total > 0 ? ((m.present + (m.half_day * 0.5)) / m.total * 100).toFixed(0) : 0;
-                                        return (
-                                            <tr key={m.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors">
-                                                <td className="py-4 pl-4 font-bold text-slate-700">{m.name}</td>
-                                                <td className="py-4 text-center font-bold text-emerald-600">{m.present}</td>
-                                                <td className="py-4 text-center font-bold text-red-600">{m.absent}</td>
-                                                <td className="py-4 text-center font-bold text-blue-600">{m.half_day}</td>
-                                                <td className="py-4 text-center font-bold text-cyan-600">{totalLeaves > 0 ? totalLeaves : '-'}</td>
-                                                <td className="py-4 text-center"><span className={`px-2 py-1 rounded-lg text-xs font-black ${percentage >= 75 ? 'bg-emerald-100 text-emerald-700' : percentage >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>{percentage}%</span></td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
+                                        {memberSummary.map(m => {
+                                            const presentDays = Number(m.present || 0);
+                                            const halfDays = Number(m.half_day || 0);
+                                            const totalActive = Number(m.total || 0) - Number(m.holiday || 0) - Number(m.week_off || 0);
+                                            const utilization = totalActive > 0 ? (((presentDays + (halfDays * 0.5)) / totalActive) * 100).toFixed(0) : 0;
+                                            
+                                            return (
+                                                <tr key={m.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-all group">
+                                                    <td className="py-5 pl-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-slate-100 to-slate-200 flex items-center justify-center font-black text-slate-500 text-xs shadow-sm group-hover:scale-110 transition-transform">
+                                                                {m.name?.[0]}
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="font-black text-slate-900 text-sm tracking-tight">{m.name}</h4>
+                                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{m.role || 'Staff'}</p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-5 text-center">
+                                                        <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 font-black text-xs inline-flex items-center justify-center shadow-sm">{m.present || 0}</span>
+                                                    </td>
+                                                    <td className="py-5 text-center">
+                                                        <span className="w-8 h-8 rounded-lg bg-red-50 text-red-600 font-black text-xs inline-flex items-center justify-center shadow-sm">{m.absent || 0}</span>
+                                                    </td>
+                                                    <td className="py-5 text-center">
+                                                        <span className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 font-black text-xs inline-flex items-center justify-center shadow-sm">{m.half_day || 0}</span>
+                                                    </td>
+                                                    <td className="py-5 text-center">
+                                                        <span className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 font-black text-xs inline-flex items-center justify-center shadow-sm">{Number(m.CL || 0) + Number(m.SL || 0) + Number(m.EL || 0)}</span>
+                                                    </td>
+                                                    <td className="py-5 text-center">
+                                                        <span className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 font-black text-xs inline-flex items-center justify-center shadow-sm">{m.holiday || 0}</span>
+                                                    </td>
+                                                    <td className="py-5 text-center">
+                                                        <div className="flex flex-col items-center gap-1.5 px-4">
+                                                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden shadow-inner">
+                                                                <div 
+                                                                    className={`h-full transition-all duration-1000 ${utilization >= 90 ? 'bg-emerald-500' : utilization >= 75 ? 'bg-blue-500' : utilization >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
+                                                                    style={{ width: `${utilization}%` }}
+                                                                ></div>
+                                                            </div>
+                                                            <span className={`text-[10px] font-black tracking-widest uppercase ${utilization >= 75 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                                                {utilization}% Utilization
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
+                )}
+
+                {activeTab === 'shifts' && (
+                    <EducationShiftManager
+                        shifts={shifts}
+                        onAdd={(data) => createEduShift({ ...data, sector: 'education' }).then(() => fetchData())}
+                        onDelete={(id) => deleteEduShift(id).then(() => fetchData())}
+                    />
+                )}
+
+                {activeTab === 'calendar' && (
+                    <EducationCalendarManager
+                        holidays={holidays}
+                        onAdd={(data) => createEduHoliday({ ...data, sector: 'education' }).then(() => fetchData())}
+                        onDelete={(id) => deleteEduHoliday(id).then(() => fetchData())}
+                    />
                 )}
 
                 {activeTab === 'members' && <EducationMemberManager onUpdate={fetchData} />}
 
             </main>
-
-            {showPermissionModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[28px] w-full max-w-sm shadow-2xl p-6 relative animate-in zoom-in-95 duration-300">
-                        <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
-                            <FaClock className="text-purple-500" /> Permission Details
-                        </h3>
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Start Time</label>
-                                    <div className="flex bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
-                                        <select value={permissionModalData.start_hour} onChange={(e) => setPermissionModalData({ ...permissionModalData, start_hour: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none"><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
-                                        <div className="w-px bg-slate-200"></div>
-                                        <select value={permissionModalData.start_minute} onChange={(e) => setPermissionModalData({ ...permissionModalData, start_minute: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none">
-                                            {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
-                                                <option key={m} value={m}>{m}</option>
-                                            ))}
-                                        </select>
-                                        <div className="w-px bg-slate-200"></div>
-                                        <select value={permissionModalData.start_period} onChange={(e) => setPermissionModalData({ ...permissionModalData, start_period: e.target.value })} className="w-full bg-transparent p-2 text-[10px] font-black uppercase text-slate-500 outline-none"><option value="AM">AM</option><option value="PM">PM</option></select>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">End Time</label>
-                                    <div className="flex bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
-                                        <select value={permissionModalData.end_hour} onChange={(e) => setPermissionModalData({ ...permissionModalData, end_hour: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none"><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
-                                        <div className="w-px bg-slate-200"></div>
-                                        <select value={permissionModalData.end_minute} onChange={(e) => setPermissionModalData({ ...permissionModalData, end_minute: e.target.value })} className="w-full bg-transparent p-2 text-xs font-bold text-slate-700 outline-none">
-                                            {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
-                                                <option key={m} value={m}>{m}</option>
-                                            ))}
-                                        </select>
-                                        <div className="w-px bg-slate-200"></div>
-                                        <select value={permissionModalData.end_period} onChange={(e) => setPermissionModalData({ ...permissionModalData, end_period: e.target.value })} className="w-full bg-transparent p-2 text-[10px] font-black uppercase text-slate-500 outline-none"><option value="AM">AM</option><option value="PM">PM</option></select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Reason</label>
-                                <textarea
-                                    value={permissionModalData.reason}
-                                    onChange={(e) => setPermissionModalData({ ...permissionModalData, reason: e.target.value })}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-700 resize-none outline-none focus:border-purple-500 transition-colors"
-                                    rows="3"
-                                    placeholder="Enter permission reason..."
-                                ></textarea>
-                            </div>
-                            <div className="flex gap-3 mt-2">
-                                <button onClick={() => setShowPermissionModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">Cancel</button>
-                                <button
-                                    onClick={async () => {
-                                        const duration = `${permissionModalData.start_hour}:${permissionModalData.start_minute} ${permissionModalData.start_period} - ${permissionModalData.end_hour}:${permissionModalData.end_minute} ${permissionModalData.end_period}`;
-                                        const startTime = `${permissionModalData.start_hour}:${permissionModalData.start_minute} ${permissionModalData.start_period}`;
-                                        const endTime = `${permissionModalData.end_hour}:${permissionModalData.end_minute} ${permissionModalData.end_period}`;
-
-                                        try {
-                                            await quickMarkEduAttendance({
-                                                member_id: permissionModalData.member_id,
-                                                date: currentPeriod,
-                                                status: 'present',
-                                                subject: 'Daily Attendance',
-                                                permission_duration: duration,
-                                                permission_start_time: startTime,
-                                                permission_end_time: endTime,
-                                                permission_reason: permissionModalData.reason
-                                            });
-                                            toast.success("Permission Saved");
-                                            setShowPermissionModal(false);
-                                            fetchData();
-                                        } catch (err) {
-                                            console.error(err);
-                                            toast.error("Failed to save permission");
-                                        }
-                                    }}
-                                    className="flex-1 py-2.5 rounded-xl bg-purple-600 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-purple-500/20 hover:bg-purple-700 transition-colors"
-                                >
-                                    Save
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* Generic Confirm Modal */}
             <ConfirmModal
@@ -848,84 +1000,6 @@ const EducationAttendance = () => {
                 confirmText="Yes, Proceed"
             />
 
-            {showManualAttendance && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[32px] w-full max-w-sm shadow-2xl p-8 relative animate-in zoom-in-95 duration-300">
-                        <h3 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
-                            Attendance Entry
-                        </h3>
-                        <div className="space-y-5">
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Staff Member</label>
-                                <select
-                                    value={manualAttendanceData.member_id}
-                                    onChange={(e) => setManualAttendanceData({ ...manualAttendanceData, member_id: e.target.value })}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-12 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all font-['Outfit']"
-                                >
-                                    <option value="">Select Staff...</option>
-                                    {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                                </select>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Date</label>
-                                    <input
-                                        type="date"
-                                        value={manualAttendanceData.date}
-                                        onChange={(e) => setManualAttendanceData({ ...manualAttendanceData, date: e.target.value })}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-12 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Status</label>
-                                    <select
-                                        value={manualAttendanceData.status}
-                                        onChange={(e) => setManualAttendanceData({ ...manualAttendanceData, status: e.target.value })}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-12 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all"
-                                    >
-                                        {statusOptions.map(opt => <option key={opt.id} value={opt.id}>{opt.label}</option>)}
-                                    </select>
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Note (Optional)</label>
-                                <textarea
-                                    value={manualAttendanceData.note}
-                                    onChange={(e) => setManualAttendanceData({ ...manualAttendanceData, note: e.target.value })}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all resize-none"
-                                    rows="3"
-                                    placeholder="Add notes..."
-                                ></textarea>
-                            </div>
-                            <div className="flex gap-4 pt-2">
-                                <button onClick={() => setShowManualAttendance(false)} className="flex-1 py-3 text-slate-500 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-50 transition-colors">Cancel</button>
-                                <button
-                                    onClick={async () => {
-                                        if (!manualAttendanceData.member_id) return toast.error("Select staff");
-                                        try {
-                                            await quickMarkEduAttendance({
-                                                member_id: manualAttendanceData.member_id,
-                                                date: manualAttendanceData.date,
-                                                status: manualAttendanceData.status,
-                                                note: manualAttendanceData.note,
-                                                subject: 'Manual Entry'
-                                            });
-                                            toast.success("Attendance added");
-                                            setShowManualAttendance(false);
-                                            fetchData();
-                                        } catch (err) {
-                                            toast.error("Failed to add entry");
-                                        }
-                                    }}
-                                    className="flex-1 py-3 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all active:scale-95"
-                                >
-                                    Save Entry
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {showRoleManager && (
                 <RoleManager
@@ -949,6 +1023,172 @@ const EducationAttendance = () => {
                 />
             )}
 
+            {/* Permission Modal */}
+            {showPermissionModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-300">
+                        <div className="p-8 bg-linear-to-br from-purple-600 to-indigo-700 text-white relative">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+                            <h3 className="text-2xl font-black tracking-tight relative z-10 flex items-center gap-3">
+                                <FaBusinessTime className="text-purple-200" />
+                                Permission Request
+                            </h3>
+                            <p className="text-purple-100/80 text-xs font-bold uppercase tracking-widest mt-2 relative z-10">
+                                {permissionModalData.member_name}
+                            </p>
+                        </div>
+                        <div className="p-8 space-y-6">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Start Time</label>
+                                    <div className="flex gap-1">
+                                        <select value={permissionModalData.start_hour} onChange={e => setPermissionModalData({...permissionModalData, start_hour: e.target.value})} className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-2 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-purple-500/20">
+                                            {Array.from({length: 12}, (_, i) => (i + 1).toString().padStart(2, '0')).map(h => <option key={h} value={h}>{h}</option>)}
+                                        </select>
+                                        <select value={permissionModalData.start_period} onChange={e => setPermissionModalData({...permissionModalData, start_period: e.target.value})} className="w-16 bg-slate-50 border border-slate-200 rounded-xl px-2 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-purple-500/20">
+                                            <option value="AM">AM</option><option value="PM">PM</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">End Time</label>
+                                    <div className="flex gap-1">
+                                        <select value={permissionModalData.end_hour} onChange={e => setPermissionModalData({...permissionModalData, end_hour: e.target.value})} className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-2 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-purple-500/20">
+                                            {Array.from({length: 12}, (_, i) => (i + 1).toString().padStart(2, '0')).map(h => <option key={h} value={h}>{h}</option>)}
+                                        </select>
+                                        <select value={permissionModalData.end_period} onChange={e => setPermissionModalData({...permissionModalData, end_period: e.target.value})} className="w-16 bg-slate-50 border border-slate-200 rounded-xl px-2 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-purple-500/20">
+                                            <option value="AM">AM</option><option value="PM">PM</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Reason</label>
+                                <textarea
+                                    value={permissionModalData.reason}
+                                    onChange={e => setPermissionModalData({...permissionModalData, reason: e.target.value})}
+                                    placeholder="Enter permission reason..."
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-purple-500/20 min-h-[100px] resize-none"
+                                />
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <button onClick={() => setShowPermissionModal(false)} className="flex-1 px-6 py-4 rounded-2xl bg-slate-100 text-slate-600 font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95">Cancel</button>
+                                <button
+                                    onClick={async () => {
+                                        const { member_id, start_hour, start_minute, start_period, end_hour, end_minute, end_period, reason } = permissionModalData;
+                                        const duration = `${start_hour}:${start_minute || '00'} ${start_period} - ${end_hour}:${end_minute || '00'} ${end_period}`;
+                                        try {
+                                            await quickMarkEduAttendance({
+                                                member_id,
+                                                date: currentPeriod,
+                                                status: 'permission',
+                                                permission_duration: duration,
+                                                permission_reason: reason
+                                            });
+                                            toast.success("Permission updated");
+                                            setShowPermissionModal(false);
+                                            fetchData();
+                                        } catch (err) { toast.error("Failed to update"); }
+                                    }}
+                                    className="flex-1 px-6 py-4 rounded-2xl bg-purple-600 text-white font-black text-xs uppercase tracking-widest hover:bg-purple-700 shadow-lg shadow-purple-200 transition-all active:scale-95"
+                                >
+                                    Save
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Overtime Modal */}
+            {showOvertimeModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-300">
+                        <div className="p-8 bg-linear-to-br from-orange-500 to-red-600 text-white relative">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+                            <h3 className="text-2xl font-black tracking-tight relative z-10 flex items-center gap-3">
+                                <FaClock className="text-orange-200" />
+                                Overtime Marking
+                            </h3>
+                            <p className="text-orange-100/80 text-xs font-bold uppercase tracking-widest mt-2 relative z-10">
+                                {overtimeModalData.member_name}
+                            </p>
+                        </div>
+                        <div className="p-8 space-y-6">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">OT Start</label>
+                                    <div className="flex gap-1">
+                                        <select value={overtimeModalData.start_hour} onChange={e => setOvertimeModalData({...overtimeModalData, start_hour: e.target.value})} className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-2 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500/20">
+                                            {Array.from({length: 12}, (_, i) => (i + 1).toString().padStart(2, '0')).map(h => <option key={h} value={h}>{h}</option>)}
+                                        </select>
+                                        <select value={overtimeModalData.start_period} onChange={e => setOvertimeModalData({...overtimeModalData, start_period: e.target.value})} className="w-16 bg-slate-50 border border-slate-200 rounded-xl px-2 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500/20">
+                                            <option value="AM">AM</option><option value="PM">PM</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">OT End</label>
+                                    <div className="flex gap-1">
+                                        <select value={overtimeModalData.end_hour} onChange={e => setOvertimeModalData({...overtimeModalData, end_hour: e.target.value})} className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-2 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500/20">
+                                            {Array.from({length: 12}, (_, i) => (i + 1).toString().padStart(2, '0')).map(h => <option key={h} value={h}>{h}</option>)}
+                                        </select>
+                                        <select value={overtimeModalData.end_period} onChange={e => setOvertimeModalData({...overtimeModalData, end_period: e.target.value})} className="w-16 bg-slate-50 border border-slate-200 rounded-xl px-2 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500/20">
+                                            <option value="AM">AM</option><option value="PM">PM</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Work Reason / Description</label>
+                                <textarea
+                                    value={overtimeModalData.reason}
+                                    onChange={e => setOvertimeModalData({...overtimeModalData, reason: e.target.value})}
+                                    placeholder="Briefly describe the work done..."
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500/20 min-h-[100px] resize-none"
+                                />
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <button onClick={() => setShowOvertimeModal(false)} className="flex-1 px-6 py-4 rounded-2xl bg-slate-100 text-slate-600 font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95">Cancel</button>
+                                <button onClick={handleOvertimeSubmit} className="flex-1 px-6 py-4 rounded-2xl bg-orange-600 text-white font-black text-xs uppercase tracking-widest hover:bg-orange-700 shadow-lg shadow-orange-200 transition-all active:scale-95">Save OT</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Work Done / Notes Modal */}
+            {showWorkDoneModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-300">
+                        <div className="p-8 bg-linear-to-br from-blue-600 to-indigo-700 text-white relative">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+                            <h3 className="text-2xl font-black tracking-tight relative z-10 flex items-center gap-3">
+                                <FaPlus className="text-blue-200" />
+                                Work Report / Note
+                            </h3>
+                            <p className="text-blue-100/80 text-xs font-bold uppercase tracking-widest mt-2 relative z-10">
+                                {workDoneModalData.member_name}
+                            </p>
+                        </div>
+                        <div className="p-8 space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Attendance Note</label>
+                                <textarea
+                                    value={workDoneModalData.note}
+                                    onChange={e => setWorkDoneModalData({...workDoneModalData, note: e.target.value})}
+                                    placeholder="Enter any work notes or remarks..."
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 min-h-[150px] resize-none"
+                                />
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <button onClick={() => setShowWorkDoneModal(false)} className="flex-1 px-6 py-4 rounded-2xl bg-slate-100 text-slate-600 font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95">Cancel</button>
+                                <button onClick={handleWorkDoneSubmit} className="flex-1 px-6 py-4 rounded-2xl bg-blue-600 text-white font-black text-xs uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95">Save Note</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

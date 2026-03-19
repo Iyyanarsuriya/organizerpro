@@ -11,7 +11,8 @@ const isTokenExpired = (token) => {
     if (!token) return true;
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        return payload.exp * 1000 < Date.now();
+        // Allow 5 minutes grace period for clock drift
+        return (payload.exp * 1000) + 300000 < Date.now();
     } catch (e) {
         return true;
     }

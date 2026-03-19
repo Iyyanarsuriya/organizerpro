@@ -27,7 +27,7 @@ const EducationMemberManager = ({ onClose, onUpdate, sector = 'education' }) => 
         department: '',
         phone: '',
         email: '',
-        gender: '',
+        gender: 'Male',
         profile_image: '',
         member_type: 'employee',
         wage_type: 'monthly',
@@ -221,17 +221,24 @@ const EducationMemberManager = ({ onClose, onUpdate, sector = 'education' }) => 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            const submissionData = {
+                ...formData,
+                reporting_manager_id: formData.reporting_manager_id || null,
+                sector
+            };
+
             if (editingId) {
-                await updateMember(editingId, { ...formData, sector });
+                await updateMember(editingId, submissionData);
                 toast.success("Staff updated!");
             } else {
-                await createMember({ ...formData, sector });
+                await createMember(submissionData);
                 toast.success("Staff added!");
             }
             resetForm();
             fetchMembers();
             if (onUpdate) onUpdate();
         } catch (error) {
+            console.error('Member submission error:', error);
             toast.error(editingId ? "Failed to update" : "Failed to add");
         }
     };
@@ -491,10 +498,10 @@ const EducationMemberManager = ({ onClose, onUpdate, sector = 'education' }) => 
                                     <input required type="date" value={formData.date_of_joining} onChange={(e) => setFormData({ ...formData, date_of_joining: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition-all" />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Reporting To (HOD/Manager) *</label>
-                                    <select required value={formData.reporting_manager_id} onChange={(e) => setFormData({ ...formData, reporting_manager_id: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 cursor-pointer">
-                                        <option value="">Select Manager / HOD</option>
-                                        <option value="self">No Reporting Manager (Self)</option>
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Reporting To (HOD/Manager)</label>
+                                    <select value={formData.reporting_manager_id} onChange={(e) => setFormData({ ...formData, reporting_manager_id: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 cursor-pointer">
+                                        <option value="">Select Manager / HOD (Optional)</option>
+                                        <option value="">No Reporting Manager (Self)</option>
                                         {members
                                             .filter(m => m.id !== editingId)
                                             .sort((a, b) => a.name.localeCompare(b.name))

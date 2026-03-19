@@ -44,7 +44,7 @@ const getSectorController = (sector) => {
 
 const createMember = async (req, res) => {
     try {
-        return getSectorController(req.body.sector).create(req, res);
+        return await getSectorController(req.body.sector).create(req, res);
     } catch (error) { res.status(500).json({ success: false, message: error.message }); }
 };
 

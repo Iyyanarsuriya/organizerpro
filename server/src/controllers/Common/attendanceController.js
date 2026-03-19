@@ -94,10 +94,25 @@ const EducationAttendanceController = {
         return locks.length > 0;
     },
     create: async (req, res) => {
-        if (await EducationAttendanceController.checkLock(req.user.data_owner_id, req.body.date)) return res.status(403).json({ success: false, message: "Attendance is locked." });
+        if (await EducationAttendanceController.checkLock(req.user.data_owner_id, req.body.date)) return res.status(200).json({ success: false, message: "Attendance is locked for this date." });
         const attendance = await Attendance.create({ ...req.body, user_id: req.user.data_owner_id, created_by: req.user.username });
         await AuditLog.create({ user_id: req.user.data_owner_id, action: 'CREATED_ATTENDANCE', module: 'attendance', details: `Created attendance for ${req.body.member_id}`, performed_by: req.user.id });
         res.status(201).json({ success: true, data: attendance });
+    },
+    quickMark: async (req, res) => {
+        try {
+            const { date } = req.body;
+            const userId = req.user.data_owner_id;
+
+            if (await EducationAttendanceController.checkLock(userId, date)) {
+                return res.status(200).json({ success: false, message: "Attendance is locked for this date." });
+            }
+
+            const result = await Attendance.quickMark({ ...req.body, user_id: userId, updated_by: req.user.username });
+            res.status(200).json({ success: true, data: result });
+        } catch (error) {
+            res.status(500).json({ success: false, message: error.message });
+        }
     }
 };
 
@@ -124,7 +139,15 @@ const createAttendance = async (req, res) => {
     try {
         const restriction = checkPastDateRestriction(req, req.body.date);
         if (restriction) return res.status(403).json({ success: false, message: restriction });
-        return getSectorController(req.body.sector).create(req, res);
+
+        const sector = req.body.sector || (
+            req.baseUrl.includes('education') ? 'education' :
+            req.baseUrl.includes('manufacturing') ? 'manufacturing' :
+            req.baseUrl.includes('it') ? 'it' :
+            req.baseUrl.includes('hotel') ? 'hotel' : 'manufacturing'
+        );
+
+        return getSectorController(sector).create(req, res);
     } catch (error) { res.status(500).json({ success: false, message: error.message }); }
 };
 
@@ -187,7 +210,17 @@ const quickMarkAttendance = async (req, res) => {
     try {
         const restriction = checkPastDateRestriction(req, req.body.date);
         if (restriction) return res.status(403).json({ success: false, message: restriction });
-        return getSectorController(req.body.sector).quickMark ? getSectorController(req.body.sector).quickMark(req, res) : HotelAttendanceController.quickMark(req, res);
+
+        // Detect sector from body, or fall back to URL detection
+        const sector = req.body.sector || (
+            req.baseUrl.includes('education') ? 'education' :
+            req.baseUrl.includes('manufacturing') ? 'manufacturing' :
+            req.baseUrl.includes('it') ? 'it' :
+            req.baseUrl.includes('hotel') ? 'hotel' : 'manufacturing'
+        );
+
+        const controller = getSectorController(sector);
+        return controller.quickMark ? controller.quickMark(req, res) : HotelAttendanceController.quickMark(req, res);
     } catch (error) { res.status(500).json({ success: false, message: error.message }); }
 };
 
@@ -258,12 +291,11 @@ const unlockAttendance = async (req, res) => {
                     req.baseUrl.includes('hotel') ? 'hotel' : 'manufacturing');
 
         const { month, year, date, reason } = req.body;
-        if (req.user.owner_id) return res.status(403).json({ success: false, message: "Only owner can unlock" });
+        // Note: requireOwner middleware already restricts this route to owners only
 
         if (sector === 'education') {
             await db.query(`UPDATE education_attendance_locks SET is_locked = 0 WHERE user_id = ? AND date = ?`, [req.user.data_owner_id, date]);
         } else {
-            // For now default other sectors might attempt this, but let's be safe
             if (sector !== 'manufacturing') {
                 return res.status(400).json({ success: false, message: "Sector not supported for locking yet" });
             }
@@ -285,7 +317,7 @@ const getLockStatus = async (req, res) => {
         const table = sector === 'education' ? 'education_attendance_locks' : 'manufacturing_attendance_locks';
         let locks;
         if (sector === 'education') {
-            [locks] = await db.query(`SELECT * FROM ${table} WHERE user_id = ? AND MONTH(date) = ? AND YEAR(date) = ?`, [req.user.data_owner_id, month, year]);
+            [locks] = await db.query(`SELECT * FROM ${table} WHERE user_id = ? AND MONTH(date) = ? AND YEAR(date) = ? AND is_locked = 1`, [req.user.data_owner_id, month, year]);
         } else {
             // For now default other sectors might attempt this, but let's be safe
             if (sector !== 'manufacturing') {

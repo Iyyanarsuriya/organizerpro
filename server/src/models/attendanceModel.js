@@ -593,7 +593,12 @@ const ITAttendanceModel = {
 // --- EDUCATION SECTOR ---
 const EducationAttendanceModel = {
     create: async (data) => {
-        const { user_id, status, date, member_id, created_by, note } = data;
+        const {
+            user_id, status, date, member_id, created_by,
+            subject, note, check_in, check_out, total_hours, work_mode,
+            permission_duration, permission_start_time, permission_end_time, permission_reason,
+            overtime_duration, overtime_reason
+        } = data;
 
         // Validation: Check for duplicate
         const [existing] = await db.query(`SELECT id FROM education_attendance WHERE user_id=? AND member_id=? AND DATE(date)=?`, [user_id, member_id, date]);
@@ -602,15 +607,45 @@ const EducationAttendanceModel = {
         }
 
         const [res] = await db.query(
-            `INSERT INTO education_attendance (user_id, status, date, member_id, note, created_by) VALUES (?, ?, ?, ?, ?, ?)`,
-            [user_id, status, date, member_id, note, created_by]
+            `INSERT INTO education_attendance (
+                user_id, status, date, member_id, created_by,
+                subject, note, check_in, check_out, total_hours, work_mode,
+                permission_duration, permission_start_time, permission_end_time, permission_reason,
+                overtime_duration, overtime_reason
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                user_id, status, date, member_id, created_by,
+                subject || 'Daily Attendance', note, check_in, check_out, total_hours || 0, work_mode || 'Office',
+                permission_duration, permission_start_time, permission_end_time, permission_reason,
+                overtime_duration, overtime_reason
+            ]
         );
         return { id: res.insertId, ...data };
     },
 
     update: async (id, userId, data) => {
-        const { status, date, note, updated_by } = data;
-        const [res] = await db.query(`UPDATE education_attendance SET status=?, date=?, note=?, updated_by=? WHERE id=? AND user_id=?`, [status, date, note, updated_by, id, userId]);
+        const {
+            status, date, note, updated_by,
+            subject, check_in, check_out, total_hours, work_mode,
+            permission_duration, permission_start_time, permission_end_time, permission_reason,
+            overtime_duration, overtime_reason
+        } = data;
+
+        const [res] = await db.query(
+            `UPDATE education_attendance SET 
+                status=?, date=?, note=?, updated_by=?,
+                subject=?, check_in=?, check_out=?, total_hours=?, work_mode=?,
+                permission_duration=?, permission_start_time=?, permission_end_time=?, permission_reason=?,
+                overtime_duration=?, overtime_reason=?
+            WHERE id=? AND user_id=?`,
+            [
+                status, date, note, updated_by,
+                subject, check_in, check_out, total_hours, work_mode,
+                permission_duration, permission_start_time, permission_end_time, permission_reason,
+                overtime_duration, overtime_reason,
+                id, userId
+            ]
+        );
         return res.affectedRows > 0;
     },
 
@@ -620,7 +655,10 @@ const EducationAttendanceModel = {
     },
 
     getAll: async (userId, filters) => {
-        let query = `SELECT a.*, w.name as member_name FROM education_attendance a LEFT JOIN education_members w ON a.member_id = w.id WHERE a.user_id = ?`;
+        let query = `SELECT a.*, w.name as member_name, w.department, w.role 
+                     FROM education_attendance a 
+                     LEFT JOIN education_members w ON a.member_id = w.id 
+                     WHERE a.user_id = ?`;
         const params = [userId];
         if (filters.memberId) { query += ' AND a.member_id = ?'; params.push(filters.memberId); }
         if (filters.period) {
@@ -652,10 +690,12 @@ const EducationAttendanceModel = {
     },
 
     getSummary: async (userId, filters) => {
-        let query = `SELECT w.id, w.name, COUNT(a.id) as total,
+        let query = `SELECT w.id, w.name, w.department, w.role, COUNT(a.id) as total,
             SUM(CASE WHEN a.status IN ('present', 'late', 'permission') THEN 1 ELSE 0 END) as present,
             SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END) as absent,
             SUM(CASE WHEN a.status = 'half-day' THEN 1 ELSE 0 END) as half_day,
+            SUM(CASE WHEN a.status = 'holiday' THEN 1 ELSE 0 END) as holiday,
+            SUM(CASE WHEN a.status = 'week_off' THEN 1 ELSE 0 END) as week_off,
             SUM(CASE WHEN a.status = 'CL' THEN 1 ELSE 0 END) as CL,
             SUM(CASE WHEN a.status = 'SL' THEN 1 ELSE 0 END) as SL,
             SUM(CASE WHEN a.status = 'EL' THEN 1 ELSE 0 END) as EL,
@@ -664,12 +704,12 @@ const EducationAttendanceModel = {
         const params = [userId];
         if (filters.period) {
             if (filters.period.length > 7) { query += ' AND DATE(a.date) = ?'; params.push(filters.period); }
-            else { query += " AND DATE_FORMAT(a.date, '%Y-%m') = ?"; params.push(filters.period); }
+            else { query += ` AND DATE_FORMAT(a.date, '%Y-%m') = ?`; params.push(filters.period); }
         } else if (filters.startDate && filters.endDate) {
             query += ' AND a.date BETWEEN ? AND ?';
             params.push(filters.startDate, filters.endDate);
         }
-        query += ` WHERE w.user_id=? GROUP BY w.id`;
+        query += ` WHERE w.user_id = ? AND w.status = 'active' GROUP BY w.id ORDER BY w.name ASC`;
         params.push(userId);
         const [rows] = await db.query(query, params);
         return rows;
@@ -678,8 +718,37 @@ const EducationAttendanceModel = {
     quickMark: async (data) => {
         const { user_id, member_id, date, status, updated_by } = data;
         const [existing] = await db.query(`SELECT id FROM education_attendance WHERE user_id=? AND member_id=? AND DATE(date)=?`, [user_id, member_id, date]);
+
         if (existing.length > 0) {
-            await db.query(`UPDATE education_attendance SET status=?, updated_by=? WHERE id=?`, [status, updated_by, existing[0].id]);
+            const {
+                subject, note, check_in, check_out, total_hours, work_mode,
+                permission_duration, permission_start_time, permission_end_time, permission_reason,
+                overtime_duration, overtime_reason
+            } = data;
+
+            // Prepare dynamic update
+            const updates = [];
+            const params = [];
+
+            if (status !== undefined) { updates.push('status=?'); params.push(status); }
+            if (updated_by !== undefined) { updates.push('updated_by=?'); params.push(updated_by); }
+            if (subject !== undefined) { updates.push('subject=?'); params.push(subject); }
+            if (note !== undefined) { updates.push('note=?'); params.push(note); }
+            if (check_in !== undefined) { updates.push('check_in=?'); params.push(check_in); }
+            if (check_out !== undefined) { updates.push('check_out=?'); params.push(check_out); }
+            if (total_hours !== undefined) { updates.push('total_hours=?'); params.push(total_hours); }
+            if (work_mode !== undefined) { updates.push('work_mode=?'); params.push(work_mode); }
+            if (permission_duration !== undefined) { updates.push('permission_duration=?'); params.push(permission_duration); }
+            if (permission_start_time !== undefined) { updates.push('permission_start_time=?'); params.push(permission_start_time); }
+            if (permission_end_time !== undefined) { updates.push('permission_end_time=?'); params.push(permission_end_time); }
+            if (permission_reason !== undefined) { updates.push('permission_reason=?'); params.push(permission_reason); }
+            if (overtime_duration !== undefined) { updates.push('overtime_duration=?'); params.push(overtime_duration); }
+            if (overtime_reason !== undefined) { updates.push('overtime_reason=?'); params.push(overtime_reason); }
+
+            if (updates.length > 0) {
+                params.push(existing[0].id);
+                await db.query(`UPDATE education_attendance SET ${updates.join(', ')} WHERE id=?`, params);
+            }
             return { id: existing[0].id, updated: true };
         }
         return EducationAttendanceModel.create({ ...data, created_by: updated_by });
