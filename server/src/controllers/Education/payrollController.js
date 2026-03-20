@@ -27,37 +27,63 @@ const generatePayroll = async (req, res) => {
         await Payroll.deleteByMonthYear(userId, month, year);
 
         const payrolls = [];
-        for (const s of summary) {
-            // Calculate salary
-            const workingDays = s.total || 30; // Fallback to 30 if total is 0
-            const presentDays = (s.present || 0) + (s.late || 0) + (s.permission || 0); // Include permissions/late as present for base
-            const halfDays = s.half_day || 0;
-            const lopDays = s.absent || 0;
-            const clUsed = s.CL || 0;
-            const slUsed = s.SL || 0;
-            const elUsed = s.EL || 0;
+        const daysInMonth = new Date(year, month, 0).getDate(); // Get number of days in the specified month
 
-            const baseSalary = s.daily_wage * 30; // Assuming monthly salary calculation
-            // Simplified calculation: (Base / WorkingDays) * (Present + CL + SL + EL + (HalfDay * 0.5))
+        const summariesWithSalary = summary.map(s => {
+            const presentDays = parseFloat(s.present || 0);
+            const halfDays = parseFloat(s.half_day || 0);
+            const clUsed = parseFloat(s.CL || 0);
+            const slUsed = parseFloat(s.SL || 0);
+            const elUsed = parseFloat(s.EL || 0);
+
+            let baseSalary = parseFloat(s.daily_wage || 0); // This is actually the wage amount, not necessarily daily
+            let netSalary = 0;
+
             const effectivePresent = presentDays + clUsed + slUsed + elUsed + (halfDays * 0.5);
-            const netSalary = (effectivePresent * s.daily_wage);
 
+            if (s.wage_type === 'daily') {
+                netSalary = effectivePresent * baseSalary;
+                baseSalary = baseSalary * daysInMonth; // Standardize base salary for reports to monthly equivalent
+            } else { // Assuming 'monthly' wage_type
+                // Monthly basis: (Monthly Salary / daysInMonth) * Effective Present
+                netSalary = (baseSalary / daysInMonth) * effectivePresent;
+            }
+
+            return {
+                ...s,
+                working_days: daysInMonth, // Total working days in the month
+                present_days: presentDays,
+                absent_days: parseFloat(s.absent || 0),
+                half_days: halfDays,
+                lop_days: parseFloat(s.absent || 0), // Assuming absent days are LOP days
+                cl_used: clUsed,
+                sl_used: slUsed,
+                el_used: elUsed,
+                base_salary: parseFloat(baseSalary.toFixed(2)),
+                net_salary: parseFloat(netSalary.toFixed(2)),
+                bonus: 0, // Placeholder
+                deductions: 0, // Placeholder
+                status: 'pending_approval'
+            };
+        });
+
+        for (const s of summariesWithSalary) {
             const payrollData = {
                 user_id: userId,
                 member_id: s.id,
                 month,
                 year,
-                working_days: workingDays,
-                present_days: presentDays,
-                absent_days: lopDays,
-                half_days: halfDays,
-                lop_days: lopDays,
-                cl_used: clUsed,
-                sl_used: slUsed,
-                el_used: elUsed,
-                base_salary: baseSalary,
-                net_salary: netSalary,
-                status: 'pending_approval'
+                working_days: s.working_days,
+                present_days: s.present_days,
+                absent_days: s.absent_days,
+                half_days: s.half_days,
+                lop_days: s.lop_days,
+                cl_used: s.cl_used,
+                sl_used: s.sl_used,
+                el_used: s.el_used,
+                base_salary: s.base_salary,
+                net_salary: s.net_salary,
+                status: s.status
             };
 
             const result = await Payroll.create(payrollData);
@@ -98,6 +124,22 @@ const approvePayroll = async (req, res) => {
             performed_by: req.user.id
         });
         res.status(200).json({ success: true, message: "Payroll approved" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const undoApprove = async (req, res) => {
+    try {
+        await Payroll.updateStatus(req.params.id, req.user.data_owner_id, 'pending_approval');
+        await AuditLog.create({
+            user_id: req.user.data_owner_id,
+            action: 'UNDONE_PAYROLL_APPROVAL',
+            module: 'payroll',
+            details: `Undid approval for payroll ID ${req.params.id}`,
+            performed_by: req.user.id
+        });
+        res.status(200).json({ success: true, message: "Approval undone" });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -149,5 +191,6 @@ module.exports = {
     generatePayroll,
     getPayrolls,
     approvePayroll,
+    undoApprove,
     payPayroll
 };

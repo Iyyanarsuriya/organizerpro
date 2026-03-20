@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FaSync, FaCheckCircle, FaMoneyBillWave, FaLock, FaCalendarAlt, FaUserTie, FaExclamationTriangle } from 'react-icons/fa';
-import { getPayrolls, generatePayroll, approvePayroll, payPayroll } from '../../api/Payroll/eduPayroll';
+import { FaSync, FaCheckCircle, FaMoneyBillWave, FaLock, FaCalendarAlt, FaUserTie, FaExclamationTriangle, FaUndo } from 'react-icons/fa';
+import { getPayrolls, generatePayroll, approvePayroll, undoApprovePayroll, payPayroll } from '../../api/Payroll/eduPayroll';
 import { getMembers } from '../../api/TeamManagement/eduTeam';
 import { formatAmount } from '../../utils/formatUtils';
 import toast from 'react-hot-toast';
@@ -55,6 +55,16 @@ const EducationPayrollManager = () => {
             fetchData();
         } catch (error) {
             toast.error("Approval failed");
+        }
+    };
+
+    const handleUndoApprove = async (id) => {
+        try {
+            await undoApprovePayroll(id);
+            toast.success("Approval undone");
+            fetchData();
+        } catch (error) {
+            toast.error("Failed to undo approval");
         }
     };
 
@@ -189,7 +199,10 @@ const EducationPayrollManager = () => {
                                                         <button onClick={() => handleApprove(p.id)} className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all shadow-sm" title="Approve"><FaCheckCircle /></button>
                                                     )}
                                                     {currentUser.role === 'owner' && p.status === 'approved' && (
-                                                        <button onClick={() => handlePay(p)} className="px-4 py-2 bg-emerald-500 text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20" title="Pay Now">Make Payment</button>
+                                                        <div className="flex gap-2">
+                                                            <button onClick={() => handlePay(p)} className="px-4 py-2 bg-emerald-500 text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20" title="Pay Now">Make Payment</button>
+                                                            <button onClick={() => handleUndoApprove(p.id)} className="w-8 h-8 flex items-center justify-center bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-600 hover:text-white transition-all shadow-sm" title="Undo Approval"><FaUndo /></button>
+                                                        </div>
                                                     )}
                                                     {p.status === 'paid' && (
                                                         <span className="text-slate-300"><FaLock /></span>

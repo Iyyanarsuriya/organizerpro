@@ -685,12 +685,17 @@ const EducationAttendanceModel = {
             params.push(filters.startDate, filters.endDate);
         }
         query += ` GROUP BY status`;
-        const [rows] = await db.query(query, params);
-        return rows;
+        try {
+            const [rows] = await db.query(query, params);
+            return rows;
+        } catch (error) {
+            console.error('Education getStats error:', error);
+            throw error;
+        }
     },
 
     getSummary: async (userId, filters) => {
-        let query = `SELECT w.id, w.name, w.department, w.role, COUNT(a.id) as total,
+        let query = `SELECT w.id, w.name, w.department, w.role, w.daily_wage, w.wage_type, COUNT(a.id) as total,
             SUM(CASE WHEN a.status IN ('present', 'late', 'permission') THEN 1 ELSE 0 END) as present,
             SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END) as absent,
             SUM(CASE WHEN a.status = 'half-day' THEN 1 ELSE 0 END) as half_day,

@@ -254,7 +254,15 @@ const EducationExpenses = () => {
                 sector: 'education'
             };
             const res = await getAttendanceStats(params);
-            setAttendanceStats(res.data);
+            const summary = {};
+            if (res.data && res.data.success && Array.isArray(res.data.data)) {
+                res.data.data.forEach(item => {
+                    if (item && item.status) {
+                        summary[item.status.toLowerCase()] = item.count;
+                    }
+                });
+            }
+            setAttendanceStats({ summary });
             setSalaryLoading(false);
         } catch (error) {
             console.error(error);
