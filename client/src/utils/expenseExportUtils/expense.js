@@ -2,8 +2,10 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { generateCSV, generateTXT, generatePDF } from '../exportUtils/base.js';
 import { formatAmount } from '../formatUtils.js';
+import toast from 'react-hot-toast';
 
 export const exportExpenseToCSV = (data, filename) => {
+    if (!data || data.length === 0) return toast.error("No data available to export");
     // Add Summary at the top of CSV for better readability in Excel
     let summary = { income: 0, expense: 0 };
     data.forEach(t => {
@@ -40,6 +42,7 @@ export const exportExpenseToCSV = (data, filename) => {
 };
 
 export const exportExpenseToTXT = ({ data, period, filename }) => {
+    if (!data || data.length === 0) return toast.error("No data available to export");
     let summary = { income: 0, expense: 0 };
     data.forEach(t => {
         if (t.type === 'income') summary.income += parseFloat(t.amount);
@@ -66,6 +69,7 @@ export const exportExpenseToTXT = ({ data, period, filename }) => {
 };
 
 export const exportExpenseToPDF = ({ data, period, subHeader, filename }) => {
+    if (!data || data.length === 0) return toast.error("No data available to export");
     let summary = { income: 0, expense: 0 };
     data.forEach(t => {
         if (t.type === 'income') summary.income += parseFloat(t.amount);

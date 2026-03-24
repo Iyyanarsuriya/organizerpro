@@ -1,6 +1,8 @@
 import { generateCSV, generateTXT, generatePDF } from '../exportUtils/base.js';
+import toast from 'react-hot-toast';
 
 export const exportReminderToCSV = ({ data, period, filename }) => {
+    if (!data || data.length === 0) return toast.error("No data available to export");
     // Add Summary
     const total = data.length;
     const completed = data.filter(r => r.is_completed).length;
@@ -34,6 +36,7 @@ export const exportReminderToCSV = ({ data, period, filename }) => {
 };
 
 export const exportReminderToTXT = ({ data, period, filename }) => {
+    if (!data || data.length === 0) return toast.error("No data available to export");
     const total = data.length;
     const completed = data.filter(r => r.is_completed).length;
     const pending = total - completed;
@@ -60,6 +63,7 @@ export const exportReminderToTXT = ({ data, period, filename }) => {
 };
 
 export const exportReminderToPDF = ({ data, period, subHeader, filename }) => {
+    if (!data || data.length === 0) return toast.error("No data available to export");
     const total = data.length;
     const completed = data.filter(r => r.is_completed).length;
     const pending = total - completed;

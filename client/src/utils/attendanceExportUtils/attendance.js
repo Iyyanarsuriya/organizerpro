@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { generateCSV, generateTXT } from '../exportUtils/base.js';
+import toast from 'react-hot-toast';
 
 const calculateAttendanceSummary = (data) => {
     const memberSummary = {};
@@ -231,6 +232,7 @@ export const processAttendanceExportData = (attendances, members, { periodType, 
 };
 
 export const exportAttendanceToCSV = (data, filename) => {
+    if (!data || data.length === 0) return toast.error("No data available to export");
     const { memberStatsRows } = calculateAttendanceSummary(data);
 
     const summaryHeaders = ["Member Summary", "Present Total", "Absent", "Half Day", "Permissions", "Working Days", "Total Perm. Hrs", "Overtime", "Total OT Hrs", "Total Records"];
@@ -269,6 +271,7 @@ export const exportAttendanceToCSV = (data, filename) => {
 };
 
 export const exportAttendanceToTXT = ({ data, period, filename }) => {
+    if (!data || data.length === 0) return toast.error("No data available to export");
     const { globalStats, memberStatsRows } = calculateAttendanceSummary(data);
 
     let titleSuffix = "\nMEMBER SUMMARY\n" + "--------------------------------------------------\n";
@@ -304,6 +307,7 @@ export const exportAttendanceToTXT = ({ data, period, filename }) => {
 };
 
 export const exportAttendanceToPDF = ({ data, period, subHeader, filename, themeColor = [37, 99, 235] }) => {
+    if (!data || data.length === 0) return toast.error("No data available to export");
     const { globalStats, memberStatsRows } = calculateAttendanceSummary(data);
 
     const doc = new jsPDF('landscape');

@@ -422,6 +422,7 @@ const EducationAttendance = () => {
                             <ExportButtons
                                 onExportCSV={() => {
                                     if (activeTab === 'summary') {
+                                        if (memberSummary.length === 0) return toast.error("No data available to export");
                                         const headers = ['Staff Name', 'Present', 'Absent', 'Half Day', 'Leaves (CL/SL/EL)', 'Total %'];
                                         const rows = memberSummary.map(m => {
                                             const totalLeaves = (m.CL || 0) + (m.SL || 0) + (m.EL || 0) + (m.OD || 0);
@@ -433,11 +434,13 @@ const EducationAttendance = () => {
                                         }).catch(err => toast.error("Export failed"));
                                     } else {
                                         const dataToExport = filteredAttendances.length > 0 ? filteredAttendances : attendances;
+                                        if (dataToExport.length === 0) return toast.error("No data available to export");
                                         exportAttendanceToCSV(dataToExport, `Education_Attendance_${currentPeriod}`);
                                     }
                                 }}
                                 onExportPDF={() => {
                                     if (activeTab === 'summary') {
+                                        if (memberSummary.length === 0) return toast.error("No data available to export");
                                         const headers = ['Staff Name', 'Present', 'Absent', 'Half Day', 'Leaves', 'Total %'];
                                         const rows = memberSummary.map(m => {
                                             const totalLeaves = (m.CL || 0) + (m.SL || 0) + (m.EL || 0) + (m.OD || 0);
@@ -455,6 +458,7 @@ const EducationAttendance = () => {
                                         }).catch(err => toast.error("Export failed"));
                                     } else {
                                         const dataToExport = filteredAttendances.length > 0 ? filteredAttendances : attendances;
+                                        if (dataToExport.length === 0) return toast.error("No data available to export");
                                         exportAttendanceToPDF({
                                             data: dataToExport,
                                             period: currentPeriod,
@@ -464,6 +468,7 @@ const EducationAttendance = () => {
                                 }}
                                 onExportTXT={() => {
                                     if (activeTab === 'summary') {
+                                        if (memberSummary.length === 0) return toast.error("No data available to export");
                                         const textContent = memberSummary.map(m =>
                                             `${m.name}: Present=${m.present}, Absent=${m.absent}`
                                         ).join('\n');
@@ -474,6 +479,7 @@ const EducationAttendance = () => {
                                         link.click();
                                     } else {
                                         const dataToExport = filteredAttendances.length > 0 ? filteredAttendances : attendances;
+                                        if (dataToExport.length === 0) return toast.error("No data available to export");
                                         exportAttendanceToTXT({
                                             data: dataToExport,
                                             period: currentPeriod,

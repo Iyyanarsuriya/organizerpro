@@ -178,6 +178,7 @@ const EducationMemberManager = ({ onClose, onUpdate, sector = 'education' }) => 
     };
 
     const handleExportCSV = () => {
+        if (filteredMembers.length === 0) return toast.error("No data available to export");
         const headers = ['Staff ID', 'Name', 'Role', 'Department', 'Phone', 'Email', 'Status'];
         const rows = filteredMembers.map(m => [
             m.staff_id || '-',
@@ -192,6 +193,7 @@ const EducationMemberManager = ({ onClose, onUpdate, sector = 'education' }) => 
     };
 
     const handleExportPDF = () => {
+        if (filteredMembers.length === 0) return toast.error("No data available to export");
         const headers = ['Staff ID', 'Name', 'Role', 'Department', 'Phone', 'Status'];
         const rows = filteredMembers.map(m => [
             m.staff_id || '-',
