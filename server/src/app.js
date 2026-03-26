@@ -107,6 +107,7 @@ hotelRouter.use('/reminder-categories', require("./routes/Hotel/reminderCategory
 hotelRouter.use('/notes', require("./routes/Hotel/noteRoutes"));
 hotelRouter.use('/transactions', transactionRoutes);
 hotelRouter.use('/categories', categoryRoutes);
+hotelRouter.use('/expense-categories', expenseCategoryRoutes);
 hotelRouter.use('/members', require("./routes/Common/memberRoutes"));
 hotelRouter.use('/member-roles', require("./routes/Common/memberRoleRoutes"));
 hotelRouter.use('/projects', require("./routes/Common/projectRoutes"));

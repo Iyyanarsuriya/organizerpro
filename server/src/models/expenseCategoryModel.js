@@ -1,6 +1,7 @@
 const db = require('../config/db');
 
 const getTableName = (sector) => {
+    if (sector === 'hotel') return 'hotel_categories';
     if (sector === 'it') return 'it_reminder_categories';
     if (sector === 'education') return 'education_expense_categories';
     if (sector === 'manufacturing') return 'manufacturing_expense_categories';
@@ -9,7 +10,7 @@ const getTableName = (sector) => {
 
 const getAllByUserId = async (userId, sector) => {
     const table = getTableName(sector);
-    const query = (sector === 'manufacturing' || sector === 'education' || sector === 'personal' || !sector)
+    const query = (sector === 'manufacturing' || sector === 'education' || sector === 'personal' || sector === 'hotel' || !sector)
         ? `SELECT * FROM ${table} WHERE user_id = ? ORDER BY type, name`
         : `SELECT *, 'expense' as type FROM ${table} WHERE user_id = ? ORDER BY name`;
 
@@ -19,7 +20,7 @@ const getAllByUserId = async (userId, sector) => {
     const hasGeneral = rows.some(r => r.name === 'General');
     const sectorsNeedingSeed = ['personal', 'manufacturing'];
     
-    if ((sectorsNeedingSeed.includes(sector) || !sector) && (rows.length === 0 || !hasGeneral)) {
+    if ((sectorsNeedingSeed.includes(sector) || sector === 'hotel' || !sector) && (rows.length === 0 || !hasGeneral)) {
         await seed(userId, sector);
         [rows] = await db.query(query, [userId]);
     }
@@ -47,7 +48,7 @@ const create = async (data) => {
     const table = getTableName(sector);
 
     let query, params;
-    if (sector === 'manufacturing' || sector === 'education' || sector === 'personal' || !sector) {
+    if (sector === 'manufacturing' || sector === 'education' || sector === 'personal' || sector === 'hotel' || !sector) {
         query = `INSERT INTO ${table} (user_id, name, type, color) VALUES (?, ?, ?, ?)`;
         params = [user_id, name, type || 'expense', data.color || '#2d5bff'];
     } else {

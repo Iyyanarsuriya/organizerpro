@@ -61,7 +61,8 @@ const ITTransactionModel = {
 // --- HOTEL SECTOR ---
 const HotelTransactionModel = {
     create: async (data) => {
-        const { user_id, title, amount, type, category_id, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, description, payment_mode, property_type, unit_id, booking_id, vendor_id, income_source, attachment_url } = data;
+        let { user_id, title, amount, type, category_id, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, description, payment_mode, property_type, unit_id, booking_id, vendor_id, income_source, attachment_url } = data;
+        category_id = category_id || null; project_id = project_id || null; member_id = member_id || null; unit_id = unit_id || null; booking_id = booking_id || null; vendor_id = vendor_id || null;
         const [res] = await db.query(
             `INSERT INTO hotel_transactions (user_id, title, amount, type, category_id, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, description, payment_mode, property_type, unit_id, booking_id, vendor_id, income_source, attachment_url) 
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -70,7 +71,8 @@ const HotelTransactionModel = {
         return { id: res.insertId, ...data };
     },
     update: async (id, userId, data) => {
-        const { title, amount, type, category_id, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, description, payment_mode, property_type, unit_id, booking_id, vendor_id, income_source, attachment_url } = data;
+        let { title, amount, type, category_id, date, project_id, member_id, guest_name, payment_status, quantity, unit_price, description, payment_mode, property_type, unit_id, booking_id, vendor_id, income_source, attachment_url } = data;
+        category_id = category_id || null; project_id = project_id || null; member_id = member_id || null; unit_id = unit_id || null; booking_id = booking_id || null; vendor_id = vendor_id || null;
         const [res] = await db.query(
             `UPDATE hotel_transactions SET title=?, amount=?, type=?, category_id=?, date=?, project_id=?, member_id=?, guest_name=?, payment_status=?, quantity=?, unit_price=?, description=?, payment_mode=?, property_type=?, unit_id=?, booking_id=?, vendor_id=?, income_source=?, attachment_url=? WHERE id=? AND user_id=?`,
             [title, amount, type, category_id, sanitizeDate(date), project_id, member_id, guest_name, payment_status || 'completed', quantity || 1, unit_price || 0, description, payment_mode, property_type, unit_id, booking_id, vendor_id, income_source, attachment_url, id, userId]

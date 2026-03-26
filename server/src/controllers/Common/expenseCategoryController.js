@@ -35,8 +35,19 @@ exports.createExpenseCategory = async (req, res) => {
 exports.deleteExpenseCategory = async (req, res) => {
     try {
         const { id } = req.params;
-        const { sector } = req.query;
-        const success = await ExpenseCategory.delete(id, req.user.data_owner_id, sector);
+        let sector = req.query.sector;
+        
+        // Fallback for sector in case middleware fails or drops the query
+        if (!sector && req.originalUrl) {
+            if (req.originalUrl.includes('/hotel-sector/')) sector = 'hotel';
+            else if (req.originalUrl.includes('/manufacturing-sector/')) sector = 'manufacturing';
+            else if (req.originalUrl.includes('/education-sector/')) sector = 'education';
+            else if (req.originalUrl.includes('/it-sector/')) sector = 'it';
+            else if (req.originalUrl.includes('/personal')) sector = 'personal';
+        }
+        
+        const ExpenseCatModel = require('../../models/expenseCategoryModel');
+        const success = await ExpenseCatModel.delete(id, req.user.data_owner_id, sector);
         if (!success) return res.status(404).json({ error: 'Category not found' });
         res.json({ message: 'Category deleted' });
     } catch (error) {

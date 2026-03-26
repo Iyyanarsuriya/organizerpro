@@ -2,7 +2,6 @@ const cron = require('node-cron');
 const Reminder = require('../models/reminderModel');
 const emailService = require('../services/emailService');
 const pushService = require('../services/pushNotificationService');
-const User = require('../models/userModel');
 
 // In-memory cache to track notified overdue tasks (cleared daily)
 const notifiedTasks = new Set();

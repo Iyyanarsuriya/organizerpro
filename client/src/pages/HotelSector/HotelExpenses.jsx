@@ -202,7 +202,7 @@ const HotelExpenses = () => {
 
             setTransactions(transRes.data.data || []);
             setStats(statsRes.data.data || { summary: { total_income: 0, total_expense: 0 }, categories: [] });
-            setCategories(catRes.data.data || []);
+            setCategories(catRes.data || []);
             setMembers(membersRes.data?.data || []);
             setVendors(vendorRes.data?.data || []);
             setUnits(unitRes.data?.data || []);
@@ -754,7 +754,7 @@ const HotelExpenses = () => {
                 <CategoryManager
                     title="Manage Expense Categories"
                     categories={categories}
-                    onUpdate={() => getExpenseCategories({ sector: 'hotel' }).then(res => setCategories(res.data.data))}
+                    onUpdate={() => getExpenseCategories({ sector: 'hotel' }).then(res => setCategories(res.data))}
                     onCreate={(data) => createExpenseCategory({ ...data, sector: 'hotel' })}
                     onDelete={deleteExpenseCategory}
                     onClose={() => setShowCategoryManager(false)}

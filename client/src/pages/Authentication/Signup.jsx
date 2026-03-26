@@ -7,7 +7,6 @@ import toast from 'react-hot-toast';
 const Signup = ({ onClose, onSwitch }) => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
-  const [mobile_number, setMobileNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -46,7 +45,7 @@ const Signup = ({ onClose, onSwitch }) => {
       setLoading(true);
       // Ensure any stale data is cleared before new signup
       clearAuthData();
-      await signup({ username, email, password, mobile_number });
+      await signup({ username, email, password });
       toast.dismiss();
       toast.success("Account created successfully!");
       if (onSwitch) {

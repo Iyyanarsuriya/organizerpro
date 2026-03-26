@@ -8,9 +8,9 @@ export const updateTransaction = (id, data) => axiosInstance.put(`${BASE_URL}/tr
 export const deleteTransaction = (id) => axiosInstance.delete(`${BASE_URL}/transactions/${id}`);
 export const getTransactionStats = (params) => axiosInstance.get(`${BASE_URL}/transactions/stats`, { params });
 
-export const getExpenseCategories = (params) => axiosInstance.get(`${BASE_URL}/categories`, { params });
-export const createExpenseCategory = (data) => axiosInstance.post(`${BASE_URL}/categories`, data);
-export const deleteExpenseCategory = (id) => axiosInstance.delete(`${BASE_URL}/categories/${id}`);
+export const getExpenseCategories = (params) => axiosInstance.get(`${BASE_URL}/expense-categories`, { params });
+export const createExpenseCategory = (data) => axiosInstance.post(`${BASE_URL}/expense-categories`, data);
+export const deleteExpenseCategory = (id) => axiosInstance.delete(`${BASE_URL}/expense-categories/${id}`);
 
 // Lookup Options
 export const getLookups = (params) => axiosInstance.get(`${BASE_URL}/lookups`, { params });
