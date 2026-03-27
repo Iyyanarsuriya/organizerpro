@@ -17,7 +17,7 @@ const ITMemberModel = {
         const [res] = await db.query(
             `INSERT INTO it_members (user_id, name, role, phone, email, status, project_id, employment_type, expected_hours, work_location, is_billable, reporting_manager_id, created_by) 
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [user_id, name, role, phone, email, status || 'active', project_id, employment_type || 'Full-time', expected_hours || 8.0, work_location || 'Office', is_billable ? 1 : 0, reporting_manager_id, created_by]
+            [user_id, name, role, phone, email, status || 'active', project_id || null, employment_type || 'Full-time', expected_hours || 8.0, work_location || 'Office', is_billable ? 1 : 0, reporting_manager_id || null, created_by]
         );
         return { id: res.insertId, ...data };
     },
@@ -25,7 +25,7 @@ const ITMemberModel = {
         const { name, role, phone, email, status, project_id, employment_type, expected_hours, work_location, is_billable, reporting_manager_id } = data;
         const [res] = await db.query(
             `UPDATE it_members SET name=?, role=?, phone=?, email=?, status=?, project_id=?, employment_type=?, expected_hours=?, work_location=?, is_billable=?, reporting_manager_id=? WHERE id=? AND user_id=?`,
-            [name, role, phone, email, status, project_id, employment_type, expected_hours, work_location, is_billable ? 1 : 0, reporting_manager_id, id, userId]
+            [name, role, phone, email, status, project_id || null, employment_type, expected_hours, work_location, is_billable ? 1 : 0, reporting_manager_id || null, id, userId]
         );
         return res.affectedRows > 0;
     },

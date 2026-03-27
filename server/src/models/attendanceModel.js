@@ -411,17 +411,23 @@ const ITAttendanceModel = {
     create: async (data) => {
         const {
             user_id, status, date, member_id, project_id, created_by,
-            subject, note, check_in, check_out, total_hours, work_mode
+            subject, note, check_in, check_out, total_hours, work_mode,
+            permission_duration, permission_start_time, permission_end_time, permission_reason,
+            overtime_duration, overtime_reason
         } = data;
 
         const [res] = await db.query(
             `INSERT INTO it_attendance (
                 user_id, status, date, member_id, project_id, created_by,
-                subject, note, check_in, check_out, total_hours, work_mode
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                subject, note, check_in, check_out, total_hours, work_mode,
+                permission_duration, permission_start_time, permission_end_time, permission_reason,
+                overtime_duration, overtime_reason
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 user_id, status, date, member_id, project_id, created_by,
-                subject || 'Daily Attendance', note, check_in, check_out, total_hours || 0, work_mode || 'Office'
+                subject || 'Daily Attendance', note, check_in, check_out, total_hours || 0, work_mode || 'Office',
+                permission_duration, permission_start_time, permission_end_time, permission_reason,
+                overtime_duration, overtime_reason
             ]
         );
         return { id: res.insertId, ...data };
@@ -430,17 +436,23 @@ const ITAttendanceModel = {
     update: async (id, userId, data) => {
         const {
             status, date, project_id, updated_by,
-            subject, note, check_in, check_out, total_hours, work_mode
+            subject, note, check_in, check_out, total_hours, work_mode,
+            permission_duration, permission_start_time, permission_end_time, permission_reason,
+            overtime_duration, overtime_reason
         } = data;
 
         const [res] = await db.query(
             `UPDATE it_attendance SET 
                 status=?, date=?, project_id=?, updated_by=?,
-                subject=?, note=?, check_in=?, check_out=?, total_hours=?, work_mode=?
+                subject=?, note=?, check_in=?, check_out=?, total_hours=?, work_mode=?,
+                permission_duration=?, permission_start_time=?, permission_end_time=?, permission_reason=?,
+                overtime_duration=?, overtime_reason=?
             WHERE id=? AND user_id=?`,
             [
                 status, date, project_id, updated_by,
                 subject, note, check_in, check_out, total_hours, work_mode,
+                permission_duration, permission_start_time, permission_end_time, permission_reason,
+                overtime_duration, overtime_reason,
                 id, userId
             ]
         );
@@ -579,6 +591,14 @@ const ITAttendanceModel = {
             if (total_hours !== undefined) { updates.push('total_hours=?'); params.push(total_hours); }
             if (work_mode !== undefined) { updates.push('work_mode=?'); params.push(work_mode); }
             if (project_id !== undefined) { updates.push('project_id=?'); params.push(project_id); }
+            
+            // New fields
+            if (data.permission_duration !== undefined) { updates.push('permission_duration=?'); params.push(data.permission_duration); }
+            if (data.permission_start_time !== undefined) { updates.push('permission_start_time=?'); params.push(data.permission_start_time); }
+            if (data.permission_end_time !== undefined) { updates.push('permission_end_time=?'); params.push(data.permission_end_time); }
+            if (data.permission_reason !== undefined) { updates.push('permission_reason=?'); params.push(data.permission_reason); }
+            if (data.overtime_duration !== undefined) { updates.push('overtime_duration=?'); params.push(data.overtime_duration); }
+            if (data.overtime_reason !== undefined) { updates.push('overtime_reason=?'); params.push(data.overtime_reason); }
 
             if (updates.length > 0) {
                 params.push(existing[0].id);
