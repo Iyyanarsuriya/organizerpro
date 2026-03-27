@@ -1072,7 +1072,12 @@ const ITAttendance = () => {
                                             return matchesRole && matchesSearch && matchesMember;
                                         })
                                         .map((w) => {
-                                            const rate = w.working_days > 0 ? ((w.present + w.half_day * 0.5) / w.working_days * 100) : 0;
+                                            const present = w.present || 0;
+                                            const half_day = w.half_day || 0;
+                                            const absent = w.absent || 0;
+                                            const late = w.late || 0;
+                                            const working_days = w.working_days || 0;
+                                            const rate = working_days > 0 ? ((present + half_day * 0.5) / working_days * 100) : 0;
                                             return (
                                                 <tr key={w.id} className="hover:bg-slate-50/80 transition-colors group">
                                                     <td className="px-8 py-5">
@@ -1091,11 +1096,11 @@ const ITAttendance = () => {
                                                     </td>
                                                     <td className="px-6 py-5">
                                                         <div className="flex items-center justify-center gap-1">
-                                                            <span className="w-8 h-8 flex items-center justify-center bg-slate-800 text-white rounded-lg font-black text-[10px] border border-slate-700 shadow-sm" title="Working Days">{w.working_days}</span>
-                                                            <span className="w-8 h-8 flex items-center justify-center bg-emerald-50 text-emerald-600 rounded-lg font-black text-[10px] border border-emerald-100" title="Present">{w.present}</span>
-                                                            <span className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 rounded-lg font-black text-[10px] border border-red-100" title="Absent">{w.absent}</span>
-                                                            <span className="w-8 h-8 flex items-center justify-center bg-amber-50 text-amber-600 rounded-lg font-black text-[10px] border border-amber-100" title="Late">{w.late}</span>
-                                                            <span className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg font-black text-[10px] border border-blue-100" title="Half Day">{w.half_day}</span>
+                                                            <span className="w-8 h-8 flex items-center justify-center bg-slate-800 text-white rounded-lg font-black text-[10px] border border-slate-700 shadow-sm" title="Working Days">{working_days}</span>
+                                                            <span className="w-8 h-8 flex items-center justify-center bg-emerald-50 text-emerald-600 rounded-lg font-black text-[10px] border border-emerald-100" title="Present">{present}</span>
+                                                            <span className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 rounded-lg font-black text-[10px] border border-red-100" title="Absent">{absent}</span>
+                                                            <span className="w-8 h-8 flex items-center justify-center bg-amber-50 text-amber-600 rounded-lg font-black text-[10px] border border-amber-100" title="Late">{late}</span>
+                                                            <span className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg font-black text-[10px] border border-blue-100" title="Half Day">{half_day}</span>
                                                             <span className="w-8 h-8 flex items-center justify-center bg-purple-50 text-purple-600 rounded-lg font-black text-[10px] border border-purple-100" title="Permission">{w.permission || 0}</span>
                                                             {w.overtime_hours > 0 && <span className="w-auto px-2 h-8 flex items-center justify-center bg-orange-50 text-orange-600 rounded-lg font-black text-[10px] border border-orange-100" title="Overtime Hours">OT: {w.overtime_hours}h</span>}
                                                             {w.undertime_days > 0 && <span className="w-auto px-2 h-8 flex items-center justify-center bg-pink-50 text-pink-600 rounded-lg font-black text-[10px] border border-pink-100" title="Undertime Days">UT: {w.undertime_days}</span>}
