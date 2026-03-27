@@ -63,5 +63,6 @@ module.exports = {
     create,
     getAll,
     updateStatus,
+    remove,
     delete: remove
 };

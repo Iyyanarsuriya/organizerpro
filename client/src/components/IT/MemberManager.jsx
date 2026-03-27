@@ -49,7 +49,6 @@ const MemberManager = ({ onClose, onUpdate, sector, projects: parentProjects }) 
 
     const fetchMembers = async () => {
         try {
-            console.log('Fetching members for sector:', sector);
             const promises = [
                 getMembers({ sector }),
                 getMemberRoles({ sector }),
@@ -68,8 +67,6 @@ const MemberManager = ({ onClose, onUpdate, sector, projects: parentProjects }) 
 
             // If we fetched projects, it's the 4th result (index 3). Extract the .data property from the API response structure.
             const fetchedProjects = (!parentProjects || parentProjects.length === 0) ? (results[3]?.data?.data || []) : parentProjects;
-
-            console.log('Projects used in member manager:', fetchedProjects);
 
             const guests = (guestRes?.data?.data || []).map(g => ({ ...g, isGuest: true }));
             setMembers([...(memRes?.data?.data || []), ...guests]);

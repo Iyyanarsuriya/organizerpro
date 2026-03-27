@@ -120,6 +120,23 @@ const ITAttendanceController = {
     create: async (req, res) => {
         const attendance = await Attendance.create({ ...req.body, user_id: req.user.data_owner_id, created_by: req.user.username });
         res.status(201).json({ success: true, data: attendance });
+    },
+    quickMark: async (req, res) => {
+        try {
+            const result = await Attendance.quickMark({ ...req.body, user_id: req.user.data_owner_id, updated_by: req.user.username });
+            // Write to IT audit log (fire-and-forget, don't block the response)
+            AuditLog.create({
+                user_id: req.user.data_owner_id,
+                action: `ATTENDANCE_MARKED`,
+                module: 'Attendance',
+                details: `Member ${req.body.member_id} marked as ${req.body.status} on ${req.body.date}`,
+                performed_by: req.user.id,
+                sector: 'it'
+            }).catch(() => {}); // Silent fail - don't break attendance on audit error
+            res.status(result.updated ? 200 : 201).json({ success: true, data: result });
+        } catch (error) {
+            res.status(500).json({ success: false, message: error.message });
+        }
     }
 };
 
